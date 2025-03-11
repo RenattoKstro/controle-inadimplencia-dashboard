@@ -120,7 +120,7 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
   const faltaReceberMes = userData.vencido_atual - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const recebidoHoje = userData.abertura_dia - userData.vencido_atual;
-  const recebimentoPorDia = userData.dias_restantes > 0 
+  const receberPorDia = userData.dias_restantes > 0 
     ? faltaReceberMes / userData.dias_restantes 
     : 0;
 
@@ -192,8 +192,8 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
         />
         
         <CardItem 
-          title="Recebimento por Dia" 
-          value={recebimentoPorDia} 
+          title="Receber por Dia" 
+          value={receberPorDia} 
           icon={<Calculator size={16} />} 
           color="bg-orange-500"
         />
