@@ -120,9 +120,11 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentual >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
     
-    // Cálculos para Meta Vale Alimentação
-    const metaAlimentacao = userData.meta_mes * 0.8;
-    const metaAlimentacaoBatida = recebidoMes >= metaAlimentacao && !isPastDay15();
+    // Cálculos para Meta Vale Alimentação - baseado em A Receber
+    const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
+    const metaAlimentacao = aReceber * 0.8;
+    const recebido = userData.abertura_vencido_mes - userData.vencido_atual;
+    const metaAlimentacaoBatida = recebido >= metaAlimentacao && !isPastDay15();
     
     const premioAlimentacaoData = [
       { nome: "80% até o dia 15", percentual: 80, valor: 100.00, atingido: metaAlimentacaoBatida, icon: <Utensils size={16} />, color: "text-green-500" },

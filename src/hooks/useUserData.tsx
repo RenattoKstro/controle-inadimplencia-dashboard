@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// Initial default values for new users
+// Initial default values for new users - todos valores começam zerados
 const DEFAULT_USER_DATA = {
   abertura_vencido_mes: 0,
   abertura_dia: 0,

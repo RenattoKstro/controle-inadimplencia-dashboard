@@ -18,8 +18,6 @@ import {
   Building,
   Target
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -51,22 +49,6 @@ const CardItem = ({
   color = "bg-blue-500",
   isEditMode = false
 }: CardItemProps) => {
-  const [inputValue, setInputValue] = useState(value.toString());
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-  };
-
-  const handleBlur = () => {
-    const numericValue = parseFloat(inputValue.replace(/[^\d.-]/g, ''));
-    if (!isNaN(numericValue)) {
-      onChange && onChange(numericValue);
-    } else {
-      setInputValue(value.toString());
-    }
-  };
-
   return (
     <Card className="shadow-sm hover:shadow transition-shadow duration-200">
       <CardContent className="p-6">
@@ -77,16 +59,7 @@ const CardItem = ({
           </span>
         </div>
         
-        {isEditable && isEditMode ? (
-          <Input
-            value={inputValue}
-            onChange={handleInputChange}
-            onBlur={handleBlur}
-            className="text-xl font-bold mt-1"
-          />
-        ) : (
-          <div className="text-2xl font-bold">{formatCurrency(value)}</div>
-        )}
+        <div className="text-2xl font-bold">{formatCurrency(value)}</div>
       </CardContent>
     </Card>
   );
@@ -141,15 +114,7 @@ const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) =
   );
 };
 
-const MetaFiado = ({ userData, updateUserData, isLoading }: DashboardProps) => {
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [formState, setFormState] = useState({
-    abertura_vencido_mes: userData.abertura_vencido_mes,
-    abertura_dia: userData.abertura_dia,
-    meta_mes: userData.meta_mes,
-    vencido_atual: userData.vencido_atual,
-  });
-
+const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
   // Calculado automaticamente
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const faltaReceberMes = userData.vencido_atual - userData.meta_mes;
@@ -159,34 +124,11 @@ const MetaFiado = ({ userData, updateUserData, isLoading }: DashboardProps) => {
     ? faltaReceberMes / userData.dias_restantes 
     : 0;
 
-  const handleChange = (field: string, value: number) => {
-    setFormState(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSave = () => {
-    updateUserData(formState);
-    setIsEditMode(false);
-  };
-
-  const handleCancel = () => {
-    setFormState({
-      abertura_vencido_mes: userData.abertura_vencido_mes,
-      abertura_dia: userData.abertura_dia,
-      meta_mes: userData.meta_mes,
-      vencido_atual: userData.vencido_atual,
-    });
-    setIsEditMode(false);
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <Skeleton className="h-8 w-1/4" />
-          <Skeleton className="h-10 w-28" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(8)].map((_, i) => (
@@ -209,16 +151,6 @@ const MetaFiado = ({ userData, updateUserData, isLoading }: DashboardProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Meta Fiado</h2>
-        {isEditMode ? (
-          <div className="flex gap-2">
-            <Button variant="default" onClick={handleSave}>Salvar</Button>
-            <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
-          </div>
-        ) : (
-          <Button variant="outline" onClick={() => setIsEditMode(true)}>
-            Editar Valores
-          </Button>
-        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

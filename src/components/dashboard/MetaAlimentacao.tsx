@@ -64,27 +64,21 @@ const MetaAlimentacao = ({
   isLoading
 }: DashboardProps) => {
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
-  const [metaBatida, setMetaBatida] = useState(false);
   
   useEffect(() => {
     // Calcula os dias úteis até o dia 15 do mês atual
     const dias = calcularDiasUteisAte15(diasSemExpediente);
     setDiasUteisAte15(dias);
-
-    // Verifica se a meta foi batida
-    if (userData.abertura_vencido_mes !== null && userData.meta_mes !== null) {
-      setMetaBatida(userData.abertura_vencido_mes >= userData.meta_mes);
-    }
   }, [userData, diasSemExpediente]);
 
   const passouDia15 = isPastDay15();
-  const progresso = userData.meta_mes
-    ? Math.min(1, (userData.abertura_vencido_mes || 0) / userData.meta_mes)
-    : 0;
-
-  // Calculando meta de ticket (80% da meta do mês até o dia 15)
-  const metaTicket = userData.meta_mes * 0.8;
+  
+  // Calculado usando A Receber como base
+  const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
+  
+  // Calculando meta de ticket (80% da meta "A Receber" até o dia 15)
+  const metaTicket = aReceber * 0.8;
   const metaTicketBatida = recebidoMes >= metaTicket && !passouDia15;
   const progressoTicket = metaTicket > 0 ? Math.min(1, recebidoMes / metaTicket) : 0;
 
@@ -121,7 +115,7 @@ const MetaAlimentacao = ({
               Meta de Ticket (Vale Alimentação)
             </CardTitle>
             <CardDescription>
-              80% da meta mensal até o dia 15 do mês
+              80% de "A Receber" até o dia 15 do mês
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -246,7 +240,7 @@ const MetaAlimentacao = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-blue-600">
-                      Meta: Atingir 80% até dia 15 = {formataDinheiro(metaTicket)}
+                      Meta: 80% de "A Receber" até dia 15 = {formataDinheiro(metaTicket)}
                     </span>
                   </div>
                 </div>
