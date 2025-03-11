@@ -3,158 +3,110 @@ import { DashboardProps } from "../DashboardLayout";
 import { 
   Card, 
   CardContent, 
-  CardHeader, 
-  CardTitle,
   CardDescription, 
-  CardFooter
+  CardHeader, 
+  CardTitle 
 } from "@/components/ui/card";
-import { Utensils, AlertTriangle, Calendar, Calculator } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('pt-BR', {
+const formataDinheiro = (valor: number | null): string => {
+  if (valor === null) {
+    return "R$ 0,00";
+  }
+  return valor.toLocaleString('pt-BR', {
     style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-  }).format(value);
+    currency: 'BRL'
+  });
 };
 
-const formatPercentage = (value: number): string => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'percent',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
-
-const isPastDay15 = () => {
+const isPastDay15 = (): boolean => {
   const today = new Date();
   return today.getDate() > 15;
 };
 
-const calcularDiasUteisAte15 = (diasSemExpediente: Date[]) => {
+const calcularDiasUteisAte15 = (diasSemExpediente: Date[]): number => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  if (today.getDate() > 15) return 0;
-  
-  const ultimoDia = new Date(today.getFullYear(), today.getMonth(), 15);
-  ultimoDia.setHours(0, 0, 0, 0);
-  
+  const ano = today.getFullYear();
+  const mes = today.getMonth();
   let diasUteis = 0;
-  const currentDate = new Date(today);
-  
-  while (currentDate <= ultimoDia) {
-    const diaSemana = currentDate.getDay();
-    const isWeekend = diaSemana === 0 || diaSemana === 6;
-    const isFeriado = diasSemExpediente.some(
-      d => d.getDate() === currentDate.getDate() && 
-           d.getMonth() === currentDate.getMonth() && 
-           d.getFullYear() === currentDate.getFullYear()
-    );
-    
-    if (!isWeekend && !isFeriado) {
-      diasUteis++;
+
+  for (let dia = 1; dia <= 15; dia++) {
+    const data = new Date(ano, mes, dia);
+    const diaDaSemana = data.getDay(); // 0 (Domingo) a 6 (Sábado)
+
+    // Verifica se é um dia útil (segunda a sexta)
+    if (diaDaSemana >= 1 && diaDaSemana <= 5) {
+      // Verifica se o dia não está na lista de dias sem expediente
+      const isDiaSemExpediente = diasSemExpediente.some(
+        (d) =>
+          d.getFullYear() === ano &&
+          d.getMonth() === mes &&
+          d.getDate() === dia
+      );
+
+      if (!isDiaSemExpediente) {
+        diasUteis++;
+      }
     }
-    
-    currentDate.setDate(currentDate.getDate() + 1);
   }
-  
+
   return diasUteis;
 };
 
-const MetaAlimentacao = ({ userData, diasSemExpediente, isLoading }: DashboardProps) => {
+const MetaAlimentacao = ({
+  userData,
+  updateUserData,
+  diasSemExpediente,
+}: DashboardProps) => {
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   const [metaBatida, setMetaBatida] = useState(false);
   
   useEffect(() => {
-    setDiasUteisAte15(calcularDiasUteisAte15(diasSemExpediente));
-    
-    const metaAlimentacao = userData.meta_mes * 0.8;
-    const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
-    setMetaBatida(recebidoMes >= metaAlimentacao);
-  }, [userData, diasSemExpediente]);
-  
-  const metaAlimentacao = userData.meta_mes * 0.8;
-  const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  const progresso = metaAlimentacao > 0 ? recebidoMes / metaAlimentacao : 0;
-  const valorNecessario = Math.max(0, metaAlimentacao - recebidoMes);
-  const valorPorDia = diasUteisAte15 > 0 ? valorNecessario / diasUteisAte15 : 0;
-  
-  const passouDia15 = isPastDay15();
-  
-  const statusMeta = passouDia15 && !metaBatida 
-    ? "Meta Não Batida" 
-    : metaBatida 
-      ? "Meta Batida!" 
-      : "Meta em Andamento";
+    // Calcula os dias úteis até o dia 15 do mês atual
+    const dias = calcularDiasUteisAte15(diasSemExpediente);
+    setDiasUteisAte15(dias);
 
-  if (isLoading) {
-    return (
-      <Card className="shadow-sm">
-        <CardHeader>
-          <Skeleton className="h-6 w-48 mb-2" />
-          <Skeleton className="h-4 w-64" />
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-4 w-full" />
-          </div>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-48" />
-                <Skeleton className="h-6 w-full" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Skeleton className="h-16 w-full" />
-        </CardFooter>
-      </Card>
-    );
-  }
+    // Verifica se a meta foi batida
+    if (userData.abertura_vencido_mes !== null && userData.meta_mes !== null) {
+      setMetaBatida(userData.abertura_vencido_mes >= userData.meta_mes);
+    }
+  }, [userData, diasSemExpediente]);
+
+  const passouDia15 = isPastDay15();
+  const progresso = userData.meta_mes
+    ? Math.min(1, (userData.abertura_vencido_mes || 0) / userData.meta_mes)
+    : 0;
 
   return (
-    <Card className="shadow-md">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <Utensils className="text-green-500" /> Meta Vale Alimentação
-        </CardTitle>
+        <CardTitle>Meta de Alimentação</CardTitle>
         <CardDescription>
-          O objetivo é atingir 80% da meta até o dia 15 do mês
+          Acompanhe o progresso da sua meta mensal.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="rounded-lg bg-gray-50 p-4 border">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium">Status da Meta</span>
-            <div className={`flex items-center gap-1 ${
-              metaBatida ? "text-green-600" : 
-              passouDia15 && !metaBatida ? "text-red-600" : "text-yellow-600"
-            }`}>
-              {metaBatida ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-bold">✅ Meta Batida!</span>
-                </div>
-              ) : passouDia15 && !metaBatida ? (
-                <div className="flex items-center gap-1">
-                  <AlertTriangle size={16} />
-                  <span className="text-sm font-bold">🚫 Meta Não Batida</span>
-                </div>
-              ) : (
-                <span className="text-sm font-bold">⏳ Meta em Andamento</span>
-              )}
+      <CardContent>
+          <div className="space-y-4">
+            <div className="grid gap-2">
+              <p className="text-sm font-medium leading-none">
+                Abertura Vencido Mês
+              </p>
+              <p className="text-2xl font-bold">
+                {formataDinheiro(userData.abertura_vencido_mes)}
+              </p>
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-gray-600">
-              <span>Progresso</span>
-              <span>{formatPercentage(progresso)}</span>
+            <div className="grid gap-2">
+              <p className="text-sm font-medium leading-none">Meta Mensal</p>
+              <p className="text-2xl font-bold">
+                {formataDinheiro(userData.meta_mes)}
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <p className="text-sm font-medium leading-none">
+                Dias Úteis até o dia 15
+              </p>
+              <p className="text-2xl font-bold">{diasUteisAte15}</p>
             </div>
             <Progress 
               value={progresso * 100} 
@@ -165,44 +117,7 @@ const MetaAlimentacao = ({ userData, diasSemExpediente, isLoading }: DashboardPr
               )}
             />
           </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Calculator className="h-4 w-4 text-blue-500" />
-              <span>Valor necessário para bater a meta (80%)</span>
-            </div>
-            <div className="text-xl font-bold">{formatCurrency(metaAlimentacao)}</div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Calendar className="h-4 w-4 text-blue-500" />
-              <span>Dias úteis restantes até o dia 15</span>
-            </div>
-            <div className="text-xl font-bold">{diasUteisAte15}</div>
-          </div>
-
-          {!passouDia15 && !metaBatida && (
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Calculator className="h-4 w-4 text-blue-500" />
-                <span>Valor necessário por dia até o dia 15</span>
-              </div>
-              <div className="text-xl font-bold">{formatCurrency(valorPorDia)}</div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-      
-      <CardFooter>
-        <div className="w-full p-4 rounded-lg bg-blue-50 border border-blue-200">
-          <p className="text-sm text-blue-800">
-            <strong>Regras:</strong> Se atingir 80% da meta ({formatCurrency(metaAlimentacao)}) até o dia 15, você ganha o vale alimentação de R$ 100,00.
-          </p>
-        </div>
-      </CardFooter>
+        </CardContent>
     </Card>
   );
 };
