@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -29,18 +28,15 @@ const formatPercentage = (value: number): string => {
   }).format(value);
 };
 
-// Função para verificar se a data atual é depois do dia 15 do mês corrente
 const isPastDay15 = () => {
   const today = new Date();
   return today.getDate() > 15;
 };
 
-// Função para calcular dias úteis até o dia 15
 const calcularDiasUteisAte15 = (diasSemExpediente: Date[]) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  // Se já passamos do dia 15, retorna 0
   if (today.getDate() > 15) return 0;
   
   const ultimoDia = new Date(today.getFullYear(), today.getMonth(), 15);
@@ -73,26 +69,21 @@ const MetaAlimentacao = ({ userData, diasSemExpediente, isLoading }: DashboardPr
   const [metaBatida, setMetaBatida] = useState(false);
   
   useEffect(() => {
-    // Calcular dias úteis até o dia 15
     setDiasUteisAte15(calcularDiasUteisAte15(diasSemExpediente));
     
-    // Verificar se a meta foi batida
     const metaAlimentacao = userData.meta_mes * 0.8;
     const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
     setMetaBatida(recebidoMes >= metaAlimentacao);
   }, [userData, diasSemExpediente]);
   
-  // Cálculos da meta de alimentação
   const metaAlimentacao = userData.meta_mes * 0.8;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const progresso = metaAlimentacao > 0 ? recebidoMes / metaAlimentacao : 0;
   const valorNecessario = Math.max(0, metaAlimentacao - recebidoMes);
   const valorPorDia = diasUteisAte15 > 0 ? valorNecessario / diasUteisAte15 : 0;
   
-  // Verificar se já passou do dia 15
   const passouDia15 = isPastDay15();
   
-  // Status da meta
   const statusMeta = passouDia15 && !metaBatida 
     ? "Meta Não Batida" 
     : metaBatida 
@@ -167,11 +158,11 @@ const MetaAlimentacao = ({ userData, diasSemExpediente, isLoading }: DashboardPr
             </div>
             <Progress 
               value={progresso * 100} 
-              className="h-2" 
-              indicatorClassName={
+              className={cn(
+                "h-2",
                 metaBatida ? "bg-green-500" : 
                 passouDia15 && !metaBatida ? "bg-red-500" : "bg-yellow-500"
-              }
+              )}
             />
           </div>
         </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,27 +14,6 @@ const CalendarioInicial = ({
 }: DashboardProps) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>(diasSemExpediente || []);
   const [isEditing, setIsEditing] = useState(false);
-
-  const handleSelect = (date: Date | undefined) => {
-    if (!date) return;
-    
-    setSelectedDates(prev => {
-      // Verificar se a data já está selecionada
-      const isAlreadySelected = prev.some(
-        d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-      );
-      
-      // Se já estiver selecionada, remover da lista
-      if (isAlreadySelected) {
-        return prev.filter(
-          d => format(d, 'yyyy-MM-dd') !== format(date, 'yyyy-MM-dd')
-        );
-      }
-      
-      // Se não estiver selecionada, adicionar à lista
-      return [...prev, date];
-    });
-  };
 
   const handleSave = () => {
     updateDiasSemExpediente(selectedDates);
@@ -86,7 +64,7 @@ const CalendarioInicial = ({
         <Calendar
           mode="multiple"
           selected={selectedDates}
-          onSelect={isEditing ? handleSelect : undefined}
+          onSelect={isEditing ? setSelectedDates : undefined}
           className="rounded-md border"
           disabled={!isEditing}
           locale={ptBR}
