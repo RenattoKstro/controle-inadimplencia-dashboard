@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -9,6 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { Utensils, Check, AlertTriangle, TrendingUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formataDinheiro = (valor: number | null): string => {
   if (valor === null) {
@@ -58,6 +61,7 @@ const MetaAlimentacao = ({
   userData,
   updateUserData,
   diasSemExpediente,
+  isLoading
 }: DashboardProps) => {
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   const [metaBatida, setMetaBatida] = useState(false);
@@ -78,47 +82,164 @@ const MetaAlimentacao = ({
     ? Math.min(1, (userData.abertura_vencido_mes || 0) / userData.meta_mes)
     : 0;
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-1/4" />
+        <div className="grid md:grid-cols-2 gap-6">
+          <Skeleton className="h-60" />
+          <Skeleton className="h-60" />
+        </div>
+      </div>
+    );
+  }
+
+  const getProgressColor = () => {
+    if (metaBatida) return "bg-green-500";
+    return passouDia15 ? "bg-red-500" : "bg-yellow-500";
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Meta de Alimentação</CardTitle>
-        <CardDescription>
-          Acompanhe o progresso da sua meta mensal.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-          <div className="space-y-4">
-            <div className="grid gap-2">
-              <p className="text-sm font-medium leading-none">
-                Abertura Vencido Mês
-              </p>
-              <p className="text-2xl font-bold">
-                {formataDinheiro(userData.abertura_vencido_mes)}
-              </p>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-2">
+        <Utensils className="h-6 w-6 text-green-500" />
+        Meta de Ticket
+      </h2>
+      
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+          <div className="h-2 bg-gradient-to-r from-green-400 to-emerald-500"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-green-500" />
+              Acompanhamento da Meta
+            </CardTitle>
+            <CardDescription>
+              Progresso da meta mensal de vale-tickets
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-500">Abertura Vencido Mês</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formataDinheiro(userData.abertura_vencido_mes)}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-500">Meta Mensal</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formataDinheiro(userData.meta_mes)}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-medium text-gray-500">Progresso da Meta</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    {Math.round(progresso * 100)}%
+                  </p>
+                </div>
+                <Progress 
+                  value={progresso * 100} 
+                  className={cn(
+                    "h-3 rounded-full bg-gray-100",
+                    getProgressColor()
+                  )}
+                />
+              </div>
+              
+              <div className="pt-3 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {metaBatida ? (
+                      <div className="bg-green-100 p-1 rounded-full">
+                        <Check className="h-4 w-4 text-green-600" />
+                      </div>
+                    ) : (
+                      <div className="bg-amber-100 p-1 rounded-full">
+                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      </div>
+                    )}
+                    <span className="text-sm font-medium">
+                      {metaBatida 
+                        ? "Meta atingida!" 
+                        : passouDia15 
+                          ? "Meta não atingida no prazo" 
+                          : "Meta em andamento"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="grid gap-2">
-              <p className="text-sm font-medium leading-none">Meta Mensal</p>
-              <p className="text-2xl font-bold">
-                {formataDinheiro(userData.meta_mes)}
-              </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+          <div className="h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Utensils className="h-5 w-5 text-blue-500" />
+              Detalhes do Período
+            </CardTitle>
+            <CardDescription>
+              Informações sobre o período de avaliação
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-500">
+                    Dias Úteis até o dia 15
+                  </p>
+                  <div className="bg-blue-50 rounded-lg p-4 flex justify-center items-center">
+                    <p className="text-3xl font-bold text-blue-700">{diasUteisAte15}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-500">
+                    Status do Período
+                  </p>
+                  <div className={cn(
+                    "rounded-lg p-4 flex justify-center items-center",
+                    passouDia15 ? "bg-red-50" : "bg-amber-50"
+                  )}>
+                    <p className={cn(
+                      "text-lg font-semibold",
+                      passouDia15 ? "text-red-700" : "text-amber-700"
+                    )}>
+                      {passouDia15 ? "Período encerrado" : "Em andamento"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-medium text-gray-500">Dia Atual</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    {new Date().getDate()}
+                  </p>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full" 
+                    style={{ 
+                      width: `${Math.min(100, (new Date().getDate() / 30) * 100)}%` 
+                    }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-500 text-right">Dias do mês</p>
+              </div>
             </div>
-            <div className="grid gap-2">
-              <p className="text-sm font-medium leading-none">
-                Dias Úteis até o dia 15
-              </p>
-              <p className="text-2xl font-bold">{diasUteisAte15}</p>
-            </div>
-            <Progress 
-              value={progresso * 100} 
-              className={cn(
-                "h-2",
-                metaBatida ? "bg-green-500" : 
-                passouDia15 && !metaBatida ? "bg-red-500" : "bg-yellow-500"
-              )}
-            />
-          </div>
-        </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 

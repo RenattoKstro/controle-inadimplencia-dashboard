@@ -3,15 +3,18 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// Initial default values for new users
+const DEFAULT_USER_DATA = {
+  abertura_vencido_mes: 0,
+  abertura_dia: 0,
+  meta_mes: 0,
+  vencido_atual: 0,
+  dias_restantes: 0,
+  meta_desafio: 0,
+};
+
 export function useUserData() {
-  const [userData, setUserData] = useState({
-    abertura_vencido_mes: 1118083.42,
-    abertura_dia: 836527.75,
-    meta_mes: 448867.63,
-    vencido_atual: 787154.86,
-    dias_restantes: 17,
-    meta_desafio: 446982.10,
-  });
+  const [userData, setUserData] = useState(DEFAULT_USER_DATA);
   const [diasSemExpediente, setDiasSemExpediente] = useState<Date[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -39,7 +42,10 @@ export function useUserData() {
         if (!dashboardData) {
           const { data: newData, error: insertError } = await supabase
             .from('user_dashboard')
-            .insert([{ user_id: user.id }])
+            .insert([{ 
+              user_id: user.id,
+              ...DEFAULT_USER_DATA
+            }])
             .select('*')
             .single();
 
@@ -49,7 +55,12 @@ export function useUserData() {
             setUserData(newData);
           }
         } else {
-          setUserData(dashboardData);
+          // Garantir que todos os campos existam com valores padrão
+          const completeData = {
+            ...DEFAULT_USER_DATA,
+            ...dashboardData
+          };
+          setUserData(completeData);
         }
 
         // Buscar dias sem expediente
