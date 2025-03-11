@@ -9,7 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      dias_sem_expediente: {
+        Row: {
+          created_at: string | null
+          data: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_dashboard: {
+        Row: {
+          abertura_dia: number | null
+          abertura_vencido_mes: number | null
+          created_at: string | null
+          dias_restantes: number | null
+          id: string
+          meta_desafio: number | null
+          meta_mes: number | null
+          updated_at: string | null
+          user_id: string
+          vencido_atual: number | null
+        }
+        Insert: {
+          abertura_dia?: number | null
+          abertura_vencido_mes?: number | null
+          created_at?: string | null
+          dias_restantes?: number | null
+          id?: string
+          meta_desafio?: number | null
+          meta_mes?: number | null
+          updated_at?: string | null
+          user_id: string
+          vencido_atual?: number | null
+        }
+        Update: {
+          abertura_dia?: number | null
+          abertura_vencido_mes?: number | null
+          created_at?: string | null
+          dias_restantes?: number | null
+          id?: string
+          meta_desafio?: number | null
+          meta_mes?: number | null
+          updated_at?: string | null
+          user_id?: string
+          vencido_atual?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
