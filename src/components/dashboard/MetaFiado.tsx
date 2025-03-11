@@ -158,7 +158,7 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
         <ProgressCard 
           title="Progresso da Meta Mensal" 
           current={recebidoMes}
-          target={userData.meta_mes}
+          target={userData.aReceber}
           icon={<Target className="h-5 w-5 text-blue-600" />}
         />
         
