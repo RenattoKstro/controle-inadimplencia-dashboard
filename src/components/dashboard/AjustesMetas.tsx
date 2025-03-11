@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { format, differenceInBusinessDays, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Building, AlertTriangle, Target } from "lucide-react";
+import { Wallet, Building, AlertTriangle, Target, Pencil } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 
 interface CardItemProps {
@@ -20,6 +20,7 @@ interface CardItemProps {
   color?: string;
   isEditMode?: boolean;
   formatAsCurrency?: boolean;
+  onEdit?: () => void;
 }
 
 const AjustesMetas = ({ 
@@ -53,7 +54,7 @@ const AjustesMetas = ({
     while (dataAtual <= ultimoDiaMes) {
       if (!isWeekend(dataAtual)) {
         // Verifica se não é um dia sem expediente
-        const isDiaSemExpediente = diasSemExpediente.some(
+        const isDiaSemExpediente = selectedDates.some(
           (d) => 
             d.getDate() === dataAtual.getDate() &&
             d.getMonth() === dataAtual.getMonth() &&
@@ -69,7 +70,7 @@ const AjustesMetas = ({
     }
     
     setDiasRestantesCalculados(dias);
-  }, [diasSemExpediente]);
+  }, [selectedDates]);
 
   const CardItem = ({ 
     title, 
@@ -80,6 +81,7 @@ const AjustesMetas = ({
     color = "bg-blue-500",
     isEditMode = false,
     formatAsCurrency = true,
+    onEdit,
   }: CardItemProps) => {
     const formatValue = (value: number): string => {
       if (formatAsCurrency) {
@@ -98,12 +100,24 @@ const AjustesMetas = ({
 
     return (
       <Card className="shadow-sm hover:shadow transition-shadow duration-200">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium text-gray-600">{title}</h3>
-            <span className={`p-2 rounded-full ${color} text-white`}>
-              {icon}
-            </span>
+            <div className="flex items-center gap-2">
+              {isEditable && !isEditMode && onEdit && (
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={onEdit} 
+                  className="h-7 w-7 rounded-full hover:bg-blue-50"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-blue-500" />
+                </Button>
+              )}
+              <span className={`p-2 rounded-full ${color} text-white`}>
+                {icon}
+              </span>
+            </div>
           </div>
           
           {isEditable && isEditMode ? (
@@ -111,18 +125,18 @@ const AjustesMetas = ({
               <CurrencyInput
                 value={value}
                 onValueChange={handleChange}
-                className="text-xl font-bold mt-1"
+                className="text-lg font-bold mt-1"
               />
             ) : (
               <Input
                 type="number"
                 value={value}
                 onChange={(e) => handleChange(parseInt(e.target.value) || 0)}
-                className="text-xl font-bold mt-1"
+                className="text-lg font-bold mt-1"
               />
             )
           ) : (
-            <div className="text-2xl font-bold">{formatValue(value)}</div>
+            <div className="text-xl font-bold">{formatValue(value)}</div>
           )}
         </CardContent>
       </Card>
@@ -162,6 +176,10 @@ const AjustesMetas = ({
     }));
   };
 
+  const handleItemEdit = () => {
+    setIsEditing(true);
+  };
+
   if (isLoading) {
     return (
       <Card className="w-full shadow-sm">
@@ -177,7 +195,7 @@ const AjustesMetas = ({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Ajustes de Metas
@@ -204,9 +222,9 @@ const AjustesMetas = ({
         )}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <Card className="col-span-1 md:col-span-2 xl:col-span-1 shadow-sm hover:shadow-md transition-all">
-          <CardHeader>
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        <Card className="col-span-1 md:col-span-3 xl:col-span-2 shadow-sm hover:shadow-md transition-all">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-xl">
               <Target className="h-5 w-5 text-blue-500" />
               Calendário de Expediente
@@ -250,6 +268,7 @@ const AjustesMetas = ({
           onChange={(value) => handleChange('abertura_vencido_mes', value)}
           color="bg-purple-500"
           isEditMode={isEditing}
+          onEdit={handleItemEdit}
         />
         
         {/* Card Abertura do Dia */}
@@ -261,6 +280,7 @@ const AjustesMetas = ({
           onChange={(value) => handleChange('abertura_dia', value)}
           color="bg-indigo-500"
           isEditMode={isEditing}
+          onEdit={handleItemEdit}
         />
         
         {/* Card Meta do Mês */}
@@ -272,6 +292,7 @@ const AjustesMetas = ({
           onChange={(value) => handleChange('meta_mes', value)}
           color="bg-blue-500"
           isEditMode={isEditing}
+          onEdit={handleItemEdit}
         />
         
         {/* Card Vencido Atual */}
@@ -283,6 +304,7 @@ const AjustesMetas = ({
           onChange={(value) => handleChange('vencido_atual', value)}
           color="bg-yellow-500"
           isEditMode={isEditing}
+          onEdit={handleItemEdit}
         />
         
         {/* Card Meta Desafio */}
@@ -294,6 +316,7 @@ const AjustesMetas = ({
           onChange={(value) => handleChange('meta_desafio', value)}
           color="bg-green-500"
           isEditMode={isEditing}
+          onEdit={handleItemEdit}
         />
         
         {/* Card Dias Restantes (readonly) */}

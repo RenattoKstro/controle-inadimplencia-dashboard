@@ -93,8 +93,9 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
   
   useEffect(() => {
     // Cálculos para Meta Fiado
+    const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
     const metaAtingidaPercentual = userData.meta_mes > 0 
-      ? ((userData.abertura_vencido_mes - userData.vencido_atual) / userData.meta_mes) * 100
+      ? (recebidoMes / userData.meta_mes) * 100
       : 0;
     
     const premiosFiadoData = [
@@ -109,7 +110,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     ];
     
     // Cálculos para Meta Desafio
-    const metaDesafioPercentual = userData.meta_desafio > 0 
+    const metaDesafioPercentual = (userData.vencido_atual > 0 && userData.meta_desafio > 0)
       ? (userData.meta_desafio / userData.vencido_atual) * 100
       : 0;
     
@@ -121,7 +122,6 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     
     // Cálculos para Meta Vale Alimentação
     const metaAlimentacao = userData.meta_mes * 0.8;
-    const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
     const metaAlimentacaoBatida = recebidoMes >= metaAlimentacao && !isPastDay15();
     
     const premioAlimentacaoData = [

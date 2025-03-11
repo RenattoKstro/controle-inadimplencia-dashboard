@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Utensils, Check, AlertTriangle, TrendingUp } from "lucide-react";
+import { Utensils, Check, AlertTriangle, TrendingUp, Calendar, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const formataDinheiro = (valor: number | null): string => {
@@ -82,6 +82,12 @@ const MetaAlimentacao = ({
     ? Math.min(1, (userData.abertura_vencido_mes || 0) / userData.meta_mes)
     : 0;
 
+  // Calculando meta de ticket (80% da meta do mês até o dia 15)
+  const metaTicket = userData.meta_mes * 0.8;
+  const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
+  const metaTicketBatida = recebidoMes >= metaTicket && !passouDia15;
+  const progressoTicket = metaTicket > 0 ? Math.min(1, recebidoMes / metaTicket) : 0;
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -94,9 +100,9 @@ const MetaAlimentacao = ({
     );
   }
 
-  const getProgressColor = () => {
-    if (metaBatida) return "bg-green-500";
-    return passouDia15 ? "bg-red-500" : "bg-yellow-500";
+  const getProgressColor = (isComplete: boolean, isPastDeadline: boolean) => {
+    if (isComplete) return "bg-green-500";
+    return isPastDeadline ? "bg-red-500" : "bg-yellow-500";
   };
 
   return (
@@ -111,26 +117,26 @@ const MetaAlimentacao = ({
           <div className="h-2 bg-gradient-to-r from-green-400 to-emerald-500"></div>
           <CardHeader className="pb-2">
             <CardTitle className="text-xl flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              Acompanhamento da Meta
+              <Target className="h-5 w-5 text-green-500" />
+              Meta de Ticket (Vale Alimentação)
             </CardTitle>
             <CardDescription>
-              Progresso da meta mensal de vale-tickets
+              80% da meta mensal até o dia 15 do mês
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-500">Abertura Vencido Mês</p>
+                  <p className="text-sm font-medium text-gray-500">Valor da Meta (80%)</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formataDinheiro(userData.abertura_vencido_mes)}
+                    {formataDinheiro(metaTicket)}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-500">Meta Mensal</p>
+                  <p className="text-sm font-medium text-gray-500">Recebido até agora</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formataDinheiro(userData.meta_mes)}
+                    {formataDinheiro(recebidoMes)}
                   </p>
                 </div>
               </div>
@@ -139,14 +145,14 @@ const MetaAlimentacao = ({
                 <div className="flex justify-between items-center">
                   <p className="text-sm font-medium text-gray-500">Progresso da Meta</p>
                   <p className="text-sm font-medium text-gray-700">
-                    {Math.round(progresso * 100)}%
+                    {Math.round(progressoTicket * 100)}%
                   </p>
                 </div>
                 <Progress 
-                  value={progresso * 100} 
+                  value={progressoTicket * 100} 
                   className={cn(
                     "h-3 rounded-full bg-gray-100",
-                    getProgressColor()
+                    getProgressColor(metaTicketBatida, passouDia15)
                   )}
                 />
               </div>
@@ -154,7 +160,7 @@ const MetaAlimentacao = ({
               <div className="pt-3 border-t">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {metaBatida ? (
+                    {metaTicketBatida ? (
                       <div className="bg-green-100 p-1 rounded-full">
                         <Check className="h-4 w-4 text-green-600" />
                       </div>
@@ -164,8 +170,8 @@ const MetaAlimentacao = ({
                       </div>
                     )}
                     <span className="text-sm font-medium">
-                      {metaBatida 
-                        ? "Meta atingida!" 
+                      {metaTicketBatida 
+                        ? "Meta atingida! Vale alimentação garantido" 
                         : passouDia15 
                           ? "Meta não atingida no prazo" 
                           : "Meta em andamento"}
@@ -181,7 +187,7 @@ const MetaAlimentacao = ({
           <div className="h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
           <CardHeader className="pb-2">
             <CardTitle className="text-xl flex items-center gap-2">
-              <Utensils className="h-5 w-5 text-blue-500" />
+              <Calendar className="h-5 w-5 text-blue-500" />
               Detalhes do Período
             </CardTitle>
             <CardDescription>
@@ -234,6 +240,16 @@ const MetaAlimentacao = ({
                   ></div>
                 </div>
                 <p className="text-xs text-gray-500 text-right">Dias do mês</p>
+              </div>
+              
+              <div className="pt-3 border-t">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-blue-600">
+                      Meta: Atingir 80% até dia 15 = {formataDinheiro(metaTicket)}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>

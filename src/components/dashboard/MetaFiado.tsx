@@ -15,11 +15,14 @@ import {
   AlertTriangle, 
   ArrowDown, 
   Check, 
-  Building 
+  Building,
+  Target
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 interface CardItemProps {
   title: string;
@@ -89,6 +92,55 @@ const CardItem = ({
   );
 };
 
+const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) => {
+  const percentage = Math.min(100, Math.round((current / target) * 100));
+  const isComplete = current >= target;
+
+  return (
+    <Card className="shadow-sm hover:shadow transition-shadow duration-200 col-span-1 md:col-span-3">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-xl flex items-center gap-2">
+            {icon}
+            {title}
+          </CardTitle>
+          <div className="text-sm font-medium">
+            {percentage}% concluído
+          </div>
+        </div>
+        <CardDescription>
+          Meta: {formatCurrency(target)} | Realizado: {formatCurrency(current)}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <Progress 
+            value={percentage} 
+            className={cn(
+              "h-3 rounded-full",
+              isComplete ? "bg-gray-100" : "bg-gray-100",
+            )}
+          />
+          <div className="flex justify-end">
+            <div className="flex items-center gap-1 text-sm">
+              {isComplete ? (
+                <>
+                  <span className="text-green-600 font-medium">Meta atingida!</span>
+                  <Check className="h-4 w-4 text-green-600" />
+                </>
+              ) : (
+                <span className="text-blue-600 font-medium">
+                  Faltam {formatCurrency(target - current)}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const MetaFiado = ({ userData, updateUserData, isLoading }: DashboardProps) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [formState, setFormState] = useState({
@@ -96,7 +148,6 @@ const MetaFiado = ({ userData, updateUserData, isLoading }: DashboardProps) => {
     abertura_dia: userData.abertura_dia,
     meta_mes: userData.meta_mes,
     vencido_atual: userData.vencido_atual,
-    dias_restantes: userData.dias_restantes
   });
 
   // Calculado automaticamente
@@ -126,7 +177,6 @@ const MetaFiado = ({ userData, updateUserData, isLoading }: DashboardProps) => {
       abertura_dia: userData.abertura_dia,
       meta_mes: userData.meta_mes,
       vencido_atual: userData.vencido_atual,
-      dias_restantes: userData.dias_restantes
     });
     setIsEditMode(false);
   };
@@ -139,7 +189,7 @@ const MetaFiado = ({ userData, updateUserData, isLoading }: DashboardProps) => {
           <Skeleton className="h-10 w-28" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(9)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <Card key={i} className="shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -171,56 +221,13 @@ const MetaFiado = ({ userData, updateUserData, isLoading }: DashboardProps) => {
         )}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Cards Editáveis */}
-        <CardItem 
-          title="Abertura de Vencido do Mês" 
-          value={formState.abertura_vencido_mes} 
-          icon={<Calendar size={16} />} 
-          isEditable={true}
-          onChange={(value) => handleChange('abertura_vencido_mes', value)}
-          color="bg-purple-500"
-          isEditMode={isEditMode}
-        />
-        
-        <CardItem 
-          title="Abertura do Dia" 
-          value={formState.abertura_dia} 
-          icon={<Building size={16} />} 
-          isEditable={true}
-          onChange={(value) => handleChange('abertura_dia', value)}
-          color="bg-indigo-500"
-          isEditMode={isEditMode}
-        />
-        
-        <CardItem 
-          title="Meta do Mês" 
-          value={formState.meta_mes} 
-          icon={<Wallet size={16} />} 
-          isEditable={true}
-          onChange={(value) => handleChange('meta_mes', value)}
-          color="bg-blue-500"
-          isEditMode={isEditMode}
-        />
-        
-        <CardItem 
-          title="Vencido Atual" 
-          value={formState.vencido_atual} 
-          icon={<AlertTriangle size={16} />} 
-          isEditable={true}
-          onChange={(value) => handleChange('vencido_atual', value)}
-          color="bg-yellow-500"
-          isEditMode={isEditMode}
-        />
-        
-        <CardItem 
-          title="Dias Restantes" 
-          value={formState.dias_restantes} 
-          icon={<Calendar size={16} />} 
-          isEditable={true}
-          onChange={(value) => handleChange('dias_restantes', value)}
-          color="bg-gray-500"
-          isEditMode={isEditMode}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Progress Card */}
+        <ProgressCard 
+          title="Progresso da Meta Mensal" 
+          current={recebidoMes}
+          target={userData.meta_mes}
+          icon={<Target className="h-5 w-5 text-blue-600" />}
         />
         
         {/* Cards Não Editáveis (Calculados) */}
