@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -32,6 +31,14 @@ interface CardItemProps {
   isEditMode?: boolean;
   showProgress?: boolean;
   progressValue?: number;
+}
+
+interface ProgressCardProps {
+  title: string;
+  current: number;
+  target: number;
+  icon: React.ReactNode;
+  userData: any;
 }
 
 const formatCurrency = (value: number): string => {
@@ -81,9 +88,9 @@ const CardItem = ({
   );
 };
 
-const ProgressCard = ({ title, current, target, icon, userData }) => {
+const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
   const percentageComplete = (() => {
-    if (current <= target) return 100; // Already achieved target
+    if (current <= target) return 100;
     
     const totalReduction = userData.abertura_vencido_mes - target;
     const actualReduction = userData.abertura_vencido_mes - current;
