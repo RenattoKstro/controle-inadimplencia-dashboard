@@ -71,7 +71,7 @@ export function useUserData() {
 
         if (diasError) throw diasError;
 
-        if (diasData) {
+        if (diasData && diasData.length > 0) {
           setDiasSemExpediente(diasData.map(d => new Date(d.data)));
         }
       } catch (error: any) {

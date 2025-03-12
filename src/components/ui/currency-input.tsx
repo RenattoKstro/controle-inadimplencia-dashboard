@@ -36,20 +36,26 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Remove formatting from input
-    const rawValue = inputValue.replace(/[^\d,]/g, '');
-    
-    if (rawValue === '') {
+    // Handle empty input
+    if (inputValue === '') {
       setDisplayValue('');
       onValueChange(0);
       return;
     }
     
-    // Parse the numeric value
-    let numericValue = parseCurrency(inputValue);
+    // Only allow numeric input and comma
+    if (!/^[\d.,]+$/.test(inputValue.replace(/[^\d,]/g, ''))) {
+      return;
+    }
     
-    // Format the display value
-    const formatted = formatCurrency(numericValue);
+    // Remove all non-numeric characters for processing
+    const cleanValue = inputValue.replace(/[^\d,]/g, '');
+    
+    // Parse the numeric value
+    const numericValue = parseCurrency(cleanValue);
+    
+    // Format for display
+    let formatted = formatCurrency(numericValue);
     setDisplayValue(formatted);
     
     // Pass the numeric value to the parent

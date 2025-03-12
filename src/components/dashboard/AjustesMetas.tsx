@@ -1,15 +1,22 @@
 
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format, differenceInBusinessDays, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Building, AlertTriangle, Target, Pencil } from "lucide-react";
+import { Wallet, Building, AlertTriangle, Target, Pencil, CalendarIcon } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 interface CardItemProps {
   title: string;
@@ -32,6 +39,7 @@ const AjustesMetas = ({
 }: DashboardProps) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>(diasSemExpediente || []);
   const [isEditing, setIsEditing] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [diasRestantesCalculados, setDiasRestantesCalculados] = useState(0);
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData.abertura_vencido_mes || 0,
@@ -223,7 +231,7 @@ const AjustesMetas = ({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        <Card className="col-span-1 md:col-span-3 xl:col-span-2 shadow-sm hover:shadow-md transition-all">
+        <Card className="col-span-1 md:col-span-2 shadow-sm hover:shadow-md transition-all">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-xl">
               <Target className="h-5 w-5 text-blue-500" />
@@ -233,27 +241,43 @@ const AjustesMetas = ({
               Selecione os dias sem expediente para calcular os dias úteis
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <Calendar
-              mode="multiple"
-              selected={selectedDates}
-              onSelect={isEditing ? setSelectedDates : undefined}
-              className="rounded-md border"
-              disabled={!isEditing}
-              locale={ptBR}
-              classNames={{
-                day_selected: "bg-red-500 text-white hover:bg-red-600 focus:bg-red-600",
-              }}
-            />
-            
-            <div className="mt-6 text-sm text-gray-600 w-full">
-              <div className="flex justify-between items-center">
-                <span>Dias sem expediente:</span>
-                <span className="font-medium">{selectedDates.length}</span>
-              </div>
-              <div className="flex justify-between items-center mt-2">
-                <span>Dias úteis restantes:</span>
-                <span className="font-medium text-blue-600">{diasRestantesCalculados}</span>
+          <CardContent>
+            <div className="flex flex-col items-center">
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full mb-4 flex justify-between items-center"
+                    disabled={!isEditing}
+                  >
+                    <span>Selecionar dias sem expediente</span>
+                    <CalendarIcon className="h-4 w-4 ml-2" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    mode="multiple"
+                    selected={selectedDates}
+                    onSelect={isEditing ? setSelectedDates : undefined}
+                    className="rounded-md border p-3 pointer-events-auto"
+                    disabled={!isEditing}
+                    locale={ptBR}
+                    classNames={{
+                      day_selected: "bg-red-500 text-white hover:bg-red-600 focus:bg-red-600",
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <div className="mt-4 text-sm text-gray-600 w-full">
+                <div className="flex justify-between items-center">
+                  <span>Dias sem expediente:</span>
+                  <span className="font-medium">{selectedDates.length}</span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span>Dias úteis restantes:</span>
+                  <span className="font-medium text-blue-600">{diasRestantesCalculados}</span>
+                </div>
               </div>
             </div>
           </CardContent>

@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Utensils, Check, AlertTriangle, TrendingUp, Calendar, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isWeekend } from "date-fns";
 
 const formataDinheiro = (valor: number | null): string => {
   if (valor === null) {
@@ -34,7 +35,13 @@ const calcularDiasUteisAte15 = (diasSemExpediente: Date[]): number => {
   const mes = today.getMonth();
   let diasUteis = 0;
 
-  for (let dia = 1; dia <= 15; dia++) {
+  // Se estamos após o dia 15, retorna 0
+  if (today.getDate() > 15) {
+    return 0;
+  }
+
+  // Conta apenas os dias até o dia 15 a partir do dia atual
+  for (let dia = today.getDate(); dia <= 15; dia++) {
     const data = new Date(ano, mes, dia);
     const diaDaSemana = data.getDay(); // 0 (Domingo) a 6 (Sábado)
 
@@ -193,7 +200,7 @@ const MetaAlimentacao = ({
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-500">
-                    Dias Úteis até o dia 15
+                    Dias Úteis Restantes até o dia 15
                   </p>
                   <div className="bg-blue-50 rounded-lg p-4 flex justify-center items-center">
                     <p className="text-3xl font-bold text-blue-700">{diasUteisAte15}</p>
@@ -229,18 +236,18 @@ const MetaAlimentacao = ({
                   <div 
                     className="bg-blue-500 h-2 rounded-full" 
                     style={{ 
-                      width: `${Math.min(100, (new Date().getDate() / 30) * 100)}%` 
+                      width: `${Math.min(100, (new Date().getDate() / 15) * 100)}%` 
                     }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500 text-right">Dias do mês</p>
+                <p className="text-xs text-gray-500 text-right">Dias até 15 do mês</p>
               </div>
               
               <div className="pt-3 border-t">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-blue-600">
-                      Meta: 80% de "A Receber" até dia 15 = {formataDinheiro(metaTicket)}
+                      Meta: 80% de "A Receber" ({formataDinheiro(aReceber)}) = {formataDinheiro(metaTicket)}
                     </span>
                   </div>
                 </div>

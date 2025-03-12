@@ -30,6 +30,8 @@ interface CardItemProps {
   onChange?: (value: number) => void;
   color?: string;
   isEditMode?: boolean;
+  showProgress?: boolean;
+  progressValue?: number;
 }
 
 const formatCurrency = (value: number): string => {
@@ -47,7 +49,9 @@ const CardItem = ({
   isEditable = false, 
   onChange, 
   color = "bg-blue-500",
-  isEditMode = false
+  isEditMode = false,
+  showProgress = false,
+  progressValue = 0
 }: CardItemProps) => {
   return (
     <Card className="shadow-sm hover:shadow transition-shadow duration-200">
@@ -60,6 +64,18 @@ const CardItem = ({
         </div>
         
         <div className="text-2xl font-bold">{formatCurrency(value)}</div>
+        
+        {showProgress && (
+          <div className="mt-3 space-y-1">
+            <Progress 
+              value={progressValue} 
+              className="h-2 rounded-full bg-gray-100"
+            />
+            <div className="text-xs text-right text-gray-500">
+              {Math.round(progressValue)}% do objetivo diário
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -120,8 +136,15 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
   const faltaReceberMes = userData.vencido_atual - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const recebidoHoje = userData.abertura_dia - userData.vencido_atual;
+  
+  // Calculo da meta diária
   const receberPorDia = userData.dias_restantes > 0 
     ? faltaReceberMes / userData.dias_restantes 
+    : 0;
+  
+  // Calculo do progresso diário
+  const progressoDiario = receberPorDia > 0
+    ? Math.min(100, (recebidoHoje / receberPorDia) * 100)
     : 0;
 
   if (isLoading) {
@@ -196,6 +219,8 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
           value={receberPorDia} 
           icon={<Calculator size={16} />} 
           color="bg-orange-500"
+          showProgress={true}
+          progressValue={progressoDiario}
         />
       </div>
     </div>
