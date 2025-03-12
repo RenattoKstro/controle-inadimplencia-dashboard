@@ -33,6 +33,20 @@ const calcularValorPorDia = (valorRestante: number, diasRestantes: number): numb
   return diasRestantes > 0 ? valorRestante / diasRestantes : 0;
 };
 
+// Função para determinar a cor da barra com base no progresso
+const getProgressColor = (progressoPercentual: number): string => {
+  if (progressoPercentual <= 50) {
+    // Vermelho para 0% a 50%
+    return 'linear-gradient(to right, #ff4d4d, #ff6666)';
+  } else if (progressoPercentual <= 90) {
+    // Amarelo para 51% a 90%
+    return 'linear-gradient(to right, #ffeb3b, #ffcc00)';
+  } else {
+    // Verde para 91% a 100%
+    return 'linear-gradient(to right, #4caf50, #66bb6a)';
+  }
+};
+
 const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalculados, diasSemExpediente }: DashboardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData.meta_desafio);
@@ -42,6 +56,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   const progresso = aberturaInicial > userData.meta_desafio 
     ? Math.min(1, (aberturaInicial - userData.vencido_atual) / (aberturaInicial - userData.meta_desafio)) 
     : 0;
+  const progressoPercentual = progresso * 100;
 
   // Calcular valor restante (quanto o Vencido Atual precisa descer)
   const valorRestante = Math.max(0, userData.vencido_atual - userData.meta_desafio);
@@ -129,17 +144,17 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
             <span className="text-sm font-medium">{formatPercentage(progresso)}</span>
           </div>
           <div 
-            className="w-full bg-gray-200 rounded-full h-6 shadow-inner"
+            className="w-full bg-white rounded-full h-6 shadow-inner"
             style={{
-              backgroundColor: '#f0f0f0',
+              backgroundColor: '#ffffff',
               boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
             }}
           >
             <div 
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
-                width: `${Math.min(100, progresso * 100)}%`,
-                background: 'linear-gradient(to right, #ff4d4d 0%, #ff4d4d 50%, #ffeb3b 51%, #ffeb3b 90%, #4caf50 91%, #4caf50 100%)',
+                width: `${progressoPercentual}%`,
+                background: getProgressColor(progressoPercentual),
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
               }}
             />
