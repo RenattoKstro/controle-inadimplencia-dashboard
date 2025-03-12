@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -35,19 +34,15 @@ const calcularDiasUteisAte15 = (diasSemExpediente: Date[]): number => {
   const mes = today.getMonth();
   let diasUteis = 0;
 
-  // Se estamos após o dia 15, retorna 0
   if (today.getDate() > 15) {
     return 0;
   }
 
-  // Conta apenas os dias até o dia 15 a partir do dia atual
   for (let dia = today.getDate(); dia <= 15; dia++) {
     const data = new Date(ano, mes, dia);
-    const diaDaSemana = data.getDay(); // 0 (Domingo) a 6 (Sábado)
+    const diaDaSemana = data.getDay();
 
-    // Verifica se é um dia útil (segunda a sexta)
     if (diaDaSemana >= 1 && diaDaSemana <= 5) {
-      // Verifica se o dia não está na lista de dias sem expediente
       const isDiaSemExpediente = diasSemExpediente.some(
         (d) =>
           d.getFullYear() === ano &&
@@ -73,21 +68,21 @@ const MetaAlimentacao = ({
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   
   useEffect(() => {
-    // Calcula os dias úteis até o dia 15 do mês atual
     const dias = calcularDiasUteisAte15(diasSemExpediente);
     setDiasUteisAte15(dias);
   }, [userData, diasSemExpediente]);
 
   const passouDia15 = isPastDay15();
   
-  // Calculado usando A Receber como base
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  
-  // Calculando meta de ticket (80% da meta "A Receber" até o dia 15)
   const metaTicket = aReceber * 0.8;
   const metaTicketBatida = recebidoMes >= metaTicket && !passouDia15;
   const progressoTicket = metaTicket > 0 ? Math.min(1, recebidoMes / metaTicket) : 0;
+
+  // New calculations
+  const valorRestante = Math.max(0, metaTicket - recebidoMes);
+  const valorPorDia = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
 
   if (isLoading) {
     return (
@@ -156,6 +151,24 @@ const MetaAlimentacao = ({
                     getProgressColor(metaTicketBatida, passouDia15)
                   )}
                 />
+              </div>
+
+              {/* New Section: Remaining Value and Daily Target */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-500">Valor Restante</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {formataDinheiro(valorRestante)}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-500">Por Dia até o Dia 15</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {formataDinheiro(valorPorDia)}
+                    </p>
+                  </div>
+                </div>
               </div>
               
               <div className="pt-3 border-t">
