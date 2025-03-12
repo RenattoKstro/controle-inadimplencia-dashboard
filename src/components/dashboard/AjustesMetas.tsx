@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -35,12 +34,12 @@ const AjustesMetas = ({
   updateUserData, 
   diasSemExpediente, 
   updateDiasSemExpediente, 
+  diasRestantesCalculados, 
   isLoading 
 }: DashboardProps) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [diasRestantesCalculados, setDiasRestantesCalculados] = useState(0);
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData.abertura_vencido_mes || 0,
     abertura_dia: userData.abertura_dia || 0,
@@ -52,42 +51,12 @@ const AjustesMetas = ({
 
   useEffect(() => {
     if (diasSemExpediente && diasSemExpediente.length > 0) {
-      const formattedDates = diasSemExpediente.map(date => 
-        new Date(date)
-      );
+      const formattedDates = diasSemExpediente.map(date => new Date(date));
       setSelectedDates(formattedDates);
     } else {
       setSelectedDates([]);
     }
   }, [diasSemExpediente]);
-
-  useEffect(() => {
-    const hoje = new Date();
-    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    
-    let dias = 0;
-    const currentDate = new Date(hoje);
-    
-    while (currentDate <= ultimoDiaMes) {
-      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
-      
-      if (!isWeekend) {
-        const isDiaSemExpediente = selectedDates.some(date => 
-          date.getDate() === currentDate.getDate() &&
-          date.getMonth() === currentDate.getMonth() &&
-          date.getFullYear() === currentDate.getFullYear()
-        );
-        
-        if (!isDiaSemExpediente) {
-          dias++;
-        }
-      }
-      
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    setDiasRestantesCalculados(dias);
-  }, [selectedDates]);
 
   const CardItem = ({ 
     title, 
@@ -166,15 +135,11 @@ const AjustesMetas = ({
       dias_restantes: diasRestantesCalculados
     };
     
-    const formattedDates = selectedDates.map(date => {
-      const dateObj = new Date(date);
-      return dateObj;
-    });
-    
+    const formattedDates = selectedDates.map(date => new Date(date));
     updateUserData(updatedForm);
     updateDiasSemExpediente(formattedDates);
-    setIsEditing(false);
     setFormState(updatedForm);
+    setIsEditing(false);
     setCalendarOpen(false);
   };
 
@@ -275,7 +240,6 @@ const AjustesMetas = ({
                     onSelect={setSelectedDates}
                     className="rounded-md border p-3 pointer-events-auto"
                     disabled={(date) => {
-                      // Disable only past dates
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
                       const compareDate = new Date(date);
