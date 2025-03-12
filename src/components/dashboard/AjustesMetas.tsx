@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -52,7 +53,7 @@ const AjustesMetas = ({
   useEffect(() => {
     if (diasSemExpediente && diasSemExpediente.length > 0) {
       const formattedDates = diasSemExpediente.map(date => 
-        date instanceof Date ? date : new Date(date)
+        new Date(date)
       );
       setSelectedDates(formattedDates);
     } else {
@@ -167,7 +168,6 @@ const AjustesMetas = ({
     
     const formattedDates = selectedDates.map(date => {
       const dateObj = new Date(date);
-      dateObj.setUTCHours(0, 0, 0, 0);
       return dateObj;
     });
     
@@ -179,7 +179,7 @@ const AjustesMetas = ({
   };
 
   const handleCancel = () => {
-    setSelectedDates(diasSemExpediente);
+    setSelectedDates(diasSemExpediente.map(date => new Date(date)));
     setFormState({
       abertura_vencido_mes: userData.abertura_vencido_mes || 0,
       abertura_dia: userData.abertura_dia || 0,
@@ -257,14 +257,14 @@ const AjustesMetas = ({
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center">
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <Popover open={calendarOpen && isEditing} onOpenChange={(open) => isEditing && setCalendarOpen(open)}>
                 <PopoverTrigger asChild>
                   <Button 
                     variant="outline" 
                     className="w-full mb-4 flex justify-between items-center"
                     disabled={!isEditing}
                   >
-                    <span>Dias sem expediente</span>
+                    <span>Selecionar dias sem expediente ({selectedDates.length})</span>
                     <CalendarIcon className="h-4 w-4 ml-2" />
                   </Button>
                 </PopoverTrigger>
@@ -274,7 +274,14 @@ const AjustesMetas = ({
                     selected={selectedDates}
                     onSelect={setSelectedDates}
                     className="rounded-md border p-3 pointer-events-auto"
-                    disabled={!isEditing}
+                    disabled={(date) => {
+                      // Disable only past dates
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const compareDate = new Date(date);
+                      compareDate.setHours(0, 0, 0, 0);
+                      return compareDate < today;
+                    }}
                     locale={ptBR}
                     classNames={{
                       day_selected: "bg-red-500 text-white hover:bg-red-600 focus:bg-red-600",

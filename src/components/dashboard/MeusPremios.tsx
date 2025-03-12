@@ -39,8 +39,8 @@ const formatCurrency = (value: number): string => {
 const formatPercentage = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'percent',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value/100);
 };
 
@@ -94,8 +94,11 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
   useEffect(() => {
     // Cálculos para Meta Fiado
     const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
-    const metaAtingidaPercentual = userData.meta_mes > 0 
-      ? (recebidoMes / userData.meta_mes) * 100
+    
+    // Para Meta Fiado, calculamos a porcentagem de redução do valor inicial para a meta
+    const totalFiado = userData.abertura_vencido_mes - userData.meta_mes;
+    const metaAtingidaPercentual = totalFiado > 0 
+      ? (recebidoMes / totalFiado) * 100
       : 0;
     
     const premiosFiadoData = [
@@ -110,8 +113,9 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     ];
     
     // Cálculos para Meta Desafio
+    // Meta desafio é o valor atual reduzido para a meta de desafio
     const metaDesafioPercentual = (userData.vencido_atual > 0 && userData.meta_desafio > 0)
-      ? (userData.meta_desafio / userData.vencido_atual) * 100
+      ? ((userData.vencido_atual - userData.meta_desafio) / userData.vencido_atual) * 100
       : 0;
     
     const premiosDesafioData = [
@@ -135,10 +139,10 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     setPremioAlimentacao(premioAlimentacaoData);
     
     // Calcular total de prêmios possíveis
-    const totalFiado = premiosFiadoData.reduce((acc, premio) => acc + premio.valor, 0);
+    const totalFiadoPremios = premiosFiadoData.reduce((acc, premio) => acc + premio.valor, 0);
     const totalDesafio = premiosDesafioData.reduce((acc, premio) => acc + premio.valor, 0);
     const totalAlimentacao = premioAlimentacaoData.reduce((acc, premio) => acc + premio.valor, 0);
-    setTotalPremios(totalFiado + totalDesafio + totalAlimentacao);
+    setTotalPremios(totalFiadoPremios + totalDesafio + totalAlimentacao);
     
   }, [userData]);
   

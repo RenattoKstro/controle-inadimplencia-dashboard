@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 
 interface CurrencyInputProps {
@@ -15,6 +15,7 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
 }) => {
   const [displayValue, setDisplayValue] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isEditing) {
@@ -39,29 +40,34 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
-    setDisplayValue(inputValue.replace(/[^\d,]/g, ''));
-    
-    const numericValue = parseCurrency(inputValue);
-    if (!isNaN(numericValue)) {
-      onValueChange(numericValue);
-    }
+    // Only allow digits and comma
+    const sanitizedValue = inputValue.replace(/[^\d,]/g, '');
+    setDisplayValue(sanitizedValue);
   };
 
   const handleFocus = () => {
     setIsEditing(true);
-    // Show the raw number without formatting when editing
-    setDisplayValue(displayValue.replace(/[^\d,]/g, ''));
+    // Show the raw number for editing
+    const rawValue = String(value).replace('.', ',');
+    setDisplayValue(rawValue);
+    // Set timeout to ensure the field is focused and cursor positioned properly
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.select();
+      }
+    }, 0);
   };
 
   const handleBlur = () => {
     setIsEditing(false);
     const numericValue = parseCurrency(displayValue);
-    setDisplayValue(formatCurrency(numericValue));
     onValueChange(numericValue);
+    setDisplayValue(formatCurrency(numericValue));
   };
 
   return (
     <Input
+      ref={inputRef}
       value={displayValue}
       onChange={handleChange}
       onFocus={handleFocus}

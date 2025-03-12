@@ -71,7 +71,7 @@ const CardItem = ({
               className="h-2 rounded-full bg-gray-100"
             />
             <div className="text-xs text-right text-gray-500">
-              {Math.round(progressValue)}% do objetivo diário
+              {progressValue.toFixed(2)}% do objetivo diário
             </div>
           </div>
         )}
@@ -83,8 +83,11 @@ const CardItem = ({
 const ProgressCard = ({ title, current, target, icon }) => {
   const percentageComplete = (() => {
     if (current <= target) return 100; // Already achieved target
-    const totalReduction = current - target; // Total amount to reduce
-    const actualReduction = current - target; // How much has been reduced
+    
+    const totalReduction = userData.abertura_vencido_mes - target;
+    const actualReduction = userData.abertura_vencido_mes - current;
+    
+    if (totalReduction <= 0) return 0;
     return Math.min(100, Math.max(0, (actualReduction / totalReduction) * 100));
   })();
 
