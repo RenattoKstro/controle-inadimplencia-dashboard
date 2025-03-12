@@ -11,6 +11,7 @@ import { Trophy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Calculator } from "lucide-react";
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', {
@@ -30,7 +31,12 @@ const formatPercentage = (value: number): string => {
 
 // Função para calcular o valor por dia (usando dias úteis)
 const calcularValorPorDia = (valorRestante: number, diasRestantes: number): number => {
-  return diasRestantes > 0 ? valorRestante / diasRestantes : 0;
+  return diasRestantes > 0 ? Math.max(0, valorRestante / diasRestantes) : 0;
+};
+
+// Função para estimar o progresso diário (baseado em redução aproximada)
+const calcularProgressoDiario = (reducaoDiaria: number, valorPorDia: number): number => {
+  return valorPorDia > 0 ? Math.min(100, (reducaoDiaria / valorPorDia) * 100) : 0;
 };
 
 const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalculados, diasSemExpediente }: DashboardProps) => {
@@ -38,7 +44,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   const [metaDesafio, setMetaDesafio] = useState(userData.meta_desafio);
 
   // Cálculos corrigidos
-  const aberturaInicial = userData.abertura_vencido_mes || userData.vencido_atual; // Usar abertura_vencido_mes como referência inicial
+  const aberturaInicial = userData.abertura_vencido_mes || userData.vencido_atual;
   const progresso = aberturaInicial > userData.meta_desafio 
     ? Math.min(1, (aberturaInicial - userData.vencido_atual) / (aberturaInicial - userData.meta_desafio)) 
     : 0;
@@ -47,8 +53,14 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   // Calcular valor restante (quanto o Vencido Atual precisa descer)
   const valorRestante = Math.max(0, userData.vencido_atual - userData.meta_desafio);
 
-  // Calcular valor por dia usando dias úteis restantes
+  // Calcular valor por dia até o fim do mês
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantesCalculados || 0);
+
+  // Estimar redução diária (aproximada com base no dia atual)
+  const diasPassados = new Date().getDate(); // 12 de março de 2025
+  const reducaoTotal = aberturaInicial - userData.meta_desafio;
+  const reducaoDiariaAproximada = reducaoTotal > 0 ? (aberturaInicial - userData.vencido_atual) / diasPassados : 0;
+  const progressoDiario = calcularProgressoDiario(reducaoDiariaAproximada, valorPorDia);
 
   const handleSave = () => {
     updateUserData({ meta_desafio: metaDesafio });
@@ -147,23 +159,41 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
           </div>
         </div>
 
-        {/* Nova seção para Valor Restante e Valor por Dia */}
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-500">Valor Restante</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {formatCurrency(valorRestante)}
-              </p>
+        {/* Seção "Por Dia até Fim do Mês" no estilo do "Receber por Dia" */}
+        <Card className="shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-gray-600">Por Dia até Fim do Mês</h3>
+              <span className="p-2 rounded-full bg-orange-500 text-white">
+                <Calculator size={16} />
+              </span>
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-500">Por Dia até Fim do Mês</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {formatCurrency(valorPorDia)}
-              </p>
+            
+            <div className="text-2xl font-bold">{formatCurrency(valorPorDia)}</div>
+            
+            <div className="mt-3 space-y-1">
+              <div 
+                className="w-full bg-white rounded-full h-6 shadow-inner"
+                style={{
+                  backgroundColor: '#ffffff',
+                  boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
+                }}
+              >
+                <div 
+                  className="h-full rounded-full transition-all duration-500 ease-in-out"
+                  style={{
+                    width: `${progressoDiario}%`,
+                    background: 'linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  }}
+                />
+              </div>
+              <div className="text-xs text-right text-gray-500">
+                {progressoDiario.toFixed(2)}% do objetivo diário
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </CardContent>
     </Card>
   );
