@@ -149,7 +149,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
               <Trophy className="text-yellow-500" /> Meta Desafio
             </CardTitle>
             <CardDescription>
-              Acompanhe o progresso para reduzir o Vencido Atual até a Meta Desafio
+              Acompanhe o progresso da Meta Desafio
             </CardDescription>
           </div>
           {isEditing ? (
@@ -219,7 +219,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
             <Card className="shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-600">Por Dia até Fim do Mês</h3>
+                  <h3 className="text-sm font-medium text-gray-600">Receber por Dia</h3>
                   <span className="p-2 rounded-full bg-orange-500 text-white">
                     <Calculator size={16} />
                   </span>
