@@ -37,13 +37,14 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData.meta_desafio);
 
-  // Cálculos
-  const progresso = userData.meta_desafio > 0 
-    ? userData.vencido_atual / userData.meta_desafio 
+  // Cálculos corrigidos
+  const aberturaInicial = userData.abertura_vencido_mes || userData.vencido_atual; // Usar abertura_vencido_mes como referência inicial
+  const progresso = aberturaInicial > userData.meta_desafio 
+    ? (aberturaInicial - userData.vencido_atual) / (aberturaInicial - userData.meta_desafio) 
     : 0;
 
-  // Calcular valor restante
-  const valorRestante = Math.max(0, userData.meta_desafio - userData.vencido_atual);
+  // Calcular valor restante (quanto o Vencido Atual precisa descer)
+  const valorRestante = Math.max(0, userData.vencido_atual - userData.meta_desafio);
 
   // Calcular valor por dia usando dias úteis restantes
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantesCalculados || 0);
@@ -93,7 +94,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
               <Trophy className="text-yellow-500" /> Meta Desafio
             </CardTitle>
             <CardDescription>
-              Acompanhe o progresso para atingir a meta desafio
+              Acompanhe o progresso para atingir a meta desafio (reduzir Vencido Atual para Meta Desafio)
             </CardDescription>
           </div>
           {isEditing ? (
