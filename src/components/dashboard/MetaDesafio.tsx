@@ -87,7 +87,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   // Calcular valor restante
   const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
 
-  // Calcular valor por dia até o fim do mês
+  // Calcular valor por dia até o fim do mês usando diasRestantesCalculados
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
 
   // Estimar redução diária (aproximada com base no dia atual)
