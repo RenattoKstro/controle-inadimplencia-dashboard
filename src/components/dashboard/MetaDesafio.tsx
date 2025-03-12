@@ -33,20 +33,6 @@ const calcularValorPorDia = (valorRestante: number, diasRestantes: number): numb
   return diasRestantes > 0 ? valorRestante / diasRestantes : 0;
 };
 
-// Função para determinar a cor da barra com base no progresso
-const getProgressColor = (progressoPercentual: number): string => {
-  if (progressoPercentual <= 50) {
-    // Vermelho para 0% a 50%
-    return 'linear-gradient(to right, #ff4d4d, #ff6666)';
-  } else if (progressoPercentual <= 90) {
-    // Amarelo para 51% a 90%
-    return 'linear-gradient(to right, #ffeb3b, #ffcc00)';
-  } else {
-    // Verde para 91% a 100%
-    return 'linear-gradient(to right, #4caf50, #66bb6a)';
-  }
-};
-
 const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalculados, diasSemExpediente }: DashboardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData.meta_desafio);
@@ -154,7 +140,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
                 width: `${progressoPercentual}%`,
-                background: getProgressColor(progressoPercentual),
+                background: 'linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)',
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
               }}
             />
