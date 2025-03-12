@@ -7,13 +7,13 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Trophy } from "lucide-react";
+import { Trophy, Target, Calculator } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calculator } from "lucide-react";
 
 const formatCurrency = (value: number): string => {
+  if (typeof value !== 'number' || isNaN(value)) return "R$ 0,00";
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
@@ -22,6 +22,7 @@ const formatCurrency = (value: number): string => {
 };
 
 const formatPercentage = (value: number): string => {
+  if (typeof value !== 'number' || isNaN(value)) return "0,00%";
   return new Intl.NumberFormat('pt-BR', {
     style: 'percent',
     minimumFractionDigits: 2,
@@ -31,35 +32,76 @@ const formatPercentage = (value: number): string => {
 
 // Função para calcular o valor por dia (usando dias úteis)
 const calcularValorPorDia = (valorRestante: number, diasRestantes: number): number => {
-  return diasRestantes > 0 ? Math.max(0, valorRestante / diasRestantes) : 0;
+  if (typeof diasRestantes !== 'number' || diasRestantes <= 0) return 0;
+  if (typeof valorRestante !== 'number' || isNaN(valorRestante)) return 0;
+  return Math.max(0, valorRestante / diasRestantes);
 };
 
 // Função para estimar o progresso diário (baseado em redução aproximada)
 const calcularProgressoDiario = (reducaoDiaria: number, valorPorDia: number): number => {
-  return valorPorDia > 0 ? Math.min(100, (reducaoDiaria / valorPorDia) * 100) : 0;
+  if (typeof valorPorDia !== 'number' || valorPorDia <= 0) return 0;
+  if (typeof reducaoDiaria !== 'number' || isNaN(reducaoDiaria)) return 0;
+  return Math.min(100, (reducaoDiaria / valorPorDia) * 100);
 };
 
 const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalculados, diasSemExpediente }: DashboardProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [metaDesafio, setMetaDesafio] = useState(userData.meta_desafio);
+  const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
 
-  // Cálculos corrigidos
-  const aberturaInicial = userData.abertura_vencido_mes || userData.vencido_atual;
-  const progresso = aberturaInicial > userData.meta_desafio 
-    ? Math.min(1, (aberturaInicial - userData.vencido_atual) / (aberturaInicial - userData.meta_desafio)) 
-    : 0;
+  // Logs para depuração
+  console.log("userData:", userData);
+  console.log("diasRestantesCalculados:", diasRestantesCalculados);
+
+  // Validação inicial dos dados
+  if (!userData) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Trophy className="text-yellow-500" /> Meta Desafio
+          </CardTitle>
+          <CardDescription>Erro: Dados do usuário não disponíveis.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  // Cálculos com validação
+  const aberturaInicial = Number(userData?.abertura_vencido_mes) || Number(userData?.vencido_atual) || 0;
+  const vencidoAtual = Number(userData?.vencido_atual) || 0;
+  const metaDesafioValor = Number(userData?.meta_desafio) || 0;
+  const diasRestantes = Number(diasRestantesCalculados) || 1; // Evitar divisão por zero
+
+  let progresso = 0;
+  try {
+    const denominator = aberturaInicial - metaDesafioValor;
+    progresso = denominator !== 0 
+      ? Math.min(1, (aberturaInicial - vencidoAtual) / denominator) 
+      : 0;
+  } catch (error) {
+    console.error("Erro ao calcular progresso:", error);
+    progresso = 0;
+  }
   const progressoPercentual = progresso * 100;
 
-  // Calcular valor restante (quanto o Vencido Atual precisa descer)
-  const valorRestante = Math.max(0, userData.vencido_atual - userData.meta_desafio);
+  // Calcular valor restante
+  const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
 
   // Calcular valor por dia até o fim do mês
-  const valorPorDia = calcularValorPorDia(valorRestante, diasRestantesCalculados || 0);
+  const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
 
   // Estimar redução diária (aproximada com base no dia atual)
   const diasPassados = new Date().getDate(); // 12 de março de 2025
-  const reducaoTotal = aberturaInicial - userData.meta_desafio;
-  const reducaoDiariaAproximada = reducaoTotal > 0 ? (aberturaInicial - userData.vencido_atual) / diasPassados : 0;
+  let reducaoDiariaAproximada = 0;
+  try {
+    const reducaoTotal = aberturaInicial - metaDesafioValor;
+    reducaoDiariaAproximada = reducaoTotal > 0 && diasPassados > 0 
+      ? (aberturaInicial - vencidoAtual) / diasPassados 
+      : 0;
+  } catch (error) {
+    console.error("Erro ao calcular reducaoDiariaAproximada:", error);
+    reducaoDiariaAproximada = 0;
+  }
   const progressoDiario = calcularProgressoDiario(reducaoDiariaAproximada, valorPorDia);
 
   const handleSave = () => {
@@ -68,7 +110,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   };
 
   const handleCancel = () => {
-    setMetaDesafio(userData.meta_desafio);
+    setMetaDesafio(userData?.meta_desafio || 0);
     setIsEditing(false);
   };
 
