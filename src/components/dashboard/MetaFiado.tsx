@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -80,7 +81,7 @@ const CardItem = ({
   );
 };
 
-const ProgressCard = ({ title, current, target, icon }) => {
+const ProgressCard = ({ title, current, target, icon, userData }) => {
   const percentageComplete = (() => {
     if (current <= target) return 100; // Already achieved target
     
@@ -187,6 +188,7 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
           current={userData.vencido_atual}
           target={userData.meta_mes}
           icon={<Target className="h-5 w-5 text-blue-600" />}
+          userData={userData}
         />
         
         <CardItem 
