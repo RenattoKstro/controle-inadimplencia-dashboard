@@ -204,27 +204,27 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
         {/* Seção "Valor Restante", "Receber por Dia" e "Dias Restantes (Calculado)" em grid */}
         <div className="space-y-3">
           <div className="grid grid-cols-3 gap-4">
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+            <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-600">Valor Restante</h3>
                   <span className="p-2 rounded-full bg-gray-500 text-white">
                     <Target size={16} />
                   </span>
                 </div>
-                <div className="text-2xl font-bold">{formatCurrency(valorRestante)}</div>
+                <div className="text-xl font-bold">{formatCurrency(valorRestante)}</div>
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+            <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-600">Receber por Dia</h3>
                   <span className="p-2 rounded-full bg-orange-500 text-white">
                     <Calculator size={16} />
                   </span>
                 </div>
-                <div className="text-2xl font-bold">{formatCurrency(valorPorDia)}</div>
+                <div className="text-xl font-bold">{formatCurrency(valorPorDia)}</div>
                 <div className="mt-3 space-y-1">
                   <div 
                     className="w-full bg-white rounded-full h-6 shadow-inner"
@@ -250,15 +250,15 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
             </Card>
 
             {/* Card "Dias Restantes (Calculado)" copiado de AjustesMetas */}
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+            <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-600">Dias Restantes (Calculado)</h3>
                   <span className="p-2 rounded-full bg-gray-500 text-white">
                     <Target size={16} />
                   </span>
                 </div>
-                <div className="text-2xl font-bold">{diasRestantes}</div>
+                <div className="text-xl font-bold">{diasRestantes}</div>
               </CardContent>
             </Card>
           </div>
