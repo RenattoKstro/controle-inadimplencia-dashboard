@@ -37,7 +37,7 @@ const AjustesMetas = ({
   updateDiasSemExpediente, 
   isLoading 
 }: DashboardProps) => {
-  const [selectedDates, setSelectedDates] = useState<Date[]>(diasSemExpediente || []);
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [diasRestantesCalculados, setDiasRestantesCalculados] = useState(0);
@@ -49,6 +49,15 @@ const AjustesMetas = ({
     dias_restantes: userData.dias_restantes || 0,
     meta_desafio: userData.meta_desafio || 0,
   });
+
+  // Initialize selectedDates when diasSemExpediente changes
+  useEffect(() => {
+    if (diasSemExpediente && diasSemExpediente.length > 0) {
+      // Deep copy the dates to ensure they're properly formatted as Date objects
+      const formattedDates = diasSemExpediente.map(date => new Date(date));
+      setSelectedDates(formattedDates);
+    }
+  }, [diasSemExpediente]);
 
   useEffect(() => {
     // Calcula dias úteis restantes no mês
@@ -225,7 +234,7 @@ const AjustesMetas = ({
             onClick={() => setIsEditing(true)}
             className="border-blue-300 text-blue-600 hover:bg-blue-50"
           >
-            Editar Valores
+            Editar
           </Button>
         )}
       </div>
@@ -249,6 +258,7 @@ const AjustesMetas = ({
                     variant="outline" 
                     className="w-full mb-4 flex justify-between items-center"
                     disabled={!isEditing}
+                    onClick={() => setCalendarOpen(true)}
                   >
                     <span>Selecionar dias sem expediente</span>
                     <CalendarIcon className="h-4 w-4 ml-2" />
@@ -259,7 +269,7 @@ const AjustesMetas = ({
                     mode="multiple"
                     selected={selectedDates}
                     onSelect={isEditing ? setSelectedDates : undefined}
-                    className="rounded-md border p-3 pointer-events-auto"
+                    className="rounded-md border p-3"
                     disabled={!isEditing}
                     locale={ptBR}
                     classNames={{

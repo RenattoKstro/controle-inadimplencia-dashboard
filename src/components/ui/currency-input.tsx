@@ -21,6 +21,7 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   }, [value]);
 
   const formatCurrency = (value: number): string => {
+    if (isNaN(value)) return '0,00';
     return value.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -30,7 +31,8 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   const parseCurrency = (value: string): number => {
     // Remove all non-numeric characters except decimal separator
     const numericValue = value.replace(/[^\d,]/g, '').replace(',', '.');
-    return parseFloat(numericValue) || 0;
+    const parsed = parseFloat(numericValue);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,19 +46,15 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
     }
     
     // Only allow numeric input and comma
-    if (!/^[\d.,]+$/.test(inputValue.replace(/[^\d,]/g, ''))) {
-      return;
-    }
-    
-    // Remove all non-numeric characters for processing
     const cleanValue = inputValue.replace(/[^\d,]/g, '');
+    if (cleanValue !== inputValue.replace(/\./g, '')) {
+      setDisplayValue(cleanValue);
+    } else {
+      setDisplayValue(inputValue);
+    }
     
     // Parse the numeric value
     const numericValue = parseCurrency(cleanValue);
-    
-    // Format for display
-    let formatted = formatCurrency(numericValue);
-    setDisplayValue(formatted);
     
     // Pass the numeric value to the parent
     onValueChange(numericValue);

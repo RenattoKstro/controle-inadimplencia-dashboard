@@ -142,7 +142,9 @@ export function useUserData() {
       if (dias.length > 0) {
         const diasParaInserir = dias.map(dia => ({
           user_id: user.id,
-          data: dia.toISOString().split('T')[0]
+          data: new Date(dia.getTime() - (dia.getTimezoneOffset() * 60000))
+            .toISOString()
+            .split('T')[0]
         }));
 
         const { error: insertError } = await supabase

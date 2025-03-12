@@ -82,8 +82,18 @@ const CardItem = ({
 };
 
 const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) => {
-  const percentage = Math.min(100, Math.round((current / target) * 100));
-  const isComplete = current >= target;
+  // Corrigindo a lógica do cálculo de percentual para Meta Fiado
+  // Meta de reduzir o "Vencido Atual" até a "Meta do Mês"
+  const total = target > current ? target : current;
+  const reduction = total - current;
+  const targetReduction = total - target;
+  
+  // Calculando o percentual de redução alcançada
+  const percentage = targetReduction > 0 
+    ? Math.min(100, Math.round((reduction / targetReduction) * 100)) 
+    : 100;
+  
+  const isComplete = current <= target;
 
   return (
     <Card className="shadow-sm hover:shadow transition-shadow duration-200 col-span-1 md:col-span-3">
@@ -98,7 +108,7 @@ const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) =
           </div>
         </div>
         <CardDescription>
-          Meta: {formatCurrency(target)} | Realizado: {formatCurrency(current)}
+          Meta: {formatCurrency(target)} | Atual: {formatCurrency(current)}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -119,7 +129,7 @@ const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) =
                 </>
               ) : (
                 <span className="text-blue-600 font-medium">
-                  Faltam {formatCurrency(target - current)}
+                  Faltam {formatCurrency(current - target)}
                 </span>
               )}
             </div>
@@ -177,10 +187,10 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Progress Card */}
+        {/* Progress Card - Corrigido para mostrar a meta de redução do vencido atual */}
         <ProgressCard 
           title="Progresso da Meta Mensal" 
-          current={recebidoMes}
+          current={userData.vencido_atual}
           target={userData.meta_mes}
           icon={<Target className="h-5 w-5 text-blue-600" />}
         />
