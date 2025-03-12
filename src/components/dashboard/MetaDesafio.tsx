@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -11,7 +10,6 @@ import {
 import { Trophy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const formatCurrency = (value: number): string => {
@@ -30,19 +28,30 @@ const formatPercentage = (value: number): string => {
   }).format(value);
 };
 
+// Função para calcular os dias restantes até o final do mês
+const calcularDiasRestantesAteFimDoMes = (): number => {
+  const today = new Date();
+  const ultimoDiaDoMes = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  return ultimoDiaDoMes - today.getDate();
+};
+
 const MetaDesafio = ({ userData, updateUserData, isLoading }: DashboardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData.meta_desafio);
 
   // Cálculos
   const progresso = userData.meta_desafio > 0 
-    ? userData.meta_desafio / userData.vencido_atual 
+    ? userData.vencido_atual / userData.meta_desafio 
     : 0;
-  
-  const diferenca = userData.vencido_atual - userData.meta_desafio;
-  const meta96 = diferenca * 0.96;
-  const meta98 = diferenca * 0.98;
-  const meta100 = diferenca;
+
+  // Calcular valor restante
+  const valorRestante = Math.max(0, userData.meta_desafio - userData.vencido_atual);
+
+  // Calcular dias restantes até o final do mês
+  const diasRestantes = calcularDiasRestantesAteFimDoMes();
+
+  // Calcular valor por dia
+  const valorPorDia = diasRestantes > 0 ? valorRestante / diasRestantes : 0;
 
   const handleSave = () => {
     updateUserData({ meta_desafio: metaDesafio });
@@ -74,14 +83,6 @@ const MetaDesafio = ({ userData, updateUserData, isLoading }: DashboardProps) =>
           <div className="space-y-2">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-4 w-full" />
-          </div>
-          <div className="space-y-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-6 w-full" />
-              </div>
-            ))}
           </div>
         </CardContent>
       </Card>
@@ -131,46 +132,36 @@ const MetaDesafio = ({ userData, updateUserData, isLoading }: DashboardProps) =>
             <span className="text-sm font-medium">Progresso</span>
             <span className="text-sm font-medium">{formatPercentage(progresso)}</span>
           </div>
-          <Progress value={progresso * 100} className="h-2" />
+          <div 
+            className="w-full bg-gray-200 rounded-full h-4"
+            style={{
+              background: 'linear-gradient(to right, #ff0000 0%, #ff0000 50%, #ffd700 51%, #ffd700 90%, #00ff00 91%, #00ff00 100%)'
+            }}
+          >
+            <div 
+              className="h-4 rounded-full transition-all duration-500 ease-in-out"
+              style={{ 
+                width: `${Math.min(100, progresso * 100)}%`,
+                background: 'transparent'
+              }}
+            ></div>
+          </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm font-medium">Meta 96%</span>
-              <span className="text-sm font-medium">{formatCurrency(meta96)}</span>
+        {/* Nova seção para Valor Restante e Valor por Dia */}
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-500">Valor Restante</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {formatCurrency(valorRestante)}
+              </p>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div 
-                className="bg-yellow-400 h-4 rounded-full transition-all duration-500 ease-in-out"
-                style={{ width: `${Math.min(96, progresso * 100)}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm font-medium">Meta 98%</span>
-              <span className="text-sm font-medium">{formatCurrency(meta98)}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div 
-                className="bg-orange-400 h-4 rounded-full transition-all duration-500 ease-in-out"
-                style={{ width: `${Math.min(98, progresso * 100)}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm font-medium">Meta 100%</span>
-              <span className="text-sm font-medium">{formatCurrency(meta100)}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div 
-                className="bg-green-500 h-4 rounded-full transition-all duration-500 ease-in-out"
-                style={{ width: `${Math.min(100, progresso * 100)}%` }}
-              ></div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-gray-500">Por Dia até Fim do Mês</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {formatCurrency(valorPorDia)}
+              </p>
             </div>
           </div>
         </div>
