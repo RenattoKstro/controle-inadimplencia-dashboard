@@ -45,7 +45,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading }: DashboardProps) =>
     : 0;
 
   // Calcular valor restante
-  const valorRestante = Math.max(0, userData.meta_desafio - userData.vencido_atual);
+  const valorRestante = Math.max(0, userData.vencido_atual - userData.meta_desafio);
 
   // Calcular dias restantes até o final do mês
   const diasRestantes = calcularDiasRestantesAteFimDoMes();
