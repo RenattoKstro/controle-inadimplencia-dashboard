@@ -201,9 +201,9 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
           </div>
         </div>
 
-        {/* Seção "Valor Restante" e "Receber por Dia" em grid */}
+        {/* Seção "Valor Restante", "Receber por Dia" e "Dias Restantes (Calculado)" em grid */}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Card className="shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -246,6 +246,19 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
                     {progressoDiario.toFixed(2)}% do objetivo diário
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Card "Dias Restantes (Calculado)" copiado de AjustesMetas */}
+            <Card className="shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-600">Dias Restantes (Calculado)</h3>
+                  <span className="p-2 rounded-full bg-gray-500 text-white">
+                    <Target size={16} />
+                  </span>
+                </div>
+                <div className="text-2xl font-bold">{diasRestantes}</div>
               </CardContent>
             </Card>
           </div>
