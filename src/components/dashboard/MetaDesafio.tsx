@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
   Card, 
@@ -28,14 +28,12 @@ const formatPercentage = (value: number): string => {
   }).format(value);
 };
 
-// Função para calcular os dias restantes até o final do mês
-const calcularDiasRestantesAteFimDoMes = (): number => {
-  const today = new Date();
-  const ultimoDiaDoMes = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  return ultimoDiaDoMes - today.getDate();
+// Função para calcular o valor por dia (usando dias úteis)
+const calcularValorPorDia = (valorRestante: number, diasRestantes: number): number => {
+  return diasRestantes > 0 ? valorRestante / diasRestantes : 0;
 };
 
-const MetaDesafio = ({ userData, updateUserData, isLoading }: DashboardProps) => {
+const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalculados, diasSemExpediente }: DashboardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData.meta_desafio);
 
@@ -45,13 +43,10 @@ const MetaDesafio = ({ userData, updateUserData, isLoading }: DashboardProps) =>
     : 0;
 
   // Calcular valor restante
-  const valorRestante = Math.max(0, userData.vencido_atual - userData.meta_desafio);
+  const valorRestante = Math.max(0, userData.meta_desafio - userData.vencido_atual);
 
-  // Calcular dias restantes até o final do mês
-  const diasRestantes = calcularDiasRestantesAteFimDoMes();
-
-  // Calcular valor por dia
-  const valorPorDia = diasRestantes > 0 ? valorRestante / diasRestantes : 0;
+  // Calcular valor por dia usando dias úteis restantes
+  const valorPorDia = calcularValorPorDia(valorRestante, diasRestantesCalculados || 0);
 
   const handleSave = () => {
     updateUserData({ meta_desafio: metaDesafio });
@@ -132,19 +127,15 @@ const MetaDesafio = ({ userData, updateUserData, isLoading }: DashboardProps) =>
             <span className="text-sm font-medium">Progresso</span>
             <span className="text-sm font-medium">{formatPercentage(progresso)}</span>
           </div>
-          <div 
-            className="w-full bg-gray-200 rounded-full h-4"
-            style={{
-              background: 'linear-gradient(to right, #ff0000 0%, #ff0000 50%, #ffd700 51%, #ffd700 90%, #00ff00 91%, #00ff00 100%)'
-            }}
-          >
+          <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden shadow-inner">
             <div 
-              className="h-4 rounded-full transition-all duration-500 ease-in-out"
-              style={{ 
+              className="h-full rounded-full transition-all duration-500 ease-in-out shadow-lg"
+              style={{
                 width: `${Math.min(100, progresso * 100)}%`,
-                background: 'transparent'
+                background: 'linear-gradient(to right, #ff4d4d 0%, #ff4d4d 50%, #ffeb3b 51%, #ffeb3b 90%, #4caf50 91%, #4caf50 100%)',
+                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',
               }}
-            ></div>
+            />
           </div>
         </div>
 
