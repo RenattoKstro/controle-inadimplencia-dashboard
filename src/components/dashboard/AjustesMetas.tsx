@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -268,14 +267,16 @@ const AjustesMetas = ({
                     <CalendarIcon className="h-4 w-4 ml-2" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="center">
+                <PopoverContent className="w-auto p-0 z-50" align="center">
                   <Calendar
                     mode="multiple"
                     selected={selectedDates}
-                    onSelect={setSelectedDates}
-                    className="rounded-md border p-3 pointer-events-auto"
+                    onSelect={(dates) => {
+                      if (dates) setSelectedDates(dates);
+                    }}
+                    className="rounded-md border pointer-events-auto"
                     disabled={(date) => {
-                      // Disable only past dates
+                      // Disable only past dates before today
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
                       const compareDate = new Date(date);
