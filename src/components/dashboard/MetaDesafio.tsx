@@ -201,7 +201,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
           </div>
         </div>
 
-        {/* Seção "Valor Restante" e "Por Dia até Fim do Mês" em grid */}
+        {/* Seção "Valor Restante" e "Receber por Dia" em grid */}
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
             <Card className="shadow-sm">
