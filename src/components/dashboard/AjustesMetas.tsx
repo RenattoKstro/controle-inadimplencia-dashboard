@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -10,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { format, differenceInBusinessDays, isWeekend } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wallet, Building, AlertTriangle, Target, Pencil, CalendarIcon } from "lucide-react";
@@ -50,32 +49,32 @@ const AjustesMetas = ({
     meta_desafio: userData.meta_desafio || 0,
   });
 
-  // Initialize selectedDates when diasSemExpediente changes
   useEffect(() => {
     if (diasSemExpediente && diasSemExpediente.length > 0) {
-      // Deep copy the dates to ensure they're properly formatted as Date objects
-      const formattedDates = diasSemExpediente.map(date => new Date(date));
+      const formattedDates = diasSemExpediente.map(date => 
+        date instanceof Date ? date : new Date(date)
+      );
       setSelectedDates(formattedDates);
+    } else {
+      setSelectedDates([]);
     }
   }, [diasSemExpediente]);
 
   useEffect(() => {
-    // Calcula dias úteis restantes no mês
     const hoje = new Date();
     const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
     
-    // Calcular dias úteis entre hoje e o fim do mês, excluindo finais de semana e dias sem expediente
     let dias = 0;
-    const dataAtual = new Date(hoje);
+    const currentDate = new Date(hoje);
     
-    while (dataAtual <= ultimoDiaMes) {
-      if (!isWeekend(dataAtual)) {
-        // Verifica se não é um dia sem expediente
-        const isDiaSemExpediente = selectedDates.some(
-          (d) => 
-            d.getDate() === dataAtual.getDate() &&
-            d.getMonth() === dataAtual.getMonth() &&
-            d.getFullYear() === dataAtual.getFullYear()
+    while (currentDate <= ultimoDiaMes) {
+      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      
+      if (!isWeekend) {
+        const isDiaSemExpediente = selectedDates.some(date => 
+          date.getDate() === currentDate.getDate() &&
+          date.getMonth() === currentDate.getMonth() &&
+          date.getFullYear() === currentDate.getFullYear()
         );
         
         if (!isDiaSemExpediente) {
@@ -83,7 +82,7 @@ const AjustesMetas = ({
         }
       }
       
-      dataAtual.setDate(dataAtual.getDate() + 1);
+      currentDate.setDate(currentDate.getDate() + 1);
     }
     
     setDiasRestantesCalculados(dias);
@@ -161,16 +160,22 @@ const AjustesMetas = ({
   };
 
   const handleSave = () => {
-    // Atualiza formState com o valor calculado de dias_restantes
     const updatedForm = {
       ...formState,
       dias_restantes: diasRestantesCalculados
     };
     
+    const formattedDates = selectedDates.map(date => {
+      const dateObj = new Date(date);
+      dateObj.setUTCHours(0, 0, 0, 0);
+      return dateObj;
+    });
+    
     updateUserData(updatedForm);
-    updateDiasSemExpediente(selectedDates);
+    updateDiasSemExpediente(formattedDates);
     setIsEditing(false);
     setFormState(updatedForm);
+    setCalendarOpen(false);
   };
 
   const handleCancel = () => {
@@ -224,7 +229,7 @@ const AjustesMetas = ({
               onClick={handleSave}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
             >
-              Salvar Alterações
+              Salvar
             </Button>
             <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
           </div>
@@ -258,9 +263,8 @@ const AjustesMetas = ({
                     variant="outline" 
                     className="w-full mb-4 flex justify-between items-center"
                     disabled={!isEditing}
-                    onClick={() => setCalendarOpen(true)}
                   >
-                    <span>Selecionar dias sem expediente</span>
+                    <span>Dias sem expediente</span>
                     <CalendarIcon className="h-4 w-4 ml-2" />
                   </Button>
                 </PopoverTrigger>
@@ -268,8 +272,8 @@ const AjustesMetas = ({
                   <Calendar
                     mode="multiple"
                     selected={selectedDates}
-                    onSelect={isEditing ? setSelectedDates : undefined}
-                    className="rounded-md border p-3"
+                    onSelect={setSelectedDates}
+                    className="rounded-md border p-3 pointer-events-auto"
                     disabled={!isEditing}
                     locale={ptBR}
                     classNames={{
@@ -293,7 +297,6 @@ const AjustesMetas = ({
           </CardContent>
         </Card>
         
-        {/* Card Abertura Vencido Mês */}
         <CardItem 
           title="Abertura de Vencido do Mês" 
           value={formState.abertura_vencido_mes} 
@@ -305,7 +308,6 @@ const AjustesMetas = ({
           onEdit={handleItemEdit}
         />
         
-        {/* Card Abertura do Dia */}
         <CardItem 
           title="Abertura do Dia" 
           value={formState.abertura_dia} 
@@ -317,7 +319,6 @@ const AjustesMetas = ({
           onEdit={handleItemEdit}
         />
         
-        {/* Card Meta do Mês */}
         <CardItem 
           title="Meta do Mês" 
           value={formState.meta_mes} 
@@ -329,7 +330,6 @@ const AjustesMetas = ({
           onEdit={handleItemEdit}
         />
         
-        {/* Card Vencido Atual */}
         <CardItem 
           title="Vencido Atual" 
           value={formState.vencido_atual} 
@@ -341,7 +341,6 @@ const AjustesMetas = ({
           onEdit={handleItemEdit}
         />
         
-        {/* Card Meta Desafio */}
         <CardItem 
           title="Meta Desafio" 
           value={formState.meta_desafio} 
@@ -353,7 +352,6 @@ const AjustesMetas = ({
           onEdit={handleItemEdit}
         />
         
-        {/* Card Dias Restantes (readonly) */}
         <CardItem 
           title="Dias Restantes (Calculado)" 
           value={diasRestantesCalculados} 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -81,20 +80,16 @@ const CardItem = ({
   );
 };
 
-const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) => {
-  // Corrigindo a lógica do cálculo de percentual para Meta Fiado
-  // Meta de reduzir o "Vencido Atual" até a "Meta do Mês"
-  const total = target > current ? target : current;
-  const reduction = total - current;
-  const targetReduction = total - target;
-  
-  // Calculando o percentual de redução alcançada
-  const percentage = targetReduction > 0 
-    ? Math.min(100, Math.round((reduction / targetReduction) * 100)) 
-    : 100;
-  
-  const isComplete = current <= target;
+const ProgressCard = ({ title, current, target, icon }) => {
+  const percentageComplete = (() => {
+    if (current <= target) return 100; // Already achieved target
+    const totalReduction = current - target; // Total amount to reduce
+    const actualReduction = current - target; // How much has been reduced
+    return Math.min(100, Math.max(0, (actualReduction / totalReduction) * 100));
+  })();
 
+  const isComplete = current <= target;
+  
   return (
     <Card className="shadow-sm hover:shadow transition-shadow duration-200 col-span-1 md:col-span-3">
       <CardHeader className="pb-2">
@@ -104,7 +99,7 @@ const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) =
             {title}
           </CardTitle>
           <div className="text-sm font-medium">
-            {percentage}% concluído
+            {percentageComplete.toFixed(2)}% concluído
           </div>
         </div>
         <CardDescription>
@@ -114,7 +109,7 @@ const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) =
       <CardContent>
         <div className="space-y-2">
           <Progress 
-            value={percentage} 
+            value={percentageComplete} 
             className={cn(
               "h-3 rounded-full",
               isComplete ? "bg-gray-100" : "bg-gray-100",
@@ -141,18 +136,15 @@ const ProgressCard = ({ title, current, target, icon, color = "bg-blue-500" }) =
 };
 
 const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
-  // Calculado automaticamente
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const faltaReceberMes = userData.vencido_atual - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const recebidoHoje = userData.abertura_dia - userData.vencido_atual;
   
-  // Calculo da meta diária
   const receberPorDia = userData.dias_restantes > 0 
     ? faltaReceberMes / userData.dias_restantes 
     : 0;
   
-  // Calculo do progresso diário
   const progressoDiario = receberPorDia > 0
     ? Math.min(100, (recebidoHoje / receberPorDia) * 100)
     : 0;
@@ -187,7 +179,6 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Progress Card - Corrigido para mostrar a meta de redução do vencido atual */}
         <ProgressCard 
           title="Progresso da Meta Mensal" 
           current={userData.vencido_atual}
@@ -195,7 +186,6 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
           icon={<Target className="h-5 w-5 text-blue-600" />}
         />
         
-        {/* Cards Não Editáveis (Calculados) */}
         <CardItem 
           title="A Receber" 
           value={aReceber} 

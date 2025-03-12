@@ -14,11 +14,13 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   className
 }) => {
   const [displayValue, setDisplayValue] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    // Format initial value
-    setDisplayValue(formatCurrency(value));
-  }, [value]);
+    if (!isEditing) {
+      setDisplayValue(formatCurrency(value));
+    }
+  }, [value, isEditing]);
 
   const formatCurrency = (value: number): string => {
     if (isNaN(value)) return '0,00';
@@ -37,45 +39,32 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
+    setDisplayValue(inputValue.replace(/[^\d,]/g, ''));
     
-    // Handle empty input
-    if (inputValue === '') {
-      setDisplayValue('');
-      onValueChange(0);
-      return;
+    const numericValue = parseCurrency(inputValue);
+    if (!isNaN(numericValue)) {
+      onValueChange(numericValue);
     }
-    
-    // Only allow numeric input and comma
-    const cleanValue = inputValue.replace(/[^\d,]/g, '');
-    if (cleanValue !== inputValue.replace(/\./g, '')) {
-      setDisplayValue(cleanValue);
-    } else {
-      setDisplayValue(inputValue);
-    }
-    
-    // Parse the numeric value
-    const numericValue = parseCurrency(cleanValue);
-    
-    // Pass the numeric value to the parent
-    onValueChange(numericValue);
+  };
+
+  const handleFocus = () => {
+    setIsEditing(true);
+    // Show the raw number without formatting when editing
+    setDisplayValue(displayValue.replace(/[^\d,]/g, ''));
   };
 
   const handleBlur = () => {
-    // Ensure correct formatting on blur
-    if (displayValue === '') {
-      setDisplayValue('0,00');
-      onValueChange(0);
-    } else {
-      const numericValue = parseCurrency(displayValue);
-      setDisplayValue(formatCurrency(numericValue));
-      onValueChange(numericValue);
-    }
+    setIsEditing(false);
+    const numericValue = parseCurrency(displayValue);
+    setDisplayValue(formatCurrency(numericValue));
+    onValueChange(numericValue);
   };
 
   return (
     <Input
       value={displayValue}
       onChange={handleChange}
+      onFocus={handleFocus}
       onBlur={handleBlur}
       placeholder="0,00"
       className={className}
