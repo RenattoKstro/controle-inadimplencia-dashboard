@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut } from "lucide-react";
@@ -18,6 +17,7 @@ export interface DashboardProps {
   updateUserData: (data: any) => void;
   diasSemExpediente: Date[];
   updateDiasSemExpediente: (dias: Date[]) => void;
+  diasRestantesCalculados: number;
   isLoading: boolean;
 }
 
@@ -32,6 +32,7 @@ const DashboardLayout = () => {
     updateDiasSemExpediente,
     isLoading 
   } = useUserData();
+  const [diasRestantesCalculados, setDiasRestantesCalculados] = useState(0);
 
   useEffect(() => {
     // Verificar se o usuário está autenticado ao carregar a página
@@ -44,6 +45,30 @@ const DashboardLayout = () => {
     
     checkAuth();
   }, [navigate]);
+
+  useEffect(() => {
+    // Calcular diasRestantesCalculados com base em diasSemExpediente
+    const hoje = new Date();
+    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    let dias = 0;
+    const currentDate = new Date(hoje);
+
+    while (currentDate <= ultimoDiaMes) {
+      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      if (!isWeekend) {
+        const isDiaSemExpediente = diasSemExpediente.some(date =>
+          date.getDate() === currentDate.getDate() &&
+          date.getMonth() === currentDate.getMonth() &&
+          date.getFullYear() === currentDate.getFullYear()
+        );
+        if (!isDiaSemExpediente) {
+          dias++;
+        }
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    setDiasRestantesCalculados(dias);
+  }, [diasSemExpediente]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -104,6 +129,7 @@ const DashboardLayout = () => {
               updateUserData={updateUserData}
               diasSemExpediente={diasSemExpediente}
               updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
               isLoading={isLoading}
             />
           </TabsContent>
@@ -114,6 +140,7 @@ const DashboardLayout = () => {
               updateUserData={updateUserData}
               diasSemExpediente={diasSemExpediente}
               updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
               isLoading={isLoading}
             />
           </TabsContent>
@@ -124,6 +151,7 @@ const DashboardLayout = () => {
               updateUserData={updateUserData}
               diasSemExpediente={diasSemExpediente}
               updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
               isLoading={isLoading}
             />
           </TabsContent>
@@ -134,6 +162,7 @@ const DashboardLayout = () => {
               updateUserData={updateUserData}
               diasSemExpediente={diasSemExpediente}
               updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
               isLoading={isLoading}
             />
           </TabsContent>
@@ -144,6 +173,7 @@ const DashboardLayout = () => {
               updateUserData={updateUserData}
               diasSemExpediente={diasSemExpediente}
               updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
               isLoading={isLoading}
             />
           </TabsContent>
