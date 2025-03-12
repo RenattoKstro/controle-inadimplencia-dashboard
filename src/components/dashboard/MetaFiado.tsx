@@ -18,7 +18,6 @@ import {
   Target
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 interface CardItemProps {
@@ -74,10 +73,22 @@ const CardItem = ({
         
         {showProgress && (
           <div className="mt-3 space-y-1">
-            <Progress 
-              value={progressValue} 
-              className="h-2 rounded-full bg-gray-100"
-            />
+            <div 
+              className="w-full bg-white rounded-full h-6 shadow-inner"
+              style={{
+                backgroundColor: '#ffffff',
+                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
+              }}
+            >
+              <div 
+                className="h-full rounded-full transition-all duration-500 ease-in-out"
+                style={{
+                  width: `${progressValue}%`,
+                  background: 'linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                }}
+              />
+            </div>
             <div className="text-xs text-right text-gray-500">
               {progressValue.toFixed(2)}% do objetivo diário
             </div>
@@ -119,13 +130,22 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          <Progress 
-            value={percentageComplete} 
-            className={cn(
-              "h-3 rounded-full",
-              isComplete ? "bg-gray-100" : "bg-gray-100",
-            )}
-          />
+          <div 
+            className="w-full bg-white rounded-full h-6 shadow-inner"
+            style={{
+              backgroundColor: '#ffffff',
+              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
+            }}
+          >
+            <div 
+              className="h-full rounded-full transition-all duration-500 ease-in-out"
+              style={{
+                width: `${percentageComplete}%`,
+                background: 'linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              }}
+            />
+          </div>
           <div className="flex justify-end">
             <div className="flex items-center gap-1 text-sm">
               {isComplete ? (
