@@ -40,7 +40,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   // Cálculos corrigidos
   const aberturaInicial = userData.abertura_vencido_mes || userData.vencido_atual; // Usar abertura_vencido_mes como referência inicial
   const progresso = aberturaInicial > userData.meta_desafio 
-    ? (aberturaInicial - userData.vencido_atual) / (aberturaInicial - userData.meta_desafio) 
+    ? Math.min(1, (aberturaInicial - userData.vencido_atual) / (aberturaInicial - userData.meta_desafio)) 
     : 0;
 
   // Calcular valor restante (quanto o Vencido Atual precisa descer)
@@ -94,7 +94,7 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
               <Trophy className="text-yellow-500" /> Meta Desafio
             </CardTitle>
             <CardDescription>
-              Acompanhe o progresso para atingir a meta desafio (reduzir Vencido Atual para Meta Desafio)
+              Acompanhe o progresso para reduzir o Vencido Atual até a Meta Desafio
             </CardDescription>
           </div>
           {isEditing ? (
@@ -128,13 +128,19 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
             <span className="text-sm font-medium">Progresso</span>
             <span className="text-sm font-medium">{formatPercentage(progresso)}</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden shadow-inner">
+          <div 
+            className="w-full bg-gray-200 rounded-full h-6 shadow-inner"
+            style={{
+              backgroundColor: '#f0f0f0',
+              boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
+            }}
+          >
             <div 
-              className="h-full rounded-full transition-all duration-500 ease-in-out shadow-lg"
+              className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
                 width: `${Math.min(100, progresso * 100)}%`,
                 background: 'linear-gradient(to right, #ff4d4d 0%, #ff4d4d 50%, #ffeb3b 51%, #ffeb3b 90%, #4caf50 91%, #4caf50 100%)',
-                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
               }}
             />
           </div>
