@@ -107,10 +107,10 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
+          <CardTitle className="text-xl sm:text-2xl font-bold text-center">
             Controle de Inadimplência
           </CardTitle>
           <CardDescription className="text-center">
@@ -119,7 +119,7 @@ const Auth = () => {
         </CardHeader>
         <CardContent>
           {errorMessage && (
-            <Alert className="mb-4 bg-amber-50 text-amber-800 border-amber-200">
+            <Alert className="mb-4 bg-amber-50 text-amber-800 border-amber-200 text-sm">
               <Info className="h-4 w-4 mr-2" />
               <AlertDescription>{errorMessage}</AlertDescription>
               {errorMessage.includes("não confirmado") && (
@@ -135,7 +135,7 @@ const Auth = () => {
             </Alert>
           )}
           {isEmailSent && !isLogin && (
-            <Alert className="mb-4 bg-green-50 text-green-800 border-green-200">
+            <Alert className="mb-4 bg-green-50 text-green-800 border-green-200 text-sm">
               <Info className="h-4 w-4 mr-2" />
               <AlertDescription>
                 Email de confirmação enviado. Por favor, verifique sua caixa de entrada.
@@ -150,6 +150,7 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="h-11"
               />
             </div>
             <div className="space-y-2">
@@ -159,9 +160,10 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="h-11"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-11 text-base" disabled={isLoading}>
               {isLoading ? "Processando..." : isLogin ? "Entrar" : "Cadastrar"}
             </Button>
           </form>
@@ -169,7 +171,7 @@ const Auth = () => {
         <CardFooter>
           <Button 
             variant="link" 
-            className="w-full" 
+            className="w-full text-sm" 
             onClick={() => {
               setIsLogin(!isLogin);
               resetError();

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useMobile } from "@/hooks/use-mobile";
 
 interface CardItemProps {
   title: string;
@@ -61,20 +63,20 @@ const CardItem = ({
 }: CardItemProps) => {
   return (
     <Card className="shadow-sm hover:shadow transition-shadow duration-200">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
+      <CardContent className="p-4 md:p-6">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-gray-600">{title}</h3>
           <span className={`p-2 rounded-full ${color} text-white`}>
             {icon}
           </span>
         </div>
         
-        <div className="text-2xl font-bold">{formatCurrency(value)}</div>
+        <div className="text-xl md:text-2xl font-bold">{formatCurrency(value)}</div>
         
         {showProgress && (
           <div className="mt-3 space-y-1">
             <div 
-              className="w-full bg-white rounded-full h-6 shadow-inner"
+              className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
               style={{
                 backgroundColor: '#ffffff',
                 boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
@@ -100,6 +102,8 @@ const CardItem = ({
 };
 
 const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
+  const isMobile = useMobile();
+  
   const percentageComplete = (() => {
     if (current <= target) return 100;
     
@@ -113,10 +117,10 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   const isComplete = current <= target;
   
   return (
-    <Card className="shadow-sm hover:shadow transition-shadow duration-200 col-span-1 md:col-span-3">
+    <Card className={`shadow-sm hover:shadow transition-shadow duration-200 ${isMobile ? 'col-span-1' : 'col-span-1 md:col-span-3'}`}>
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl flex items-center gap-2">
+        <div className="flex justify-between items-center flex-wrap gap-2">
+          <CardTitle className="text-lg md:text-xl flex items-center gap-2">
             {icon}
             {title}
           </CardTitle>
@@ -124,14 +128,17 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             {percentageComplete.toFixed(2)}% concluído
           </div>
         </div>
-        <CardDescription>
-          Meta: {formatCurrency(target)} | Atual: {formatCurrency(current)}
+        <CardDescription className="text-sm mt-1">
+          <div className="flex flex-col md:flex-row md:gap-4">
+            <span>Meta: {formatCurrency(target)}</span>
+            <span>Atual: {formatCurrency(current)}</span>
+          </div>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
           <div 
-            className="w-full bg-white rounded-full h-6 shadow-inner"
+            className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
             style={{
               backgroundColor: '#ffffff',
               boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
@@ -167,6 +174,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 };
 
 const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
+  const isMobile = useMobile();
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const faltaReceberMes = userData.vencido_atual - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
@@ -186,10 +194,10 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
         <div className="flex justify-between items-center">
           <Skeleton className="h-8 w-1/4" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(8)].map((_, i) => (
+        <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2 lg:grid-cols-3'} gap-4`}>
+          {[...Array(isMobile ? 4 : 8)].map((_, i) => (
             <Card key={i} className="shadow-sm">
-              <CardContent className="p-6">
+              <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-8 w-8 rounded-full" />
@@ -206,10 +214,10 @@ const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Meta Fiado</h2>
+        <h2 className="text-xl md:text-2xl font-bold">Meta Fiado</h2>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 ${isMobile ? 'gap-3' : 'md:grid-cols-3 gap-4'}`}>
         <ProgressCard 
           title="Progresso da Meta Mensal" 
           current={userData.vencido_atual}
