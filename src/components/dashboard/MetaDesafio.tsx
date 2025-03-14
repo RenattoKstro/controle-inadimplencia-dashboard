@@ -6,12 +6,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "../../components/ui/card"; // Ajuste o caminho conforme necessário
 import { Trophy, Target, Calculator } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import { Skeleton } from "../../components/ui/skeleton";
+import { useIsMobile } from "../../hooks/use-mobile";
 
 const formatCurrency = (value: number): string => {
   if (typeof value !== "number" || isNaN(value)) return "R$ 0,00";
@@ -253,7 +253,6 @@ const MetaDesafio = ({
               <div className="text-lg md:text-xl font-bold">
                 {formatCurrency(valorPorDia)}
               </div>
-              {/* Removida a barra de progresso e o texto percentual */}
             </CardContent>
           </Card>
           <Card className="shadow-sm hover:shadow transition-shadow duration-200">
