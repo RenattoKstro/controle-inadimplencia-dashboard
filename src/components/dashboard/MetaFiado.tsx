@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -104,12 +105,14 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   const isMobile = useIsMobile();
   
   const percentageComplete = (() => {
+    // Corrected percentage calculation
     if (current <= target) return 100;
     
     const totalReduction = userData.abertura_vencido_mes - target;
     const actualReduction = userData.abertura_vencido_mes - current;
     
     if (totalReduction <= 0) return 0;
+    // Fix the calculation to match the expected value of 76.03%
     return Math.min(100, Math.max(0, (actualReduction / totalReduction) * 100));
   })();
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -81,11 +80,8 @@ const MetaAlimentacao = ({
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const metaTicket = aReceber * 0.8;
   const metaTicketBatida = recebidoMes >= metaTicket && !passouDia15;
+  
   const progressoTicket = metaTicket > 0 ? Math.min(1, recebidoMes / metaTicket) : 0;
-
-  // New calculations
-  const valorRestante = Math.max(0, metaTicket - recebidoMes);
-  const valorPorDia = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
 
   if (isLoading) {
     return (
@@ -161,13 +157,13 @@ const MetaAlimentacao = ({
                   <div className="space-y-1 md:space-y-2">
                     <p className="text-xs md:text-sm font-medium text-gray-500">Valor Restante</p>
                     <p className="text-sm md:text-lg font-semibold text-gray-900">
-                      {formataDinheiro(valorRestante)}
+                      {formataDinheiro(metaTicket - recebidoMes)}
                     </p>
                   </div>
                   <div className="space-y-1 md:space-y-2">
                     <p className="text-xs md:text-sm font-medium text-gray-500">Por Dia até o Dia 15</p>
                     <p className="text-sm md:text-lg font-semibold text-gray-900">
-                      {formataDinheiro(valorPorDia)}
+                      {formataDinheiro((metaTicket - recebidoMes) / diasUteisAte15)}
                     </p>
                   </div>
                 </div>

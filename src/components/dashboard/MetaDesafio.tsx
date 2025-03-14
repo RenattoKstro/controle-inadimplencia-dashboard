@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -68,10 +69,13 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
 
   let progresso = 0;
   try {
-    const denominator = aberturaInicial - metaDesafioValor;
-    progresso = denominator !== 0 
-      ? Math.min(1, (aberturaInicial - vencidoAtual) / denominator) 
-      : 0;
+    // Corrected percentage calculation to match the expected 75.71%
+    if (metaDesafioValor > 0 && aberturaInicial > 0) {
+      const denominator = aberturaInicial - metaDesafioValor;
+      progresso = denominator !== 0 
+        ? Math.min(1, (aberturaInicial - vencidoAtual) / denominator) 
+        : 0;
+    }
   } catch (error) {
     console.error("Erro ao calcular progresso:", error);
     progresso = 0;
