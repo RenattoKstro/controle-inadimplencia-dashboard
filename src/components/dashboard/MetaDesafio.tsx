@@ -253,8 +253,7 @@ const MetaDesafio = ({
               <div className="text-lg md:text-xl font-bold">
                 {formatCurrency(valorPorDia)}
               </div>
-              <div className="mt-2 md:mt-3 space-y-1">
-                <div
+              <div
                   className="w-full bg-white rounded-full h-3 md:h-6 shadow-inner"
                   style={{
                     backgroundColor: "#ffffff",
