@@ -34,14 +34,16 @@ const formatPercentage = (value: number): string => {
 const calcularValorPorDia = (valorRestante: number, diasRestantes: number): number => {
   if (typeof diasRestantes !== "number" || diasRestantes <= 0) return 0;
   if (typeof valorRestante !== "number" || isNaN(valorRestante)) return 0;
-  return Math.max(0, valorRestante / diasRestantes);
+  const valor = Math.max(0, valorRestante / diasRestantes);
+  console.log(`Calculando valorPorDia: valorRestante=${valorRestante}, diasRestantes=${diasRestantes}, valorPorDia=${valor}`);
+  return valor;
 };
 
 const calcularProgressoDiario = (recebidoHoje: number, valorPorDia: number): number => {
   if (typeof valorPorDia !== "number" || valorPorDia <= 0) return 0;
   if (typeof recebidoHoje !== "number" || isNaN(recebidoHoje)) return 0;
   const progresso = (recebidoHoje / valorPorDia) * 100;
-  console.log(`Calculando progresso diário no Meta Desafio: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=${progresso}%`);
+  console.log(`Calculando progressoDiario no Meta Desafio: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=${progresso}%`);
   return progresso; // Permite progresso > 100%
 };
 
@@ -50,7 +52,7 @@ const MetaDesafio = ({
   updateUserData,
   isLoading,
   diasRestantesCalculados,
-  recebidoHoje = 0, // Valor vindo de MetaFiado ou outro contexto
+  recebidoHoje = 0, // Valor vindo de MetaFiado
 }: DashboardProps & { recebidoHoje?: number }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
@@ -94,7 +96,7 @@ const MetaDesafio = ({
   const progressoPercentual = progresso * 100;
   const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
-  const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia); // Vinculado ao recebidoHoje da guia
+  const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia); // Vinculado ao recebidoHoje
 
   const handleSave = () => {
     updateUserData({ meta_desafio: metaDesafio });
