@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,9 +35,9 @@ const DashboardLayout = () => {
     updateUserData, 
     diasSemExpediente, 
     updateDiasSemExpediente,
-    isLoading 
+    isLoading,
+    diasRestantesCalculados
   } = useUserData();
-  const [diasRestantesCalculados, setDiasRestantesCalculados] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -49,35 +49,6 @@ const DashboardLayout = () => {
     
     checkAuth();
   }, [navigate]);
-
-  useEffect(() => {
-    const hoje = new Date();
-    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    let dias = 0;
-    const currentDate = new Date(hoje);
-
-    while (currentDate <= ultimoDiaMes) {
-      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
-      if (!isWeekend) {
-        const isDiaSemExpediente = diasSemExpediente.some(date => {
-          if (!date) return false;
-          
-          // Ensure we're comparing dates correctly
-          const dateObj = new Date(date);
-          return (
-            dateObj.getDate() === currentDate.getDate() &&
-            dateObj.getMonth() === currentDate.getMonth() &&
-            dateObj.getFullYear() === currentDate.getFullYear()
-          );
-        });
-        if (!isDiaSemExpediente) {
-          dias++;
-        }
-      }
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    setDiasRestantesCalculados(dias);
-  }, [diasSemExpediente]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

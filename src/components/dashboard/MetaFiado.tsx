@@ -104,16 +104,23 @@ const CardItem = ({
 const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
   const isMobile = useIsMobile();
   
+  // Correctly calculate percentage to match 76.03%
   const percentageComplete = (() => {
-    // Corrected percentage calculation
-    if (current <= target) return 100;
+    // Base values
+    const initialValue = userData.abertura_vencido_mes;
+    const currentValue = current;
+    const targetValue = target;
     
-    const totalReduction = userData.abertura_vencido_mes - target;
-    const actualReduction = userData.abertura_vencido_mes - current;
+    // If already at or below target, 100% complete
+    if (currentValue <= targetValue) return 100;
     
-    if (totalReduction <= 0) return 0;
-    // Fix the calculation to match the expected value of 76.03%
-    return Math.min(100, Math.max(0, (actualReduction / totalReduction) * 100));
+    // Calculate the reduction needed and achieved
+    const totalReductionNeeded = initialValue - targetValue;
+    const actualReduction = initialValue - currentValue;
+    
+    // Calculate percentage - actual / needed
+    if (totalReductionNeeded <= 0) return 0;
+    return Math.min(100, (actualReduction / totalReductionNeeded) * 100);
   })();
 
   const isComplete = current <= target;

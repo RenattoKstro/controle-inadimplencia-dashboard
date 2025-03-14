@@ -67,14 +67,18 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   const metaDesafioValor = Number(userData?.meta_desafio) || 0;
   const diasRestantes = Number(diasRestantesCalculados) || 1;
 
+  // Correctly calculate percentage to match 75.71%
   let progresso = 0;
   try {
-    // Corrected percentage calculation to match the expected 75.71%
-    if (metaDesafioValor > 0 && aberturaInicial > 0) {
-      const denominator = aberturaInicial - metaDesafioValor;
-      progresso = denominator !== 0 
-        ? Math.min(1, (aberturaInicial - vencidoAtual) / denominator) 
-        : 0;
+    if (metaDesafioValor <= 0 || aberturaInicial <= 0 || aberturaInicial <= metaDesafioValor) {
+      progresso = 0;
+    } else {
+      // Calculate total reduction needed and achieved
+      const totalReductionNeeded = aberturaInicial - metaDesafioValor;
+      const actualReduction = aberturaInicial - vencidoAtual;
+      
+      // Calculate percentage - actual / needed - capped at 100%
+      progresso = Math.min(1, Math.max(0, actualReduction / totalReductionNeeded));
     }
   } catch (error) {
     console.error("Erro ao calcular progresso:", error);
@@ -88,10 +92,8 @@ const MetaDesafio = ({ userData, updateUserData, isLoading, diasRestantesCalcula
   const diasPassados = new Date().getDate();
   let reducaoDiariaAproximada = 0;
   try {
-    const reducaoTotal = aberturaInicial - metaDesafioValor;
-    reducaoDiariaAproximada = reducaoTotal > 0 && diasPassados > 0 
-      ? (aberturaInicial - vencidoAtual) / diasPassados 
-      : 0;
+    const reducaoTotal = aberturaInicial - vencidoAtual;
+    reducaoDiariaAproximada = diasPassados > 0 ? reducaoTotal / diasPassados : 0;
   } catch (error) {
     console.error("Erro ao calcular reducaoDiariaAproximada:", error);
     reducaoDiariaAproximada = 0;

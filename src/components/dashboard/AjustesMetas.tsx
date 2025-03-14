@@ -10,13 +10,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Building, AlertTriangle, Target, Pencil, CalendarIcon } from "lucide-react";
+import { Wallet, Building, AlertTriangle, Target, Pencil } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 
 interface CardItemProps {
   title: string;
@@ -32,21 +28,17 @@ interface CardItemProps {
 
 const AjustesMetas = ({ 
   userData, 
-  updateUserData, 
-  diasSemExpediente, 
-  updateDiasSemExpediente, 
+  updateUserData,
   diasRestantesCalculados, 
   isLoading 
 }: DashboardProps) => {
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData.abertura_vencido_mes || 0,
     abertura_dia: userData.abertura_dia || 0,
     meta_mes: userData.meta_mes || 0,
     vencido_atual: userData.vencido_atual || 0,
-    dias_restantes: userData.dias_restantes || 0,
+    dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
     meta_desafio: userData.meta_desafio || 0,
   });
 
@@ -57,23 +49,10 @@ const AjustesMetas = ({
       abertura_dia: userData.abertura_dia || 0,
       meta_mes: userData.meta_mes || 0,
       vencido_atual: userData.vencido_atual || 0,
-      dias_restantes: userData.dias_restantes || 0,
+      dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
       meta_desafio: userData.meta_desafio || 0,
     });
-  }, [userData]);
-
-  // Ensure diasSemExpediente is properly loaded
-  useEffect(() => {
-    if (diasSemExpediente && diasSemExpediente.length > 0) {
-      const formattedDates = diasSemExpediente.map(date => {
-        // Ensure we have proper Date objects
-        return new Date(date);
-      });
-      setSelectedDates(formattedDates);
-    } else {
-      setSelectedDates([]);
-    }
-  }, [diasSemExpediente]);
+  }, [userData, diasRestantesCalculados]);
 
   const CardItem = ({ 
     title, 
@@ -147,33 +126,19 @@ const AjustesMetas = ({
   };
 
   const handleSave = () => {
-    // Make sure we save diasRestantesCalculados in the form state
-    const updatedForm = {
-      ...formState,
-      dias_restantes: diasRestantesCalculados
-    };
-    
-    // Ensure we're sending full Date objects
-    updateUserData(updatedForm);
-    
-    // Important: Convert dates to proper format before saving
-    const formattedDates = selectedDates.map(date => new Date(date));
-    updateDiasSemExpediente(formattedDates);
-    
-    setFormState(updatedForm);
+    // Save the user entered days remaining value
+    updateUserData(formState);
     setIsEditing(false);
-    setCalendarOpen(false);
   };
 
   const handleCancel = () => {
     // Reset to previously saved values
-    setSelectedDates(diasSemExpediente.map(date => new Date(date)));
     setFormState({
       abertura_vencido_mes: userData.abertura_vencido_mes || 0,
       abertura_dia: userData.abertura_dia || 0,
       meta_mes: userData.meta_mes || 0,
       vencido_atual: userData.vencido_atual || 0,
-      dias_restantes: userData.dias_restantes || 0,
+      dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
       meta_desafio: userData.meta_desafio || 0,
     });
     setIsEditing(false);
@@ -233,64 +198,6 @@ const AjustesMetas = ({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        <Card className="col-span-1 md:col-span-2 shadow-sm hover:shadow-md transition-all">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Target className="h-5 w-5 text-blue-500" />
-              Calendário de Expediente
-            </CardTitle>
-            <CardDescription>
-              Selecione os dias sem expediente para calcular os dias úteis
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center">
-              <Popover open={calendarOpen && isEditing} onOpenChange={(open) => isEditing && setCalendarOpen(open)}>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full mb-4 flex justify-between items-center"
-                    disabled={!isEditing}
-                  >
-                    <span>Selecionar dias sem expediente ({selectedDates.length})</span>
-                    <CalendarIcon className="h-4 w-4 ml-2" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="center">
-                  <Calendar
-                    mode="multiple"
-                    selected={selectedDates}
-                    onSelect={setSelectedDates}
-                    className="rounded-md border pointer-events-auto"
-                    disabled={(date) => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const compareDate = new Date(date);
-                      compareDate.setHours(0, 0, 0, 0);
-                      return compareDate < today;
-                    }}
-                    locale={ptBR}
-                    classNames={{
-                      day_selected: "bg-red-500 text-white hover:bg-red-600 focus:bg-red-600",
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-              
-              <div className="mt-4 text-sm text-gray-600 w-full">
-                <div className="flex justify-between items-center">
-                  <span>Dias sem expediente:</span>
-                  <span className="font-medium">{selectedDates.length}</span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span>Dias úteis restantes:</span>
-                  <span className="font-medium text-blue-600">{diasRestantesCalculados}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
         <CardItem 
           title="Abertura de Vencido do Mês" 
           value={formState.abertura_vencido_mes} 
@@ -347,11 +254,15 @@ const AjustesMetas = ({
         />
         
         <CardItem 
-          title="Dias Restantes (Calculado)" 
-          value={diasRestantesCalculados} 
+          title="Dias Restantes (mês)" 
+          value={formState.dias_restantes} 
           icon={<Target size={16} />}
           color="bg-gray-500"
           formatAsCurrency={false}
+          isEditable={true}
+          onChange={(value) => handleChange('dias_restantes', value)}
+          isEditMode={isEditing}
+          onEdit={handleItemEdit}
         />
       </div>
     </div>

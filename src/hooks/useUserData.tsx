@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +17,23 @@ export function useUserData() {
   const [diasSemExpediente, setDiasSemExpediente] = useState<Date[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // Calculate dias restantes based on current date
+  const calculateDiasRestantes = () => {
+    const hoje = new Date();
+    const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    let dias = 0;
+    const currentDate = new Date(hoje);
+
+    while (currentDate <= ultimoDiaMes) {
+      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      if (!isWeekend) {
+        dias++;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return dias;
+  };
 
   // Buscar dados do usuário ao carregar a página
   useEffect(() => {
@@ -40,11 +56,15 @@ export function useUserData() {
 
         // Se não encontrar dados, inserir dados padrão
         if (!dashboardData) {
+          // Calculate default dias_restantes
+          const defaultDiasRestantes = calculateDiasRestantes();
+          
           const { data: newData, error: insertError } = await supabase
             .from('user_dashboard')
             .insert([{ 
               user_id: user.id,
-              ...DEFAULT_USER_DATA
+              ...DEFAULT_USER_DATA,
+              dias_restantes: defaultDiasRestantes
             }])
             .select('*')
             .single();
@@ -55,6 +75,11 @@ export function useUserData() {
             setUserData(newData);
           }
         } else {
+          // If dias_restantes is 0, calculate it
+          if (!dashboardData.dias_restantes) {
+            dashboardData.dias_restantes = calculateDiasRestantes();
+          }
+          
           // Garantir que todos os campos existam com valores padrão
           const completeData = {
             ...DEFAULT_USER_DATA,
@@ -63,7 +88,8 @@ export function useUserData() {
           setUserData(completeData);
         }
 
-        // Buscar dias sem expediente
+        // Buscar dias sem expediente (we'll keep this for backward compatibility,
+        // but it won't be used in the UI anymore)
         const { data: diasData, error: diasError } = await supabase
           .from('dias_sem_expediente')
           .select('data')
@@ -72,13 +98,7 @@ export function useUserData() {
         if (diasError) throw diasError;
 
         if (diasData && diasData.length > 0) {
-          // Ensure we properly convert database dates to JavaScript Date objects
-          const datesArray = diasData.map(d => {
-            // Parse the date string and create a new Date object
-            const parsedDate = new Date(d.data);
-            // Account for timezone offset to get the correct local date
-            return new Date(parsedDate.getTime());
-          });
+          const datesArray = diasData.map(d => new Date(d.data));
           setDiasSemExpediente(datesArray);
         }
       } catch (error: any) {
@@ -130,6 +150,7 @@ export function useUserData() {
   };
 
   // Função para atualizar os dias sem expediente
+  // We'll keep this for backward compatibility, but it won't be used directly in the UI
   const updateDiasSemExpediente = async (dias: Date[]) => {
     try {
       setIsLoading(true);
@@ -170,11 +191,6 @@ export function useUserData() {
 
       // Update local state with the new dates
       setDiasSemExpediente(dias.map(d => new Date(d)));
-      
-      toast({
-        title: 'Calendário atualizado',
-        description: 'Dias sem expediente foram atualizados com sucesso.',
-      });
     } catch (error: any) {
       console.error('Erro ao atualizar calendário:', error);
       toast({
@@ -187,5 +203,15 @@ export function useUserData() {
     }
   };
 
-  return { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading };
+  // Calculate business days to use as default if user doesn't set manually
+  const diasRestantesCalculados = calculateDiasRestantes();
+
+  return { 
+    userData, 
+    updateUserData, 
+    diasSemExpediente, 
+    updateDiasSemExpediente, 
+    isLoading,
+    diasRestantesCalculados 
+  };
 }
