@@ -87,7 +87,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   const percentageComplete = (() => {
     if (current <= 0) return 0; // Evita divisão por zero
     const progresso = (target / current) * 100; // Fórmula: Meta / Vencido Atual
-    console.log(`Meta Fiado - Vencido Atual: ${current}, Meta: ${target}, Progresso Calculado: ${progresso.toFixed(2)}%`);
+    console.log(`[MetaFiado] Meta Fiado - Vencido Atual: ${current}, Meta: ${target}, Progresso Calculado: ${progresso.toFixed(2)}%`);
     return progresso; // Permite que o progresso ultrapasse 100%
   })();
 
@@ -161,19 +161,20 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const faltaReceberMes = Math.max(0, userData.vencido_atual - userData.meta_mes);
   const recebidosMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  // Ajustando para a lógica original: abertura_dia - vencido_atual
   const recebidoHoje = Math.max(0, (userData.abertura_dia || 0) - userData.vencido_atual);
+  console.log(`[MetaFiado] Calculado recebidoHoje: ${recebidoHoje}, abertura_dia=${userData.abertura_dia}, vencido_atual=${userData.vencido_atual}`);
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
     : 0;
-  const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0; // Permite progresso diário > 100%
+  const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
 
   useEffect(() => {
     if (setRecebidoHoje) {
-      console.log(`Atualizando recebidoHoje no MetaFiado: ${recebidoHoje}`);
-      setRecebidoHoje(recebidoHoje);
+      const calculatedRecebidoHoje = Math.max(0, (userData.abertura_dia || 0) - userData.vencido_atual);
+      console.log(`[MetaFiado] Atualizando recebidoHoje no MetaFiado: ${calculatedRecebidoHoje}, abertura_dia=${userData.abertura_dia}, vencido_atual=${userData.vencido_atual}`);
+      setRecebidoHoje(calculatedRecebidoHoje);
     }
-  }, [recebidoHoje, setRecebidoHoje]);
+  }, [recebidoHoje, userData.abertura_dia, userData.vencido_atual, setRecebidoHoje]);
 
   if (isLoading) {
     return (
@@ -240,6 +241,12 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           value={recebidoHoje}
           icon={<Building size={16} />}
           color="bg-green-500"
+        />
+        <CardItem
+          title="Abertura Dia (Debug)"
+          value={userData.abertura_dia || 0}
+          icon={<Building size={16} />}
+          color="bg-gray-500"
         />
         <CardItem
           title="Receber por Dia"
