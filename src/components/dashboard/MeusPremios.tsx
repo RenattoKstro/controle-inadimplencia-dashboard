@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Gift, Wallet, Trophy, Utensils } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PremioProps {
   nome: string;
@@ -51,28 +52,30 @@ const isPastDay15 = () => {
 };
 
 const CardPremio = ({ titulo, premios, total, icon, color }: CardPremioProps) => {
+  const isMobile = useIsMobile();
+  
   return (
     <Card className={`shadow-sm border-l-4 ${color}`}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-bold flex items-center gap-2">
+      <CardHeader className="pb-1 md:pb-2">
+        <CardTitle className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
           {icon} {titulo}
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs md:text-sm">
           Total possível: {formatCurrency(total)}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ul className="space-y-3">
+        <ul className="space-y-2 md:space-y-3">
           {premios.map((premio, index) => (
             <li key={index} className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${premio.atingido ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                <span className="text-sm">
+              <div className="flex items-center gap-1 md:gap-2">
+                <span className={`w-1.5 md:w-2 h-1.5 md:h-2 rounded-full ${premio.atingido ? 'bg-green-500' : 'bg-gray-300'}`}></span>
+                <span className="text-xs md:text-sm">
                   {formatPercentage(premio.percentual)}
                 </span>
               </div>
               <div className="flex items-center gap-1">
-                <span className={`text-sm font-semibold ${premio.atingido ? 'text-green-600' : 'text-gray-500'}`}>
+                <span className={`text-xs md:text-sm font-semibold ${premio.atingido ? 'text-green-600' : 'text-gray-500'}`}>
                   {formatCurrency(premio.valor)}
                 </span>
                 {premio.atingido && <span>✅</span>}
@@ -90,6 +93,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
   const [premiosDesafio, setPremiosDesafio] = useState<PremioProps[]>([]);
   const [premioAlimentacao, setPremioAlimentacao] = useState<PremioProps[]>([]);
   const [totalPremios, setTotalPremios] = useState(0);
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     // Cálculos para Meta Fiado
@@ -154,21 +158,21 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="space-y-4 md:space-y-6">
+        <Skeleton className="h-6 md:h-8 w-48" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {[...Array(3)].map((_, i) => (
             <Card key={i}>
               <CardHeader>
-                <Skeleton className="h-6 w-36 mb-1" />
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-5 md:h-6 w-36 mb-1" />
+                <Skeleton className="h-3 md:h-4 w-24" />
               </CardHeader>
               <CardContent>
-                <ul className="space-y-3">
+                <ul className="space-y-2 md:space-y-3">
                   {[...Array(4)].map((_, j) => (
                     <li key={j} className="flex justify-between">
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 md:h-4 w-16" />
+                      <Skeleton className="h-3 md:h-4 w-24" />
                     </li>
                   ))}
                 </ul>
@@ -176,23 +180,23 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
             </Card>
           ))}
         </div>
-        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-12 md:h-16 w-full" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold flex items-center gap-2">
+    <div className="space-y-4 md:space-y-6">
+      <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
         <Gift className="text-pink-500" /> Meus Prêmios
       </h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         <CardPremio 
           titulo="Meta Fiado" 
           premios={premiosFiado}
           total={787.50}
-          icon={<Wallet className="text-blue-500" />}
+          icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
           color="border-blue-500"
         />
         
@@ -200,7 +204,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
           titulo="Meta Desafio" 
           premios={premiosDesafio}
           total={500.00}
-          icon={<Trophy className="text-yellow-500" />}
+          icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
           color="border-yellow-500"
         />
         
@@ -208,23 +212,23 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
           titulo="Vale Alimentação" 
           premios={premioAlimentacao}
           total={100.00}
-          icon={<Utensils className="text-green-500" />}
+          icon={<Utensils className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-green-500`} />}
           color="border-green-500"
         />
       </div>
       
       <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
             <div>
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <Gift className="text-purple-500" /> Total Geral de Ganhos
+              <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
+                <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos
               </h3>
-              <p className="text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
+              <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
             </div>
-            <div className="text-2xl font-bold text-purple-700">
+            <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
               {formatCurrency(totalGanhos)}
-              <span className="text-sm text-gray-500 block text-right">
+              <span className="text-xs md:text-sm text-gray-500 block text-right">
                 de {formatCurrency(totalPremios)}
               </span>
             </div>
