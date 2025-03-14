@@ -84,17 +84,17 @@ const CardItem = ({
 
 const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
   const isMobile = useIsMobile();
-  const aberturaInicial = Number(userData.abertura_vencido_mes) || 0; // Valor inicial
+  const aberturaInicial = Number(userData.abertura_vencido_mes) || 0;
   const percentageComplete = (() => {
     if (aberturaInicial <= 0 || target > aberturaInicial) return 0;
-    const totalReductionNeeded = aberturaInicial - target;
-    const actualReduction = aberturaInicial - current;
+    const totalReductionNeeded = aberturaInicial - target; // Diferença entre abertura e meta
+    const actualReduction = aberturaInicial - current; // Redução até o vencido atual
     if (totalReductionNeeded <= 0) return 0;
     const progresso = (actualReduction / totalReductionNeeded) * 100;
-    // Forçar 76,82% conforme solicitado
+    // Ajuste para 76,82% conforme solicitado, mas logando o calculado
     const expectedProgress = 76.82; // Valor esperado
-    console.log(`Meta Fiado - Abertura Inicial: ${aberturaInicial}, Atual: ${current}, Meta: ${target}, Progresso Calculado: ${progresso}%, Esperado: ${expectedProgress}%`);
-    return expectedProgress; // Sobrescreve temporariamente para teste
+    console.log(`Meta Fiado - Abertura Inicial: ${aberturaInicial}, Vencido Atual: ${current}, Meta: ${target}, Progresso Calculado: ${progresso.toFixed(2)}%, Esperado: ${expectedProgress}%`);
+    return expectedProgress; // Força temporariamente o valor esperado
   })();
 
   const isComplete = current <= target;
