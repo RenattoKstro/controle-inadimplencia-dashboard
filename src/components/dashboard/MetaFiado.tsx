@@ -170,11 +170,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
 
   useEffect(() => {
     if (setRecebidoHoje) {
-      const calculatedRecebidoHoje = Math.max(0, (userData.abertura_dia || 0) - userData.vencido_atual);
-      console.log(`[MetaFiado] Atualizando recebidoHoje no MetaFiado: ${calculatedRecebidoHoje}, abertura_dia=${userData.abertura_dia}, vencido_atual=${userData.vencido_atual}`);
-      setRecebidoHoje(calculatedRecebidoHoje);
+      console.log(`[MetaFiado] Atualizando recebidoHoje no MetaFiado: ${recebidoHoje}`);
+      setRecebidoHoje(recebidoHoje);
     }
-  }, [recebidoHoje, userData.abertura_dia, userData.vencido_atual, setRecebidoHoje]);
+  }, [recebidoHoje, setRecebidoHoje]);
 
   if (isLoading) {
     return (
@@ -241,12 +240,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           value={recebidoHoje}
           icon={<Building size={16} />}
           color="bg-green-500"
-        />
-        <CardItem
-          title="Abertura Dia (Debug)"
-          value={userData.abertura_dia || 0}
-          icon={<Building size={16} />}
-          color="bg-gray-500"
         />
         <CardItem
           title="Receber por Dia"
