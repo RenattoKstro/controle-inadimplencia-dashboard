@@ -40,9 +40,12 @@ const calcularValorPorDia = (valorRestante: number, diasRestantes: number): numb
 };
 
 const calcularProgressoDiario = (recebidoHoje: number, valorPorDia: number): number => {
-  if (typeof valorPorDia !== "number" || valorPorDia <= 0) return 0;
+  if (typeof valorPorDia !== "number" || valorPorDia <= 0) {
+    console.log(`[MetaDesafio] Erro: valorPorDia inválido (${valorPorDia}), progresso=0%`);
+    return 0;
+  }
   if (typeof recebidoHoje !== "number" || isNaN(recebidoHoje)) {
-    console.log(`[MetaDesafio] Erro no progressoDiario: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=0%`);
+    console.warn(`[MetaDesafio] Aviso: recebidoHoje inválido (${recebidoHoje}), usando 0, progresso=0%`);
     return 0;
   }
   const progresso = (recebidoHoje / valorPorDia) * 100;
@@ -70,7 +73,7 @@ const MetaDesafio = ({
       setDiasRestantes(userData.dias_restantes);
     }
     console.log(`[MetaDesafio] useEffect: diasRestantes atualizado para ${diasRestantes}, recebidoHoje=${recebidoHoje}`);
-  }, [userData?.dias_restantes, recebidoHoje]);
+  }, [userData?.dias_restantes, recebidoHoje]); // Adicionando recebidoHoje como dependência
 
   if (!userData) {
     return (
