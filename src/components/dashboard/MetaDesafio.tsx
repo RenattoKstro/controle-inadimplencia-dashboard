@@ -40,8 +40,9 @@ const calcularValorPorDia = (valorRestante: number, diasRestantes: number): numb
 const calcularProgressoDiario = (recebidoHoje: number, valorPorDia: number): number => {
   if (typeof valorPorDia !== "number" || valorPorDia <= 0) return 0;
   if (typeof recebidoHoje !== "number" || isNaN(recebidoHoje)) return 0;
-  console.log(`Calculando progresso diário: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=${(recebidoHoje / valorPorDia) * 100}%`);
-  return Math.min(100, (recebidoHoje / valorPorDia) * 100);
+  const progresso = (recebidoHoje / valorPorDia) * 100;
+  console.log(`Calculando progresso diário: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=${progresso}%`);
+  return progresso; // Permite progresso > 100%
 };
 
 const MetaDesafio = ({
@@ -83,20 +84,13 @@ const MetaDesafio = ({
     );
   }
 
-  const aberturaInicial =
-    Number(userData?.abertura_vencido_mes) || Number(userData?.vencido_atual) || 0;
   const vencidoAtual = Number(userData?.vencido_atual) || 0;
   const metaDesafioValor = Number(userData?.meta_desafio) || 0;
 
   let progresso = 0;
-  if (metaDesafioValor > 0 && aberturaInicial > metaDesafioValor) {
-    const totalReductionNeeded = aberturaInicial - metaDesafioValor;
-    const actualReduction = aberturaInicial - vencidoAtual;
-    progresso = Math.min(1, Math.max(0, actualReduction / totalReductionNeeded));
-    // Ajuste para 76,50% conforme solicitado, mas logando o calculado
-    const expectedProgress = 76.50; // Valor esperado
-    console.log(`Meta Desafio - Abertura Inicial: ${aberturaInicial}, Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado: ${progresso * 100}%, Esperado: ${expectedProgress}%`);
-    progresso = expectedProgress / 100; // Força temporariamente o valor esperado
+  if (vencidoAtual > 0 && metaDesafioValor > 0) {
+    progresso = (metaDesafioValor / vencidoAtual); // Fórmula: Meta / Vencido Atual
+    console.log(`Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado: ${progresso * 100}%`);
   }
 
   const progressoPercentual = progresso * 100;
@@ -213,7 +207,7 @@ const MetaDesafio = ({
             <div
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
-                width: `${progressoPercentual}%`,
+                width: `${Math.min(progressoPercentual, 100)}%`, // Limite visual na barra
                 background:
                   "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -263,7 +257,7 @@ const MetaDesafio = ({
                   <div
                     className="h-full rounded-full transition-all duration-500 ease-in-out"
                     style={{
-                      width: `${progressoDiario}%`,
+                      width: `${Math.min(progressoDiario, 100)}%`, // Limite visual na barra
                       background:
                         "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                       boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
