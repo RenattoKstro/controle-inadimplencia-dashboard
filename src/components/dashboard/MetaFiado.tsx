@@ -65,7 +65,7 @@ const CardItem = ({
               <div
                 className="h-full rounded-full transition-all duration-500 ease-in-out"
                 style={{
-                  width: `${progressValue}%`,
+                  width: `${Math.min(progressValue, 100)}%`, // Limite visual na barra
                   background:
                     "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -84,17 +84,11 @@ const CardItem = ({
 
 const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
   const isMobile = useIsMobile();
-  const aberturaInicial = Number(userData.abertura_vencido_mes) || 0;
   const percentageComplete = (() => {
-    if (aberturaInicial <= 0 || target > aberturaInicial) return 0;
-    const totalReductionNeeded = aberturaInicial - target; // Diferença entre abertura e meta
-    const actualReduction = aberturaInicial - current; // Redução até o vencido atual
-    if (totalReductionNeeded <= 0) return 0;
-    const progresso = (actualReduction / totalReductionNeeded) * 100;
-    // Ajuste para 76,82% conforme solicitado, mas logando o calculado
-    const expectedProgress = 76.82; // Valor esperado
-    console.log(`Meta Fiado - Abertura Inicial: ${aberturaInicial}, Vencido Atual: ${current}, Meta: ${target}, Progresso Calculado: ${progresso.toFixed(2)}%, Esperado: ${expectedProgress}%`);
-    return expectedProgress; // Força temporariamente o valor esperado
+    if (current <= 0) return 0; // Evita divisão por zero
+    const progresso = (target / current) * 100; // Fórmula: Meta / Vencido Atual
+    console.log(`Meta Fiado - Vencido Atual: ${current}, Meta: ${target}, Progresso Calculado: ${progresso.toFixed(2)}%`);
+    return progresso; // Permite que o progresso ultrapasse 100%
   })();
 
   const isComplete = current <= target;
@@ -134,7 +128,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             <div
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
-                width: `${percentageComplete}%`,
+                width: `${Math.min(percentageComplete, 100)}%`, // Limite visual na barra
                 background:
                   "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -171,7 +165,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
     : 0;
-  const progressoDiario = receberPorDia > 0 ? Math.min(100, (recebidoHoje / receberPorDia) * 100) : 0;
+  const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0; // Permite progresso diário > 100%
 
   useEffect(() => {
     if (setRecebidoHoje) {
