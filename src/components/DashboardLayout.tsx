@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu } from "lucide-react";
@@ -13,7 +12,7 @@ import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface DashboardProps {
   userData: any;
@@ -28,7 +27,7 @@ const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const { 
     userData, 
     updateUserData, 
@@ -39,7 +38,6 @@ const DashboardLayout = () => {
   const [diasRestantesCalculados, setDiasRestantesCalculados] = useState(0);
 
   useEffect(() => {
-    // Verificar se o usuário está autenticado ao carregar a página
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
@@ -51,7 +49,6 @@ const DashboardLayout = () => {
   }, [navigate]);
 
   useEffect(() => {
-    // Calcular diasRestantesCalculados com base em diasSemExpediente
     const hoje = new Date();
     const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
     let dias = 0;

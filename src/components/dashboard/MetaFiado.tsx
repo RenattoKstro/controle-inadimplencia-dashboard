@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -20,7 +19,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CardItemProps {
   title: string;
@@ -102,7 +101,7 @@ const CardItem = ({
 };
 
 const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   const percentageComplete = (() => {
     if (current <= target) return 100;
@@ -174,7 +173,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 };
 
 const MetaFiado = ({ userData, isLoading }: DashboardProps) => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const faltaReceberMes = userData.vencido_atual - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
