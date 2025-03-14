@@ -253,27 +253,7 @@ const MetaDesafio = ({
               <div className="text-lg md:text-xl font-bold">
                 {formatCurrency(valorPorDia)}
               </div>
-              <div
-                  className="w-full bg-white rounded-full h-3 md:h-6 shadow-inner"
-                  style={{
-                    backgroundColor: "#ffffff",
-                    boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
-                  }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-500 ease-in-out"
-                    style={{
-                      width: `${Math.min(progressoDiario, 100)}%`,
-                      background:
-                        "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
-                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                    }}
-                  />
-                </div>
-                <div className="text-xs text-right text-gray-500">
-                  {formatPercentage(progressoDiario)}
-                </div>
-              </div>
+              {/* Removida a barra de progresso e o texto percentual */}
             </CardContent>
           </Card>
           <Card className="shadow-sm hover:shadow transition-shadow duration-200">
