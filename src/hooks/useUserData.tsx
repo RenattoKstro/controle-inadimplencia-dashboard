@@ -72,7 +72,14 @@ export function useUserData() {
         if (diasError) throw diasError;
 
         if (diasData && diasData.length > 0) {
-          setDiasSemExpediente(diasData.map(d => new Date(d.data)));
+          // Ensure we properly convert database dates to JavaScript Date objects
+          const datesArray = diasData.map(d => {
+            // Parse the date string and create a new Date object
+            const parsedDate = new Date(d.data);
+            // Account for timezone offset to get the correct local date
+            return new Date(parsedDate.getTime());
+          });
+          setDiasSemExpediente(datesArray);
         }
       } catch (error: any) {
         console.error('Erro ao buscar dados:', error);
@@ -140,12 +147,19 @@ export function useUserData() {
 
       // Depois inserir os novos dias
       if (dias.length > 0) {
-        const diasParaInserir = dias.map(dia => ({
-          user_id: user.id,
-          data: new Date(dia.getTime() - (dia.getTimezoneOffset() * 60000))
-            .toISOString()
-            .split('T')[0]
-        }));
+        // Format dates properly for database storage
+        const diasParaInserir = dias.map(dia => {
+          // Ensure we're working with a valid Date object
+          const date = new Date(dia);
+          
+          // Format the date as YYYY-MM-DD for storage
+          const formattedDate = date.toISOString().split('T')[0];
+          
+          return {
+            user_id: user.id,
+            data: formattedDate
+          };
+        });
 
         const { error: insertError } = await supabase
           .from('dias_sem_expediente')
@@ -154,7 +168,8 @@ export function useUserData() {
         if (insertError) throw insertError;
       }
 
-      setDiasSemExpediente(dias);
+      // Update local state with the new dates
+      setDiasSemExpediente(dias.map(d => new Date(d)));
       
       toast({
         title: 'Calendário atualizado',

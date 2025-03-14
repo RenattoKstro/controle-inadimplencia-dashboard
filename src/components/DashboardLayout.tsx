@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ const DashboardLayout = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { 
     userData, 
     updateUserData, 
@@ -57,11 +59,17 @@ const DashboardLayout = () => {
     while (currentDate <= ultimoDiaMes) {
       const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
       if (!isWeekend) {
-        const isDiaSemExpediente = diasSemExpediente.some(date =>
-          date.getDate() === currentDate.getDate() &&
-          date.getMonth() === currentDate.getMonth() &&
-          date.getFullYear() === currentDate.getFullYear()
-        );
+        const isDiaSemExpediente = diasSemExpediente.some(date => {
+          if (!date) return false;
+          
+          // Ensure we're comparing dates correctly
+          const dateObj = new Date(date);
+          return (
+            dateObj.getDate() === currentDate.getDate() &&
+            dateObj.getMonth() === currentDate.getMonth() &&
+            dateObj.getFullYear() === currentDate.getFullYear()
+          );
+        });
         if (!isDiaSemExpediente) {
           dias++;
         }
@@ -80,25 +88,52 @@ const DashboardLayout = () => {
     navigate("/auth");
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (isMobile) {
+      setSheetOpen(false);
+    }
+  };
+
   const renderTabs = () => (
     <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-5'} w-full p-1 bg-white shadow-sm rounded-xl`}>
-      <TabsTrigger value="ajustes-metas" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600">
+      <TabsTrigger 
+        value="ajustes-metas" 
+        className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
+        onClick={() => handleTabChange("ajustes-metas")}
+      >
         <Sliders className="h-4 w-4" />
         <span>Ajustes de Metas</span>
       </TabsTrigger>
-      <TabsTrigger value="meta-fiado" className="flex items-center gap-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-600">
+      <TabsTrigger 
+        value="meta-fiado" 
+        className="flex items-center gap-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-600"
+        onClick={() => handleTabChange("meta-fiado")}
+      >
         <Wallet className="h-4 w-4" />
         <span>Meta Fiado</span>
       </TabsTrigger>
-      <TabsTrigger value="meta-desafio" className="flex items-center gap-2 data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600">
+      <TabsTrigger 
+        value="meta-desafio" 
+        className="flex items-center gap-2 data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600"
+        onClick={() => handleTabChange("meta-desafio")}
+      >
         <Trophy className="h-4 w-4" />
         <span>Meta Desafio</span>
       </TabsTrigger>
-      <TabsTrigger value="meta-alimentacao" className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600">
+      <TabsTrigger 
+        value="meta-alimentacao" 
+        className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600"
+        onClick={() => handleTabChange("meta-alimentacao")}
+      >
         <Utensils className="h-4 w-4" />
         <span>Meta de Ticket</span>
       </TabsTrigger>
-      <TabsTrigger value="meus-premios" className="flex items-center gap-2 data-[state=active]:bg-pink-50 data-[state=active]:text-pink-600">
+      <TabsTrigger 
+        value="meus-premios" 
+        className="flex items-center gap-2 data-[state=active]:bg-pink-50 data-[state=active]:text-pink-600"
+        onClick={() => handleTabChange("meus-premios")}
+      >
         <Gift className="h-4 w-4" />
         <span>Meus Prêmios</span>
       </TabsTrigger>
@@ -174,7 +209,7 @@ const DashboardLayout = () => {
                 Controle
               </h1>
               <div className="flex items-center gap-2">
-                <Sheet>
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="h-9 w-9">
                       <Menu size={18} />
@@ -192,12 +227,7 @@ const DashboardLayout = () => {
                               key={tab}
                               variant="ghost"
                               className={`w-full justify-start ${activeTab === tab ? 'text-blue-600' : ''}`}
-                              onClick={() => {
-                                setActiveTab(tab);
-                                document.querySelector('[data-radix-collection-item]')?.dispatchEvent(
-                                  new MouseEvent('click', { bubbles: true })
-                                );
-                              }}
+                              onClick={() => handleTabChange(tab)}
                             >
                               {tab === "ajustes-metas" && <Sliders className="h-4 w-4 mr-2" />}
                               {tab === "meta-fiado" && <Wallet className="h-4 w-4 mr-2" />}
@@ -249,7 +279,7 @@ const DashboardLayout = () => {
         <Tabs 
           defaultValue="meta-fiado" 
           value={activeTab} 
-          onValueChange={setActiveTab}
+          onValueChange={handleTabChange}
           className="space-y-6"
         >
           {isMobile ? (

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -49,9 +50,25 @@ const AjustesMetas = ({
     meta_desafio: userData.meta_desafio || 0,
   });
 
+  // Update form state when userData changes
+  useEffect(() => {
+    setFormState({
+      abertura_vencido_mes: userData.abertura_vencido_mes || 0,
+      abertura_dia: userData.abertura_dia || 0,
+      meta_mes: userData.meta_mes || 0,
+      vencido_atual: userData.vencido_atual || 0,
+      dias_restantes: userData.dias_restantes || 0,
+      meta_desafio: userData.meta_desafio || 0,
+    });
+  }, [userData]);
+
+  // Ensure diasSemExpediente is properly loaded
   useEffect(() => {
     if (diasSemExpediente && diasSemExpediente.length > 0) {
-      const formattedDates = diasSemExpediente.map(date => new Date(date));
+      const formattedDates = diasSemExpediente.map(date => {
+        // Ensure we have proper Date objects
+        return new Date(date);
+      });
       setSelectedDates(formattedDates);
     } else {
       setSelectedDates([]);
@@ -110,14 +127,14 @@ const AjustesMetas = ({
             formatAsCurrency ? (
               <CurrencyInput
                 value={value}
-                onValueChange={handleChange}
+                onValueChange={onChange}
                 className="text-lg font-bold mt-1"
               />
             ) : (
               <Input
                 type="number"
                 value={value}
-                onChange={(e) => handleChange(parseInt(e.target.value) || 0)}
+                onChange={(e) => onChange && onChange(parseInt(e.target.value) || 0)}
                 className="text-lg font-bold mt-1"
               />
             )
@@ -130,20 +147,26 @@ const AjustesMetas = ({
   };
 
   const handleSave = () => {
+    // Make sure we save diasRestantesCalculados in the form state
     const updatedForm = {
       ...formState,
       dias_restantes: diasRestantesCalculados
     };
     
-    const formattedDates = selectedDates.map(date => new Date(date));
+    // Ensure we're sending full Date objects
     updateUserData(updatedForm);
+    
+    // Important: Convert dates to proper format before saving
+    const formattedDates = selectedDates.map(date => new Date(date));
     updateDiasSemExpediente(formattedDates);
+    
     setFormState(updatedForm);
     setIsEditing(false);
     setCalendarOpen(false);
   };
 
   const handleCancel = () => {
+    // Reset to previously saved values
     setSelectedDates(diasSemExpediente.map(date => new Date(date)));
     setFormState({
       abertura_vencido_mes: userData.abertura_vencido_mes || 0,
@@ -238,7 +261,7 @@ const AjustesMetas = ({
                     mode="multiple"
                     selected={selectedDates}
                     onSelect={setSelectedDates}
-                    className="rounded-md border p-3 pointer-events-auto"
+                    className="rounded-md border pointer-events-auto"
                     disabled={(date) => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
