@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // Adicionei useEffect para sincronização
+import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import {
   Card,
@@ -40,6 +40,7 @@ const calcularValorPorDia = (valorRestante: number, diasRestantes: number): numb
 const calcularProgressoDiario = (recebidoHoje: number, valorPorDia: number): number => {
   if (typeof valorPorDia !== "number" || valorPorDia <= 0) return 0;
   if (typeof recebidoHoje !== "number" || isNaN(recebidoHoje)) return 0;
+  console.log(`Calculando progresso diário: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=${(recebidoHoje / valorPorDia) * 100}%`);
   return Math.min(100, (recebidoHoje / valorPorDia) * 100);
 };
 
@@ -48,7 +49,7 @@ const MetaDesafio = ({
   updateUserData,
   isLoading,
   diasRestantesCalculados,
-  recebidoHoje = 0,
+  recebidoHoje = 0, // Valor deve vir de Meta Fiado
 }: DashboardProps & { recebidoHoje?: number }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
@@ -266,7 +267,7 @@ const MetaDesafio = ({
                   />
                 </div>
                 <div className="text-xs text-right text-gray-500">
-                  {progressoDiario.toFixed(2)}% do objetivo diário
+                  {formatPercentage(progressoDiario)}
                 </div>
               </div>
             </CardContent>
