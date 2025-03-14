@@ -49,7 +49,7 @@ const MetaDesafio = ({
   updateUserData,
   isLoading,
   diasRestantesCalculados,
-  recebidoHoje = 0, // Valor deve vir de Meta Fiado
+  recebidoHoje = 0,
 }: DashboardProps & { recebidoHoje?: number }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
@@ -93,6 +93,7 @@ const MetaDesafio = ({
     const totalReductionNeeded = aberturaInicial - metaDesafioValor;
     const actualReduction = aberturaInicial - vencidoAtual;
     progresso = Math.min(1, Math.max(0, actualReduction / totalReductionNeeded));
+    console.log(`Meta Desafio - Abertura Inicial: ${aberturaInicial}, Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso: ${progresso * 100}%`);
   }
 
   const progressoPercentual = progresso * 100;
