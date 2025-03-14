@@ -161,7 +161,8 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const faltaReceberMes = Math.max(0, userData.vencido_atual - userData.meta_mes);
   const recebidosMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  const recebidoHoje = Math.max(0, userData.abertura_dia - (userData.vencido_atual - recebidosMes));
+  // Ajustando para a lógica original: abertura_dia - vencido_atual
+  const recebidoHoje = Math.max(0, (userData.abertura_dia || 0) - userData.vencido_atual);
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
     : 0;
