@@ -1,26 +1,25 @@
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Utensils, Check, AlertTriangle, TrendingUp, Calendar, Target } from "lucide-react";
+import { Utensils, Check, AlertTriangle, Calendar, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { isWeekend } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const formataDinheiro = (valor: number | null): string => {
   if (valor === null) {
     return "R$ 0,00";
   }
-  return valor.toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
   });
 };
 
@@ -29,59 +28,37 @@ const isPastDay15 = (): boolean => {
   return today.getDate() > 15;
 };
 
-const calcularDiasUteisAte15 = (diasSemExpediente: Date[]): number => {
+const calcularDiasUteisAte15 = (diasRestantes: number): number => {
   const today = new Date();
-  const ano = today.getFullYear();
-  const mes = today.getMonth();
-  let diasUteis = 0;
-
   if (today.getDate() > 15) {
     return 0;
   }
-
-  for (let dia = today.getDate(); dia <= 15; dia++) {
-    const data = new Date(ano, mes, dia);
-    const diaDaSemana = data.getDay();
-
-    if (diaDaSemana >= 1 && diaDaSemana <= 5) {
-      const isDiaSemExpediente = diasSemExpediente.some(
-        (d) =>
-          d.getFullYear() === ano &&
-          d.getMonth() === mes &&
-          d.getDate() === dia
-      );
-
-      if (!isDiaSemExpediente) {
-        diasUteis++;
-      }
-    }
-  }
-
-  return diasUteis;
+  const diasAte15 = 15 - today.getDate();
+  return Math.min(diasRestantes, diasAte15);
 };
 
 const MetaAlimentacao = ({
   userData,
-  updateUserData,
-  diasSemExpediente,
-  isLoading
+  diasRestantesCalculados,
+  isLoading,
 }: DashboardProps) => {
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   const isMobile = useIsMobile();
-  
+
   useEffect(() => {
-    const dias = calcularDiasUteisAte15(diasSemExpediente);
+    const dias = calcularDiasUteisAte15(userData.dias_restantes || diasRestantesCalculados);
     setDiasUteisAte15(dias);
-  }, [userData, diasSemExpediente]);
+  }, [userData.dias_restantes, diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
-  
+
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const metaTicket = aReceber * 0.8;
   const metaTicketBatida = recebidoMes >= metaTicket && !passouDia15;
-  
-  const progressoTicket = metaTicket > 0 ? Math.min(1, recebidoMes / metaTicket) : 0;
+
+  const progressoTicket = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
+  console.log(`Meta Ticket - Recebido: ${recebidoMes}, Meta: ${metaTicket}, Progresso: ${progressoTicket}%`);
 
   if (isLoading) {
     return (
@@ -106,7 +83,7 @@ const MetaAlimentacao = ({
         <Utensils className="h-5 w-5 text-green-500" />
         Meta de Ticket
       </h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
           <div className="h-2 bg-gradient-to-r from-green-400 to-emerald-500"></div>
@@ -123,28 +100,34 @@ const MetaAlimentacao = ({
             <div className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Valor da Meta (80%)</p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">
+                    Valor da Meta (80%)
+                  </p>
                   <p className="text-base md:text-2xl font-bold text-gray-900">
                     {formataDinheiro(metaTicket)}
                   </p>
                 </div>
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Recebido até agora</p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">
+                    Recebido até agora
+                  </p>
                   <p className="text-base md:text-2xl font-bold text-gray-900">
                     {formataDinheiro(recebidoMes)}
                   </p>
                 </div>
               </div>
-              
+
               <div className="space-y-2 md:space-y-3">
                 <div className="flex justify-between items-center">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Progresso da Meta</p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">
+                    Progresso da Meta
+                  </p>
                   <p className="text-xs md:text-sm font-medium text-gray-700">
-                    {Math.round(progressoTicket * 100)}%
+                    {progressoTicket.toFixed(2)}%
                   </p>
                 </div>
-                <Progress 
-                  value={progressoTicket * 100} 
+                <Progress
+                  value={progressoTicket}
                   className={cn(
                     "h-2 md:h-3 rounded-full bg-gray-100",
                     getProgressColor(metaTicketBatida, passouDia15)
@@ -155,20 +138,28 @@ const MetaAlimentacao = ({
               <div className="space-y-2 md:space-y-3">
                 <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-gray-500">Valor Restante</p>
+                    <p className="text-xs md:text-sm font-medium text-gray-500">
+                      Valor Restante
+                    </p>
                     <p className="text-sm md:text-lg font-semibold text-gray-900">
-                      {formataDinheiro(metaTicket - recebidoMes)}
+                      {formataDinheiro(Math.max(0, metaTicket - recebidoMes))}
                     </p>
                   </div>
                   <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-gray-500">Por Dia até o Dia 15</p>
+                    <p className="text-xs md:text-sm font-medium text-gray-500">
+                      Por Dia até o Dia 15
+                    </p>
                     <p className="text-sm md:text-lg font-semibold text-gray-900">
-                      {formataDinheiro((metaTicket - recebidoMes) / diasUteisAte15)}
+                      {formataDinheiro(
+                        diasUteisAte15 > 0
+                          ? (metaTicket - recebidoMes) / diasUteisAte15
+                          : 0
+                      )}
                     </p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="pt-2 md:pt-3 border-t">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 md:gap-2">
@@ -182,11 +173,11 @@ const MetaAlimentacao = ({
                       </div>
                     )}
                     <span className="text-xs md:text-sm font-medium">
-                      {metaTicketBatida 
-                        ? "Meta atingida! Vale alimentação garantido" 
-                        : passouDia15 
-                          ? "Meta não atingida no prazo" 
-                          : "Meta em andamento"}
+                      {metaTicketBatida
+                        ? "Meta atingida! Vale alimentação garantido"
+                        : passouDia15
+                        ? "Meta não atingida no prazo"
+                        : "Meta em andamento"}
                     </span>
                   </div>
                 </div>
@@ -194,7 +185,7 @@ const MetaAlimentacao = ({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
           <div className="h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
           <CardHeader className="pb-2">
@@ -214,51 +205,59 @@ const MetaAlimentacao = ({
                     Dias Úteis Restantes até o dia 15
                   </p>
                   <div className="bg-blue-50 rounded-lg p-2 md:p-4 flex justify-center items-center">
-                    <p className="text-xl md:text-3xl font-bold text-blue-700">{diasUteisAte15}</p>
+                    <p className="text-xl md:text-3xl font-bold text-blue-700">
+                      {diasUteisAte15}
+                    </p>
                   </div>
                 </div>
-                
                 <div className="space-y-1 md:space-y-2">
                   <p className="text-xs md:text-sm font-medium text-gray-500">
                     Status do Período
                   </p>
-                  <div className={cn(
-                    "rounded-lg p-2 md:p-4 flex justify-center items-center",
-                    passouDia15 ? "bg-red-50" : "bg-amber-50"
-                  )}>
-                    <p className={cn(
-                      "text-sm md:text-lg font-semibold",
-                      passouDia15 ? "text-red-700" : "text-amber-700"
-                    )}>
+                  <div
+                    className={cn(
+                      "rounded-lg p-2 md:p-4 flex justify-center items-center",
+                      passouDia15 ? "bg-red-50" : "bg-amber-50"
+                    )}
+                  >
+                    <p
+                      className={cn(
+                        "text-sm md:text-lg font-semibold",
+                        passouDia15 ? "text-red-700" : "text-amber-700"
+                      )}
+                    >
                       {passouDia15 ? "Período encerrado" : "Em andamento"}
                     </p>
                   </div>
                 </div>
               </div>
-              
               <div className="pt-2 md:pt-4 space-y-2 md:space-y-3">
                 <div className="flex justify-between items-center">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Dia Atual</p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">
+                    Dia Atual
+                  </p>
                   <p className="text-xs md:text-sm font-medium text-gray-700">
                     {new Date().getDate()}
                   </p>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-1.5 md:h-2">
-                  <div 
-                    className="bg-blue-500 h-1.5 md:h-2 rounded-full" 
-                    style={{ 
-                      width: `${Math.min(100, (new Date().getDate() / 15) * 100)}%` 
+                  <div
+                    className="bg-blue-500 h-1.5 md:h-2 rounded-full"
+                    style={{
+                      width: `${Math.min(100, (new Date().getDate() / 15) * 100)}%`,
                     }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500 text-right">Dias até 15 do mês</p>
+                <p className="text-xs text-gray-500 text-right">
+                  Dias até 15 do mês
+                </p>
               </div>
-              
               <div className="pt-2 md:pt-3 border-t">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 md:gap-2">
                     <span className="text-xs md:text-sm font-medium text-blue-600">
-                      Meta: 80% de "A Receber" ({formataDinheiro(aReceber)}) = {formataDinheiro(metaTicket)}
+                      Meta: 80% de "A Receber" ({formataDinheiro(aReceber)}) ={" "}
+                      {formataDinheiro(metaTicket)}
                     </span>
                   </div>
                 </div>
