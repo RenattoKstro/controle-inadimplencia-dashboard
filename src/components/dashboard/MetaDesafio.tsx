@@ -41,7 +41,7 @@ const calcularProgressoDiario = (recebidoHoje: number, valorPorDia: number): num
   if (typeof valorPorDia !== "number" || valorPorDia <= 0) return 0;
   if (typeof recebidoHoje !== "number" || isNaN(recebidoHoje)) return 0;
   const progresso = (recebidoHoje / valorPorDia) * 100;
-  console.log(`Calculando progresso diário: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=${progresso}%`);
+  console.log(`Calculando progresso diário no Meta Desafio: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=${progresso}%`);
   return progresso; // Permite progresso > 100%
 };
 
@@ -50,19 +50,17 @@ const MetaDesafio = ({
   updateUserData,
   isLoading,
   diasRestantesCalculados,
-  recebidoHoje = 0,
+  recebidoHoje = 0, // Valor vindo de MetaFiado ou outro contexto
 }: DashboardProps & { recebidoHoje?: number }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
   const isMobile = useIsMobile();
 
-  // Sincroniza o valor de diasRestantes com userData.dias_restantes
   const [diasRestantes, setDiasRestantes] = useState(
     userData?.dias_restantes || diasRestantesCalculados || 1
   );
 
   useEffect(() => {
-    // Atualiza diasRestantes sempre que userData.dias_restantes mudar
     if (userData?.dias_restantes !== undefined) {
       setDiasRestantes(userData.dias_restantes);
     }
@@ -89,14 +87,14 @@ const MetaDesafio = ({
 
   let progresso = 0;
   if (vencidoAtual > 0 && metaDesafioValor > 0) {
-    progresso = (metaDesafioValor / vencidoAtual); // Fórmula: Meta / Vencido Atual
+    progresso = (metaDesafioValor / vencidoAtual);
     console.log(`Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado: ${progresso * 100}%`);
   }
 
   const progressoPercentual = progresso * 100;
   const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
-  const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia);
+  const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia); // Vinculado ao recebidoHoje da guia
 
   const handleSave = () => {
     updateUserData({ meta_desafio: metaDesafio });
@@ -207,7 +205,7 @@ const MetaDesafio = ({
             <div
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
-                width: `${Math.min(progressoPercentual, 100)}%`, // Limite visual na barra
+                width: `${Math.min(progressoPercentual, 100)}%`,
                 background:
                   "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -257,7 +255,7 @@ const MetaDesafio = ({
                   <div
                     className="h-full rounded-full transition-all duration-500 ease-in-out"
                     style={{
-                      width: `${Math.min(progressoDiario, 100)}%`, // Limite visual na barra
+                      width: `${Math.min(progressoDiario, 100)}%`,
                       background:
                         "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                       boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
