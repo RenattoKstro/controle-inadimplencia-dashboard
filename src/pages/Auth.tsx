@@ -40,10 +40,18 @@ const Auth = () => {
         description: "Verifique sua caixa de entrada para confirmar seu email.",
       });
     } catch (error: any) {
-      setErrorMessage(error.message || "Ocorreu um erro ao reenviar o email.");
+      console.error('Erro ao reenviar email:', error);
+      
+      // Handle network errors specifically
+      let errorMsg = error.message || "Ocorreu um erro ao reenviar o email.";
+      if (error.message === "Failed to fetch") {
+        errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet.";
+      }
+      
+      setErrorMessage(errorMsg);
       toast({
         title: "Erro",
-        description: error.message || "Ocorreu um erro ao reenviar o email.",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -95,10 +103,18 @@ const Auth = () => {
         });
       }
     } catch (error: any) {
-      setErrorMessage(error.message);
+      console.error('Erro durante autenticação:', error);
+      
+      // Provide a more user-friendly message for network errors
+      let errorMsg = error.message;
+      if (error.message === "Failed to fetch") {
+        errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet.";
+      }
+      
+      setErrorMessage(errorMsg);
       toast({
         title: "Erro",
-        description: error.message || "Ocorreu um erro durante a autenticação.",
+        description: errorMsg || "Ocorreu um erro durante a autenticação.",
         variant: "destructive",
       });
     } finally {
