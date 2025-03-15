@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +17,38 @@ const Auth = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+      } finally {
+        setIsCheckingSession(false);
+      }
+    };
+
+    checkSession();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        navigate("/dashboard");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const resetError = () => {
     setErrorMessage("");
@@ -28,7 +58,7 @@ const Auth = () => {
   const handleConnectionError = (error: any) => {
     console.error('Erro de conexão:', error);
     
-    let errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet.";
+    let errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet e tente novamente.";
     
     if (retryCount > 0) {
       errorMsg += ` Tentativa ${retryCount} de conexão falhou.`;
@@ -60,8 +90,12 @@ const Auth = () => {
     } catch (error: any) {
       console.error('Erro ao reenviar email:', error);
       
-      // Handle network errors specifically
-      if (error.message === "Failed to fetch") {
+      if (!navigator.onLine) {
+        handleConnectionError({ message: "Browser is offline" });
+        return;
+      }
+      
+      if (error.message === "Failed to fetch" || error.__isAuthError) {
         handleConnectionError(error);
         setRetryCount(prev => prev + 1);
       } else {
@@ -83,12 +117,22 @@ const Auth = () => {
     setIsLoading(true);
     resetError();
     
+    // First check if browser is online
+    if (!navigator.onLine) {
+      handleConnectionError({ message: "Browser is offline" });
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log("Attempting login with:", { email });
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
+        
+        console.log("Login response:", { data, error });
         
         if (error) {
           if (error.message === "Invalid login credentials") {
@@ -105,12 +149,18 @@ const Auth = () => {
           description: "Bem-vindo ao Dashboard de Controle de Inadimplência.",
         });
         
-        navigate("/dashboard");
+        // Navigation is handled by the useEffect listener for auth state changes
       } else {
-        const { error } = await supabase.auth.signUp({
+        console.log("Attempting signup with:", { email });
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: window.location.origin + '/auth'
+          }
         });
+        
+        console.log("Signup response:", { data, error });
         
         if (error) throw error;
         
@@ -124,8 +174,7 @@ const Auth = () => {
     } catch (error: any) {
       console.error('Erro durante autenticação:', error);
       
-      // Handle connection errors
-      if (error.message === "Failed to fetch") {
+      if (error.message === "Failed to fetch" || error.__isAuthError) {
         handleConnectionError(error);
         setRetryCount(prev => prev + 1);
       } else {
@@ -141,6 +190,17 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while checking session
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="w-full max-w-md shadow-lg p-8 text-center">
+          <div className="animate-pulse">Verificando sessão...</div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
@@ -168,7 +228,7 @@ const Auth = () => {
                   {isEmailSent ? "Email reenviado!" : "Reenviar email de confirmação"}
                 </Button>
               )}
-              {errorMessage.includes("conexão") && retryCount > 0 && (
+              {errorMessage.includes("conexão") && (
                 <Button 
                   variant="link" 
                   className="p-0 h-auto text-amber-800 underline mt-2" 

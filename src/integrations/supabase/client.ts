@@ -9,6 +9,7 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Create the Supabase client with enhanced configuration
 export const supabase = createClient<Database>(
   SUPABASE_URL, 
   SUPABASE_PUBLISHABLE_KEY,
@@ -17,17 +18,23 @@ export const supabase = createClient<Database>(
       autoRefreshToken: true,
       persistSession: true,
       storageKey: 'supabase_auth_token',
+      detectSessionInUrl: true, // Automatically detects OAuth session in URL
+      flowType: 'implicit', // Required for implicit flow
     },
     global: {
-      fetch: fetch,
       headers: {
         'x-application-name': 'controle-inadimplencia',
+        'Content-Type': 'application/json',
       },
+      // Avoid using custom fetch implementations
     },
     realtime: {
       params: {
         eventsPerSecond: 10,
       },
+    },
+    db: {
+      schema: 'public',
     },
   }
 );
