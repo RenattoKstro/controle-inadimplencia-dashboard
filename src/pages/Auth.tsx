@@ -16,12 +16,30 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isEmailSent, setIsEmailSent] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const resetError = () => {
     setErrorMessage("");
     setIsEmailSent(false);
+  };
+
+  const handleConnectionError = (error: any) => {
+    console.error('Erro de conexão:', error);
+    
+    let errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet.";
+    
+    if (retryCount > 0) {
+      errorMsg += ` Tentativa ${retryCount} de conexão falhou.`;
+    }
+    
+    setErrorMessage(errorMsg);
+    toast({
+      title: "Erro de conexão",
+      description: errorMsg,
+      variant: "destructive",
+    });
   };
 
   const handleResendConfirmation = async () => {
@@ -43,17 +61,18 @@ const Auth = () => {
       console.error('Erro ao reenviar email:', error);
       
       // Handle network errors specifically
-      let errorMsg = error.message || "Ocorreu um erro ao reenviar o email.";
       if (error.message === "Failed to fetch") {
-        errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet.";
+        handleConnectionError(error);
+        setRetryCount(prev => prev + 1);
+      } else {
+        let errorMsg = error.message || "Ocorreu um erro ao reenviar o email.";
+        setErrorMessage(errorMsg);
+        toast({
+          title: "Erro",
+          description: errorMsg,
+          variant: "destructive",
+        });
       }
-      
-      setErrorMessage(errorMsg);
-      toast({
-        title: "Erro",
-        description: errorMsg,
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -105,18 +124,19 @@ const Auth = () => {
     } catch (error: any) {
       console.error('Erro durante autenticação:', error);
       
-      // Provide a more user-friendly message for network errors
-      let errorMsg = error.message;
+      // Handle connection errors
       if (error.message === "Failed to fetch") {
-        errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet.";
+        handleConnectionError(error);
+        setRetryCount(prev => prev + 1);
+      } else {
+        // Handle other errors
+        setErrorMessage(error.message);
+        toast({
+          title: "Erro",
+          description: error.message || "Ocorreu um erro durante a autenticação.",
+          variant: "destructive",
+        });
       }
-      
-      setErrorMessage(errorMsg);
-      toast({
-        title: "Erro",
-        description: errorMsg || "Ocorreu um erro durante a autenticação.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -146,6 +166,16 @@ const Auth = () => {
                   disabled={isLoading || isEmailSent}
                 >
                   {isEmailSent ? "Email reenviado!" : "Reenviar email de confirmação"}
+                </Button>
+              )}
+              {errorMessage.includes("conexão") && retryCount > 0 && (
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-amber-800 underline mt-2" 
+                  onClick={handleAuth}
+                  disabled={isLoading}
+                >
+                  Tentar novamente
                 </Button>
               )}
             </Alert>

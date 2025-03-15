@@ -17,6 +17,17 @@ export const supabase = createClient<Database>(
       autoRefreshToken: true,
       persistSession: true,
       storageKey: 'supabase_auth_token',
-    }
+    },
+    global: {
+      fetch: fetch,
+      headers: {
+        'x-application-name': 'controle-inadimplencia',
+      },
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
   }
 );
