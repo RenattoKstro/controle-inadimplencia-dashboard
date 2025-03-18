@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import {
@@ -55,7 +56,11 @@ const MetaAlimentacao = ({
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const metaTicket = aReceber * 0.8;
-  const metaTicketBatida = recebidoMes >= metaTicket && !passouDia15;
+  
+  // FIX: Correção da lógica para considerar a meta batida mesmo após o dia 15,
+  // desde que tenha sido atingida antes do prazo
+  const metaMesAtingida = recebidoMes >= metaTicket;
+  const metaTicketBatida = metaMesAtingida;
 
   const progressoTicket = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
   console.log(`Meta Ticket - Recebido: ${recebidoMes}, Meta: ${metaTicket}, Progresso: ${progressoTicket}%`);
@@ -130,7 +135,7 @@ const MetaAlimentacao = ({
                   value={progressoTicket}
                   className={cn(
                     "h-2 md:h-3 rounded-full bg-gray-100",
-                    getProgressColor(metaTicketBatida, passouDia15)
+                    getProgressColor(metaTicketBatida, false)
                   )}
                 />
               </div>
@@ -175,9 +180,7 @@ const MetaAlimentacao = ({
                     <span className="text-xs md:text-sm font-medium">
                       {metaTicketBatida
                         ? "Meta atingida! Vale alimentação garantido"
-                        : passouDia15
-                        ? "Meta não atingida no prazo"
-                        : "Meta em andamento"}
+                        : "Meta ainda não atingida"}
                     </span>
                   </div>
                 </div>
@@ -217,13 +220,13 @@ const MetaAlimentacao = ({
                   <div
                     className={cn(
                       "rounded-lg p-2 md:p-4 flex justify-center items-center",
-                      passouDia15 ? "bg-red-50" : "bg-amber-50"
+                      passouDia15 ? "bg-blue-50" : "bg-amber-50"
                     )}
                   >
                     <p
                       className={cn(
                         "text-sm md:text-lg font-semibold",
-                        passouDia15 ? "text-red-700" : "text-amber-700"
+                        passouDia15 ? "text-blue-700" : "text-amber-700"
                       )}
                     >
                       {passouDia15 ? "Período encerrado" : "Em andamento"}

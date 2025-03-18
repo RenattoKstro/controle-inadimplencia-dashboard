@@ -132,7 +132,10 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
     const metaAlimentacao = aReceber * 0.8;
     const recebido = userData.abertura_vencido_mes - userData.vencido_atual;
-    const metaAlimentacaoBatida = recebido >= metaAlimentacao && !isPastDay15();
+    
+    // FIX: Correção da lógica - agora apenas verifica se o valor recebido atingiu a meta,
+    // sem considerar a data
+    const metaAlimentacaoBatida = recebido >= metaAlimentacao;
     
     const premioAlimentacaoData = [
       { nome: "80% até o dia 15", percentual: 80, valor: 100.00, atingido: metaAlimentacaoBatida, icon: <Utensils size={16} />, color: "text-green-500" },
