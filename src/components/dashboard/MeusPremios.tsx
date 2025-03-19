@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -102,29 +101,21 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     let metaAtingidaPercentual = 0;
 
     if (totalFiado > 0) {
-      // Se vencido_atual <= meta_mes, a meta foi atingida ou superada
-      if (userData.vencido_atual <= userData.meta_mes) {
-        metaAtingidaPercentual = (recebidoMes / totalFiado) * 100;
-      } else {
-        // Caso contrário, calcula o progresso parcial
-        metaAtingidaPercentual = (recebidoMes / totalFiado) * 100;
-      }
+      metaAtingidaPercentual = (recebidoMes / totalFiado) * 100;
       console.log(`Meta Fiado: Recebido Mes = ${recebidoMes}, Total Fiado = ${totalFiado}, Meta Atingida Percentual = ${metaAtingidaPercentual.toFixed(2)}%`);
     }
 
     // Garante que o percentual não seja negativo
     metaAtingidaPercentual = Math.max(0, metaAtingidaPercentual);
 
-    // Correção da lógica para verificar se a meta foi atingida
-    // Agora usamos >= para cada percentual exato (sem arredondamentos)
     const premiosFiadoData = [
-      { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentual >= 94 && metaAtingidaPercentual < 96, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "96%", percentual: 96, valor: 63.00, atingido: metaAtingidaPercentual >= 96 && metaAtingidaPercentual < 98, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "98%", percentual: 98, valor: 84.00, atingido: metaAtingidaPercentual >= 98 && metaAtingidaPercentual < 99, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "99%", percentual: 99, valor: 94.50, atingido: metaAtingidaPercentual >= 99 && metaAtingidaPercentual < 100, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "100%", percentual: 100, valor: 241.50, atingido: metaAtingidaPercentual >= 100 && metaAtingidaPercentual < 101, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "101%", percentual: 101, valor: 84.00, atingido: metaAtingidaPercentual >= 101 && metaAtingidaPercentual < 103, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "103%", percentual: 103, valor: 84.00, atingido: metaAtingidaPercentual >= 103 && metaAtingidaPercentual < 105, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentual >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "96%", percentual: 96, valor: 63.00, atingido: metaAtingidaPercentual >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "98%", percentual: 98, valor: 84.00, atingido: metaAtingidaPercentual >= 98, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "99%", percentual: 99, valor: 94.50, atingido: metaAtingidaPercentual >= 99, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "100%", percentual: 100, valor: 241.50, atingido: metaAtingidaPercentual >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "101%", percentual: 101, valor: 84.00, atingido: metaAtingidaPercentual >= 101, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "103%", percentual: 103, valor: 84.00, atingido: metaAtingidaPercentual >= 103, icon: <Wallet size={16} />, color: "text-blue-500" },
       { nome: "105%", percentual: 105, valor: 84.00, atingido: metaAtingidaPercentual >= 105, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
 
@@ -149,10 +140,9 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     
     metaDesafioPercentual = Math.max(0, Math.min(100, metaDesafioPercentual));
     
-    // Correção da lógica para verificar se a meta desafio foi atingida
     const premiosDesafioData = [
-      { nome: "96%", percentual: 96, valor: 200.00, atingido: metaDesafioPercentual >= 96 && metaDesafioPercentual < 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
-      { nome: "98%", percentual: 98, valor: 150.00, atingido: metaDesafioPercentual >= 98 && metaDesafioPercentual < 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "96%", percentual: 96, valor: 200.00, atingido: metaDesafioPercentual >= 96, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "98%", percentual: 98, valor: 150.00, atingido: metaDesafioPercentual >= 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
       { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentual >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
     
