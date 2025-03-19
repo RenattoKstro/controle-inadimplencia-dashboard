@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import {
@@ -44,6 +43,8 @@ const MetaAlimentacao = ({
   isLoading,
 }: DashboardProps) => {
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
+  const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
+  const [mesCongelado, setMesCongelado] = useState<number | null>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -52,18 +53,52 @@ const MetaAlimentacao = ({
   }, [userData.dias_restantes, diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
+  const today = new Date();
+  const mesAtual = today.getMonth();
 
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const metaTicket = aReceber * 0.8;
-  
+
+  // Cálculo do progresso atual
+  const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
+  console.log(`Meta Ticket - Recebido: ${recebidoMes}, Meta: ${metaTicket}, Progresso Atual: ${progressoTicketAtual}%`);
+
+  // Determinar o progresso a ser exibido
+  let progressoExibido: number;
+
+  useEffect(() => {
+    // Se o mês mudou desde o último congelamento, resetar o progresso congelado
+    if (mesCongelado !== null && mesCongelado !== mesAtual) {
+      setProgressoCongelado(null);
+      setMesCongelado(null);
+      console.log(`[MetaAlimentacao] Mês mudou (de ${mesCongelado} para ${mesAtual}). Resetando progresso congelado.`);
+    }
+
+    // Se estamos no dia 15 ou após, e ainda não congelamos o progresso, congelar
+    if (passouDia15 && progressoCongelado === null) {
+      const progressoNoDia15 = Math.min(100, progressoTicketAtual); // Limitar a 100%
+      setProgressoCongelado(progressoNoDia15);
+      setMesCongelado(mesAtual);
+      console.log(`[MetaAlimentacao] Congelando progresso no dia 15: ${progressoNoDia15}% (Mês: ${mesAtual})`);
+    }
+  }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado]);
+
+  // Determinar o progresso a ser exibido
+  if (progressoCongelado !== null) {
+    // Se o progresso foi congelado, usar o valor congelado
+    progressoExibido = progressoCongelado;
+    console.log(`[MetaAlimentacao] Usando progresso congelado: ${progressoExibido}%`);
+  } else {
+    // Caso contrário, usar o progresso atual, limitado a 100%
+    progressoExibido = Math.min(100, progressoTicketAtual);
+    console.log(`[MetaAlimentacao] Usando progresso atual: ${progressoExibido}%`);
+  }
+
   // FIX: Correção da lógica para considerar a meta batida mesmo após o dia 15,
   // desde que tenha sido atingida antes do prazo
   const metaMesAtingida = recebidoMes >= metaTicket;
   const metaTicketBatida = metaMesAtingida;
-
-  const progressoTicket = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
-  console.log(`Meta Ticket - Recebido: ${recebidoMes}, Meta: ${metaTicket}, Progresso: ${progressoTicket}%`);
 
   if (isLoading) {
     return (
@@ -128,14 +163,14 @@ const MetaAlimentacao = ({
                     Progresso da Meta
                   </p>
                   <p className="text-xs md:text-sm font-medium text-gray-700">
-                    {progressoTicket.toFixed(2)}%
+                    {progressoExibido.toFixed(2)}%
                   </p>
                 </div>
                 <Progress
-                  value={progressoTicket}
+                  value={progressoExibido}
                   className={cn(
                     "h-2 md:h-3 rounded-full bg-gray-100",
-                    getProgressColor(metaTicketBatida, false)
+                    getProgressColor(metaTicketBatida, passouDia15)
                   )}
                 />
               </div>
