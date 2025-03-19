@@ -7,7 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card"; // Ajuste o caminho conforme necessário
+} from "../../components/ui/card";
 import { Trophy, Target, Calculator } from "lucide-react";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
@@ -95,16 +95,28 @@ const MetaDesafio = ({
   const vencidoAtual = Number(userData?.vencido_atual) || 0;
   const metaDesafioValor = Number(userData?.meta_desafio) || 0;
 
-  // Correção no cálculo do progresso da Meta Desafio
+  // Corrigindo o cálculo do progresso da Meta Desafio
   let progresso = 0;
-  if (vencidoAtual > 0 && metaDesafioValor > 0) {
-    // Corrigindo para cálculo correto: quanto o vencido atual foi reduzido para a meta desafio
-    const valorReduzido = vencidoAtual - metaDesafioValor;
-    progresso = valorReduzido / vencidoAtual;
-    console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Valor Reduzido: ${valorReduzido}, Progresso Calculado: ${progresso * 100}%`);
+  
+  if (metaDesafioValor > 0) {
+    // Se vencido atual é menor que meta desafio, meta já foi atingida
+    if (vencidoAtual <= metaDesafioValor) {
+      progresso = 100; // 100% de progresso
+    } else {
+      // Caso contrário, calcula o percentual de redução necessário
+      const valorInicial = metaDesafioValor * 2 - vencidoAtual; // Estimativa do valor inicial
+      const valorReduzido = valorInicial - vencidoAtual;
+      const valorAReduzir = valorInicial - metaDesafioValor;
+      
+      if (valorAReduzir > 0) {
+        progresso = (valorReduzido / valorAReduzir) * 100;
+      }
+    }
+    
+    console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado: ${progresso}%`);
   }
 
-  const progressoPercentual = progresso * 100;
+  const progressoPercentual = Math.max(0, Math.min(100, progresso)); // Limita entre 0 e 100%
   const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
   const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia);
@@ -218,7 +230,7 @@ const MetaDesafio = ({
             <div
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
-                width: `${Math.min(progressoPercentual, 100)}%`,
+                width: `${progressoPercentual}%`,
                 background:
                   "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",

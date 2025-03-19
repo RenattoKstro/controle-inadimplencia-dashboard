@@ -108,6 +108,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       console.log(`Meta Fiado: Meta atingida percentual = ${metaAtingidaPercentual}%`);
     }
     
+    // Corrigindo a verificação para premios de Meta Fiado
     const premiosFiadoData = [
       { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentual >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
       { nome: "96%", percentual: 96, valor: 63.00, atingido: metaAtingidaPercentual >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
@@ -120,17 +121,30 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     ];
     
     // Cálculos para Meta Desafio
-    // Corrigindo: Meta desafio é quanto do valor atual foi reduzido em relação à meta de desafio
+    // Corrigindo o cálculo da meta desafio para usar a mesma lógica da visualização
     let metaDesafioPercentual = 0;
     
     if (userData.meta_desafio > 0) {
-      // O cálculo correto: quanto do vencido foi reduzido para a meta desafio
-      const valorReduzido = userData.vencido_atual - userData.meta_desafio;
-      const percentualReducao = valorReduzido / userData.vencido_atual * 100;
-      metaDesafioPercentual = percentualReducao;
+      // Verificar se a meta já foi atingida
+      if (userData.vencido_atual <= userData.meta_desafio) {
+        metaDesafioPercentual = 100; // 100% de progresso
+      } else {
+        // Estimar um valor inicial baseado na distância entre atual e meta
+        const valorInicial = userData.meta_desafio * 2 - userData.vencido_atual;
+        const valorReduzido = valorInicial - userData.vencido_atual;
+        const valorAReduzir = valorInicial - userData.meta_desafio;
+        
+        if (valorAReduzir > 0) {
+          metaDesafioPercentual = (valorReduzido / valorAReduzir) * 100;
+        }
+      }
+      
       console.log(`Meta Desafio: Vencido Atual = ${userData.vencido_atual}, Meta Desafio = ${userData.meta_desafio}`);
-      console.log(`Meta Desafio: Valor Reduzido = ${valorReduzido}, Percentual = ${metaDesafioPercentual}%`);
+      console.log(`Meta Desafio: Percentual Calculado = ${metaDesafioPercentual}%`);
     }
+    
+    // Limitar entre 0 e 100% para os cálculos de prêmios
+    metaDesafioPercentual = Math.max(0, Math.min(100, metaDesafioPercentual));
     
     const premiosDesafioData = [
       { nome: "96%", percentual: 96, valor: 200.00, atingido: metaDesafioPercentual >= 96, icon: <Trophy size={16} />, color: "text-yellow-500" },
