@@ -101,9 +101,12 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     
     // Para Meta Fiado, calculamos a porcentagem de redução do valor inicial para a meta
     const totalFiado = userData.abertura_vencido_mes - userData.meta_mes;
-    const metaAtingidaPercentual = totalFiado > 0 
-      ? (recebidoMes / totalFiado) * 100
-      : 0;
+    let metaAtingidaPercentual = 0;
+    
+    if (totalFiado > 0) {
+      metaAtingidaPercentual = (recebidoMes / totalFiado) * 100;
+      console.log(`Meta Fiado: Meta atingida percentual = ${metaAtingidaPercentual}%`);
+    }
     
     const premiosFiadoData = [
       { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentual >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
@@ -117,10 +120,17 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     ];
     
     // Cálculos para Meta Desafio
-    // Meta desafio é o valor atual reduzido para a meta de desafio
-    const metaDesafioPercentual = (userData.vencido_atual > 0 && userData.meta_desafio > 0)
-      ? ((userData.vencido_atual - userData.meta_desafio) / userData.vencido_atual) * 100
-      : 0;
+    // Corrigindo: Meta desafio é quanto do valor atual foi reduzido em relação à meta de desafio
+    let metaDesafioPercentual = 0;
+    
+    if (userData.meta_desafio > 0) {
+      // O cálculo correto: quanto do vencido foi reduzido para a meta desafio
+      const valorReduzido = userData.vencido_atual - userData.meta_desafio;
+      const percentualReducao = valorReduzido / userData.vencido_atual * 100;
+      metaDesafioPercentual = percentualReducao;
+      console.log(`Meta Desafio: Vencido Atual = ${userData.vencido_atual}, Meta Desafio = ${userData.meta_desafio}`);
+      console.log(`Meta Desafio: Valor Reduzido = ${valorReduzido}, Percentual = ${metaDesafioPercentual}%`);
+    }
     
     const premiosDesafioData = [
       { nome: "96%", percentual: 96, valor: 200.00, atingido: metaDesafioPercentual >= 96, icon: <Trophy size={16} />, color: "text-yellow-500" },

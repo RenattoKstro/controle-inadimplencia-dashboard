@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import {
@@ -94,10 +95,13 @@ const MetaDesafio = ({
   const vencidoAtual = Number(userData?.vencido_atual) || 0;
   const metaDesafioValor = Number(userData?.meta_desafio) || 0;
 
+  // Correção no cálculo do progresso da Meta Desafio
   let progresso = 0;
   if (vencidoAtual > 0 && metaDesafioValor > 0) {
-    progresso = (metaDesafioValor / vencidoAtual);
-    console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado: ${progresso * 100}%`);
+    // Corrigindo para cálculo correto: quanto o vencido atual foi reduzido para a meta desafio
+    const valorReduzido = vencidoAtual - metaDesafioValor;
+    progresso = valorReduzido / vencidoAtual;
+    console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Valor Reduzido: ${valorReduzido}, Progresso Calculado: ${progresso * 100}%`);
   }
 
   const progressoPercentual = progresso * 100;
