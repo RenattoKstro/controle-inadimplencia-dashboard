@@ -8,7 +8,7 @@ interface ErrorMessageProps {
   isLoading: boolean;
   isEmailSent: boolean;
   handleResendConfirmation: () => void;
-  handleRetry: () => void;
+  handleRetry: (e: React.FormEvent) => void | Promise<void>;
 }
 
 export const ErrorMessage = ({
@@ -38,7 +38,7 @@ export const ErrorMessage = ({
         <Button 
           variant="link" 
           className="p-0 h-auto text-amber-800 underline mt-2" 
-          onClick={handleRetry}
+          onClick={(e) => handleRetry(e)}
           disabled={isLoading}
         >
           Tentar novamente

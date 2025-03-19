@@ -46,7 +46,7 @@ const Auth = () => {
             isLoading={isLoading}
             isEmailSent={isEmailSent}
             handleResendConfirmation={handleResendConfirmation}
-            handleRetry={(e) => handleAuth(e)}
+            handleRetry={handleAuth}
           />
           <EmailSentMessage 
             isEmailSent={isEmailSent} 
