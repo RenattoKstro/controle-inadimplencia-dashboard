@@ -86,17 +86,17 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   const isMobile = useIsMobile();
 
   // Cálculo ajustado para o progresso
-  const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  const totalFiado = userData.abertura_vencido_mes - userData.meta_mes;
   let percentageComplete = 0;
 
-  if (totalFiado > 0) {
-    percentageComplete = (recebidoMes / totalFiado) * 100;
-    console.log(`[MetaFiado] Meta Fiado - Recebido Mes: ${recebidoMes}, Total Fiado: ${totalFiado}, Progresso Calculado: ${percentageComplete.toFixed(2)}%`);
+  if (userData.vencido_atual > 0) {
+    percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
+    console.log(`[MetaFiado] Meta Fiado - Meta Mes: ${userData.meta_mes}, Vencido Atual: ${userData.vencido_atual}, Progresso Calculado: ${percentageComplete.toFixed(2)}%`);
+  } else {
+    console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
   }
 
   percentageComplete = Math.max(0, percentageComplete);
-  const isComplete = percentageComplete >= 100;
+  const isComplete = current <= target;
 
   return (
     <Card
@@ -149,7 +149,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
                 </>
               ) : (
                 <span className="text-blue-600 font-medium">
-                  Faltam {formatCurrency(totalFiado - recebidoMes)}
+                  Faltam {formatCurrency(current - target)}
                 </span>
               )}
             </div>
