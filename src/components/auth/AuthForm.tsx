@@ -9,7 +9,7 @@ interface AuthFormProps {
   setPassword: (password: string) => void;
   isLoading: boolean;
   isLogin: boolean;
-  handleAuth: (e: React.FormEvent) => void;
+  handleAuth: (e: React.FormEvent) => void | Promise<void>;
 }
 
 export const AuthForm = ({
