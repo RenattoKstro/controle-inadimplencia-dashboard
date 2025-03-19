@@ -94,16 +94,11 @@ const MetaDesafio = ({
   const vencidoAtual = Number(userData?.vencido_atual) || 0;
   const metaDesafioValor = Number(userData?.meta_desafio) || 0;
 
-  // Corrigindo o cálculo do progresso da Meta Desafio
+  // Novo cálculo do progresso da Meta Desafio usando a sua fórmula
   let progresso = 0;
 
-  if (metaDesafioValor > 0) {
-    if (vencidoAtual <= metaDesafioValor) {
-      progresso = 100; // 100% de progresso
-    } else {
-      // Nova fórmula: progresso = ((meta_desafio * 2 - vencido_atual) / meta_desafio) * 100
-      progresso = ((metaDesafioValor * 2 - vencidoAtual) / metaDesafioValor) * 100;
-    }
+  if (metaDesafioValor > 0 && vencidoAtual > 0) {
+    progresso = (metaDesafioValor / vencidoAtual) * 100;
     console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado (antes de arredondar): ${progresso}`);
     // Arredondar para evitar problemas de precisão
     progresso = Number(progresso.toFixed(2));
