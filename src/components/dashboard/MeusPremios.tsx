@@ -101,17 +101,14 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     if (userData.vencido_atual > 0) {
       metaAtingidaPercentual = (userData.meta_mes / userData.vencido_atual) * 100;
       console.log(`[MeusPremios] Meta Fiado - Meta Mes: ${userData.meta_mes}, Vencido Atual: ${userData.vencido_atual}, Meta Atingida Percentual (antes de arredondar): ${metaAtingidaPercentual}`);
-      // Arredondar para 2 casas decimais para evitar problemas de precisão
       metaAtingidaPercentual = Number(metaAtingidaPercentual.toFixed(2));
       console.log(`[MeusPremios] Meta Fiado - Meta Atingida Percentual (após arredondar): ${metaAtingidaPercentual}%`);
     } else {
       console.log(`[MeusPremios] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
     }
 
-    // Garante que o percentual não seja negativo
     metaAtingidaPercentual = Math.max(0, metaAtingidaPercentual);
 
-    // Log para verificar quais prêmios serão marcados
     console.log(`[MeusPremios] Verificando prêmios - Meta Atingida Percentual: ${metaAtingidaPercentual}%`);
     const premiosFiadoData = [
       { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentual >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
@@ -124,57 +121,59 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       { nome: "105%", percentual: 105, valor: 84.00, atingido: metaAtingidaPercentual >= 105, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
 
-    // Log para verificar quais prêmios foram marcados
     premiosFiadoData.forEach(premio => {
       console.log(`[MeusPremios] Prêmio ${premio.nome} (${premio.percentual}%): Atingido = ${premio.atingido}`);
     });
 
     // Cálculos para Meta Desafio
     let metaDesafioPercentual = 0;
-    
+
     if (userData.meta_desafio > 0) {
       if (userData.vencido_atual <= userData.meta_desafio) {
         metaDesafioPercentual = 100; // 100% de progresso
       } else {
-        const valorInicial = userData.meta_desafio * 2 - userData.vencido_atual;
-        const valorReduzido = valorInicial - userData.vencido_atual;
-        const valorAReduzir = valorInicial - userData.meta_desafio;
-        
-        if (valorAReduzir > 0) {
-          metaDesafioPercentual = (valorReduzido / valorAReduzir) * 100;
-        }
+        // Nova fórmula: progresso = ((meta_desafio * 2 - vencido_atual) / meta_desafio) * 100
+        metaDesafioPercentual = ((userData.meta_desafio * 2 - userData.vencido_atual) / userData.meta_desafio) * 100;
       }
-      console.log(`[MeusPremios] Meta Desafio: Vencido Atual = ${userData.vencido_atual}, Meta Desafio = ${userData.meta_desafio}, Percentual Calculado = ${metaDesafioPercentual}%`);
+      console.log(`[MeusPremios] Meta Desafio - Vencido Atual: ${userData.vencido_atual}, Meta Desafio: ${userData.meta_desafio}, Percentual Calculado (antes de arredondar): ${metaDesafioPercentual}`);
+      // Arredondar para evitar problemas de precisão
+      metaDesafioPercentual = Number(metaDesafioPercentual.toFixed(2));
+      console.log(`[MeusPremios] Meta Desafio - Percentual Calculado (após arredondar): ${metaDesafioPercentual}%`);
     }
-    
+
     metaDesafioPercentual = Math.max(0, Math.min(100, metaDesafioPercentual));
-    
+
     const premiosDesafioData = [
       { nome: "96%", percentual: 96, valor: 200.00, atingido: metaDesafioPercentual >= 96, icon: <Trophy size={16} />, color: "text-yellow-500" },
       { nome: "98%", percentual: 98, valor: 150.00, atingido: metaDesafioPercentual >= 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
       { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentual >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
-    
+
+    // Log para verificar quais prêmios foram marcados
+    premiosDesafioData.forEach(premio => {
+      console.log(`[MeusPremios] Prêmio Meta Desafio ${premio.nome} (${premio.percentual}%): Atingido = ${premio.atingido}`);
+    });
+
     // Cálculos para Meta Vale Alimentação
     const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
     const metaAlimentacao = aReceber * 0.8;
     const recebido = userData.abertura_vencido_mes - userData.vencido_atual;
     const metaAlimentacaoBatida = recebido >= metaAlimentacao;
-    
+
     const premioAlimentacaoData = [
       { nome: "80% até o dia 15", percentual: 80, valor: 100.00, atingido: metaAlimentacaoBatida, icon: <Utensils size={16} />, color: "text-green-500" },
     ];
-    
+
     setPremiosFiado(premiosFiadoData);
     setPremiosDesafio(premiosDesafioData);
     setPremioAlimentacao(premioAlimentacaoData);
-    
+
     const totalFiadoPremios = premiosFiadoData.reduce((acc, premio) => acc + premio.valor, 0);
     const totalDesafio = premiosDesafioData.reduce((acc, premio) => acc + premio.valor, 0);
     const totalAlimentacao = premioAlimentacaoData.reduce((acc, premio) => acc + premio.valor, 0);
     setTotalPremios(totalFiadoPremios + totalDesafio + totalAlimentacao);
   }, [userData]);
-  
+
   const premiosFiadoGanhos = premiosFiado.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
   const premiosDesafioGanhos = premiosDesafio.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
   const premiosAlimentacaoGanhos = premioAlimentacao.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
