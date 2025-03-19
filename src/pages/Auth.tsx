@@ -46,11 +46,7 @@ const Auth = () => {
             isLoading={isLoading}
             isEmailSent={isEmailSent}
             handleResendConfirmation={handleResendConfirmation}
-            handleRetry={(e) => {
-              // Fix to ensure we handle both void and Promise<void> returns
-              const result = handleAuth(e);
-              // TypeScript will no longer complain because we're not directly returning the Promise
-            }}
+            handleRetry={(e) => handleAuth(e)}
           />
           <EmailSentMessage 
             isEmailSent={isEmailSent} 

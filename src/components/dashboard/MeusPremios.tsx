@@ -108,7 +108,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       console.log(`Meta Fiado: Meta atingida percentual = ${metaAtingidaPercentual}%`);
     }
     
-    // Corrigindo a verificação para premios de Meta Fiado
+    // Fixing the Meta Fiado prize calculation logic to properly handle all percentage levels
     const premiosFiadoData = [
       { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentual >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
       { nome: "96%", percentual: 96, valor: 63.00, atingido: metaAtingidaPercentual >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
