@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import {
@@ -74,7 +73,7 @@ const MetaDesafio = ({
       setDiasRestantes(userData.dias_restantes);
     }
     console.log(`[MetaDesafio] useEffect: diasRestantes atualizado para ${diasRestantes}, recebidoHoje=${recebidoHoje}`);
-  }, [userData?.dias_restantes, recebidoHoje]); // Adicionando recebidoHoje como dependência
+  }, [userData?.dias_restantes, recebidoHoje]);
 
   if (!userData) {
     return (
@@ -97,26 +96,21 @@ const MetaDesafio = ({
 
   // Corrigindo o cálculo do progresso da Meta Desafio
   let progresso = 0;
-  
+
   if (metaDesafioValor > 0) {
-    // Se vencido atual é menor que meta desafio, meta já foi atingida
     if (vencidoAtual <= metaDesafioValor) {
       progresso = 100; // 100% de progresso
     } else {
-      // Caso contrário, calcula o percentual de redução necessário
-      const valorInicial = metaDesafioValor * 2 - vencidoAtual; // Estimativa do valor inicial
-      const valorReduzido = valorInicial - vencidoAtual;
-      const valorAReduzir = valorInicial - metaDesafioValor;
-      
-      if (valorAReduzir > 0) {
-        progresso = (valorReduzido / valorAReduzir) * 100;
-      }
+      // Nova fórmula: progresso = ((meta_desafio * 2 - vencido_atual) / meta_desafio) * 100
+      progresso = ((metaDesafioValor * 2 - vencidoAtual) / metaDesafioValor) * 100;
     }
-    
-    console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado: ${progresso}%`);
+    console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado (antes de arredondar): ${progresso}`);
+    // Arredondar para evitar problemas de precisão
+    progresso = Number(progresso.toFixed(2));
+    console.log(`[MetaDesafio] Meta Desafio - Progresso Calculado (após arredondar): ${progresso}%`);
   }
 
-  const progressoPercentual = Math.max(0, Math.min(100, progresso)); // Limita entre 0 e 100%
+  const progressoPercentual = Math.max(0, Math.min(100, progresso)); // Limita entre 0 e 100% para a barra
   const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
   const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia);
@@ -217,7 +211,7 @@ const MetaDesafio = ({
           <div className="flex justify-between">
             <span className="text-sm font-medium">Progresso</span>
             <span className="text-sm font-medium">
-              {formatPercentage(progressoPercentual)}
+              {formatPercentage(progresso)} {/* Exibe o progresso real */}
             </span>
           </div>
           <div
@@ -230,7 +224,7 @@ const MetaDesafio = ({
             <div
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
-                width: `${progressoPercentual}%`,
+                width: `${progressoPercentual}%`, // Limita a barra a 100%
                 background:
                   "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
