@@ -156,7 +156,7 @@ const MetaDesafio = ({
               Meta Desafio
             </CardTitle>
             <CardDescription>
-              Acompanhe o seu progresso da Meta Desafio
+              Acompanhamento do Desafio
             </CardDescription>
           </div>
           {isEditing ? (
