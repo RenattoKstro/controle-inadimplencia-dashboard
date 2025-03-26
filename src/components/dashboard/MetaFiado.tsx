@@ -98,6 +98,26 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   percentageComplete = Math.max(0, percentageComplete);
   const isComplete = current <= target;
 
+  // Lista de percentuais alvo
+  const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
+
+  // Calcular os valores restantes para cada percentual
+  const valoresRestantes = percentuaisAlvo.map((percentual) => {
+    // Calcular o vencido_atual necessário para atingir o percentual
+    const vencidoNecessario = userData.meta_mes / (percentual / 100);
+    // Calcular a diferença (valor restante)
+    let diferenca = userData.vencido_atual - vencidoNecessario;
+    // Determinar se o percentual foi atingido
+    const atingido = percentageComplete >= percentual;
+    // Se atingido, a diferença é positiva; se não, é negativa
+    diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
+    return {
+      percentual,
+      diferenca,
+      atingido,
+    };
+  });
+
   return (
     <Card
       className={`shadow-sm hover:shadow transition-shadow duration-200 ${
@@ -139,6 +159,20 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             />
+          </div>
+          {/* Exibir os valores restantes para cada percentual */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {valoresRestantes.map(({ percentual, diferenca, atingido }) => (
+              <div
+                key={percentual}
+                className={cn(
+                  "text-xs font-medium",
+                  atingido ? "text-green-600" : "text-red-600"
+                )}
+              >
+                {percentual}%: {formatCurrency(diferenca)}
+              </div>
+            ))}
           </div>
           <div className="flex justify-end">
             <div className="flex items-center gap-1 text-sm">
