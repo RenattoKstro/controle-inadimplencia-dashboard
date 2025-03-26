@@ -12,6 +12,7 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Skeleton } from "../../components/ui/skeleton";
 import { useIsMobile } from "../../hooks/use-mobile";
+import { cn } from "../../lib/utils"; // Adicionar para usar a função cn
 
 const formatCurrency = (value: number): string => {
   if (typeof value !== "number" || isNaN(value)) return "R$ 0,00";
@@ -109,6 +110,26 @@ const MetaDesafio = ({
   const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
   const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia);
+
+  // Lista de percentuais alvo
+  const percentuaisAlvo = [96, 98, 100];
+
+  // Calcular os valores restantes para cada percentual
+  const valoresRestantes = percentuaisAlvo.map((percentual) => {
+    // Calcular o vencido_atual necessário para atingir o percentual
+    const vencidoNecessario = metaDesafioValor / (percentual / 100);
+    // Calcular a diferença (valor restante)
+    let diferenca = vencidoAtual - vencidoNecessario;
+    // Determinar se o percentual foi atingido
+    const atingido = progresso >= percentual;
+    // Se atingido, a diferença é positiva; se não, é negativa
+    diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
+    return {
+      percentual,
+      diferenca,
+      atingido,
+    };
+  });
 
   const handleSave = () => {
     updateUserData({ meta_desafio: metaDesafio });
@@ -225,6 +246,28 @@ const MetaDesafio = ({
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             />
+          </div>
+          {/* Exibir os valores restantes com separadores visuais */}
+          <div className="flex flex-wrap gap-4 mt-2 justify-center">
+            {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
+              <div
+                key={percentual}
+                className="flex items-center gap-2"
+              >
+                <div
+                  className={cn(
+                    "text-sm md:text-base font-medium",
+                    atingido ? "text-green-600" : "text-red-600"
+                  )}
+                >
+                  {percentual}%: {formatCurrency(diferenca)}
+                </div>
+                {/* Adicionar separador |, exceto no último item */}
+                {index < valoresRestantes.length - 1 && (
+                  <span className="text-gray-400">|</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
         <div
