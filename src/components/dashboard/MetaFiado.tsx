@@ -129,7 +129,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             {icon}
             {title}
           </CardTitle>
-          {/* Aumentar e centralizar o percentual principal */}
+          {/* Percentual principal centralizado e maior */}
           <div className="text-xl md:text-2xl font-bold text-gray-700">
             {percentageComplete.toFixed(2)}% concluído
           </div>
@@ -160,21 +160,28 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
               }}
             />
           </div>
-          {/* Exibir os valores restantes para cada percentual com fonte maior */}
-          <div className="flex flex-wrap gap-3 mt-2 justify-center">
-            {valoresRestantes.map(({ percentual, diferenca, atingido }) => (
+          {/* Exibir os valores restantes com separadores visuais */}
+          <div className="flex flex-wrap gap-4 mt-2 justify-center">
+            {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
               <div
                 key={percentual}
-                className={cn(
-                  "text-sm md:text-base font-medium", // Aumentar a fonte
-                  atingido ? "text-green-600" : "text-red-600"
-                )}
+                className="flex items-center gap-2"
               >
-                {percentual}%: {formatCurrency(diferenca)}
+                <div
+                  className={cn(
+                    "text-sm md:text-base font-medium",
+                    atingido ? "text-green-600" : "text-red-600"
+                  )}
+                >
+                  {percentual}%: {formatCurrency(diferenca)}
+                </div>
+                {/* Adicionar separador |, exceto no último item */}
+                {index < valoresRestantes.length - 1 && (
+                  <span className="text-gray-400">|</span>
+                )}
               </div>
             ))}
           </div>
-          {/* Removido o trecho "Faltam" */}
         </div>
       </CardContent>
     </Card>
