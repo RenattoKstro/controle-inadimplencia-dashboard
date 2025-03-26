@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calculator, Building, Wallet, AlertTriangle, ArrowDown, Check, Target } from "lucide-react";
+import { Calculator, Building, Wallet, ArrowDown, Check, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -96,7 +96,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   }
 
   percentageComplete = Math.max(0, percentageComplete);
-  const isComplete = current <= target;
 
   // Lista de percentuais alvo
   const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
@@ -125,17 +124,18 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       }`}
     >
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-center flex-wrap gap-2">
+        <div className="flex flex-col items-center gap-2">
           <CardTitle className="text-lg md:text-xl flex items-center gap-2">
             {icon}
             {title}
           </CardTitle>
-          <div className="text-sm font-medium">
+          {/* Aumentar e centralizar o percentual principal */}
+          <div className="text-xl md:text-2xl font-bold text-gray-700">
             {percentageComplete.toFixed(2)}% concluído
           </div>
         </div>
-        <CardDescription className="text-sm mt-1">
-          <div className="flex flex-col md:flex-row md:gap-4">
+        <CardDescription className="text-sm mt-1 text-center">
+          <div className="flex flex-col md:flex-row md:gap-4 justify-center">
             <span>Meta: {formatCurrency(target)}</span>
             <span>Atual: {formatCurrency(current)}</span>
           </div>
@@ -160,13 +160,13 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
               }}
             />
           </div>
-          {/* Exibir os valores restantes para cada percentual */}
-          <div className="flex flex-wrap gap-2 mt-2">
+          {/* Exibir os valores restantes para cada percentual com fonte maior */}
+          <div className="flex flex-wrap gap-3 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }) => (
               <div
                 key={percentual}
                 className={cn(
-                  "text-xs font-medium",
+                  "text-sm md:text-base font-medium", // Aumentar a fonte
                   atingido ? "text-green-600" : "text-red-600"
                 )}
               >
@@ -174,20 +174,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
               </div>
             ))}
           </div>
-          <div className="flex justify-end">
-            <div className="flex items-center gap-1 text-sm">
-              {isComplete ? (
-                <>
-                  <span className="text-green-600 font-medium">Meta atingida!</span>
-                  <Check className="h-4 w-4 text-green-600" />
-                </>
-              ) : (
-                <span className="text-blue-600 font-medium">
-                  Faltam {formatCurrency(current - target)}
-                </span>
-              )}
-            </div>
-          </div>
+          {/* Removido o trecho "Faltam" */}
         </div>
       </CardContent>
     </Card>
