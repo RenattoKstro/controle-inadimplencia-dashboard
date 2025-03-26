@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -212,6 +212,14 @@ const DashboardLayout = () => {
                               {tab === "meus-premios" && "Meus Prêmios"}
                             </Button>
                           ))}
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start text-blue-600"
+                            onClick={() => navigate("/upload")}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Gerenciar Ícones
+                          </Button>
                         </div>
                       </div>
                       <div className="py-4 border-t">
@@ -237,10 +245,20 @@ const DashboardLayout = () => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
-              <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
-                <LogOut size={16} />
-                <span>Sair</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/upload")}
+                  className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 transition-colors mr-2"
+                >
+                  <Upload size={16} />
+                  <span>Gerenciar Ícones</span>
+                </Button>
+                <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <LogOut size={16} />
+                  <span>Sair</span>
+                </Button>
+              </div>
             </>
           )}
         </div>
