@@ -12,7 +12,7 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Skeleton } from "../../components/ui/skeleton";
 import { useIsMobile } from "../../hooks/use-mobile";
-import { cn } from "../../lib/utils"; // Adicionar para usar a função cn
+import { cn } from "../../lib/utils";
 
 const formatCurrency = (value: number): string => {
   if (typeof value !== "number" || isNaN(value)) return "R$ 0,00";
@@ -59,7 +59,7 @@ const MetaDesafio = ({
   updateUserData,
   isLoading,
   diasRestantesCalculados,
-  recebidoHoje = 0, // Valor vindo de MetaFiado
+  recebidoHoje = 0,
 }: DashboardProps & { recebidoHoje?: number }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
@@ -95,9 +95,8 @@ const MetaDesafio = ({
   const vencidoAtual = Number(userData?.vencido_atual) || 0;
   const metaDesafioValor = Number(userData?.meta_desafio) || 0;
 
-  // Novo cálculo do progresso da Meta Desafio usando a sua fórmula
+  // Cálculo do progresso
   let progresso = 0;
-
   if (metaDesafioValor > 0 && vencidoAtual > 0) {
     progresso = (metaDesafioValor / vencidoAtual) * 100;
     console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado (antes de arredondar): ${progresso}`);
@@ -106,7 +105,7 @@ const MetaDesafio = ({
     console.log(`[MetaDesafio] Meta Desafio - Progresso Calculado (após arredondar): ${progresso}%`);
   }
 
-  const progressoPercentual = Math.max(0, Math.min(100, progresso)); // Limita entre 0 e 100% para a barra
+  const progressoPercentual = Math.max(0, Math.min(100, progresso));
   const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
   const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia);
@@ -114,15 +113,17 @@ const MetaDesafio = ({
   // Lista de percentuais alvo
   const percentuaisAlvo = [96, 98, 100];
 
+  // Estado para rastrear quais percentuais já foram premiados
+  const [percentuaisPremiados, setPercentuaisPremiados] = useState<number[]>(
+    userData?.percentuais_premiados || []
+  );
+
   // Calcular os valores restantes para cada percentual
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
-    // Calcular o vencido_atual necessário para atingir o percentual
     const vencidoNecessario = metaDesafioValor / (percentual / 100);
-    // Calcular a diferença (valor restante)
     let diferenca = vencidoAtual - vencidoNecessario;
-    // Determinar se o percentual foi atingido
-    const atingido = progresso >= percentual;
-    // Se atingido, a diferença é positiva; se não, é negativa
+    // Ajustar a comparação para evitar problemas de precisão
+    const atingido = Number(progresso.toFixed(2)) >= Number(percentual.toFixed(2));
     diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
     return {
       percentual,
@@ -130,6 +131,37 @@ const MetaDesafio = ({
       atingido,
     };
   });
+
+  // Função para calcular o ganho (ajuste conforme necessário)
+  const calcularGanho = (percentual: number): number => {
+    // Exemplo: R$ 1.000,00 para cada percentual atingido
+    // Você pode ajustar essa lógica conforme necessário
+    return 1000;
+  };
+
+  // Atualizar os prêmios quando um percentual é atingido
+  useEffect(() => {
+    const novosPercentuaisAtingidos: number[] = [];
+    let novosPremios = Number(userData?.premios) || 0;
+
+    valoresRestantes.forEach(({ percentual, atingido }) => {
+      if (atingido && !percentuaisPremiados.includes(percentual)) {
+        const ganho = calcularGanho(percentual);
+        novosPremios += ganho;
+        novosPercentuaisAtingidos.push(percentual);
+        console.log(`[MetaDesafio] Percentual ${percentual}% atingido! Adicionando ganho de ${formatCurrency(ganho)} aos prêmios.`);
+      }
+    });
+
+    if (novosPercentuaisAtingidos.length > 0) {
+      // Atualizar os prêmios e os percentuais premiados
+      updateUserData({
+        premios: novosPremios,
+        percentuais_premiados: [...percentuaisPremiados, ...novosPercentuaisAtingidos],
+      });
+      setPercentuaisPremiados([...percentuaisPremiados, ...novosPercentuaisAtingidos]);
+    }
+  }, [valoresRestantes, percentuaisPremiados, updateUserData, userData?.premios]);
 
   const handleSave = () => {
     updateUserData({ meta_desafio: metaDesafio });
@@ -227,7 +259,7 @@ const MetaDesafio = ({
           <div className="flex justify-between">
             <span className="text-sm font-medium">Progresso</span>
             <span className="text-sm font-medium">
-              {formatPercentage(progresso)} {/* Exibe o progresso real */}
+              {formatPercentage(progresso)}
             </span>
           </div>
           <div
@@ -240,14 +272,13 @@ const MetaDesafio = ({
             <div
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
-                width: `${progressoPercentual}%`, // Limita a barra a 100%
+                width: `${progressoPercentual}%`,
                 background:
                   "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             />
           </div>
-          {/* Exibir os valores restantes com separadores visuais */}
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
               <div
@@ -262,7 +293,6 @@ const MetaDesafio = ({
                 >
                   {percentual}%: {formatCurrency(diferenca)}
                 </div>
-                {/* Adicionar separador |, exceto no último item */}
                 {index < valoresRestantes.length - 1 && (
                   <span className="text-gray-400">|</span>
                 )}
