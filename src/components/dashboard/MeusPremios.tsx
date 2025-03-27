@@ -111,14 +111,14 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
 
     console.log(`[MeusPremios] Verificando prêmios - Meta Atingida Percentual: ${metaAtingidaPercentual}%`);
     const premiosFiadoData = [
-      { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentual >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "96%", percentual: 96, valor: 63.00, atingido: metaAtingidaPercentual >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "98%", percentual: 98, valor: 84.00, atingido: metaAtingidaPercentual >= 98, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "99%", percentual: 99, valor: 94.50, atingido: metaAtingidaPercentual >= 99, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "100%", percentual: 100, valor: 241.50, atingido: metaAtingidaPercentual >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "101%", percentual: 101, valor: 84.00, atingido: metaAtingidaPercentual >= 101, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "103%", percentual: 103, valor: 84.00, atingido: metaAtingidaPercentual >= 103, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "105%", percentual: 105, valor: 84.00, atingido: metaAtingidaPercentual >= 105, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "94%", percentual: 94, valor: 52.50, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((94).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "96%", percentual: 96, valor: 63.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((96).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "98%", percentual: 98, valor: 84.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((98).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "99%", percentual: 99, valor: 94.50, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((99).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "100%", percentual: 100, valor: 241.50, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((100).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "101%", percentual: 101, valor: 84.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((101).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "103%", percentual: 103, valor: 84.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((103).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "105%", percentual: 105, valor: 84.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((105).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
 
     premiosFiadoData.forEach(premio => {
@@ -128,13 +128,8 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     // Cálculos para Meta Desafio
     let metaDesafioPercentual = 0;
 
-    if (userData.meta_desafio > 0) {
-      if (userData.vencido_atual <= userData.meta_desafio) {
-        metaDesafioPercentual = 100; // 100% de progresso
-      } else {
-        // Nova fórmula: progresso = ((meta_desafio * 2 - vencido_atual) / meta_desafio) * 100
-        metaDesafioPercentual = ((userData.meta_desafio * 2 - userData.vencido_atual) / userData.meta_desafio) * 100;
-      }
+    if (userData.meta_desafio > 0 && userData.vencido_atual > 0) {
+      metaDesafioPercentual = (userData.meta_desafio / userData.vencido_atual) * 100;
       console.log(`[MeusPremios] Meta Desafio - Vencido Atual: ${userData.vencido_atual}, Meta Desafio: ${userData.meta_desafio}, Percentual Calculado (antes de arredondar): ${metaDesafioPercentual}`);
       // Arredondar para evitar problemas de precisão
       metaDesafioPercentual = Number(metaDesafioPercentual.toFixed(2));
@@ -144,9 +139,9 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     metaDesafioPercentual = Math.max(0, Math.min(100, metaDesafioPercentual));
 
     const premiosDesafioData = [
-      { nome: "96%", percentual: 96, valor: 200.00, atingido: metaDesafioPercentual >= 96, icon: <Trophy size={16} />, color: "text-yellow-500" },
-      { nome: "98%", percentual: 98, valor: 150.00, atingido: metaDesafioPercentual >= 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
-      { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentual >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "96%", percentual: 96, valor: 200.00, atingido: Number(metaDesafioPercentual.toFixed(2)) >= Number((96).toFixed(2)), icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "98%", percentual: 98, valor: 150.00, atingido: Number(metaDesafioPercentual.toFixed(2)) >= Number((98).toFixed(2)), icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "100%", percentual: 100, valor: 150.00, atingido: Number(metaDesafioPercentual.toFixed(2)) >= Number((100).toFixed(2)), icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
 
     // Log para verificar quais prêmios foram marcados
