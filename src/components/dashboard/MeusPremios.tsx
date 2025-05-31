@@ -5,7 +5,11 @@ import {
   CardContent, 
   CardHeader, 
   CardTitle,
-  CardDescription
+  CardDescription,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from "@/components/ui/card";
 import { Gift, Wallet, Trophy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,6 +97,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
   const [premiosDesafioCadastro, setPremiosDesafioCadastro] = useState<PremioProps[]>([]);
   const [totalPremiosLider, setTotalPremiosLider] = useState(0);
   const [totalPremiosCadastro, setTotalPremiosCadastro] = useState(0);
+  const [activeTab, setActiveTab] = useState("lider");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -186,7 +191,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     return (
       <div className="space-y-4 md:space-y-6">
         <Skeleton className="h-6 md:h-8 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {[...Array(4)].map((_, i) => (
             <Card key={i}>
               <CardHeader>
@@ -217,79 +222,84 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
         <Gift className="text-pink-500" /> Meus Prêmios
       </h2>
 
-      {/* Seção 1: Op. Cadastro Líder */}
-      <h3 className="text-lg md:text-xl font-semibold text-gray-700">Op. Cadastro Líder</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
-        <CardPremio 
-          titulo="Meta Fiado" 
-          premios={premiosFiadoLider}
-          total={totalPremiosLider}
-          icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
-          color="border-blue-500"
-        />
-        <CardPremio 
-          titulo="Meta Desafio" 
-          premios={premiosDesafioLider}
-          total={totalPremiosLider}
-          icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
-          color="border-yellow-500"
-        />
-      </div>
-      <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
-        <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
-            <div>
-              <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
-                <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos (Líder)
-              </h3>
-              <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
-            </div>
-            <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
-              {formatCurrency(totalGanhosLider)}
-              <span className="text-xs md:text-sm text-gray-500 block text-right">
-                de {formatCurrency(totalPremiosLider)}
-              </span>
-            </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="lider">Op. Cadastro Líder</TabsTrigger>
+          <TabsTrigger value="cadastro">Op. Cadastro</TabsTrigger>
+        </TabsList>
+        <TabsContent value="lider">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
+            <CardPremio 
+              titulo="Meta Fiado" 
+              premios={premiosFiadoLider}
+              total={totalPremiosLider}
+              icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
+              color="border-blue-500"
+            />
+            <CardPremio 
+              titulo="Meta Desafio" 
+              premios={premiosDesafioLider}
+              total={totalPremiosLider}
+              icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
+              color="border-yellow-500"
+            />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Seção 2: Op. Cadastro */}
-      <h3 className="text-lg md:text-xl font-semibold text-gray-700">Op. Cadastro</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
-        <CardPremio 
-          titulo="Meta Fiado" 
-          premios={premiosFiadoCadastro}
-          total={totalPremiosCadastro}
-          icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
-          color="border-blue-500"
-        />
-        <CardPremio 
-          titulo="Meta Desafio" 
-          premios={premiosDesafioCadastro}
-          total={totalPremiosCadastro}
-          icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
-          color="border-yellow-500"
-        />
-      </div>
-      <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
-        <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
-            <div>
-              <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
-                <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos (Cadastro)
-              </h3>
-              <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
-            </div>
-            <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
-              {formatCurrency(totalGanhosCadastro)}
-              <span className="text-xs md:text-sm text-gray-500 block text-right">
-                de {formatCurrency(totalPremiosCadastro)}
-              </span>
-            </div>
+          <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
+            <CardContent className="p-4 md:p-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+                <div>
+                  <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
+                    <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos (Líder)
+                  </h3>
+                  <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
+                </div>
+                <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
+                  {formatCurrency(totalGanhosLider)}
+                  <span className="text-xs md:text-sm text-gray-500 block text-right">
+                    de {formatCurrency(totalPremiosLider)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="cadastro">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
+            <CardPremio 
+              titulo="Meta Fiado" 
+              premios={premiosFiadoCadastro}
+              total={totalPremiosCadastro}
+              icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
+              color="border-blue-500"
+            />
+            <CardPremio 
+              titulo="Meta Desafio" 
+              premios={premiosDesafioCadastro}
+              total={totalPremiosCadastro}
+              icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
+              color="border-yellow-500"
+            />
           </div>
-        </CardContent>
-      </Card>
+          <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
+            <CardContent className="p-4 md:p-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+                <div>
+                  <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
+                    <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos (Cadastro)
+                  </h3>
+                  <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
+                </div>
+                <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
+                  {formatCurrency(totalGanhosCadastro)}
+                  <span className="text-xs md:text-sm text-gray-500 block text-right">
+                    de {formatCurrency(totalPremiosCadastro)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
