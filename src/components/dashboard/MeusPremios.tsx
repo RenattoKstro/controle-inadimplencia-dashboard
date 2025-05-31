@@ -6,11 +6,14 @@ import {
   CardHeader, 
   CardTitle,
   CardDescription,
+} from "@/components/ui/card";
+// Attempt to import Tabs from the correct location
+import { 
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/card";
+} from "@/components/ui/tabs"; // Adjust this import if needed
 import { Gift, Wallet, Trophy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -216,18 +219,11 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     );
   }
 
-  return (
-    <div className="space-y-4 md:space-y-6">
-      <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-        <Gift className="text-pink-500" /> Meus Prêmios
-      </h2>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="lider">Op. Cadastro Líder</TabsTrigger>
-          <TabsTrigger value="cadastro">Op. Cadastro</TabsTrigger>
-        </TabsList>
-        <TabsContent value="lider">
+  // Fallback tab implementation using buttons if Tabs component fails
+  const renderTabContent = () => {
+    if (activeTab === "lider") {
+      return (
+        <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
             <CardPremio 
               titulo="Meta Fiado" 
@@ -262,8 +258,11 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="cadastro">
+        </>
+      );
+    } else {
+      return (
+        <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
             <CardPremio 
               titulo="Meta Fiado" 
@@ -298,8 +297,117 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </>
+      );
+    }
+  };
+
+  return (
+    <div className="space-y-4 md:space-y-6">
+      <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+        <Gift className="text-pink-500" /> Meus Prêmios
+      </h2>
+
+      {/* Try using the Tabs component */}
+      {typeof Tabs !== "undefined" ? (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="lider">Op. Cadastro Líder</TabsTrigger>
+            <TabsTrigger value="cadastro">Op. Cadastro</TabsTrigger>
+          </TabsList>
+          <TabsContent value="lider">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
+              <CardPremio 
+                titulo="Meta Fiado" 
+                premios={premiosFiadoLider}
+                total={totalPremiosLider}
+                icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
+                color="border-blue-500"
+              />
+              <CardPremio 
+                titulo="Meta Desafio" 
+                premios={premiosDesafioLider}
+                total={totalPremiosLider}
+                icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
+                color="border-yellow-500"
+              />
+            </div>
+            <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+                  <div>
+                    <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
+                      <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos (Líder)
+                    </h3>
+                    <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
+                  </div>
+                  <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
+                    {formatCurrency(totalGanhosLider)}
+                    <span className="text-xs md:text-sm text-gray-500 block text-right">
+                      de {formatCurrency(totalPremiosLider)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="cadastro">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
+              <CardPremio 
+                titulo="Meta Fiado" 
+                premios={premiosFiadoCadastro}
+                total={totalPremiosCadastro}
+                icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
+                color="border-blue-500"
+              />
+              <CardPremio 
+                titulo="Meta Desafio" 
+                premios={premiosDesafioCadastro}
+                total={totalPremiosCadastro}
+                icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
+                color="border-yellow-500"
+              />
+            </div>
+            <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+                  <div>
+                    <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
+                      <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos (Cadastro)
+                    </h3>
+                    <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
+                  </div>
+                  <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
+                    {formatCurrency(totalGanhosCadastro)}
+                    <span className="text-xs md:text-sm text-gray-500 block text-right">
+                      de {formatCurrency(totalPremiosCadastro)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      ) : (
+        // Fallback using buttons
+        <div>
+          <div className="flex space-x-2 mb-4">
+            <button
+              className={`px-4 py-2 rounded-md ${activeTab === "lider" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"}`}
+              onClick={() => setActiveTab("lider")}
+            >
+              Op. Cadastro Líder
+            </button>
+            <button
+              className={`px-4 py-2 rounded-md ${activeTab === "cadastro" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"}`}
+              onClick={() => setActiveTab("cadastro")}
+            >
+              Op. Cadastro
+            </button>
+          </div>
+          {renderTabContent()}
+        </div>
+      )}
     </div>
   );
 };
