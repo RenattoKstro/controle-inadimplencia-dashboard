@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
   Card, 
@@ -7,7 +7,7 @@ import {
   CardTitle,
   CardDescription
 } from "@/components/ui/card";
-import { Gift, Wallet, Trophy, Utensils } from "lucide-react";
+import { Gift, Wallet, Trophy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -44,7 +44,6 @@ const formatPercentage = (value: number): string => {
   }).format(value / 100);
 };
 
-// Função para verificar se a data atual é depois do dia 15 do mês corrente
 const isPastDay15 = () => {
   const today = new Date();
   return today.getDate() > 15;
@@ -88,98 +87,107 @@ const CardPremio = ({ titulo, premios, total, icon, color }: CardPremioProps) =>
 };
 
 const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps) => {
-  const [premiosFiado, setPremiosFiado] = useState<PremioProps[]>([]);
-  const [premiosDesafio, setPremiosDesafio] = useState<PremioProps[]>([]);
-  const [premioAlimentacao, setPremioAlimentacao] = useState<PremioProps[]>([]);
-  const [totalPremios, setTotalPremios] = useState(0);
+  const [premiosFiadoLider, setPremiosFiadoLider] = useState<PremioProps[]>([]);
+  const [premiosDesafioLider, setPremiosDesafioLider] = useState<PremioProps[]>([]);
+  const [premiosFiadoCadastro, setPremiosFiadoCadastro] = useState<PremioProps[]>([]);
+  const [premiosDesafioCadastro, setPremiosDesafioCadastro] = useState<PremioProps[]>([]);
+  const [totalPremiosLider, setTotalPremiosLider] = useState(0);
+  const [totalPremiosCadastro, setTotalPremiosCadastro] = useState(0);
   const isMobile = useIsMobile();
-  
+
   useEffect(() => {
-    // Cálculos para Meta Fiado
-    let metaAtingidaPercentual = 0;
-
+    // Cálculos para Meta Fiado (Op. Cadastro Líder)
+    let metaAtingidaPercentualLider = 0;
     if (userData.vencido_atual > 0) {
-      metaAtingidaPercentual = (userData.meta_mes / userData.vencido_atual) * 100;
-      console.log(`[MeusPremios] Meta Fiado - Meta Mes: ${userData.meta_mes}, Vencido Atual: ${userData.vencido_atual}, Meta Atingida Percentual (antes de arredondar): ${metaAtingidaPercentual}`);
-      metaAtingidaPercentual = Number(metaAtingidaPercentual.toFixed(2));
-      console.log(`[MeusPremios] Meta Fiado - Meta Atingida Percentual (após arredondar): ${metaAtingidaPercentual}%`);
+      metaAtingidaPercentualLider = (userData.meta_mes / userData.vencido_atual) * 100;
+      metaAtingidaPercentualLider = Number(metaAtingidaPercentualLider.toFixed(2));
     } else {
-      console.log(`[MeusPremios] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
+      metaAtingidaPercentualLider = 0;
     }
+    metaAtingidaPercentualLider = Math.max(0, metaAtingidaPercentualLider);
 
-    metaAtingidaPercentual = Math.max(0, metaAtingidaPercentual);
-
-    console.log(`[MeusPremios] Verificando prêmios - Meta Atingida Percentual: ${metaAtingidaPercentual}%`);
-    const premiosFiadoData = [
-      { nome: "94%", percentual: 94, valor: 52.50, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((94).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "96%", percentual: 96, valor: 63.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((96).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "98%", percentual: 98, valor: 84.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((98).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "99%", percentual: 99, valor: 94.50, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((99).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "100%", percentual: 100, valor: 241.50, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((100).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "101%", percentual: 101, valor: 84.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((101).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "103%", percentual: 103, valor: 84.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((103).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "105%", percentual: 105, valor: 84.00, atingido: Number(metaAtingidaPercentual.toFixed(2)) >= Number((105).toFixed(2)), icon: <Wallet size={16} />, color: "text-blue-500" },
+    const premiosFiadoLiderData = [
+      { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentualLider >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "96%", percentual: 96, valor: 63.00, atingido: metaAtingidaPercentualLider >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "98%", percentual: 98, valor: 84.00, atingido: metaAtingidaPercentualLider >= 98, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "99%", percentual: 99, valor: 94.50, atingido: metaAtingidaPercentualLider >= 99, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "100%", percentual: 100, valor: 241.50, atingido: metaAtingidaPercentualLider >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "101%", percentual: 101, valor: 84.00, atingido: metaAtingidaPercentualLider >= 101, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "103%", percentual: 103, valor: 84.00, atingido: metaAtingidaPercentualLider >= 103, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "105%", percentual: 105, valor: 84.00, atingido: metaAtingidaPercentualLider >= 105, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
 
-    premiosFiadoData.forEach(premio => {
-      console.log(`[MeusPremios] Prêmio ${premio.nome} (${premio.percentual}%): Atingido = ${premio.atingido}`);
-    });
-
-    // Cálculos para Meta Desafio
-    let metaDesafioPercentual = 0;
-
+    // Cálculos para Meta Desafio (Op. Cadastro Líder)
+    let metaDesafioPercentualLider = 0;
     if (userData.meta_desafio > 0 && userData.vencido_atual > 0) {
-      metaDesafioPercentual = (userData.meta_desafio / userData.vencido_atual) * 100;
-      console.log(`[MeusPremios] Meta Desafio - Vencido Atual: ${userData.vencido_atual}, Meta Desafio: ${userData.meta_desafio}, Percentual Calculado (antes de arredondar): ${metaDesafioPercentual}`);
-      // Arredondar para evitar problemas de precisão
-      metaDesafioPercentual = Number(metaDesafioPercentual.toFixed(2));
-      console.log(`[MeusPremios] Meta Desafio - Percentual Calculado (após arredondar): ${metaDesafioPercentual}%`);
+      metaDesafioPercentualLider = (userData.meta_desafio / userData.vencido_atual) * 100;
+      metaDesafioPercentualLider = Number(metaDesafioPercentualLider.toFixed(2));
     }
+    metaDesafioPercentualLider = Math.max(0, Math.min(100, metaDesafioPercentualLider));
 
-    metaDesafioPercentual = Math.max(0, Math.min(100, metaDesafioPercentual));
-
-    const premiosDesafioData = [
-      { nome: "96%", percentual: 96, valor: 200.00, atingido: Number(metaDesafioPercentual.toFixed(2)) >= Number((96).toFixed(2)), icon: <Trophy size={16} />, color: "text-yellow-500" },
-      { nome: "98%", percentual: 98, valor: 150.00, atingido: Number(metaDesafioPercentual.toFixed(2)) >= Number((98).toFixed(2)), icon: <Trophy size={16} />, color: "text-yellow-500" },
-      { nome: "100%", percentual: 100, valor: 150.00, atingido: Number(metaDesafioPercentual.toFixed(2)) >= Number((100).toFixed(2)), icon: <Trophy size={16} />, color: "text-yellow-500" },
+    const premiosDesafioLiderData = [
+      { nome: "96%", percentual: 96, valor: 200.00, atingido: metaDesafioPercentualLider >= 96, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "98%", percentual: 98, valor: 150.00, atingido: metaDesafioPercentualLider >= 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentualLider >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
 
-    // Log para verificar quais prêmios foram marcados
-    premiosDesafioData.forEach(premio => {
-      console.log(`[MeusPremios] Prêmio Meta Desafio ${premio.nome} (${premio.percentual}%): Atingido = ${premio.atingido}`);
-    });
+    // Cálculos para Meta Fiado (Op. Cadastro)
+    let metaAtingidaPercentualCadastro = 0;
+    if (userData.vencido_atual > 0) {
+      metaAtingidaPercentualCadastro = (userData.meta_mes / userData.vencido_atual) * 100;
+      metaAtingidaPercentualCadastro = Number(metaAtingidaPercentualCadastro.toFixed(2));
+    } else {
+      metaAtingidaPercentualCadastro = 0;
+    }
+    metaAtingidaPercentualCadastro = Math.max(0, metaAtingidaPercentualCadastro);
 
-    // Cálculos para Meta Vale Alimentação
-    const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
-    const metaAlimentacao = aReceber * 0.8;
-    const recebido = userData.abertura_vencido_mes - userData.vencido_atual;
-    const metaAlimentacaoBatida = recebido >= metaAlimentacao;
-
-    const premioAlimentacaoData = [
-      { nome: "80% até o dia 15", percentual: 80, valor: 100.00, atingido: metaAlimentacaoBatida, icon: <Utensils size={16} />, color: "text-green-500" },
+    const premiosFiadoCadastroData = [
+      { nome: "94%", percentual: 94, valor: 105.00, atingido: metaAtingidaPercentualCadastro >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "98%", percentual: 98, valor: 157.50, atingido: metaAtingidaPercentualCadastro >= 98, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "100%", percentual: 100, valor: 315.00, atingido: metaAtingidaPercentualCadastro >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
 
-    setPremiosFiado(premiosFiadoData);
-    setPremiosDesafio(premiosDesafioData);
-    setPremioAlimentacao(premioAlimentacaoData);
+    // Cálculos para Meta Desafio (Op. Cadastro)
+    let metaDesafioPercentualCadastro = 0;
+    if (userData.meta_desafio > 0 && userData.vencido_atual > 0) {
+      metaDesafioPercentualCadastro = (userData.meta_desafio / userData.vencido_atual) * 100;
+      metaDesafioPercentualCadastro = Number(metaDesafioPercentualCadastro.toFixed(2));
+    }
+    metaDesafioPercentualCadastro = Math.max(0, Math.min(100, metaDesafioPercentualCadastro));
 
-    const totalFiadoPremios = premiosFiadoData.reduce((acc, premio) => acc + premio.valor, 0);
-    const totalDesafio = premiosDesafioData.reduce((acc, premio) => acc + premio.valor, 0);
-    const totalAlimentacao = premioAlimentacaoData.reduce((acc, premio) => acc + premio.valor, 0);
-    setTotalPremios(totalFiadoPremios + totalDesafio + totalAlimentacao);
+    const premiosDesafioCadastroData = [
+      { nome: "94%", percentual: 94, valor: 100.00, atingido: metaDesafioPercentualCadastro >= 94, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "98%", percentual: 98, valor: 200.00, atingido: metaDesafioPercentualCadastro >= 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "100%", percentual: 100, valor: 350.00, atingido: metaDesafioPercentualCadastro >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
+    ];
+
+    setPremiosFiadoLider(premiosFiadoLiderData);
+    setPremiosDesafioLider(premiosDesafioLiderData);
+    setPremiosFiadoCadastro(premiosFiadoCadastroData);
+    setPremiosDesafioCadastro(premiosDesafioCadastroData);
+
+    const totalFiadoLider = premiosFiadoLiderData.reduce((acc, premio) => acc + premio.valor, 0);
+    const totalDesafioLider = premiosDesafioLiderData.reduce((acc, premio) => acc + premio.valor, 0);
+    const totalFiadoCadastro = premiosFiadoCadastroData.reduce((acc, premio) => acc + premio.valor, 0);
+    const totalDesafioCadastro = premiosDesafioCadastroData.reduce((acc, premio) => acc + premio.valor, 0);
+    setTotalPremiosLider(totalFiadoLider + totalDesafioLider);
+    setTotalPremiosCadastro(totalFiadoCadastro + totalDesafioCadastro);
   }, [userData]);
 
-  const premiosFiadoGanhos = premiosFiado.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
-  const premiosDesafioGanhos = premiosDesafio.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
-  const premiosAlimentacaoGanhos = premioAlimentacao.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
-  const totalGanhos = premiosFiadoGanhos + premiosDesafioGanhos + premiosAlimentacaoGanhos;
+  const premiosFiadoGanhosLider = premiosFiadoLider.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
+  const premiosDesafioGanhosLider = premiosDesafioLider.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
+  const totalGanhosLider = premiosFiadoGanhosLider + premiosDesafioGanhosLider;
+
+  const premiosFiadoGanhosCadastro = premiosFiadoCadastro.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
+  const premiosDesafioGanhosCadastro = premiosDesafioCadastro.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
+  const totalGanhosCadastro = premiosFiadoGanhosCadastro + premiosDesafioGanhosCadastro;
 
   if (isLoading) {
     return (
       <div className="space-y-4 md:space-y-6">
         <Skeleton className="h-6 md:h-8 w-48" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {[...Array(3)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <Card key={i}>
               <CardHeader>
                 <Skeleton className="h-5 md:h-6 w-36 mb-1" />
@@ -208,46 +216,75 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
         <Gift className="text-pink-500" /> Meus Prêmios
       </h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+
+      {/* Seção 1: Op. Cadastro Líder */}
+      <h3 className="text-lg md:text-xl font-semibold text-gray-700">Op. Cadastro Líder</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
         <CardPremio 
           titulo="Meta Fiado" 
-          premios={premiosFiado}
-          total={787.50}
+          premios={premiosFiadoLider}
+          total={totalPremiosLider}
           icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
           color="border-blue-500"
         />
-        
         <CardPremio 
           titulo="Meta Desafio" 
-          premios={premiosDesafio}
-          total={500.00}
+          premios={premiosDesafioLider}
+          total={totalPremiosLider}
           icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
           color="border-yellow-500"
         />
-        
-        <CardPremio 
-          titulo="Vale Alimentação" 
-          premios={premioAlimentacao}
-          total={100.00}
-          icon={<Utensils className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-green-500`} />}
-          color="border-green-500"
-        />
       </div>
-      
       <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
             <div>
               <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
-                <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos
+                <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos (Líder)
               </h3>
               <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
             </div>
             <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
-              {formatCurrency(totalGanhos)}
+              {formatCurrency(totalGanhosLider)}
               <span className="text-xs md:text-sm text-gray-500 block text-right">
-                de {formatCurrency(totalPremios)}
+                de {formatCurrency(totalPremiosLider)}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Seção 2: Op. Cadastro */}
+      <h3 className="text-lg md:text-xl font-semibold text-gray-700">Op. Cadastro</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 md:gap-4">
+        <CardPremio 
+          titulo="Meta Fiado" 
+          premios={premiosFiadoCadastro}
+          total={totalPremiosCadastro}
+          icon={<Wallet className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-blue-500`} />}
+          color="border-blue-500"
+        />
+        <CardPremio 
+          titulo="Meta Desafio" 
+          premios={premiosDesafioCadastro}
+          total={totalPremiosCadastro}
+          icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
+          color="border-yellow-500"
+        />
+      </div>
+      <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
+            <div>
+              <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
+                <Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-purple-500`} /> Total Geral de Ganhos (Cadastro)
+              </h3>
+              <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
+            </div>
+            <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
+              {formatCurrency(totalGanhosCadastro)}
+              <span className="text-xs md:text-sm text-gray-500 block text-right">
+                de {formatCurrency(totalPremiosCadastro)}
               </span>
             </div>
           </div>
