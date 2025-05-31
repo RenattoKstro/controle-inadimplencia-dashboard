@@ -135,7 +135,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
 
     // Cálculos para Vale Alimentação (Op. Cadastro Líder)
     const premioAlimentacaoLiderData = [
-      { nome: "Disponível após dia 15", percentual: 100, valor: 150.00, atingido: isPastDay15() && metaAtingidaPercentualLider >= 100, icon: <Gift size={16} />, color: "text-green-500" },
+      { nome: "Disponível após dia 15", percentual: 100, valor: 100.00, atingido: isPastDay15() && metaAtingidaPercentualLider >= 100, icon: <Gift size={16} />, color: "text-green-500" },
     ];
 
     // Cálculos para Meta Fiado (Op. Cadastro)
