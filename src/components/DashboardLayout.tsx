@@ -38,7 +38,6 @@ const DashboardLayout = () => {
     diasRestantesCalculados
   } = useUserData();
   const today = new Date(); // Fixed to today's date (June 4, 2025)
-  const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1)); // For calendar navigation
   const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
@@ -281,26 +280,10 @@ const DashboardLayout = () => {
                   </Button>
                   {showCalendar && (
                     <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
-                      <div className="flex justify-between items-center mb-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-lg font-bold"
-                          onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
-                        >
-                          <
-                        </Button>
+                      <div className="flex justify-center mb-3">
                         <span className="text-base font-semibold">
-                          {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                          {today.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-lg font-bold"
-                          onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
-                        >
-                          >
-                        </Button>
                       </div>
                       <div className="grid grid-cols-7 gap-2 text-center">
                         {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
@@ -308,7 +291,7 @@ const DashboardLayout = () => {
                             {day}
                           </div>
                         ))}
-                        {getCalendarDays(calendarMonth).map((day, index) => (
+                        {getCalendarDays(today).map((day, index) => (
                           <div
                             key={index}
                             className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
@@ -348,26 +331,10 @@ const DashboardLayout = () => {
                   </Button>
                   {showCalendar && (
                     <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
-                      <div className="flex justify-between items-center mb-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-lg font-bold"
-                          onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
-                        >
-                          <
-                        </Button>
+                      <div className="flex justify-center mb-3">
                         <span className="text-base font-semibold">
-                          {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                          {today.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-lg font-bold"
-                          onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
-                        >
-                          >
-                        </Button>
                       </div>
                       <div className="grid grid-cols-7 gap-2 text-center">
                         {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
@@ -375,7 +342,7 @@ const DashboardLayout = () => {
                             {day}
                           </div>
                         ))}
-                        {getCalendarDays(calendarMonth).map((day, index) => (
+                        {getCalendarDays(today).map((day, index) => (
                           <div
                             key={index}
                             className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
