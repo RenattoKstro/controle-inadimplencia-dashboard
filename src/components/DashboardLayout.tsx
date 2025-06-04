@@ -179,7 +179,7 @@ const DashboardLayout = () => {
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 Controle <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="h-9 w-9">
@@ -227,27 +227,13 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                    onClick={() => {}}
-                  >
-                    <Calendar className="h-5 w-5" />
-                    <span className="text-sm">
-                      {selectedDate.toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-gray-600" />
                   <input
                     type="date"
                     value={selectedDate.toISOString().split("T")[0]}
                     onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                    className="absolute right-0 mt-2 z-50 opacity-0 w-40 cursor-pointer"
+                    className="h-9 px-2 bg-transparent border border-gray-300 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   />
                 </div>
                 <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 flex items-center">
@@ -261,26 +247,13 @@ const DashboardLayout = () => {
                 Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
               <div className="flex items-center gap-4">
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                    onClick={() => {}}
-                  >
-                    <Calendar className="h-5 w-5" />
-                    <span className="text-sm">
-                      {selectedDate.toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-gray-600" />
                   <input
                     type="date"
                     value={selectedDate.toISOString().split("T")[0]}
                     onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                    className="absolute right-0 mt-2 z-50 opacity-0 w-40 cursor-pointer"
+                    className="h-9 px-2 bg-transparent border border-gray-300 rounded-md text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   />
                 </div>
                 <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
