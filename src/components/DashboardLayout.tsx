@@ -173,18 +173,24 @@ const DashboardLayout = () => {
   );
 
   const getDaysInMonth = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) return 0;
     const year = date.getFullYear();
     const month = date.getMonth();
     return new Date(year, month + 1, 0).getDate();
   };
 
   const getFirstDayOfMonth = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) return 0;
     const year = date.getFullYear();
     const month = date.getMonth();
     return new Date(year, month, 1).getDay();
   };
 
   const getCalendarDays = (date: Date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.error("Invalid date provided to getCalendarDays:", date);
+      return [];
+    }
     const daysInMonth = getDaysInMonth(date);
     const firstDay = getFirstDayOfMonth(date);
     const days = [];
@@ -204,6 +210,21 @@ const DashboardLayout = () => {
     if (dayOfWeek === 0) return "text-red-500"; // Sunday
     if (dayOfWeek === 6) return "text-yellow-500"; // Saturday
     return "text-green-500"; // Monday to Friday
+  };
+
+  const handleMonthNavigation = (direction: "prev" | "next") => {
+    setCalendarMonth((prev) => {
+      if (!(prev instanceof Date) || isNaN(prev.getTime())) {
+        console.error("Invalid calendarMonth state:", prev);
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+      }
+      const newMonth = new Date(prev.getFullYear(), prev.getMonth() + (direction === "next" ? 1 : -1), 1);
+      if (isNaN(newMonth.getTime())) {
+        console.error("Invalid new month calculated:", newMonth);
+        return prev;
+      }
+      return newMonth;
+    });
   };
 
   return (
@@ -286,9 +307,9 @@ const DashboardLayout = () => {
                           variant="ghost"
                           size="sm"
                           className="text-lg font-bold"
-                          onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
+                          onClick={() => handleMonthNavigation("prev")}
                         >
-                          <
+                          {"<"}
                         </Button>
                         <span className="text-base font-semibold">
                           {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
@@ -297,9 +318,9 @@ const DashboardLayout = () => {
                           variant="ghost"
                           size="sm"
                           className="text-lg font-bold"
-                          onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
+                          onClick={() => handleMonthNavigation("next")}
                         >
-                          >
+                          {">"}
                         </Button>
                       </div>
                       <div className="grid grid-cols-7 gap-2 text-center">
@@ -353,9 +374,9 @@ const DashboardLayout = () => {
                           variant="ghost"
                           size="sm"
                           className="text-lg font-bold"
-                          onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
+                          onClick={() => handleMonthNavigation("prev")}
                         >
-                          <
+                          {"<"}
                         </Button>
                         <span className="text-base font-semibold">
                           {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
@@ -364,9 +385,9 @@ const DashboardLayout = () => {
                           variant="ghost"
                           size="sm"
                           className="text-lg font-bold"
-                          onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
+                          onClick={() => handleMonthNavigation("next")}
                         >
-                          >
+                          {">"}
                         </Button>
                       </div>
                       <div className="grid grid-cols-7 gap-2 text-center">
