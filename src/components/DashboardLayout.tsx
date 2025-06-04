@@ -37,6 +37,7 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -226,15 +227,28 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="h-5 w-5" />
-                  <span className="text-sm">
-                    {new Date().toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </span>
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    onClick={() => {}}
+                  >
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-sm">
+                      {selectedDate.toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </Button>
+                  <input
+                    type="date"
+                    value={selectedDate.toISOString().split("T")[0]}
+                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                    className="absolute right-0 mt-2 z-50 opacity-0 w-40 cursor-pointer"
+                  />
                 </div>
                 <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 flex items-center">
                   <LogOut size={16} />
@@ -247,15 +261,27 @@ const DashboardLayout = () => {
                 Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="h-5 w-5" />
-                  <span className="text-sm">
-                    {new Date().toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </span>
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    onClick={() => {}}
+                  >
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-sm">
+                      {selectedDate.toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </Button>
+                  <input
+                    type="date"
+                    value={selectedDate.toISOString().split("T")[0]}
+                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                    className="absolute right-0 mt-2 z-50 opacity-0 w-40 cursor-pointer"
+                  />
                 </div>
                 <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
                   <LogOut size={16} />
