@@ -279,36 +279,38 @@ const DashboardLayout = () => {
                     </span>
                   </Button>
                   {showCalendar && (
-                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-md shadow-lg p-2 z-50">
-                      <div className="flex justify-between mb-2">
+                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                      <div className="flex justify-between items-center mb-3">
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="text-lg font-bold"
                           onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
                         >
                           &lt;
                         </Button>
-                        <span className="text-sm font-semibold">
+                        <span className="text-base font-semibold">
                           {selectedDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                         </span>
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="text-lg font-bold"
                           onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
                         >
                           &gt;
                         </Button>
                       </div>
-                      <div className="grid grid-cols-7 gap-1 text-center">
+                      <div className="grid grid-cols-7 gap-2 text-center">
                         {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                          <div key={day} className="text-xs font-bold text-gray-600">
+                          <div key={day} className="text-sm font-medium text-gray-700">
                             {day}
                           </div>
                         ))}
                         {getCalendarDays(selectedDate).map((day, index) => (
                           <button
                             key={index}
-                            className={`text-sm w-8 h-8 rounded-full hover:bg-gray-100 focus:outline-none ${getDayColor(day)}`}
+                            className={`text-lg w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none ${getDayColor(day)}`}
                             onClick={() => day && setSelectedDate(day)}
                             disabled={!day}
                           >
@@ -346,36 +348,38 @@ const DashboardLayout = () => {
                     </span>
                   </Button>
                   {showCalendar && (
-                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-md shadow-lg p-2 z-50">
-                      <div className="flex justify-between mb-2">
+                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                      <div className="flex justify-between items-center mb-3">
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="text-lg font-bold"
                           onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
                         >
                           &lt;
                         </Button>
-                        <span className="text-sm font-semibold">
+                        <span className="text-base font-semibold">
                           {selectedDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                         </span>
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="text-lg font-bold"
                           onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
                         >
                           &gt;
                         </Button>
                       </div>
-                      <div className="grid grid-cols-7 gap-1 text-center">
+                      <div className="grid grid-cols-7 gap-2 text-center">
                         {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                          <div key={day} className="text-xs font-bold text-gray-600">
+                          <div key={day} className="text-sm font-medium text-gray-700">
                             {day}
                           </div>
                         ))}
                         {getCalendarDays(selectedDate).map((day, index) => (
                           <button
                             key={index}
-                            className={`text-sm w-8 h-8 rounded-full hover:bg-gray-100 focus:outline-none ${getDayColor(day)}`}
+                            className={`text-lg w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none ${getDayColor(day)}`}
                             onClick={() => day && setSelectedDate(day)}
                             disabled={!day}
                           >
