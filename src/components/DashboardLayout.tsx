@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,7 +178,7 @@ const DashboardLayout = () => {
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 Controle <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="h-9 w-9">
@@ -227,6 +226,16 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar className="h-5 w-5" />
+                  <span className="text-sm">
+                    {new Date().toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
                 <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 flex items-center">
                   <LogOut size={16} />
                 </Button>
@@ -237,10 +246,22 @@ const DashboardLayout = () => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
-              <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
-                <LogOut size={16} />
-                <span>Sair</span>
-              </Button>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Calendar className="h-5 w-5" />
+                  <span className="text-sm">
+                    {new Date().toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <LogOut size={16} />
+                  <span>Sair</span>
+                </Button>
+              </div>
             </>
           )}
         </div>
