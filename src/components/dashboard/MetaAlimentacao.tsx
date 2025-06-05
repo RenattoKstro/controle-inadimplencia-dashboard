@@ -34,7 +34,16 @@ const calcularDiasUteisAte15 = (diasRestantes: number): number => {
     return 0;
   }
   const diasAte15 = 15 - today.getDate();
-  return Math.min(diasRestantes, diasAte15);
+  let diasUteis = 0;
+  for (let i = 0; i < diasAte15; i++) {
+    const currentDate = new Date(today);
+    currentDate.setDate(today.getDate() + i + 1); // +1 to start from tomorrow
+    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+    if (dayOfWeek !== 0) { // Exclude Sundays (dayOfWeek === 0)
+      diasUteis++;
+    }
+  }
+  return Math.min(diasRestantes, diasUteis);
 };
 
 const MetaAlimentacao = ({
@@ -50,6 +59,7 @@ const MetaAlimentacao = ({
   useEffect(() => {
     const dias = calcularDiasUteisAte15(userData.dias_restantes || diasRestantesCalculados);
     setDiasUteisAte15(dias);
+    console.log(`[MetaAlimentacao] Dias úteis até 15: ${dias}`);
   }, [userData.dias_restantes, diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
