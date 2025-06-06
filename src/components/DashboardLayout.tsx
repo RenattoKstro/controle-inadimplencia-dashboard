@@ -435,7 +435,7 @@ const DashboardLayout = () => {
           <div className="flex items-center gap-2">
             <Instagram className="h-5 w-5 text-pink-600" />
             <a
-              href="https://instagram.com/renato)alme1da" // Replace with actual Instagram handle
+              href="https://instagram.com/renato_alme1da" // Replace with actual Instagram handle
               target="_blank"
               rel="noopener noreferrer"
               className="text-pink-600 hover:underline font-medium"
