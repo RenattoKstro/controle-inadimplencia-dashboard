@@ -33,13 +33,13 @@ const calcularDiasUteisAte15 = (diasRestantes: number): number => {
   if (today.getDate() > 15) {
     return 0;
   }
-  const diasAte15 = 15 - today.getDate();
+  const diasAte14 = 15 - today.getDate(); // Days from today to 14th
   let diasUteis = 0;
-  for (let i = 0; i < diasAte15; i++) {
+  for (let i = 0; i < diasAte14; i++) {
     const currentDate = new Date(today);
-    currentDate.setDate(today.getDate() + i + 1); // +1 to start from tomorrow
+    currentDate.setDate(today.getDate() + i);
     const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
-    if (dayOfWeek !== 0) { // Exclude Sundays (dayOfWeek === 0)
+    if (dayOfWeek !== 0) { // Exclude only Sundays, include Saturdays
       diasUteis++;
     }
   }
