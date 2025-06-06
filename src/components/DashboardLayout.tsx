@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +37,7 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
-  const today = new Date(); // Fixed to today's date (June 4, 2025)
+  const today = new Date(); // Fixed to today's date (June 6, 2025)
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1)); // For calendar navigation
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -419,6 +419,32 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Support Section */}
+        <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-blue-600" />
+            <a
+              href="https://wa.me/68992237305" // Replace with actual WhatsApp number
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline font-medium"
+            >
+              Suporte WhatsApp: (68) 99223-7305
+            </a>
+          </div>
+          <div className="flex items-center gap-2">
+            <Instagram className="h-5 w-5 text-pink-600" />
+            <a
+              href="https://instagram.com/renato)alme1da" // Replace with actual Instagram handle
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-600 hover:underline font-medium"
+            >
+              @renato_alme1da
+            </a>
+          </div>
+        </div>
+
         <Tabs 
           defaultValue="meta-fiado" 
           value={activeTab} 
