@@ -17,8 +17,6 @@ const formataDinheiro = (valor: number | null): string => {
 const MetaAlimentacao = ({
   userData,
   updateUserData,
-  diasSemExpediente,
-  updateDiasSemExpediente,
   diasRestantesCalculados,
   isLoading,
 }: DashboardProps) => {
