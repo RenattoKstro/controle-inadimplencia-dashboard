@@ -24,7 +24,6 @@ export interface DashboardProps {
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
-  const [subTabRecebimentos, setSubTabRecebimentos] = useState("diarios"); // Nova subguia
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -34,9 +33,8 @@ const DashboardLayout = () => {
     updateUserData, 
     isLoading,
     diasRestantesCalculados,
-    addDailyReceipt,
   } = useUserData();
-  const today = new Date("2025-06-18T16:24:00-03:00"); // Atualizado para o horário atual
+  const today = new Date("2025-06-18T20:16:00-03:00"); // Atualizado para o horário atual
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -64,13 +62,10 @@ const DashboardLayout = () => {
     if (isMobile) {
       setSheetOpen(false);
     }
-    if (value !== "recebimentos") {
-      setSubTabRecebimentos("diarios"); // Reset subguia ao sair de "Recebimentos"
-    }
   };
 
   const renderTabs = () => (
-    <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-6'} w-full p-1 bg-white shadow-sm rounded-xl`}>
+    <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-5'} w-full p-1 bg-white shadow-sm rounded-xl`}>
       <TabsTrigger 
         value="ajustes-metas" 
         className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
@@ -110,14 +105,6 @@ const DashboardLayout = () => {
       >
         <Gift className="h-4 w-4" />
         <span>Meus Prêmios</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="recebimentos" 
-        className="flex items-center gap-2 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-600"
-        onClick={() => handleTabChange("recebimentos")}
-      >
-        <Calendar className="h-4 w-4" />
-        <span>Recebimentos</span>
       </TabsTrigger>
     </TabsList>
   );
@@ -163,29 +150,6 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
         />
-      </TabsContent>
-      <TabsContent value="recebimentos" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-        <Tabs defaultValue="diarios" value={subTabRecebimentos} onValueChange={setSubTabRecebimentos} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="diarios">Recebimentos Diários</TabsTrigger>
-            <TabsTrigger value="mensais">Recebimentos Mensais</TabsTrigger>
-          </TabsList>
-          <TabsContent value="diarios">
-            <RecebimentosDiarios 
-              userData={userData}
-              updateUserData={updateUserData}
-              addDailyReceipt={addDailyReceipt}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-          <TabsContent value="mensais">
-            <RecebimentosMensais 
-              userData={userData}
-              updateUserData={updateUserData}
-              isLoading={isLoading}
-            />
-          </TabsContent>
-        </Tabs>
       </TabsContent>
     </>
   );
@@ -280,7 +244,7 @@ const DashboardLayout = () => {
                           </div>
                           <div className="py-4 flex-1">
                             <div className="space-y-2">
-                              {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios", "recebimentos"].map((tab) => (
+                              {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios"].map((tab) => (
                                 <Button
                                   key={tab}
                                   variant="ghost"
@@ -292,13 +256,11 @@ const DashboardLayout = () => {
                                   {tab === "meta-desafio" && <Trophy className="h-4 w-4 mr-2" />}
                                   {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
                                   {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
-                                  {tab === "recebimentos" && <Calendar className="h-4 w-4 mr-2" />}
                                   {tab === "ajustes-metas" && "Ajustes de Metas"}
                                   {tab === "meta-fiado" && "Meta Fiado"}
                                   {tab === "meta-desafio" && "Meta Desafio"}
                                   {tab === "meta-alimentacao" && "Meta de Ticket"}
                                   {tab === "meus-premios" && "Meus Prêmios"}
-                                  {tab === "recebimentos" && "Recebimentos"}
                                 </Button>
                               ))}
                             </div>
