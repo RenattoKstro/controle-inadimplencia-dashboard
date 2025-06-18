@@ -17,7 +17,6 @@ const DEFAULT_USER_DATA = {
 
 export function useUserData() {
   const [userData, setUserData] = useState(DEFAULT_USER_DATA);
-  const [diasSemExpediente, setDiasSemExpediente] = useState<Date[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -85,19 +84,6 @@ export function useUserData() {
             monthlyReceipts: dashboardData.monthlyReceipts || {},
           };
           setUserData(completeData);
-        }
-
-        // Fetch non-working days (for backward compatibility)
-        const { data: diasData, error: diasError } = await supabase
-          .from('dias_sem_expediente')
-          .select('data')
-          .eq('user_id', user.id);
-
-        if (diasError) throw diasError;
-
-        if (diasData && diasData.length > 0) {
-          const datesArray = diasData.map(d => new Date(d.data));
-          setDiasSemExpediente(datesArray);
         }
       } catch (error: any) {
         console.error('Erro ao buscar dados:', error);
@@ -190,8 +176,6 @@ export function useUserData() {
   return { 
     userData, 
     updateUserData, 
-    diasSemExpediente, 
-    updateDiasSemExpediente, 
     isLoading,
     diasRestantesCalculados,
     addDailyReceipt,
