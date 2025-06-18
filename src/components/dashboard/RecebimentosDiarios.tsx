@@ -19,8 +19,8 @@ const RecebimentosDiarios = ({
   isLoading,
 }: RecebimentosDiariosProps) => {
   const [newAmount, setNewAmount] = useState(0);
-  const [selectedDate, setSelectedDate] = useState(new Date("2025-06-18T16:24:00-03:00")); // Começa hoje
-  const today = new Date("2025-06-18T16:24:00-03:00");
+  const [selectedDate, setSelectedDate] = useState(new Date("2025-06-18T18:26:00-03:00")); // Atualizado para o horário atual
+  const today = new Date("2025-06-18T18:26:00-03:00");
 
   const handleAddReceipt = () => {
     if (newAmount > 0 && selectedDate) {
@@ -77,7 +77,7 @@ const RecebimentosDiarios = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {userData.dailyReceipts.map((receipt: { date: string; amount: number }, index: number) => (
+                  {(userData.dailyreceipts || []).map((receipt: { date: string; amount: number }, index: number) => (
                     <tr key={index} className="border-t">
                       <td className="p-2">{new Date(receipt.date).toLocaleDateString("pt-BR")}</td>
                       <td className="p-2">R${receipt.amount.toFixed(2)}</td>
