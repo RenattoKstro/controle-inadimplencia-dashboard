@@ -7,20 +7,21 @@ import { cn } from "@/lib/utils";
 import { Utensils, Check, AlertTriangle, Calendar, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserData } from "@/hooks/useUserData";
 import { Button } from "@/components/ui/button";
 
 const formataDinheiro = (valor: number | null): string => {
-  if (valor === null) return "R$ 0,00";
+  if (valor === null || isNaN(valor)) return "R$ 0,00";
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
 const isPastDay15 = (): boolean => {
-  const today = new Date("2025-06-18T16:03:00-03:00"); // Atualizado para o horário atual
+  const today = new Date("2025-06-18T16:07:00-03:00"); // Atualizado para o horário atual
   return today.getDate() > 15;
 };
 
 const calcularDiasUteisAte15 = (diasRestantes: number): number => {
-  const today = new Date("2025-06-18T16:03:00-03:00");
+  const today = new Date("2025-06-18T16:07:00-03:00");
   if (today.getDate() > 15) return 0;
   const diasAte14 = 15 - today.getDate();
   let diasUteis = 0;
@@ -28,7 +29,7 @@ const calcularDiasUteisAte15 = (diasRestantes: number): number => {
     const currentDate = new Date(today);
     currentDate.setDate(today.getDate() + i);
     const dayOfWeek = currentDate.getDay();
-    if (dayOfWeek !== 0) diasUteis++; // Exclude only Sundays
+    if (dayOfWeek !== 0) diasUteis++; // Exclude Sundays
   }
   return Math.min(diasRestantes, diasUteis);
 };
@@ -39,24 +40,24 @@ const MetaAlimentacao = ({
   diasRestantesCalculados,
   isLoading,
 }: DashboardProps) => {
+  const { addDailyReceipt } = useUserData();
   const [newAmount, setNewAmount] = useState(0);
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
   const [mesCongelado, setMesCongelado] = useState<number | null>(null);
   const isMobile = useIsMobile();
-  const { addDailyReceipt } = useUserData();
 
   useEffect(() => {
-    const dias = calcularDiasUteisAte15(diasRestantesCalculados);
+    const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
     setDiasUteisAte15(dias);
   }, [diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
-  const todayDate = new Date("2025-06-18T16:03:00-03:00");
+  const todayDate = new Date("2025-06-18T16:07:00-03:00");
   const mesAtual = todayDate.getMonth();
 
-  const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
-  const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual; // Simulação, pois não registramos mensais diretamente
+  const aReceber = userData?.abertura_vencido_mes - userData?.meta_mes || 0;
+  const recebidoMes = userData?.abertura_vencido_mes - userData?.vencido_atual || 0; // Fallback para evitar NaN
   const metaTicket = aReceber * 0.8;
 
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
