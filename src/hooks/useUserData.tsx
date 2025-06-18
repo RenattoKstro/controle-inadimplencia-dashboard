@@ -1,3 +1,4 @@
+// src/hooks/useUserData.ts
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +11,8 @@ const DEFAULT_USER_DATA = {
   vencido_atual: 0,
   dias_restantes: 0,
   meta_desafio: 0,
+  dailyReceipts: [], // [{ date: string, amount: number }]
+  monthlyReceipts: {}, // { "2025-06": number, "2025-05": number, ... }
 };
 
 export function useUserData() {
@@ -18,7 +21,7 @@ export function useUserData() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Calculate dias restantes based on current date
+  // Calculate business days remaining based on current date
   const calculateDiasRestantes = () => {
     const hoje = new Date();
     const ultimoDiaMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
@@ -35,7 +38,7 @@ export function useUserData() {
     return dias;
   };
 
-  // Buscar dados do usuário ao carregar a página
+  // Fetch user data on page load
   useEffect(() => {
     async function fetchUserData() {
       try {
@@ -43,7 +46,7 @@ export function useUserData() {
         
         if (!user) return;
 
-        // Buscar dados do dashboard do usuário
+        // Fetch dashboard data
         const { data: dashboardData, error: dashboardError } = await supabase
           .from('user_dashboard')
           .select('*')
@@ -54,9 +57,8 @@ export function useUserData() {
           throw dashboardError;
         }
 
-        // Se não encontrar dados, inserir dados padrão
+        // If no data, insert default data
         if (!dashboardData) {
-          // Calculate default dias_restantes
           const defaultDiasRestantes = calculateDiasRestantes();
           
           const { data: newData, error: insertError } = await supabase
@@ -75,21 +77,17 @@ export function useUserData() {
             setUserData(newData);
           }
         } else {
-          // If dias_restantes is 0, calculate it
-          if (!dashboardData.dias_restantes) {
-            dashboardData.dias_restantes = calculateDiasRestantes();
-          }
-          
-          // Garantir que todos os campos existam com valores padrão
+          // Ensure all fields exist with default values, including receipts
           const completeData = {
             ...DEFAULT_USER_DATA,
-            ...dashboardData
+            ...dashboardData,
+            dailyReceipts: dashboardData.dailyReceipts || [],
+            monthlyReceipts: dashboardData.monthlyReceipts || {},
           };
           setUserData(completeData);
         }
 
-        // Buscar dias sem expediente (we'll keep this for backward compatibility,
-        // but it won't be used in the UI anymore)
+        // Fetch non-working days (for backward compatibility)
         const { data: diasData, error: diasError } = await supabase
           .from('dias_sem_expediente')
           .select('data')
@@ -116,7 +114,7 @@ export function useUserData() {
     fetchUserData();
   }, [toast]);
 
-  // Função para atualizar os dados do usuário
+  // Update user data
   const updateUserData = async (newData: any) => {
     try {
       setIsLoading(true);
@@ -149,58 +147,41 @@ export function useUserData() {
     }
   };
 
-  // Função para atualizar os dias sem expediente
-  // We'll keep this for backward compatibility, but it won't be used directly in the UI
-  const updateDiasSemExpediente = async (dias: Date[]) => {
+  // Add a daily receipt
+  const addDailyReceipt = async (date: string, amount: number) => {
     try {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Primeiro remover todos os dias existentes
-      const { error: deleteError } = await supabase
-        .from('dias_sem_expediente')
-        .delete()
-        .eq('user_id', user.id);
+      const newReceipts = [...userData.dailyReceipts, { date, amount }];
+      const monthlyKey = date.split("-").slice(0, 2).join("-"); // e.g., "2025-06"
+      const monthlyTotal = (userData.monthlyReceipts[monthlyKey] || 0) + amount;
+      const newMonthlyReceipts = { ...userData.monthlyReceipts, [monthlyKey]: monthlyTotal };
 
-      if (deleteError) throw deleteError;
-
-      // Depois inserir os novos dias
-      if (dias.length > 0) {
-        // Format dates properly for database storage
-        const diasParaInserir = dias.map(dia => {
-          // Ensure we're working with a valid Date object
-          const date = new Date(dia);
-          
-          // Format the date as YYYY-MM-DD for storage
-          const formattedDate = date.toISOString().split('T')[0];
-          
-          return {
-            user_id: user.id,
-            data: formattedDate
-          };
-        });
-
-        const { error: insertError } = await supabase
-          .from('dias_sem_expediente')
-          .insert(diasParaInserir);
-
-        if (insertError) throw insertError;
-      }
-
-      // Update local state with the new dates
-      setDiasSemExpediente(dias.map(d => new Date(d)));
+      await updateUserData({ dailyReceipts: newReceipts, monthlyReceipts: newMonthlyReceipts });
     } catch (error: any) {
-      console.error('Erro ao atualizar calendário:', error);
+      console.error('Erro ao adicionar recebimento:', error);
       toast({
-        title: 'Erro ao atualizar calendário',
-        description: error.message || 'Não foi possível atualizar o calendário.',
+        title: 'Erro ao adicionar recebimento',
+        description: error.message || 'Não foi possível salvar o recebimento.',
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Get comparison with previous month
+  const getPreviousMonthComparison = () => {
+    const currentMonth = new Date().toISOString().slice(0, 7); // e.g., "2025-06"
+    const prevMonth = new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().slice(0, 7); // e.g., "2025-05"
+    const currentTotal = userData.monthlyReceipts[currentMonth] || 0;
+    const prevTotal = userData.monthlyReceipts[prevMonth] || 0;
+    const difference = currentTotal - prevTotal;
+    const percentageChange = prevTotal ? (difference / prevTotal) * 100 : 0;
+    return { currentTotal, prevTotal, difference, percentageChange };
   };
 
   // Calculate business days to use as default if user doesn't set manually
@@ -212,6 +193,8 @@ export function useUserData() {
     diasSemExpediente, 
     updateDiasSemExpediente, 
     isLoading,
-    diasRestantesCalculados 
+    diasRestantesCalculados,
+    addDailyReceipt,
+    getPreviousMonthComparison,
   };
 }
