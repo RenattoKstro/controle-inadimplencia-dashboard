@@ -35,7 +35,7 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
-  const today = new Date("2025-06-18T15:37:00-03:00"); // Atualizado para o horário atual
+  const today = new Date("2025-06-18T16:14:00-03:00"); // Atualizado para o horário atual
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -46,7 +46,6 @@ const DashboardLayout = () => {
         navigate("/auth");
       }
     };
-    
     checkAuth();
   }, [navigate]);
 
@@ -401,4 +400,76 @@ const DashboardLayout = () => {
                           </div>
                           <div className="grid grid-cols-7 gap-2 text-center">
                             {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                             
+                              <div key={day} className="text-sm font-medium text-gray-700">
+                                {day}
+                              </div>
+                            ))}
+                            {getCalendarDays(calendarMonth).map((day, index) => (
+                              <div
+                                key={index}
+                                className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
+                              >
+                                {day ? day.getDate() : ""}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
+                      <LogOut size={16} />
+                      <span>Sair</span>
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-4 py-6">
+            <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-blue-600" />
+                <a
+                  href="https://wa.me/68992237305"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline font-medium"
+                >
+                  Suporte WhatsApp: (68) 99223-7305
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Instagram className="h-5 w-5 text-pink-600" />
+                <a
+                  href="https://instagram.com/renato_alme1da"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-pink-600 hover:underline font-medium"
+                >
+                  @renato_alme1da
+                </a>
+              </div>
+            </div>
+
+            <Tabs 
+              defaultValue="meta-fiado" 
+              value={activeTab} 
+              onValueChange={handleTabChange}
+              className="space-y-6"
+            >
+              {isMobile ? (
+                <div className="hidden">{renderTabs()}</div>
+              ) : (
+                renderTabs()
+              )}
+              {renderTabsContent()}
+            </Tabs>
+          </main>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default DashboardLayout;
