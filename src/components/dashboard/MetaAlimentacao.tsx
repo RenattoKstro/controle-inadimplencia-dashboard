@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils";
 import { Utensils, Check, AlertTriangle, Calendar, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useUserData } from "@/hooks/useUserData";
-import { Button } from "@/components/ui/button";
 
 const formataDinheiro = (valor: number | null): string => {
   if (valor === null || isNaN(valor)) return "R$ 0,00";
@@ -16,12 +14,12 @@ const formataDinheiro = (valor: number | null): string => {
 };
 
 const isPastDay15 = (): boolean => {
-  const today = new Date("2025-06-18T16:07:00-03:00"); // Atualizado para o horário atual
+  const today = new Date("2025-06-18T16:24:00-03:00"); // Atualizado para o horário atual
   return today.getDate() > 15;
 };
 
 const calcularDiasUteisAte15 = (diasRestantes: number): number => {
-  const today = new Date("2025-06-18T16:07:00-03:00");
+  const today = new Date("2025-06-18T16:24:00-03:00");
   if (today.getDate() > 15) return 0;
   const diasAte14 = 15 - today.getDate();
   let diasUteis = 0;
@@ -40,8 +38,6 @@ const MetaAlimentacao = ({
   diasRestantesCalculados,
   isLoading,
 }: DashboardProps) => {
-  const { addDailyReceipt } = useUserData();
-  const [newAmount, setNewAmount] = useState(0);
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
   const [mesCongelado, setMesCongelado] = useState<number | null>(null);
@@ -53,7 +49,7 @@ const MetaAlimentacao = ({
   }, [diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
-  const todayDate = new Date("2025-06-18T16:07:00-03:00");
+  const todayDate = new Date("2025-06-18T16:24:00-03:00");
   const mesAtual = todayDate.getMonth();
 
   const aReceber = userData?.abertura_vencido_mes - userData?.meta_mes || 0;
@@ -96,30 +92,6 @@ const MetaAlimentacao = ({
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
-        <h3 className="text-lg font-medium text-gray-700">Adicionar Recebimento Diário</h3>
-        <div className="mt-2 flex gap-2">
-          <input
-            type="number"
-            placeholder="Valor (R$)"
-            className="p-2 border rounded"
-            value={newAmount || ""}
-            onChange={(e) => setNewAmount(Number(e.target.value) || 0)}
-            min="0"
-          />
-          <Button
-            onClick={() => {
-              if (newAmount > 0) {
-                addDailyReceipt(todayDate.toISOString().split("T")[0], newAmount);
-                setNewAmount(0);
-              }
-            }}
-            disabled={isLoading || newAmount <= 0}
-          >
-            Salvar
-          </Button>
-        </div>
-      </div>
       <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-2">
         <Utensils className="h-5 w-5 text-green-500" />
         Meta de Ticket
