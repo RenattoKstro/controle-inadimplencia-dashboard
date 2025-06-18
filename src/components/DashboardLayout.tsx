@@ -10,6 +10,7 @@ import MetaDesafio from "./dashboard/MetaDesafio";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
+import RecebimentosAnteriores from "./dashboard/RecebimentosAnteriores"; // Import new component
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -37,7 +38,7 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
-  const today = new Date(); // Fixed to today's date (June 6, 2025)
+  const today = new Date("2025-06-18T12:34:00-03:00"); // Set to current date and time
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1)); // For calendar navigation
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -69,7 +70,7 @@ const DashboardLayout = () => {
   };
 
   const renderTabs = () => (
-    <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-5'} w-full p-1 bg-white shadow-sm rounded-xl`}>
+    <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-6'} w-full p-1 bg-white shadow-sm rounded-xl`}>
       <TabsTrigger 
         value="ajustes-metas" 
         className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
@@ -109,6 +110,14 @@ const DashboardLayout = () => {
       >
         <Gift className="h-4 w-4" />
         <span>Meus Prêmios</span>
+      </TabsTrigger>
+      <TabsTrigger 
+        value="recebimentos-anteriores" 
+        className="flex items-center gap-2 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-600"
+        onClick={() => handleTabChange("recebimentos-anteriores")}
+      >
+        <Calendar className="h-4 w-4" />
+        <span>Recebimentos Anteriores</span>
       </TabsTrigger>
     </TabsList>
   );
@@ -168,6 +177,9 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
         />
+      </TabsContent>
+      <TabsContent value="recebimentos-anteriores" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+        <RecebimentosAnteriores />
       </TabsContent>
     </>
   );
@@ -250,7 +262,7 @@ const DashboardLayout = () => {
                       </div>
                       <div className="py-4 flex-1">
                         <div className="space-y-2">
-                          {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios"].map((tab) => (
+                          {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios", "recebimentos-anteriores"].map((tab) => (
                             <Button
                               key={tab}
                               variant="ghost"
@@ -262,11 +274,13 @@ const DashboardLayout = () => {
                               {tab === "meta-desafio" && <Trophy className="h-4 w-4 mr-2" />}
                               {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
                               {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
+                              {tab === "recebimentos-anteriores" && <Calendar className="h-4 w-4 mr-2" />}
                               {tab === "ajustes-metas" && "Ajustes de Metas"}
                               {tab === "meta-fiado" && "Meta Fiado"}
                               {tab === "meta-desafio" && "Meta Desafio"}
                               {tab === "meta-alimentacao" && "Meta de Ticket"}
                               {tab === "meus-premios" && "Meus Prêmios"}
+                              {tab === "recebimentos-anteriores" && "Recebimentos Anteriores"}
                             </Button>
                           ))}
                         </div>
@@ -424,7 +438,7 @@ const DashboardLayout = () => {
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-blue-600" />
             <a
-              href="https://wa.me/68992237305" // Replace with actual WhatsApp number
+              href="https://wa.me/68992237305" // Updated WhatsApp number
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline font-medium"
@@ -435,7 +449,7 @@ const DashboardLayout = () => {
           <div className="flex items-center gap-2">
             <Instagram className="h-5 w-5 text-pink-600" />
             <a
-              href="https://instagram.com/renato_alme1da" // Replace with actual Instagram handle
+              href="https://instagram.com/renato_alme1da" // Updated Instagram handle
               target="_blank"
               rel="noopener noreferrer"
               className="text-pink-600 hover:underline font-medium"
