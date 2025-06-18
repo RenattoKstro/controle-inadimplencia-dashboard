@@ -1,26 +1,18 @@
-import { useState, useEffect } from "react";
+// src/components/dashboard/MetaAlimentacao.tsx
+import { useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Utensils, Check, AlertTriangle, Calendar, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserData } from "@/hooks/useUserData";
+import { Button } from "@/components/ui/button";
 
 const formataDinheiro = (valor: number | null): string => {
-  if (valor === null) {
-    return "R$ 0,00";
-  }
-  return valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+  if (valor === null) return "R$ 0,00";
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
 
 const isPastDay15 = (): boolean => {
@@ -30,27 +22,28 @@ const isPastDay15 = (): boolean => {
 
 const calcularDiasUteisAte15 = (diasRestantes: number): number => {
   const today = new Date();
-  if (today.getDate() > 15) {
-    return 0;
-  }
-  const diasAte14 = 15 - today.getDate(); // Days from today to 14th
+  if (today.getDate() > 15) return 0;
+  const diasAte14 = 15 - today.getDate();
   let diasUteis = 0;
   for (let i = 0; i < diasAte14; i++) {
     const currentDate = new Date(today);
     currentDate.setDate(today.getDate() + i);
-    const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
-    if (dayOfWeek !== 0) { // Exclude only Sundays, include Saturdays
-      diasUteis++;
-    }
+    const dayOfWeek = currentDate.getDay();
+    if (dayOfWeek !== 0) diasUteis++; // Exclude only Sundays
   }
   return Math.min(diasRestantes, diasUteis);
 };
 
 const MetaAlimentacao = ({
   userData,
+  updateUserData,
+  diasSemExpediente,
+  updateDiasSemExpediente,
   diasRestantesCalculados,
   isLoading,
 }: DashboardProps) => {
+  const { addDailyReceipt } = useUserData();
+  const [newAmount, setNewAmount] = useState(0);
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
   const [mesCongelado, setMesCongelado] = useState<number | null>(null);
@@ -59,56 +52,37 @@ const MetaAlimentacao = ({
   useEffect(() => {
     const dias = calcularDiasUteisAte15(userData.dias_restantes || diasRestantesCalculados);
     setDiasUteisAte15(dias);
-    console.log(`[MetaAlimentacao] Dias úteis até 15: ${dias}`);
   }, [userData.dias_restantes, diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
-  const today = new Date();
-  const mesAtual = today.getMonth();
+  const todayDate = new Date();
+  const mesAtual = todayDate.getMonth();
 
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const metaTicket = aReceber * 0.8;
 
-  // Cálculo do progresso atual
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
-  console.log(`Meta Ticket - Recebido: ${recebidoMes}, Meta: ${metaTicket}, Progresso Atual: ${progressoTicketAtual}%`);
-
-  // Determinar o progresso a ser exibido
-  let progressoExibido: number;
 
   useEffect(() => {
-    // Se o mês mudou desde o último congelamento, resetar o progresso congelado
     if (mesCongelado !== null && mesCongelado !== mesAtual) {
       setProgressoCongelado(null);
       setMesCongelado(null);
-      console.log(`[MetaAlimentacao] Mês mudou (de ${mesCongelado} para ${mesAtual}). Resetando progresso congelado.`);
     }
-
-    // Se estamos no dia 15 ou após, e ainda não congelamos o progresso, congelar
     if (passouDia15 && progressoCongelado === null) {
-      const progressoNoDia15 = Math.min(100, progressoTicketAtual); // Limitar a 100%
+      const progressoNoDia15 = Math.min(100, progressoTicketAtual);
       setProgressoCongelado(progressoNoDia15);
       setMesCongelado(mesAtual);
-      console.log(`[MetaAlimentacao] Congelando progresso no dia 15: ${progressoNoDia15}% (Mês: ${mesAtual})`);
     }
   }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado]);
 
-  // Determinar o progresso a ser exibido
-  if (progressoCongelado !== null) {
-    // Se o progresso foi congelado, usar o valor congelado
-    progressoExibido = progressoCongelado;
-    console.log(`[MetaAlimentacao] Usando progresso congelado: ${progressoExibido}%`);
-  } else {
-    // Caso contrário, usar o progresso atual, limitado a 100%
-    progressoExibido = Math.min(100, progressoTicketAtual);
-    console.log(`[MetaAlimentacao] Usando progresso atual: ${progressoExibido}%`);
-  }
+  const progressoExibido = progressoCongelado !== null ? progressoCongelado : Math.min(100, progressoTicketAtual);
+  const metaTicketBatida = recebidoMes >= metaTicket;
 
-  // FIX: Correção da lógica para considerar a meta batida mesmo após o dia 15,
-  // desde que tenha sido atingida antes do prazo
-  const metaMesAtingida = recebidoMes >= metaTicket;
-  const metaTicketBatida = metaMesAtingida;
+  const getProgressColor = (isComplete: boolean, isPastDeadline: boolean) => {
+    if (isComplete) return "bg-green-500";
+    return isPastDeadline ? "bg-red-500" : "bg-yellow-500";
+  };
 
   if (isLoading) {
     return (
@@ -122,18 +96,33 @@ const MetaAlimentacao = ({
     );
   }
 
-  const getProgressColor = (isComplete: boolean, isPastDeadline: boolean) => {
-    if (isComplete) return "bg-green-500";
-    return isPastDeadline ? "bg-red-500" : "bg-yellow-500";
-  };
-
   return (
     <div className="space-y-4 md:space-y-6">
+      <div className="mb-4 p-4 bg-white rounded-lg shadow-sm">
+        <h3 className="text-lg font-medium text-gray-700">Adicionar Recebimento Diário</h3>
+        <div className="mt-2 flex gap-2">
+          <input
+            type="number"
+            placeholder="Valor (R$)"
+            className="p-2 border rounded"
+            value={newAmount}
+            onChange={(e) => setNewAmount(Number(e.target.value))}
+          />
+          <Button
+            onClick={() => {
+              addDailyReceipt(todayDate.toISOString().split("T")[0], newAmount);
+              setNewAmount(0);
+            }}
+            disabled={isLoading}
+          >
+            Salvar
+          </Button>
+        </div>
+      </div>
       <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-2">
         <Utensils className="h-5 w-5 text-green-500" />
         Meta de Ticket
       </h2>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
           <div className="h-2 bg-gradient-to-r from-green-400 to-emerald-500"></div>
@@ -150,28 +139,21 @@ const MetaAlimentacao = ({
             <div className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Valor da Meta (80%)
-                  </p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">Valor da Meta (80%)</p>
                   <p className="text-base md:text-2xl font-bold text-gray-900">
                     {formataDinheiro(metaTicket)}
                   </p>
                 </div>
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Recebido até agora
-                  </p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">Recebido até agora</p>
                   <p className="text-base md:text-2xl font-bold text-gray-900">
                     {formataDinheiro(recebidoMes)}
                   </p>
                 </div>
               </div>
-
               <div className="space-y-2 md:space-y-3">
                 <div className="flex justify-between items-center">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Progresso da Meta
-                  </p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">Progresso da Meta</p>
                   <p className="text-xs md:text-sm font-medium text-gray-700">
                     {progressoExibido.toFixed(2)}%
                   </p>
@@ -184,32 +166,24 @@ const MetaAlimentacao = ({
                   )}
                 />
               </div>
-
               <div className="space-y-2 md:space-y-3">
                 <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-gray-500">
-                      Valor Restante
-                    </p>
+                    <p className="text-xs md:text-sm font-medium text-gray-500">Valor Restante</p>
                     <p className="text-sm md:text-lg font-semibold text-gray-900">
                       {formataDinheiro(Math.max(0, metaTicket - recebidoMes))}
                     </p>
                   </div>
                   <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-gray-500">
-                      Por Dia até o Dia 15
-                    </p>
+                    <p className="text-xs md:text-sm font-medium text-gray-500">Por Dia até o Dia 15</p>
                     <p className="text-sm md:text-lg font-semibold text-gray-900">
                       {formataDinheiro(
-                        diasUteisAte15 > 0
-                          ? (metaTicket - recebidoMes) / diasUteisAte15
-                          : 0
+                        diasUteisAte15 > 0 ? (metaTicket - recebidoMes) / diasUteisAte15 : 0
                       )}
                     </p>
                   </div>
                 </div>
               </div>
-
               <div className="pt-2 md:pt-3 border-t">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 md:gap-2">
@@ -233,7 +207,6 @@ const MetaAlimentacao = ({
             </div>
           </CardContent>
         </Card>
-
         <Card className="shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
           <div className="h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
           <CardHeader className="pb-2">
@@ -249,9 +222,7 @@ const MetaAlimentacao = ({
             <div className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-2 gap-3 md:gap-6">
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Dias Úteis Restantes até o dia 15
-                  </p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">Dias Úteis Restantes até o dia 15</p>
                   <div className="bg-blue-50 rounded-lg p-2 md:p-4 flex justify-center items-center">
                     <p className="text-xl md:text-3xl font-bold text-blue-700">
                       {diasUteisAte15}
@@ -259,9 +230,7 @@ const MetaAlimentacao = ({
                   </div>
                 </div>
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Status do Período
-                  </p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">Status do Período</p>
                   <div
                     className={cn(
                       "rounded-lg p-2 md:p-4 flex justify-center items-center",
@@ -281,31 +250,24 @@ const MetaAlimentacao = ({
               </div>
               <div className="pt-2 md:pt-4 space-y-2 md:space-y-3">
                 <div className="flex justify-between items-center">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">
-                    Dia Atual
-                  </p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">Dia Atual</p>
                   <p className="text-xs md:text-sm font-medium text-gray-700">
-                    {new Date().getDate()}
+                    {todayDate.getDate()}
                   </p>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-1.5 md:h-2">
                   <div
                     className="bg-blue-500 h-1.5 md:h-2 rounded-full"
-                    style={{
-                      width: `${Math.min(100, (new Date().getDate() / 15) * 100)}%`,
-                    }}
+                    style={{ width: `${Math.min(100, (todayDate.getDate() / 15) * 100)}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500 text-right">
-                  Dias até 15 do mês
-                </p>
+                <p className="text-xs text-gray-500 text-right">Dias até 15 do mês</p>
               </div>
               <div className="pt-2 md:pt-3 border-t">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 md:gap-2">
                     <span className="text-xs md:text-sm font-medium text-blue-600">
-                      Meta: 80% de "A Receber" ({formataDinheiro(aReceber)}) ={" "}
-                      {formataDinheiro(metaTicket)}
+                      Meta: 80% de "A Receber" ({formataDinheiro(aReceber)}) = {formataDinheiro(metaTicket)}
                     </span>
                   </div>
                 </div>
