@@ -11,8 +11,6 @@ import MetaDesafio from "./dashboard/MetaDesafio";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
-import RecebimentosDiarios from "./dashboard/RecebimentosDiarios"; // Novo componente
-import RecebimentosMensais from "./dashboard/RecebimentosMensais"; // Novo componente
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
