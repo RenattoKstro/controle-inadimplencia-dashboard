@@ -12,18 +12,18 @@ const RecebimentosMensais = ({
   useEffect(() => {
     const calculateMonthlyTotals = () => {
       const monthlyTotals: { [key: string]: number } = {};
-      userData.dailyReceipts.forEach((receipt: { date: string; amount: number }) => {
+      (userData.dailyreceipts || []).forEach((receipt: { date: string; amount: number }) => {
         const monthKey = receipt.date.split("-").slice(0, 2).join("-"); // e.g., "2025-06"
         monthlyTotals[monthKey] = (monthlyTotals[monthKey] || 0) + receipt.amount;
       });
 
       if (Object.keys(monthlyTotals).length > 0) {
-        updateUserData({ monthlyReceipts: monthlyTotals });
+        updateUserData({ monthlyreceipts: monthlyTotals }); // Usando minúsculas
       }
     };
 
     calculateMonthlyTotals();
-  }, [userData.dailyReceipts, updateUserData]);
+  }, [userData.dailyreceipts, updateUserData]);
 
   if (isLoading) {
     return (
@@ -52,7 +52,7 @@ const RecebimentosMensais = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(userData.monthlyReceipts || {}).map(([month, total]: [string, number], index: number) => (
+                  {Object.entries(userData.monthlyreceipts || {}).map(([month, total]: [string, number], index: number) => (
                     <tr key={index} className="border-t">
                       <td className="p-2">{new Date(month + "-01").toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</td>
                       <td className="p-2">R${total.toFixed(2)}</td>
