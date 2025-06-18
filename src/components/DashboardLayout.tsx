@@ -11,7 +11,8 @@ import MetaDesafio from "./dashboard/MetaDesafio";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
-import RecebimentosAnteriores from "./dashboard/RecebimentosAnteriores";
+import RecebimentosDiarios from "./dashboard/RecebimentosDiarios"; // Novo componente
+import RecebimentosMensais from "./dashboard/RecebimentosMensais"; // Novo componente
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -25,6 +26,7 @@ export interface DashboardProps {
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
+  const [subTabRecebimentos, setSubTabRecebimentos] = useState("diarios"); // Nova subguia
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -33,9 +35,10 @@ const DashboardLayout = () => {
     userData, 
     updateUserData, 
     isLoading,
-    diasRestantesCalculados
+    diasRestantesCalculados,
+    addDailyReceipt,
   } = useUserData();
-  const today = new Date("2025-06-18T16:14:00-03:00"); // Atualizado para o horário atual
+  const today = new Date("2025-06-18T16:24:00-03:00"); // Atualizado para o horário atual
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
 
@@ -62,6 +65,9 @@ const DashboardLayout = () => {
     setActiveTab(value);
     if (isMobile) {
       setSheetOpen(false);
+    }
+    if (value !== "recebimentos") {
+      setSubTabRecebimentos("diarios"); // Reset subguia ao sair de "Recebimentos"
     }
   };
 
@@ -108,12 +114,12 @@ const DashboardLayout = () => {
         <span>Meus Prêmios</span>
       </TabsTrigger>
       <TabsTrigger 
-        value="recebimentos-anteriores" 
+        value="recebimentos" 
         className="flex items-center gap-2 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-600"
-        onClick={() => handleTabChange("recebimentos-anteriores")}
+        onClick={() => handleTabChange("recebimentos")}
       >
         <Calendar className="h-4 w-4" />
-        <span>Recebimentos Anteriores</span>
+        <span>Recebimentos</span>
       </TabsTrigger>
     </TabsList>
   );
@@ -160,8 +166,28 @@ const DashboardLayout = () => {
           isLoading={isLoading}
         />
       </TabsContent>
-      <TabsContent value="recebimentos-anteriores" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-        <RecebimentosAnteriores />
+      <TabsContent value="recebimentos" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+        <Tabs defaultValue="diarios" value={subTabRecebimentos} onValueChange={setSubTabRecebimentos} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="diarios">Recebimentos Diários</TabsTrigger>
+            <TabsTrigger value="mensais">Recebimentos Mensais</TabsTrigger>
+          </TabsList>
+          <TabsContent value="diarios">
+            <RecebimentosDiarios 
+              userData={userData}
+              updateUserData={updateUserData}
+              addDailyReceipt={addDailyReceipt}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+          <TabsContent value="mensais">
+            <RecebimentosMensais 
+              userData={userData}
+              updateUserData={updateUserData}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
     </>
   );
@@ -256,7 +282,7 @@ const DashboardLayout = () => {
                           </div>
                           <div className="py-4 flex-1">
                             <div className="space-y-2">
-                              {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios", "recebimentos-anteriores"].map((tab) => (
+                              {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios", "recebimentos"].map((tab) => (
                                 <Button
                                   key={tab}
                                   variant="ghost"
@@ -268,13 +294,13 @@ const DashboardLayout = () => {
                                   {tab === "meta-desafio" && <Trophy className="h-4 w-4 mr-2" />}
                                   {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
                                   {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
-                                  {tab === "recebimentos-anteriores" && <Calendar className="h-4 w-4 mr-2" />}
+                                  {tab === "recebimentos" && <Calendar className="h-4 w-4 mr-2" />}
                                   {tab === "ajustes-metas" && "Ajustes de Metas"}
                                   {tab === "meta-fiado" && "Meta Fiado"}
                                   {tab === "meta-desafio" && "Meta Desafio"}
                                   {tab === "meta-alimentacao" && "Meta de Ticket"}
                                   {tab === "meus-premios" && "Meus Prêmios"}
-                                  {tab === "recebimentos-anteriores" && "Recebimentos Anteriores"}
+                                  {tab === "recebimentos" && "Recebimentos"}
                                 </Button>
                               ))}
                             </div>
