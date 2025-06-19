@@ -1,16 +1,18 @@
 import React from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress"; // Correct import for Progress
+import { Progress } from "@/components/ui/progress";
 import { AlertTriangle } from "lucide-react";
 
 const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) => {
+  console.log("MetaPerdido renderizado", userData);
   const [metaPerdido, setMetaPerdido] = React.useState(userData.meta_perdido || 0);
   const [recPerdido, setRecPerdido] = React.useState(userData.rec_perdido || 0);
 
   React.useEffect(() => {
     setMetaPerdido(userData.meta_perdido || 0);
     setRecPerdido(userData.rec_perdido || 0);
+    console.log("MetaPerdido useEffect executado", userData);
   }, [userData]);
 
   const percentual = userData.vencido_atual > 0 
