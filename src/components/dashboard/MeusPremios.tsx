@@ -11,6 +11,7 @@ import { Gift, Wallet, Trophy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast"; // Adicionado para exibir erros
 
 interface PremioProps {
   nome: string;
@@ -88,6 +89,7 @@ const CardPremio = ({ titulo, premios, total, icon, color }: CardPremioProps) =>
 };
 
 const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps) => {
+  const { toast } = useToast(); // Adicionado para exibir erros
   const [premiosFiadoLider, setPremiosFiadoLider] = useState<PremioProps[]>([]);
   const [premiosDesafioLider, setPremiosDesafioLider] = useState<PremioProps[]>([]);
   const [premiosAlimentacaoLider, setPremiosAlimentacaoLider] = useState<PremioProps[]>([]);
@@ -97,15 +99,24 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
   const [totalPremiosCadastro, setTotalPremiosCadastro] = useState(0);
   const [activeTab, setActiveTab] = useState("lider");
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
+    if (!userData) {
+      console.warn("userData não está disponível, pulando cálculos.");
+      return;
+    }
+
+    // Validações para evitar erros
+    const safeVencidoAtual = userData.vencido_atual || 0;
+    const safeMetaMes = userData.meta_mes || 0;
+    const safeMetaDesafio = userData.meta_desafio || 0;
+    const safeMetaPerdido = userData.meta_perdido || 0;
+    const safeRecPerdido = userData.rec_perdido || 0;
+
     let metaAtingidaPercentualLider = 0;
-    if (userData.vencido_atual > 0) {
-      metaAtingidaPercentualLider = (userData.meta_mes / userData.vencido_atual) * 100;
+    if (safeVencidoAtual > 0) {
+      metaAtingidaPercentualLider = (safeMetaMes / safeVencidoAtual) * 100;
       metaAtingidaPercentualLider = Number(metaAtingidaPercentualLider.toFixed(2));
-    } else {
-      metaAtingidaPercentualLider = 0;
     }
     metaAtingidaPercentualLider = Math.max(0, metaAtingidaPercentualLider);
 
@@ -121,8 +132,8 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     ];
 
     let metaDesafioPercentualLider = 0;
-    if (userData.meta_desafio > 0 && userData.vencido_atual > 0) {
-      metaDesafioPercentualLider = (userData.meta_desafio / userData.vencido_atual) * 100;
+    if (safeVencidoAtual > 0 && safeMetaDesafio > 0) {
+      metaDesafioPercentualLider = (safeMetaDesafio / safeVencidoAtual) * 100;
       metaDesafioPercentualLider = Number(metaDesafioPercentualLider.toFixed(2));
     }
     metaDesafioPercentualLider = Math.max(0, Math.min(100, metaDesafioPercentualLider));
@@ -138,11 +149,9 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     ];
 
     let metaAtingidaPercentualCadastro = 0;
-    if (userData.vencido_atual > 0) {
-      metaAtingidaPercentualCadastro = (userData.meta_mes / userData.vencido_atual) * 100;
+    if (safeVencidoAtual > 0) {
+      metaAtingidaPercentualCadastro = (safeMetaMes / safeVencidoAtual) * 100;
       metaAtingidaPercentualCadastro = Number(metaAtingidaPercentualCadastro.toFixed(2));
-    } else {
-      metaAtingidaPercentualCadastro = 0;
     }
     metaAtingidaPercentualCadastro = Math.max(0, metaAtingidaPercentualCadastro);
 
@@ -153,8 +162,8 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     ];
 
     let metaDesafioPercentualCadastro = 0;
-    if (userData.meta_desafio > 0 && userData.vencido_atual > 0) {
-      metaDesafioPercentualCadastro = (userData.meta_desafio / userData.vencido_atual) * 100;
+    if (safeVencidoAtual > 0 && safeMetaDesafio > 0) {
+      metaDesafioPercentualCadastro = (safeMetaDesafio / safeVencidoAtual) * 100;
       metaDesafioPercentualCadastro = Number(metaDesafioPercentualCadastro.toFixed(2));
     }
     metaDesafioPercentualCadastro = Math.max(0, Math.min(100, metaDesafioPercentualCadastro));
@@ -166,8 +175,8 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     ];
 
     let metaPerdidoPercentual = 0;
-    if (userData.meta_perdido > 0 && userData.rec_perdido > 0) {
-      metaPerdidoPercentual = (userData.rec_perdido / userData.meta_perdido) * 100;
+    if (safeMetaPerdido > 0 && safeRecPerdido > 0) {
+      metaPerdidoPercentual = (safeRecPerdido / safeMetaPerdido) * 100;
       metaPerdidoPercentual = Number(metaPerdidoPercentual.toFixed(2));
     }
     const bonusPerdido = [
@@ -343,7 +352,19 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       {renderTabContent()}
       <Button
         variant={bonusPerdidoAtivado ? "default" : "outline"}
-        onClick={() => setBonusPerdidoAtivado(!bonusPerdidoAtivado)}
+        onClick={() => {
+          try {
+            setBonusPerdidoAtivado(!bonusPerdidoAtivado);
+            console.log("Botão + Perdido clicado, novo estado:", !bonusPerdidoAtivado);
+          } catch (error) {
+            console.error("Erro ao alternar bonusPerdidoAtivado:", error);
+            toast({
+              title: "Erro",
+              description: "Não foi possível ativar/desativar o bônus perdido. Tente novamente.",
+              variant: "destructive",
+            });
+          }
+        }}
         className="mt-4"
       >
         + Perdido
