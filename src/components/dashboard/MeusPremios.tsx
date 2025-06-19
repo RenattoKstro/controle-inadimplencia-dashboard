@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
   Card, 
@@ -7,11 +7,13 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Gift, Wallet, Trophy } from "lucide-react";
+import { Gift, Wallet, Trophy, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast"; // Adicionado para exibir erros
+import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch"; // Adicionado para o botão toggle
+import { Label } from "@/components/ui/label"; // Adicionado para o label do switch
 
 interface PremioProps {
   nome: string;
@@ -88,8 +90,14 @@ const CardPremio = ({ titulo, premios, total, icon, color }: CardPremioProps) =>
   );
 };
 
-const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps) => {
-  const { toast } = useToast(); // Adicionado para exibir erros
+const MeusPremios = ({ 
+  userData, 
+  diasSemExpediente, 
+  isLoading, 
+  bonusPerdidoAtivado,
+  setBonusPerdidoAtivado,
+}: DashboardProps) => {
+  const { toast } = useToast();
   const [premiosFiadoLider, setPremiosFiadoLider] = useState<PremioProps[]>([]);
   const [premiosDesafioLider, setPremiosDesafioLider] = useState<PremioProps[]>([]);
   const [premiosAlimentacaoLider, setPremiosAlimentacaoLider] = useState<PremioProps[]>([]);
@@ -98,7 +106,6 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
   const [totalPremiosLider, setTotalPremiosLider] = useState(0);
   const [totalPremiosCadastro, setTotalPremiosCadastro] = useState(0);
   const [activeTab, setActiveTab] = useState("lider");
-  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
 
   useEffect(() => {
     if (!userData) {
@@ -106,7 +113,6 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       return;
     }
 
-    // Validações para evitar erros
     const safeVencidoAtual = userData.vencido_atual || 0;
     const safeMetaMes = userData.meta_mes || 0;
     const safeMetaDesafio = userData.meta_desafio || 0;
@@ -183,9 +189,6 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       { percentual: 100, valor: 500.00, atingido: metaPerdidoPercentual >= 100 },
       { percentual: 105, valor: 200.00, atingido: metaPerdidoPercentual >= 105 },
     ];
-    const bonusPerdidoTotal = bonusPerdidoAtivado 
-      ? bonusPerdido.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0)
-      : 0;
 
     setPremiosFiadoLider(premiosFiadoLiderData);
     setPremiosDesafioLider(premiosDesafioLiderData);
@@ -200,12 +203,13 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     const totalDesafioCadastro = premiosDesafioCadastroData.reduce((acc, premio) => acc + premio.valor, 0);
     setTotalPremiosLider(totalFiadoLider + totalDesafioLider + totalAlimentacaoLider);
     setTotalPremiosCadastro(totalFiadoCadastro + totalDesafioCadastro);
-  }, [userData, bonusPerdidoAtivado]);
+  }, [userData]);
 
   const premiosFiadoGanhosLider = premiosFiadoLider.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
   const premiosDesafioGanhosLider = premiosDesafioLider.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
   const premiosAlimentacaoGanhosLider = premiosAlimentacaoLider.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
-  const totalGanhosLider = premiosFiadoGanhosLider + premiosDesafioGanhosLider + premiosAlimentacaoGanhosLider + (bonusPerdidoAtivado ? bonusPerdido.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0) : 0);
+  const bonusPerdidoGanhos = bonusPerdidoAtivado ? bonusPerdido.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0) : 0;
+  const totalGanhosLider = premiosFiadoGanhosLider + premiosDesafioGanhosLider + premiosAlimentacaoGanhosLider + bonusPerdidoGanhos;
 
   const premiosFiadoGanhosCadastro = premiosFiadoCadastro.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
   const premiosDesafioGanhosCadastro = premiosDesafioCadastro.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
@@ -244,7 +248,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     if (activeTab === "lider") {
       return (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             <CardPremio 
               titulo="Meta Fiado" 
               premios={premiosFiadoLider}
@@ -266,6 +270,15 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
               icon={<Gift className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-green-500`} />}
               color="border-green-500"
             />
+            {bonusPerdidoAtivado && (
+              <CardPremio 
+                titulo="Meta Perdido" 
+                premios={[{ percentual: 100, valor: 500.00, atingido: metaPerdidoPercentual >= 100 }, { percentual: 105, valor: 200.00, atingido: metaPerdidoPercentual >= 105 }].map(p => ({ ...p, icon: <AlertTriangle size={16} />, color: "text-red-500" }))}
+                total={bonusPerdidoAtivado ? 700.00 : 0}
+                icon={<AlertTriangle className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-red-500`} />}
+                color="border-red-500"
+              />
+            )}
           </div>
           <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
             <CardContent className="p-4 md:p-6">
@@ -279,7 +292,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
                 <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
                   {formatCurrency(totalGanhosLider)}
                   <span className="text-xs md:text-sm text-gray-500 block text-right">
-                    de {formatCurrency(totalPremiosLider)}
+                    de {formatCurrency(totalPremiosLider + (bonusPerdidoAtivado ? 700.00 : 0))}
                   </span>
                 </div>
               </div>
@@ -305,6 +318,15 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
               icon={<Trophy className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-yellow-500`} />}
               color="border-yellow-500"
             />
+            {bonusPerdidoAtivado && (
+              <CardPremio 
+                titulo="Meta Perdido" 
+                premios={[{ percentual: 100, valor: 500.00, atingido: metaPerdidoPercentual >= 100 }, { percentual: 105, valor: 200.00, atingido: metaPerdidoPercentual >= 105 }].map(p => ({ ...p, icon: <AlertTriangle size={16} />, color: "text-red-500" }))}
+                total={bonusPerdidoAtivado ? 700.00 : 0}
+                icon={<AlertTriangle className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} text-red-500`} />}
+                color="border-red-500"
+              />
+            )}
           </div>
           <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
             <CardContent className="p-4 md:p-6">
@@ -318,7 +340,7 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
                 <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
                   {formatCurrency(totalGanhosCadastro)}
                   <span className="text-xs md:text-sm text-gray-500 block text-right">
-                    de {formatCurrency(totalPremiosCadastro)}
+                    de {formatCurrency(totalPremiosCadastro + (bonusPerdidoAtivado ? 700.00 : 0))}
                   </span>
                 </div>
               </div>
@@ -350,25 +372,26 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
         </button>
       </div>
       {renderTabContent()}
-      <Button
-        variant={bonusPerdidoAtivado ? "default" : "outline"}
-        onClick={() => {
-          try {
-            setBonusPerdidoAtivado(!bonusPerdidoAtivado);
-            console.log("Botão + Perdido clicado, novo estado:", !bonusPerdidoAtivado);
-          } catch (error) {
-            console.error("Erro ao alternar bonusPerdidoAtivado:", error);
-            toast({
-              title: "Erro",
-              description: "Não foi possível ativar/desativar o bônus perdido. Tente novamente.",
-              variant: "destructive",
-            });
-          }
-        }}
-        className="mt-4"
-      >
-        + Perdido
-      </Button>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked={bonusPerdidoAtivado}
+          onCheckedChange={(checked) => {
+            try {
+              setBonusPerdidoAtivado(checked);
+              console.log("Switch + Perdido alterado para:", checked);
+            } catch (error) {
+              console.error("Erro ao alternar bonusPerdidoAtivado:", error);
+              toast({
+                title: "Erro",
+                description: "Não foi possível ativar/desativar o bônus perdido. Tente novamente.",
+                variant: "destructive",
+              });
+            }
+          }}
+          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
+        />
+        <Label htmlFor="bonus-perdido-switch">Ativar Meta Perdido</Label>
+      </div>
     </div>
   );
 };
