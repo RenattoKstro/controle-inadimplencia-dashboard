@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -40,9 +39,10 @@ const AjustesMetas = ({
     vencido_atual: userData.vencido_atual || 0,
     dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
     meta_desafio: userData.meta_desafio || 0,
+    meta_perdido: userData.meta_perdido || 0,
+    rec_perdido: userData.rec_perdido || 0,
   });
 
-  // Update form state when userData changes
   useEffect(() => {
     setFormState({
       abertura_vencido_mes: userData.abertura_vencido_mes || 0,
@@ -51,6 +51,8 @@ const AjustesMetas = ({
       vencido_atual: userData.vencido_atual || 0,
       dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
       meta_desafio: userData.meta_desafio || 0,
+      meta_perdido: userData.meta_perdido || 0,
+      rec_perdido: userData.rec_perdido || 0,
     });
   }, [userData, diasRestantesCalculados]);
 
@@ -126,13 +128,11 @@ const AjustesMetas = ({
   };
 
   const handleSave = () => {
-    // Save the user entered days remaining value
     updateUserData(formState);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    // Reset to previously saved values
     setFormState({
       abertura_vencido_mes: userData.abertura_vencido_mes || 0,
       abertura_dia: userData.abertura_dia || 0,
@@ -140,6 +140,8 @@ const AjustesMetas = ({
       vencido_atual: userData.vencido_atual || 0,
       dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
       meta_desafio: userData.meta_desafio || 0,
+      meta_perdido: userData.meta_perdido || 0,
+      rec_perdido: userData.rec_perdido || 0,
     });
     setIsEditing(false);
   };
@@ -208,7 +210,6 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
         <CardItem 
           title="Abertura do Dia" 
           value={formState.abertura_dia} 
@@ -219,7 +220,6 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
         <CardItem 
           title="Meta do Mês" 
           value={formState.meta_mes} 
@@ -230,7 +230,6 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
         <CardItem 
           title="Vencido Atual" 
           value={formState.vencido_atual} 
@@ -241,7 +240,6 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
         <CardItem 
           title="Meta Desafio" 
           value={formState.meta_desafio} 
@@ -252,7 +250,26 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
+        <CardItem 
+          title="Meta Perdido" 
+          value={formState.meta_perdido} 
+          icon={<AlertTriangle size={16} />} 
+          isEditable={true}
+          onChange={(value) => handleChange('meta_perdido', value)}
+          color="bg-red-500"
+          isEditMode={isEditing}
+          onEdit={handleItemEdit}
+        />
+        <CardItem 
+          title="Rec. Perdido" 
+          value={formState.rec_perdido} 
+          icon={<Wallet size={16} />} 
+          isEditable={true}
+          onChange={(value) => handleChange('rec_perdido', value)}
+          color="bg-red-500"
+          isEditMode={isEditing}
+          onEdit={handleItemEdit}
+        />
         <CardItem 
           title="Dias Restantes (mês)" 
           value={formState.dias_restantes} 
