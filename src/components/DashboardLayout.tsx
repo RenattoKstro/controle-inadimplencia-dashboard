@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle } from "lucide-react"; // Adicionado AlertTriangle
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,8 @@ export interface DashboardProps {
   updateDiasSemExpediente: (dias: Date[]) => void;
   diasRestantesCalculados: number;
   isLoading: boolean;
+  bonusPerdidoAtivado: boolean;
+  setBonusPerdidoAtivado: (value: boolean) => void;
 }
 
 const DashboardLayout = () => {
@@ -31,6 +33,7 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(!!userData?.bonusPerdidoAtivado); // Inicializa com userData
   const { 
     userData, 
     updateUserData, 
@@ -133,6 +136,8 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
+          setBonusPerdidoAtivado={setBonusPerdidoAtivado}
         />
       </TabsContent>
       <TabsContent value="meta-fiado" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -143,6 +148,7 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
       <TabsContent value="meta-desafio" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -153,17 +159,21 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
       <TabsContent value="meta-perdido" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-        <MetaPerdido 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-        />
+        {bonusPerdidoAtivado && (
+          <MetaPerdido 
+            userData={userData}
+            updateUserData={updateUserData}
+            diasSemExpediente={diasSemExpediente}
+            updateDiasSemExpediente={updateDiasSemExpediente}
+            diasRestantesCalculados={diasRestantesCalculados}
+            isLoading={isLoading}
+            bonusPerdidoAtivado={bonusPerdidoAtivado}
+          />
+        )}
       </TabsContent>
       <TabsContent value="meta-alimentacao" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
         <MetaAlimentacao 
@@ -173,6 +183,7 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
       <TabsContent value="meus-premios" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -183,6 +194,7 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
     </>
