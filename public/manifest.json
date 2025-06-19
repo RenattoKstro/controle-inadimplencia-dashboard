@@ -8,13 +8,13 @@
   "theme_color": "#9b87f5",
   "icons": [
     {
-      "src": "https://iili.io/3uYDKps.png",
+      "src": "/icon-192x192.png", // Substitua por imagens locais
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://iili.io/3uYDqTG.png",
+      "src": "/icon-512x512.png", // Substitua por imagens locais
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
