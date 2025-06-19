@@ -1,6 +1,7 @@
 import React from "react";
 import { DashboardProps } from "../DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, Progress } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress"; // Correct import for Progress
 import { AlertTriangle } from "lucide-react";
 
 const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) => {
