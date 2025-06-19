@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle } from "lucide-react"; // Adicionado AlertTriangle
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
