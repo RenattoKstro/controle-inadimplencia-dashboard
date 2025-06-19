@@ -25,6 +25,7 @@ export interface DashboardProps {
 }
 
 const DashboardLayout = () => {
+  console.log("DashboardLayout renderizado");
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ const DashboardLayout = () => {
   const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
+    console.log("DashboardLayout useEffect executado", userData);
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
