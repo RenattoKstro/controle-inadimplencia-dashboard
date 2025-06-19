@@ -8,6 +8,9 @@ const DEFAULT_USER_DATA = {
   abertura_vencido_mes: 0,
   meta_mes: 0,
   vencido_atual: 0,
+  abertura_dia: 0,
+  dias_restantes: 0,
+  meta_desafio: 0,
 };
 
 export function useUserData() {
@@ -60,10 +63,7 @@ export function useUserData() {
       const updatedData = { ...userData, ...newData, user_id: user.id };
       const { error } = await supabase
         .from("user_dashboard")
-        .upsert(
-          { ...updatedData, updated_at: new Date().toISOString() },
-          { onConflict: "user_id" }
-        );
+        .upsert({ ...updatedData, updated_at: new Date().toISOString() });
 
       if (error) throw error;
 
