@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wallet, Building, AlertTriangle, Target, Pencil } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface CardItemProps {
   title: string;
@@ -29,8 +31,10 @@ const AjustesMetas = ({
   userData, 
   updateUserData,
   diasRestantesCalculados, 
-  isLoading 
-}: DashboardProps) => {
+  isLoading,
+  bonusPerdidoAtivado,
+  setBonusPerdidoAtivado, // Adicionado para controlar o estado
+}: DashboardProps & { setBonusPerdidoAtivado: (value: boolean) => void }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData.abertura_vencido_mes || 0,
@@ -189,13 +193,26 @@ const AjustesMetas = ({
             <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
           </div>
         ) : (
-          <Button 
-            variant="outline" 
-            onClick={() => setIsEditing(true)}
-            className="border-blue-300 text-blue-600 hover:bg-blue-50"
-          >
-            Editar
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditing(true)}
+              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+            >
+              Editar
+            </Button>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={bonusPerdidoAtivado}
+                onCheckedChange={(checked) => {
+                  setBonusPerdidoAtivado(checked);
+                  updateUserData({ ...userData, bonusPerdidoAtivado: checked });
+                }}
+                className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
+              />
+              <Label htmlFor="bonus-perdido-switch">Ativar Meta Perdido</Label>
+            </div>
+          </div>
         )}
       </div>
       
@@ -250,26 +267,30 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        <CardItem 
-          title="Meta Perdido" 
-          value={formState.meta_perdido} 
-          icon={<AlertTriangle size={16} />} 
-          isEditable={true}
-          onChange={(value) => handleChange('meta_perdido', value)}
-          color="bg-red-500"
-          isEditMode={isEditing}
-          onEdit={handleItemEdit}
-        />
-        <CardItem 
-          title="Rec. Perdido" 
-          value={formState.rec_perdido} 
-          icon={<Wallet size={16} />} 
-          isEditable={true}
-          onChange={(value) => handleChange('rec_perdido', value)}
-          color="bg-red-500"
-          isEditMode={isEditing}
-          onEdit={handleItemEdit}
-        />
+        {bonusPerdidoAtivado && (
+          <>
+            <CardItem 
+              title="Meta Perdido" 
+              value={formState.meta_perdido} 
+              icon={<AlertTriangle size={16} />} 
+              isEditable={true}
+              onChange={(value) => handleChange('meta_perdido', value)}
+              color="bg-red-500"
+              isEditMode={isEditing}
+              onEdit={handleItemEdit}
+            />
+            <CardItem 
+              title="Rec. Perdido" 
+              value={formState.rec_perdido} 
+              icon={<Wallet size={16} />} 
+              isEditable={true}
+              onChange={(value) => handleChange('rec_perdido', value)}
+              color="bg-red-500"
+              isEditMode={isEditing}
+              onEdit={handleItemEdit}
+            />
+          </>
+        )}
         <CardItem 
           title="Dias Restantes (mês)" 
           value={formState.dias_restantes} 
