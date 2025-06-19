@@ -10,6 +10,7 @@ import {
 import { Gift, Wallet, Trophy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 
 interface PremioProps {
   nome: string;
@@ -95,10 +96,10 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
   const [totalPremiosLider, setTotalPremiosLider] = useState(0);
   const [totalPremiosCadastro, setTotalPremiosCadastro] = useState(0);
   const [activeTab, setActiveTab] = useState("lider");
+  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Cálculos para Meta Fiado (Op. Cadastro Líder)
     let metaAtingidaPercentualLider = 0;
     if (userData.vencido_atual > 0) {
       metaAtingidaPercentualLider = (userData.meta_mes / userData.vencido_atual) * 100;
@@ -119,7 +120,6 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       { nome: "105%", percentual: 105, valor: 84.00, atingido: metaAtingidaPercentualLider >= 105, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
 
-    // Cálculos para Meta Desafio (Op. Cadastro Líder)
     let metaDesafioPercentualLider = 0;
     if (userData.meta_desafio > 0 && userData.vencido_atual > 0) {
       metaDesafioPercentualLider = (userData.meta_desafio / userData.vencido_atual) * 100;
@@ -133,12 +133,10 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentualLider >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
 
-    // Cálculos para Vale Alimentação (Op. Cadastro Líder)
     const premioAlimentacaoLiderData = [
       { nome: "Disponível após dia 15", percentual: 100, valor: 100.00, atingido: isPastDay15() && metaAtingidaPercentualLider >= 100, icon: <Gift size={16} />, color: "text-green-500" },
     ];
 
-    // Cálculos para Meta Fiado (Op. Cadastro)
     let metaAtingidaPercentualCadastro = 0;
     if (userData.vencido_atual > 0) {
       metaAtingidaPercentualCadastro = (userData.meta_mes / userData.vencido_atual) * 100;
@@ -154,7 +152,6 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       { nome: "100%", percentual: 100, valor: 157.50, atingido: metaAtingidaPercentualCadastro >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
 
-    // Cálculos para Meta Desafio (Op. Cadastro)
     let metaDesafioPercentualCadastro = 0;
     if (userData.meta_desafio > 0 && userData.vencido_atual > 0) {
       metaDesafioPercentualCadastro = (userData.meta_desafio / userData.vencido_atual) * 100;
@@ -167,6 +164,19 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
       { nome: "98%", percentual: 98, valor: 100.00, atingido: metaDesafioPercentualCadastro >= 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
       { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentualCadastro >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
+
+    let metaPerdidoPercentual = 0;
+    if (userData.meta_perdido > 0 && userData.rec_perdido > 0) {
+      metaPerdidoPercentual = (userData.rec_perdido / userData.meta_perdido) * 100;
+      metaPerdidoPercentual = Number(metaPerdidoPercentual.toFixed(2));
+    }
+    const bonusPerdido = [
+      { percentual: 100, valor: 500.00, atingido: metaPerdidoPercentual >= 100 },
+      { percentual: 105, valor: 200.00, atingido: metaPerdidoPercentual >= 105 },
+    ];
+    const bonusPerdidoTotal = bonusPerdidoAtivado 
+      ? bonusPerdido.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0)
+      : 0;
 
     setPremiosFiadoLider(premiosFiadoLiderData);
     setPremiosDesafioLider(premiosDesafioLiderData);
@@ -181,16 +191,16 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     const totalDesafioCadastro = premiosDesafioCadastroData.reduce((acc, premio) => acc + premio.valor, 0);
     setTotalPremiosLider(totalFiadoLider + totalDesafioLider + totalAlimentacaoLider);
     setTotalPremiosCadastro(totalFiadoCadastro + totalDesafioCadastro);
-  }, [userData]);
+  }, [userData, bonusPerdidoAtivado]);
 
   const premiosFiadoGanhosLider = premiosFiadoLider.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
   const premiosDesafioGanhosLider = premiosDesafioLider.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
   const premiosAlimentacaoGanhosLider = premiosAlimentacaoLider.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
-  const totalGanhosLider = premiosFiadoGanhosLider + premiosDesafioGanhosLider + premiosAlimentacaoGanhosLider;
+  const totalGanhosLider = premiosFiadoGanhosLider + premiosDesafioGanhosLider + premiosAlimentacaoGanhosLider + (bonusPerdidoAtivado ? bonusPerdido.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0) : 0);
 
   const premiosFiadoGanhosCadastro = premiosFiadoCadastro.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
   const premiosDesafioGanhosCadastro = premiosDesafioCadastro.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0);
-  const totalGanhosCadastro = premiosFiadoGanhosCadastro + premiosDesafioGanhosCadastro;
+  const totalGanhosCadastro = premiosFiadoGanhosCadastro + premiosDesafioGanhosCadastro + (bonusPerdidoAtivado ? bonusPerdido.filter(p => p.atingido).reduce((acc, p) => acc + p.valor, 0) : 0);
 
   if (isLoading) {
     return (
@@ -221,7 +231,6 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
     );
   }
 
-  // Fallback tab implementation using buttons
   const renderTabContent = () => {
     if (activeTab === "lider") {
       return (
@@ -332,6 +341,13 @@ const MeusPremios = ({ userData, diasSemExpediente, isLoading }: DashboardProps)
         </button>
       </div>
       {renderTabContent()}
+      <Button
+        variant={bonusPerdidoAtivado ? "default" : "outline"}
+        onClick={() => setBonusPerdidoAtivado(!bonusPerdidoAtivado)}
+        className="mt-4"
+      >
+        + Perdido
+      </Button>
     </div>
   );
 };
