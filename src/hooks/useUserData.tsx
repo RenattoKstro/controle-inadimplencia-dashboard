@@ -1,4 +1,3 @@
-// src/hooks/useUserData.tsx
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,8 @@ const DEFAULT_USER_DATA = {
   abertura_dia: 0,
   dias_restantes: 0,
   meta_desafio: 0,
+  meta_perdido: 0,
+  rec_perdido: 0,
 };
 
 export function useUserData() {
