@@ -1,4 +1,3 @@
-// src/components/DashboardLayout.tsx
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram } from "lucide-react";
@@ -11,6 +10,7 @@ import MetaDesafio from "./dashboard/MetaDesafio";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
+import RecebimentosAnteriores from "./dashboard/RecebimentosAnteriores"; // Import new component
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,6 +18,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export interface DashboardProps {
   userData: any;
   updateUserData: (data: any) => void;
+  diasSemExpediente: Date[];
+  updateDiasSemExpediente: (dias: Date[]) => void;
   diasRestantesCalculados: number;
   isLoading: boolean;
 }
@@ -31,11 +33,13 @@ const DashboardLayout = () => {
   const { 
     userData, 
     updateUserData, 
+    diasSemExpediente, 
+    updateDiasSemExpediente,
     isLoading,
-    diasRestantesCalculados,
+    diasRestantesCalculados
   } = useUserData();
-  const today = new Date("2025-06-18T20:16:00-03:00"); // Atualizado para o horário atual
-  const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const today = new Date("2025-06-18T12:34:00-03:00"); // Set to current date and time
+  const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1)); // For calendar navigation
   const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
@@ -45,6 +49,7 @@ const DashboardLayout = () => {
         navigate("/auth");
       }
     };
+    
     checkAuth();
   }, [navigate]);
 
@@ -65,7 +70,7 @@ const DashboardLayout = () => {
   };
 
   const renderTabs = () => (
-    <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-5'} w-full p-1 bg-white shadow-sm rounded-xl`}>
+    <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-6'} w-full p-1 bg-white shadow-sm rounded-xl`}>
       <TabsTrigger 
         value="ajustes-metas" 
         className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
@@ -106,6 +111,14 @@ const DashboardLayout = () => {
         <Gift className="h-4 w-4" />
         <span>Meus Prêmios</span>
       </TabsTrigger>
+      <TabsTrigger 
+        value="recebimentos-anteriores" 
+        className="flex items-center gap-2 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-600"
+        onClick={() => handleTabChange("recebimentos-anteriores")}
+      >
+        <Calendar className="h-4 w-4" />
+        <span>Recebimentos Anteriores</span>
+      </TabsTrigger>
     </TabsList>
   );
 
@@ -115,41 +128,58 @@ const DashboardLayout = () => {
         <AjustesMetas
           userData={userData}
           updateUserData={updateUserData}
+          diasSemExpediente={diasSemExpediente}
+          updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
         />
       </TabsContent>
+
       <TabsContent value="meta-fiado" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
         <MetaFiado 
           userData={userData}
           updateUserData={updateUserData}
+          diasSemExpediente={diasSemExpediente}
+          updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
         />
       </TabsContent>
+
       <TabsContent value="meta-desafio" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
         <MetaDesafio 
           userData={userData}
           updateUserData={updateUserData}
+          diasSemExpediente={diasSemExpediente}
+          updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
         />
       </TabsContent>
+
       <TabsContent value="meta-alimentacao" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
         <MetaAlimentacao 
           userData={userData}
           updateUserData={updateUserData}
+          diasSemExpediente={diasSemExpediente}
+          updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
         />
       </TabsContent>
+
       <TabsContent value="meus-premios" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
         <MeusPremios 
           userData={userData}
           updateUserData={updateUserData}
+          diasSemExpediente={diasSemExpediente}
+          updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
         />
+      </TabsContent>
+      <TabsContent value="recebimentos-anteriores" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+        <RecebimentosAnteriores />
       </TabsContent>
     </>
   );
@@ -211,249 +241,238 @@ const DashboardLayout = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {isLoading && (
-        <div className="flex items-center justify-center min-h-screen">
-          <p className="text-lg text-gray-600">Carregando...</p>
-        </div>
-      )}
-      {!isLoading && !userData && (
-        <div className="flex items-center justify-center min-h-screen">
-          <p className="text-lg text-red-600">Erro: Dados do usuário não carregados.</p>
-        </div>
-      )}
-      {!isLoading && userData && (
-        <>
-          <header className="bg-white shadow-md">
-            <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-              {isMobile ? (
-                <>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                    Controle <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
-                  </h1>
-                  <div className="flex items-center gap-2">
-                    <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                      <SheetTrigger asChild>
-                        <Button variant="outline" size="icon" className="h-9 w-9">
-                          <Menu size={18} />
+      <header className="bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          {isMobile ? (
+            <>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Controle <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
+              </h1>
+              <div className="flex items-center gap-2">
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9">
+                      <Menu size={18} />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+                    <div className="flex flex-col h-full">
+                      <div className="py-6 border-b">
+                        <h2 className="text-lg font-semibold">Menu de Navegação</h2>
+                      </div>
+                      <div className="py-4 flex-1">
+                        <div className="space-y-2">
+                          {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios", "recebimentos-anteriores"].map((tab) => (
+                            <Button
+                              key={tab}
+                              variant="ghost"
+                              className={`w-full justify-start ${activeTab === tab ? 'text-blue-600' : ''}`}
+                              onClick={() => handleTabChange(tab)}
+                            >
+                              {tab === "ajustes-metas" && <Sliders className="h-4 w-4 mr-2" />}
+                              {tab === "meta-fiado" && <Wallet className="h-4 w-4 mr-2" />}
+                              {tab === "meta-desafio" && <Trophy className="h-4 w-4 mr-2" />}
+                              {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
+                              {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
+                              {tab === "recebimentos-anteriores" && <Calendar className="h-4 w-4 mr-2" />}
+                              {tab === "ajustes-metas" && "Ajustes de Metas"}
+                              {tab === "meta-fiado" && "Meta Fiado"}
+                              {tab === "meta-desafio" && "Meta Desafio"}
+                              {tab === "meta-alimentacao" && "Meta de Ticket"}
+                              {tab === "meus-premios" && "Meus Prêmios"}
+                              {tab === "recebimentos-anteriores" && "Recebimentos Anteriores"}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="py-4 border-t">
+                        <Button 
+                          variant="destructive" 
+                          className="w-full" 
+                          onClick={handleLogout}
+                        >
+                          <LogOut size={16} className="mr-2" />
+                          Sair
                         </Button>
-                      </SheetTrigger>
-                      <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
-                        <div className="flex flex-col h-full">
-                          <div className="py-6 border-b">
-                            <h2 className="text-lg font-semibold">Menu de Navegação</h2>
-                          </div>
-                          <div className="py-4 flex-1">
-                            <div className="space-y-2">
-                              {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios"].map((tab) => (
-                                <Button
-                                  key={tab}
-                                  variant="ghost"
-                                  className={`w-full justify-start ${activeTab === tab ? 'text-blue-600' : ''}`}
-                                  onClick={() => handleTabChange(tab)}
-                                >
-                                  {tab === "ajustes-metas" && <Sliders className="h-4 w-4 mr-2" />}
-                                  {tab === "meta-fiado" && <Wallet className="h-4 w-4 mr-2" />}
-                                  {tab === "meta-desafio" && <Trophy className="h-4 w-4 mr-2" />}
-                                  {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
-                                  {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
-                                  {tab === "ajustes-metas" && "Ajustes de Metas"}
-                                  {tab === "meta-fiado" && "Meta Fiado"}
-                                  {tab === "meta-desafio" && "Meta Desafio"}
-                                  {tab === "meta-alimentacao" && "Meta de Ticket"}
-                                  {tab === "meus-premios" && "Meus Prêmios"}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="py-4 border-t">
-                            <Button 
-                              variant="destructive" 
-                              className="w-full" 
-                              onClick={handleLogout}
-                            >
-                              <LogOut size={16} className="mr-2" />
-                              Sair
-                            </Button>
-                          </div>
-                        </div>
-                      </SheetContent>
-                    </Sheet>
-                    <div className="relative">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-9 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                        onClick={() => setShowCalendar(!showCalendar)}
-                      >
-                        <Calendar className="h-5 w-5" />
-                        <span className="text-sm">
-                          {today.toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </Button>
-                      {showCalendar && (
-                        <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
-                          <div className="flex justify-between items-center mb-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-lg font-bold"
-                              onClick={() => handleMonthNavigation("prev")}
-                            >
-                              {"<"}
-                            </Button>
-                            <span className="text-base font-semibold">
-                              {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-lg font-bold"
-                              onClick={() => handleMonthNavigation("next")}
-                            >
-                              {">"}
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-7 gap-2 text-center">
-                            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                              <div key={day} className="text-sm font-medium text-gray-700">
-                                {day}
-                              </div>
-                            ))}
-                            {getCalendarDays(calendarMonth).map((day, index) => (
-                              <div
-                                key={index}
-                                className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
-                              >
-                                {day ? day.getDate() : ""}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 flex items-center">
-                      <LogOut size={16} />
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                    Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
-                  </h1>
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                        onClick={() => setShowCalendar(!showCalendar)}
-                      >
-                        <Calendar className="h-5 w-5" />
-                        <span className="text-sm">
-                          {today.toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
+                  </SheetContent>
+                </Sheet>
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    onClick={() => setShowCalendar(!showCalendar)}
+                  >
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-sm">
+                      {today.toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </Button>
+                  {showCalendar && (
+                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                      <div className="flex justify-between items-center mb-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-lg font-bold"
+                          onClick={() => handleMonthNavigation("prev")}
+                        >
+                          {"<"}
+                        </Button>
+                        <span className="text-base font-semibold">
+                          {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                         </span>
-                      </Button>
-                      {showCalendar && (
-                        <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
-                          <div className="flex justify-between items-center mb-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-lg font-bold"
-                              onClick={() => handleMonthNavigation("prev")}
-                            >
-                              {"<"}
-                            </Button>
-                            <span className="text-base font-semibold">
-                              {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-lg font-bold"
-                              onClick={() => handleMonthNavigation("next")}
-                            >
-                              {">"}
-                            </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-lg font-bold"
+                          onClick={() => handleMonthNavigation("next")}
+                        >
+                          {">"}
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-7 gap-2 text-center">
+                        {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
+                          <div key={day} className="text-sm font-medium text-gray-700">
+                            {day}
                           </div>
-                          <div className="grid grid-cols-7 gap-2 text-center">
-                            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                              <div key={day} className="text-sm font-medium text-gray-700">
-                                {day}
-                              </div>
-                            ))}
-                            {getCalendarDays(calendarMonth).map((day, index) => (
-                              <div
-                                key={index}
-                                className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
-                              >
-                                {day ? day.getDate() : ""}
-                              </div>
-                            ))}
+                        ))}
+                        {getCalendarDays(calendarMonth).map((day, index) => (
+                          <div
+                            key={index}
+                            className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
+                          >
+                            {day ? day.getDate() : ""}
                           </div>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                    <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
-                      <LogOut size={16} />
-                      <span>Sair</span>
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </header>
-
-          <main className="max-w-7xl mx-auto px-4 py-6">
-            <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
-              <div className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-blue-600" />
-                <a
-                  href="https://wa.me/68992237305"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline font-medium"
-                >
-                  Suporte WhatsApp: (68) 99223-7305
-                </a>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 flex items-center">
+                  <LogOut size={16} />
+                </Button>
               </div>
-              <div className="flex items-center gap-2">
-                <Instagram className="h-5 w-5 text-pink-600" />
-                <a
-                  href="https://instagram.com/renato_alme1da"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-pink-600 hover:underline font-medium"
-                >
-                  @renato_alme1da
-                </a>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
+              </h1>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    onClick={() => setShowCalendar(!showCalendar)}
+                  >
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-sm">
+                      {today.toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </Button>
+                  {showCalendar && (
+                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                      <div className="flex justify-between items-center mb-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-lg font-bold"
+                          onClick={() => handleMonthNavigation("prev")}
+                        >
+                          {"<"}
+                        </Button>
+                        <span className="text-base font-semibold">
+                          {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-lg font-bold"
+                          onClick={() => handleMonthNavigation("next")}
+                        >
+                          {">"}
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-7 gap-2 text-center">
+                        {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
+                          <div key={day} className="text-sm font-medium text-gray-700">
+                            {day}
+                          </div>
+                        ))}
+                        {getCalendarDays(calendarMonth).map((day, index) => (
+                          <div
+                            key={index}
+                            className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
+                          >
+                            {day ? day.getDate() : ""}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
+                  <LogOut size={16} />
+                  <span>Sair</span>
+                </Button>
               </div>
-            </div>
+            </>
+          )}
+        </div>
+      </header>
 
-            <Tabs 
-              defaultValue="meta-fiado" 
-              value={activeTab} 
-              onValueChange={handleTabChange}
-              className="space-y-6"
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Support Section */}
+        <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-blue-600" />
+            <a
+              href="https://wa.me/68992237305" // Updated WhatsApp number
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline font-medium"
             >
-              {isMobile ? (
-                <div className="hidden">{renderTabs()}</div>
-              ) : (
-                renderTabs()
-              )}
-              {renderTabsContent()}
-            </Tabs>
-          </main>
-        </>
-      )}
+              Suporte WhatsApp: (68) 99223-7305
+            </a>
+          </div>
+          <div className="flex items-center gap-2">
+            <Instagram className="h-5 w-5 text-pink-600" />
+            <a
+              href="https://instagram.com/renato_alme1da" // Updated Instagram handle
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-600 hover:underline font-medium"
+            >
+              @renato_alme1da
+            </a>
+          </div>
+        </div>
+
+        <Tabs 
+          defaultValue="meta-fiado" 
+          value={activeTab} 
+          onValueChange={handleTabChange}
+          className="space-y-6"
+        >
+          {isMobile ? (
+            <div className="hidden">{renderTabs()}</div>
+          ) : (
+            renderTabs()
+          )}
+          {renderTabsContent()}
+        </Tabs>
+      </main>
     </div>
   );
 };
