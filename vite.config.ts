@@ -12,35 +12,35 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    // VitePWA desativado temporariamente (conforme última sugestão)
+    // VitePWA desativado temporariamente
     // VitePWA({
     //   registerType: "autoUpdate",
     //   manifest: {
     //     name: "Controle de Inadimplência",
-    //     short_name": "Controle",
-    //     description": "Controle de Inadimplência Dashboard",
-    //     start_url": "/dashboard",
-    //     display": "standalone",
-    //     background_color": "#ffffff",
-    //     theme_color": "#9b87f5",
-    //     icons": [
+    //     short_name: "Controle", // Corrigido: removido " extra
+    //     description: "Controle de Inadimplência Dashboard", // Corrigido
+    //     start_url: "/dashboard", // Corrigido
+    //     display: "standalone", // Corrigido
+    //     background_color: "#ffffff", // Corrigido
+    //     theme_color: "#9b87f5", // Corrigido
+    //     icons: [
     //       {
-    //         src": "/icon-192x192.png",
-    //         sizes": "192x192",
-    //         type": "image/png",
-    //         purpose": "any maskable",
+    //         src: "/icon-192x192.png", // Corrigido
+    //         sizes: "192x192", // Corrigido
+    //         type: "image/png", // Corrigido
+    //         purpose: "any maskable", // Corrigido
     //       },
     //       {
-    //         src": "/icon-512x512.png",
-    //         sizes": "512x512",
-    //         type": "image/png",
-    //         purpose": "any maskable",
+    //         src: "/icon-512x512.png", // Corrigido
+    //         sizes: "512x512", // Corrigido
+    //         type: "image/png", // Corrigido
+    //         purpose: "any maskable", // Corrigido
     //       },
     //     ],
     //   },
     // }),
   ].filter(Boolean),
-  resolve: { // Corrigido: removido o " extra antes de resolve
+  resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
