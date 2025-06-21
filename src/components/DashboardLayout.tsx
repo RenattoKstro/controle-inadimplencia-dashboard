@@ -33,7 +33,7 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false); // Valor padrão
+  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { 
     userData, 
     updateUserData, 
@@ -46,9 +46,8 @@ const DashboardLayout = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // Sincroniza bonusPerdidoAtivado com userData
   useEffect(() => {
-    console.log("userData:", userData); // Depuração
+    console.log("userData:", userData);
     if (userData) {
       setBonusPerdidoAtivado(!!userData.bonusPerdidoAtivado);
     }
@@ -82,7 +81,7 @@ const DashboardLayout = () => {
   };
 
   const renderTabs = () => (
-    <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-5'} w-full p-1 bg-white shadow-sm rounded-xl`}>
+    <TabsList className={`grid grid-cols-6 w-full p-1 bg-white shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
       <TabsTrigger 
         value="ajustes-metas" 
         className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
@@ -107,14 +106,16 @@ const DashboardLayout = () => {
         <Trophy className="h-4 w-4" />
         <span>Meta Desafio</span>
       </TabsTrigger>
-      <TabsTrigger 
-        value="meta-perdido" 
-        className="flex items-center gap-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-600"
-        onClick={() => handleTabChange("meta-perdido")}
-      >
-        <AlertTriangle className="h-4 w-4" />
-        <span>Meta Perdido</span>
-      </TabsTrigger>
+      {bonusPerdidoAtivado && (
+        <TabsTrigger 
+          value="meta-perdido" 
+          className="flex items-center gap-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-600"
+          onClick={() => handleTabChange("meta-perdido")}
+        >
+          <AlertTriangle className="h-4 w-4" />
+          <span>Meta Perdido</span>
+        </TabsTrigger>
+      )}
       <TabsTrigger 
         value="meta-alimentacao" 
         className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600"
@@ -195,16 +196,20 @@ const DashboardLayout = () => {
         />
       </TabsContent>
       <TabsContent value="meus-premios" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-        <MeusPremios 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-          setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-        />
+        {userData ? (
+          <MeusPremios 
+            userData={userData}
+            updateUserData={updateUserData}
+            diasSemExpediente={diasSemExpediente}
+            updateDiasSemExpediente={updateDiasSemExpediente}
+            diasRestantesCalculados={diasRestantesCalculados}
+            isLoading={isLoading}
+            bonusPerdidoAtivado={bonusPerdidoAtivado}
+            setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+          />
+        ) : (
+          <div>Carregando dados...</div>
+        )}
       </TabsContent>
     </>
   );
@@ -489,11 +494,7 @@ const DashboardLayout = () => {
           onValueChange={handleTabChange}
           className="space-y-6"
         >
-          {isMobile ? (
-            <div className="hidden">{renderTabs()}</div>
-          ) : (
-            renderTabs()
-          )}
+          {renderTabs()}
           {renderTabsContent()}
         </Tabs>
       </main>
