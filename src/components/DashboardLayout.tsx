@@ -33,7 +33,7 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(!!userData?.bonusPerdidoAtivado); // Inicializa com userData
+  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false); // Valor padrão
   const { 
     userData, 
     updateUserData, 
@@ -45,6 +45,14 @@ const DashboardLayout = () => {
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
+
+  // Sincroniza bonusPerdidoAtivado com userData
+  useEffect(() => {
+    console.log("userData:", userData); // Depuração
+    if (userData) {
+      setBonusPerdidoAtivado(!!userData.bonusPerdidoAtivado);
+    }
+  }, [userData]);
 
   useEffect(() => {
     console.log("DashboardLayout useEffect executado", userData);
@@ -195,6 +203,7 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          setBonusPerdidoAtivado={setBonusPerdidoAtivado}
         />
       </TabsContent>
     </>
