@@ -1,32 +1,42 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react'; // Adicionado para consistência com outros componentes
+import { Loader2 } from 'lucide-react';
 
 const ResetPassword: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); // Para capturar o token da URL
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const token = searchParams.get('token');
+      console.log('Resetting password with token:', token, 'and password:', newPassword);
+      if (!token) throw new Error('Token de redefinição de senha não encontrado na URL.');
+
+      const { error } = await supabase.auth.exchangePasswordlessCode({
+        code: token,
+        newPassword,
+      });
       if (error) throw error;
+
       toast({
         title: 'Senha redefinida',
         description: 'Sua senha foi atualizada com sucesso.',
       });
       navigate('/auth');
     } catch (error: any) {
+      console.error('Error during password reset:', error);
       toast({
         title: 'Erro',
         description: error.message || 'Erro ao redefinir a senha.',
