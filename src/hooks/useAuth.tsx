@@ -153,7 +153,7 @@ export const useAuth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: 'https://controledeinadimplencia.shop/auth',
+            emailRedirectTo: 'https://cotroledeinadimpleciateste.netlify.app/auth', // Ajustado para o site de testes
           }
         });
         
