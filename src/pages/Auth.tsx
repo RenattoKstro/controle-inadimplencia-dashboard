@@ -46,7 +46,7 @@ const Auth = () => {
       }
 
       const { error } = await supabase.auth.resetPasswordForEmail(recoverEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: 'https://controledeinadimplencia.shop/reset-password',
       });
 
       if (error) throw error;
