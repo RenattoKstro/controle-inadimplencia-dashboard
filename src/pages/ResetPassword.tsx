@@ -23,21 +23,23 @@ const ResetPassword: React.FC = () => {
       const accessToken = searchParams.get('access_token');
       const type = searchParams.get('type');
 
-      console.log('Reset params:', { accessToken, type, newPassword }); // Depuração
+      console.log('URL Params:', Object.fromEntries(searchParams)); // Depuração completa
+      console.log('Reset params:', { accessToken, type, newPassword });
 
       if (!accessToken || type !== 'recovery') {
-        throw new Error('Token de redefinição de senha ou tipo inválido na URL.');
+        throw new Error('Link de redefinição de senha inválido ou expirado. Por favor, solicite um novo e-mail de recuperação.');
       }
 
       // Atualizar a senha usando o token de recuperação
-      const { error } = await supabase.auth.updateUser({
+      const { data, error } = await supabase.auth.updateUser({
         password: newPassword,
       }, {
-        token: accessToken, // O token é passado via cabeçalho de autorização
+        token: accessToken, // Passa o token para autenticação
       });
 
       if (error) throw error;
 
+      console.log('UpdateUser response:', data);
       toast({
         title: 'Senha redefinida',
         description: 'Sua senha foi atualizada com sucesso.',
@@ -47,7 +49,7 @@ const ResetPassword: React.FC = () => {
       console.error('Error during password reset:', error);
       toast({
         title: 'Erro',
-        description: error.message || 'Erro ao redefinir a senha.',
+        description: error.message || 'Erro ao redefinir a senha. Verifique o link ou solicite um novo.',
         variant: 'destructive',
       });
     } finally {
