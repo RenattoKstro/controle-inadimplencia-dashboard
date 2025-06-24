@@ -34,10 +34,15 @@ const ResetPassword: React.FC = () => {
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword,
       }, {
-        token: accessToken, // Passa o token para autenticação
+        token: accessToken,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('expired') || error.message.includes('invalid')) {
+          throw new Error('O token de redefinição de senha expirou ou é inválido. Solicite um novo e-mail.');
+        }
+        throw error;
+      }
 
       console.log('UpdateUser response:', data);
       toast({
