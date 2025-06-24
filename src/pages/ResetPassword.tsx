@@ -13,21 +13,29 @@ const ResetPassword: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); // Para capturar o token da URL
+  const [searchParams] = useSearchParams();
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const token = searchParams.get('token');
-      console.log('Resetting password with token:', token, 'and password:', newPassword);
-      if (!token) throw new Error('Token de redefinição de senha não encontrado na URL.');
+      const accessToken = searchParams.get('access_token');
+      const type = searchParams.get('type');
 
-      const { error } = await supabase.auth.exchangePasswordlessCode({
-        code: token,
-        newPassword,
+      console.log('Reset params:', { accessToken, type, newPassword }); // Depuração
+
+      if (!accessToken || type !== 'recovery') {
+        throw new Error('Token de redefinição de senha ou tipo inválido na URL.');
+      }
+
+      // Atualizar a senha usando o token de recuperação
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      }, {
+        token: accessToken, // O token é passado via cabeçalho de autorização
       });
+
       if (error) throw error;
 
       toast({
