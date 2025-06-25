@@ -275,16 +275,12 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           value={receberPorDia}
           icon={<Calculator size={16} />}
           color="bg-orange-500"
-          showProgress={true}
-          progressValue={progressoDiario}
         />
         <CardItem
           title="Falta para Meta Diária"
           value={faltaParaMetaDiaria}
           icon={<Target size={16} />}
           color="bg-yellow-500"
-          showProgress={true}
-          progressValue={100 - progressoDiario}
         />
       </div>
     </div>
