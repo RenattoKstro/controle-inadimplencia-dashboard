@@ -152,11 +152,11 @@ export const useAuth = () => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      console.log("Attempting Google login with redirectTo:", 'https://cotroledeinadimpleciateste.netlify.app/auth');
+      console.log("Attempting Google login with redirectTo:", 'https://cotroledeinadimpleciateste.netlify.app/auth/callback');
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://cotroledeinadimpleciateste.netlify.app/auth',
+          redirectTo: 'https://cotroledeinadimpleciateste.netlify.app/auth/callback',
         },
       });
       if (error) throw error;
