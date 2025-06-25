@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react"; // Adicionada a importação de useEffect
+import { useEffect } from "react"; // Importação de useEffect
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -19,19 +19,27 @@ const Callback: React.FC = () => {
         console.log("Callback started, current URL:", window.location.href);
         console.log("Search params:", new URLSearchParams(window.location.search));
 
-        const { data, error } = await supabase.auth.getSession();
-        console.log("Callback session data:", data);
+        // Verifica o estado da autenticação
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log("Callback session data:", session);
         console.log("Callback error:", error);
 
         if (error) {
           console.error("Error during callback:", error.message);
           throw new Error(`Falha no callback: ${error.message}`);
-        } else if (data.session) {
-          console.log("Session established, redirecting to dashboard...");
+        } else if (session) {
+          console.log("Session established, user:", session.user);
           window.location.href = "/dashboard";
         } else {
-          console.log("No session found, redirecting to auth...");
-          window.location.href = "/auth";
+          console.log("No session found, checking auth state...");
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            console.log("User found, redirecting to dashboard...");
+            window.location.href = "/dashboard";
+          } else {
+            console.log("No user or session, redirecting to auth...");
+            window.location.href = "/auth?error=login_failed";
+          }
         }
       } catch (error: any) {
         console.error("Unexpected error in callback:", error);
