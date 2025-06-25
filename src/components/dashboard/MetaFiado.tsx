@@ -45,14 +45,14 @@ const CardItem = ({
   showProgress = false,
   progressValue = 0,
 }: CardItemProps) => {
-  const getProgressColor = (value: number) => {
-    if (value < 94) return "#ef4444"; // Vermelho
-    if (value < 100) return "#facc15"; // Amarelo
-    return "#22c55e"; // Verde
+  const getProgressStyle = (value: number) => {
+    if (value < 94) return { background: "linear-gradient(90deg, #ef4444, #dc2626)" };
+    if (value < 100) return { background: "linear-gradient(90deg, #facc15, #f59e0b)" };
+    return { background: "linear-gradient(90deg, #22c55e, #16a34a)" };
   };
 
   return (
-    <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-gray-600">{title}</h3>
@@ -60,48 +60,39 @@ const CardItem = ({
         </div>
         <div className="text-xl md:text-2xl font-bold">{formatCurrency(value)}</div>
         {showProgress && (
-          <div className="mt-3 space-y-2 relative">
+          <div className="mt-4 space-y-2 relative">
             <div
-              className="w-full h-8 md:h-10 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 overflow-hidden relative"
+              className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
               style={{
-                boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
+                boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
               }}
             >
               <div
-                className="h-full rounded-l-full transition-all duration-700 ease-out"
+                className="h-full rounded-l-full transition-all duration-1000 ease-out"
                 style={{
-                  width: `${Math.min(progressValue, 105)}%`, // Suporta até 105%
-                  background: getProgressColor(progressValue),
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                  width: `${Math.min(progressValue, 105)}%`,
+                  ...getProgressStyle(progressValue),
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
                 }}
               />
-              {/* Linhas de marco */}
+              {/* Marcações circulares */}
               {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
                 <div
                   key={index}
-                  className="absolute h-5 w-0.5 bg-gray-700"
+                  className="absolute h-3 w-3 bg-gray-700 rounded-full"
                   style={{
                     left: `${mark}%`,
                     top: "50%",
-                    transform: "translateY(-50%)",
+                    transform: "translate(-50%, -50%)",
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
                   }}
+                  title={`${mark}%`}
                 />
               ))}
             </div>
-            {/* Rótulos dos marcos */}
-            <div className="flex justify-between text-xs text-gray-700">
-              {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
-                <span
-                  key={index}
-                  className="w-1/8 text-center"
-                  style={{
-                    position: "relative",
-                    left: `${(mark / 105) * 100 - (100 / (8 * 2))}%`, // Ajuste proporcional
-                  }}
-                >
-                  {mark}%
-                </span>
-              ))}
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>0%</span>
+              <span>105%</span>
             </div>
             <div className="text-xs text-right text-gray-600">
               {progressValue.toFixed(2)}% do objetivo diário
@@ -141,15 +132,15 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
     };
   });
 
-  const getProgressColor = (value: number) => {
-    if (value < 94) return "#ef4444"; // Vermelho
-    if (value < 100) return "#facc15"; // Amarelo
-    return "#22c55e"; // Verde
+  const getProgressStyle = (value: number) => {
+    if (value < 94) return { background: "linear-gradient(90deg, #ef4444, #dc2626)" };
+    if (value < 100) return { background: "linear-gradient(90deg, #facc15, #f59e0b)" };
+    return { background: "linear-gradient(90deg, #22c55e, #16a34a)" };
   };
 
   return (
     <Card
-      className={`shadow-sm hover:shadow transition-shadow duration-200 ${
+      className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${
         isMobile ? "col-span-1" : "col-span-1 md:col-span-3"
       }`}
     >
@@ -173,46 +164,37 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       <CardContent>
         <div className="space-y-2">
           <div
-            className="w-full h-8 md:h-10 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 overflow-hidden relative"
+            className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
             style={{
-              boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
+              boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
             }}
           >
             <div
-              className="h-full rounded-l-full transition-all duration-700 ease-out"
+              className="h-full rounded-l-full transition-all duration-1000 ease-out"
               style={{
-                width: `${Math.min(percentageComplete, 105)}%`, // Suporta até 105%
-                background: getProgressColor(percentageComplete),
-                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                width: `${Math.min(percentageComplete, 105)}%`,
+                ...getProgressStyle(percentageComplete),
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
               }}
             />
-            {/* Linhas de marco */}
+            {/* Marcações circulares */}
             {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
               <div
                 key={index}
-                className="absolute h-5 w-0.5 bg-gray-700"
+                className="absolute h-3 w-3 bg-gray-700 rounded-full"
                 style={{
                   left: `${mark}%`,
                   top: "50%",
-                  transform: "translateY(-50%)",
+                  transform: "translate(-50%, -50%)",
+                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
                 }}
+                title={`${mark}%`}
               />
             ))}
           </div>
-          {/* Rótulos dos marcos */}
-          <div className="flex justify-between text-xs text-gray-700">
-            {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
-              <span
-                key={index}
-                className="w-1/8 text-center"
-                style={{
-                  position: "relative",
-                  left: `${(mark / 105) * 100 - (100 / (8 * 2))}%`, // Ajuste proporcional
-                }}
-              >
-                {mark}%
-              </span>
-            ))}
+          <div className="flex justify-between text-xs text-gray-600">
+            <span>0%</span>
+            <span>105%</span>
           </div>
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
