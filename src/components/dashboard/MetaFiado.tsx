@@ -56,21 +56,37 @@ const CardItem = ({
         {showProgress && (
           <div className="mt-3 space-y-1">
             <div
-              className="w-full h-6 md:h-8 rounded-full bg-gray-100 overflow-hidden"
+              className="w-full h-6 md:h-8 rounded-full bg-gray-200 overflow-hidden relative"
               style={{
-                background: "linear-gradient(135deg, #e0e7ff, #f3f4f6)",
+                background: "linear-gradient(90deg, #e5e7eb, #d1d5db)",
                 boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             >
               <div
+                className="absolute inset-0 h-full rounded-full"
+                style={{
+                  background: "linear-gradient(90deg, transparent, #3b82f6, transparent)",
+                  backgroundSize: "200% 100%",
+                  animation: "loadingWave 1.5s infinite linear",
+                }}
+              />
+              <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
                 style={{
                   width: `${Math.min(progressValue, 100)}%`,
-                  background: "conic-gradient(from 0deg, #3b82f6, #22d3ee, #3b82f6)",
+                  background: "#3b82f6",
                   boxShadow: "0 2px 6px rgba(59, 130, 246, 0.3)",
                 }}
               />
             </div>
+            <style>
+              {`
+                @keyframes loadingWave {
+                  0% { background-position: -200% 0; }
+                  100% { background-position: 200% 0; }
+                }
+              `}
+            </style>
             <div className="text-xs text-right text-gray-600">
               {progressValue.toFixed(2)}% do objetivo diário
             </div>
@@ -135,22 +151,37 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       <CardContent>
         <div className="space-y-2">
           <div
-            className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
+            className="w-full h-6 md:h-8 rounded-full bg-gray-200 overflow-hidden relative"
             style={{
-              backgroundColor: "#ffffff",
-              boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
+              background: "linear-gradient(90deg, #e5e7eb, #d1d5db)",
+              boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
             }}
           >
             <div
-              className="h-full rounded-full transition-all duration-500 ease-in-out"
+              className="absolute inset-0 h-full rounded-full"
+              style={{
+                background: "linear-gradient(90deg, transparent, #3b82f6, transparent)",
+                backgroundSize: "200% 100%",
+                animation: "loadingWave 1.5s infinite linear",
+              }}
+            />
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
                 width: `${Math.min(percentageComplete, 100)}%`,
-                background:
-                  "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
-                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                background: "#3b82f6",
+                boxShadow: "0 2px 6px rgba(59, 130, 246, 0.3)",
               }}
             />
           </div>
+          <style>
+            {`
+              @keyframes loadingWave {
+                0% { background-position: -200% 0; }
+                100% { background-position: 200% 0; }
+              }
+            `}
+          </style>
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
               <div key={percentual} className="flex items-center gap-2">
@@ -275,7 +306,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           icon={<Target size={16} />}
           color="bg-yellow-500"
           showProgress={true}
-          progressValue={100 - progressoDiario} // Inverte o progresso para mostrar o que falta
+          progressValue={100 - progressoDiario}
         />
       </div>
     </div>
