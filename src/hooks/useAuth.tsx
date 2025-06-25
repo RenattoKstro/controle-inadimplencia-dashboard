@@ -150,27 +150,29 @@ export const useAuth = () => {
 
   // Função para login com Google
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    try {
-      console.log("Attempting Google login with redirectTo:", 'https://cotroledeinadimpleciateste.netlify.app/auth/callback');
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'https://cotroledeinadimpleciateste.netlify.app/auth/callback',
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Erro no login com Google:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Falha ao logar com Google.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  setIsLoading(true);
+  try {
+    console.log("Starting Google login process...");
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://cotroledeinadimpleciateste.netlify.app/auth/callback',
+      },
+    });
+    console.log("Google login response:", data);
+    console.log("Google login URL used:", data?.url); // Tenta capturar o URL real
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('Erro no login com Google:', error);
+    toast({
+      title: "Erro",
+      description: error.message || "Falha ao logar com Google.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return {
     email,
