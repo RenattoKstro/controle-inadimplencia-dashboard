@@ -47,11 +47,14 @@ const CardItem = ({
 }: CardItemProps) => {
   const getProgressColor = (value: number) => {
     if (value < 94) return "#ef4444"; // Vermelho
-    if (value < 96) return "#facc15"; // Amarelo (94-95.99%)
-    if (value < 98) return "#facc15"; // Amarelo (96-97.99%)
-    if (value < 99) return "#facc15"; // Amarelo (98-98.99%)
-    if (value < 100) return "#facc15"; // Amarelo (99-99.99%)
-    return "#22c55e"; // Verde (100% ou mais)
+    if (value < 96) return "#facc15"; // Amarelo
+    if (value < 98) return "#facc15"; // Amarelo
+    if (value < 99) return "#facc15"; // Amarelo
+    if (value < 100) return "#facc15"; // Amarelo
+    if (value < 101) return "#22c55e"; // Verde
+    if (value < 103) return "#22c55e"; // Verde
+    if (value < 105) return "#22c55e"; // Verde
+    return "#22c55e"; // Verde
   };
 
   return (
@@ -65,7 +68,7 @@ const CardItem = ({
         {showProgress && (
           <div className="mt-3 space-y-1 relative">
             <div
-              className="w-full h-6 md:h-8 rounded-full bg-gray-200 overflow-hidden relative"
+              className="w-full h-8 md:h-10 rounded-full bg-gray-200 overflow-hidden relative"
               style={{
                 background: "linear-gradient(90deg, #e5e7eb, #d1d5db)",
                 boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -74,26 +77,39 @@ const CardItem = ({
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
                 style={{
-                  width: `${Math.min(progressValue, 100)}%`,
+                  width: `${Math.min(progressValue, 105)}%`, // Suporta até 105%
                   background: getProgressColor(progressValue),
                   boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
                   position: "relative",
                 }}
               />
-              {/* Marcações */}
-              {[94, 96, 98, 99, 100].map((mark, index) => (
+              {/* Marcações com Emojis */}
+              {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
                 <div
                   key={index}
-                  className="absolute h-4 w-1 bg-gray-600 rounded-full"
+                  className="absolute flex items-center"
                   style={{
                     left: `${mark}%`,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    opacity: progressValue >= mark ? 1 : 0.3,
-                    transition: "opacity 0.3s",
+                    top: "-10px", // Posiciona o emoji acima da barra
+                    transform: "translateX(-50%)",
                   }}
-                  title={`${mark}%`}
-                />
+                >
+                  <div
+                    className="h-3 w-3 bg-gray-600 rounded-full"
+                    style={{
+                      opacity: progressValue >= mark ? 1 : 0.3,
+                      transition: "opacity 0.3s",
+                    }}
+                  />
+                  {progressValue >= mark && (
+                    <span
+                      className="ml-1 text-xs"
+                      style={{ color: getProgressColor(mark), opacity: 1 }}
+                    >
+                      ✅
+                    </span>
+                  )}
+                </div>
               ))}
             </div>
             <div className="text-xs text-right text-gray-600">
@@ -136,11 +152,14 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
   const getProgressColor = (value: number) => {
     if (value < 94) return "#ef4444"; // Vermelho
-    if (value < 96) return "#facc15"; // Amarelo (94-95.99%)
-    if (value < 98) return "#facc15"; // Amarelo (96-97.99%)
-    if (value < 99) return "#facc15"; // Amarelo (98-98.99%)
-    if (value < 100) return "#facc15"; // Amarelo (99-99.99%)
-    return "#22c55e"; // Verde (100% ou mais)
+    if (value < 96) return "#facc15"; // Amarelo
+    if (value < 98) return "#facc15"; // Amarelo
+    if (value < 99) return "#facc15"; // Amarelo
+    if (value < 100) return "#facc15"; // Amarelo
+    if (value < 101) return "#22c55e"; // Verde
+    if (value < 103) return "#22c55e"; // Verde
+    if (value < 105) return "#22c55e"; // Verde
+    return "#22c55e"; // Verde
   };
 
   return (
@@ -169,7 +188,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       <CardContent>
         <div className="space-y-2">
           <div
-            className="w-full h-6 md:h-8 rounded-full bg-gray-200 overflow-hidden relative"
+            className="w-full h-8 md:h-10 rounded-full bg-gray-200 overflow-hidden relative"
             style={{
               background: "linear-gradient(90deg, #e5e7eb, #d1d5db)",
               boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -178,26 +197,39 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{
-                width: `${Math.min(percentageComplete, 100)}%`,
+                width: `${Math.min(percentageComplete, 105)}%`, // Suporta até 105%
                 background: getProgressColor(percentageComplete),
                 boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
                 position: "relative",
               }}
             />
-            {/* Marcações */}
-            {[94, 96, 98, 99, 100].map((mark, index) => (
+            {/* Marcações com Emojis */}
+            {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
               <div
                 key={index}
-                className="absolute h-4 w-1 bg-gray-600 rounded-full"
+                className="absolute flex items-center"
                 style={{
                   left: `${mark}%`,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  opacity: percentageComplete >= mark ? 1 : 0.3,
-                  transition: "opacity 0.3s",
+                  top: "-10px", // Posiciona o emoji acima da barra
+                  transform: "translateX(-50%)",
                 }}
-                title={`${mark}%`}
-              />
+              >
+                <div
+                  className="h-3 w-3 bg-gray-600 rounded-full"
+                  style={{
+                    opacity: percentageComplete >= mark ? 1 : 0.3,
+                    transition: "opacity 0.3s",
+                  }}
+                />
+                {percentageComplete >= mark && (
+                  <span
+                    className="ml-1 text-xs"
+                    style={{ color: getProgressColor(mark), opacity: 1 }}
+                  >
+                    ✅
+                  </span>
+                )}
+              </div>
             ))}
           </div>
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
