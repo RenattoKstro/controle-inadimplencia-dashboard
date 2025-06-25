@@ -16,7 +16,13 @@ const Callback: React.FC = () => {
     const handleCallback = async () => {
       try {
         console.log("Callback started, current URL:", window.location.href);
-        console.log("Search params:", Object.fromEntries(new URLSearchParams(window.location.search)));
+        const searchParams = Object.fromEntries(new URLSearchParams(window.location.search));
+        console.log("Search params:", searchParams);
+
+        if (searchParams.error) {
+          console.error("OAuth error from Google:", searchParams);
+          throw new Error(`OAuth Error: ${searchParams.error_description || 'Unknown error'}`);
+        }
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         console.log("Callback session data:", session);
@@ -41,7 +47,7 @@ const Callback: React.FC = () => {
             window.location.href = "/dashboard";
           } else {
             console.log("No user or session, redirecting to auth with details...");
-            window.location.href = "/auth?error=login_failed_no_user&details=" + encodeURIComponent(JSON.stringify({ sessionError, userError }));
+            window.location.href = "/auth?error=login_failed_no_user&details=" + encodeURIComponent(JSON.stringify({ sessionError, userError, searchParams }));
           }
         }
       } catch (error: any) {
