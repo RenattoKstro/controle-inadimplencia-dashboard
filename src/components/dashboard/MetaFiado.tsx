@@ -65,7 +65,7 @@ const CardItem = ({
               <div
                 className="h-full rounded-full transition-all duration-500 ease-in-out"
                 style={{
-                  width: `${Math.min(progressValue, 100)}%`, // Limite visual na barra
+                  width: `${Math.min(progressValue, 100)}%`,
                   background:
                     "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                   boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -85,7 +85,6 @@ const CardItem = ({
 const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
   const isMobile = useIsMobile();
 
-  // Cálculo ajustado para o progresso
   let percentageComplete = 0;
 
   if (userData.vencido_atual > 0) {
@@ -97,18 +96,12 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
   percentageComplete = Math.max(0, percentageComplete);
 
-  // Lista de percentuais alvo
   const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
 
-  // Calcular os valores restantes para cada percentual
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
-    // Calcular o vencido_atual necessário para atingir o percentual
     const vencidoNecessario = userData.meta_mes / (percentual / 100);
-    // Calcular a diferença (valor restante)
     let diferenca = userData.vencido_atual - vencidoNecessario;
-    // Determinar se o percentual foi atingido
     const atingido = percentageComplete >= percentual;
-    // Se atingido, a diferença é positiva; se não, é negativa
     diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
     return {
       percentual,
@@ -129,7 +122,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             {icon}
             {title}
           </CardTitle>
-          {/* Percentual principal centralizado e maior */}
           <div className="text-xl md:text-2xl font-bold text-gray-700">
             {percentageComplete.toFixed(2)}% concluído
           </div>
@@ -153,20 +145,16 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             <div
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
-                width: `${Math.min(percentageComplete, 100)}%`, // Limite visual na barra
+                width: `${Math.min(percentageComplete, 100)}%`,
                 background:
                   "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
                 boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             />
           </div>
-          {/* Exibir os valores restantes com separadores visuais */}
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
-              <div
-                key={percentual}
-                className="flex items-center gap-2"
-              >
+              <div key={percentual} className="flex items-center gap-2">
                 <div
                   className={cn(
                     "text-sm md:text-base font-medium",
@@ -175,7 +163,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
                 >
                   {percentual}%: {formatCurrency(diferenca)}
                 </div>
-                {/* Adicionar separador |, exceto no último item */}
                 {index < valoresRestantes.length - 1 && (
                   <span className="text-gray-400">|</span>
                 )}
@@ -200,6 +187,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
     : 0;
   const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
+  const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje); // Novo cálculo
 
   useEffect(() => {
     if (setRecebidoHoje) {
@@ -281,6 +269,13 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           color="bg-orange-500"
           showProgress={true}
           progressValue={progressoDiario}
+        />
+        {/* Novo Card: Falta para Meta Diária */}
+        <CardItem
+          title="Falta para Meta Diária"
+          value={faltaParaMetaDiaria}
+          icon={<Target size={16} />}
+          color="bg-yellow-500"
         />
       </div>
     </div>
