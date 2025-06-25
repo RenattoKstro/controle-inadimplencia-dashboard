@@ -47,13 +47,7 @@ const CardItem = ({
 }: CardItemProps) => {
   const getProgressColor = (value: number) => {
     if (value < 94) return "#ef4444"; // Vermelho
-    if (value < 96) return "#facc15"; // Amarelo
-    if (value < 98) return "#facc15"; // Amarelo
-    if (value < 99) return "#facc15"; // Amarelo
     if (value < 100) return "#facc15"; // Amarelo
-    if (value < 101) return "#22c55e"; // Verde
-    if (value < 103) return "#22c55e"; // Verde
-    if (value < 105) return "#22c55e"; // Verde
     return "#22c55e"; // Verde
   };
 
@@ -66,7 +60,7 @@ const CardItem = ({
         </div>
         <div className="text-xl md:text-2xl font-bold">{formatCurrency(value)}</div>
         {showProgress && (
-          <div className="mt-3 space-y-1 relative">
+          <div className="mt-3 space-y-2 relative">
             <div
               className="w-full h-8 md:h-10 rounded-full bg-gray-200 overflow-hidden relative"
               style={{
@@ -75,41 +69,36 @@ const CardItem = ({
               }}
             >
               <div
-                className="h-full rounded-full transition-all duration-700 ease-out"
+                className="h-full rounded-l-full transition-all duration-700 ease-out"
                 style={{
                   width: `${Math.min(progressValue, 105)}%`, // Suporta até 105%
                   background: getProgressColor(progressValue),
                   boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-                  position: "relative",
                 }}
               />
-              {/* Marcações com Emojis */}
+              {/* Linhas de marco */}
               {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
                 <div
                   key={index}
-                  className="absolute flex items-center"
+                  className="absolute h-4 w-0.5 bg-gray-600"
                   style={{
                     left: `${mark}%`,
-                    top: "-10px", // Posiciona o emoji acima da barra
-                    transform: "translateX(-50%)",
+                    top: "50%",
+                    transform: "translateY(-50%)",
                   }}
+                />
+              ))}
+            </div>
+            {/* Rótulos dos marcos */}
+            <div className="flex justify-between text-xs text-gray-600">
+              {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
+                <span
+                  key={index}
+                  className="w-1/8 text-center"
+                  style={{ left: `${mark * 0.94}%`, position: "relative" }} // Ajuste para alinhamento
                 >
-                  <div
-                    className="h-3 w-3 bg-gray-600 rounded-full"
-                    style={{
-                      opacity: progressValue >= mark ? 1 : 0.3,
-                      transition: "opacity 0.3s",
-                    }}
-                  />
-                  {progressValue >= mark && (
-                    <span
-                      className="ml-1 text-xs"
-                      style={{ color: getProgressColor(mark), opacity: 1 }}
-                    >
-                      ✅
-                    </span>
-                  )}
-                </div>
+                  {mark}%
+                </span>
               ))}
             </div>
             <div className="text-xs text-right text-gray-600">
@@ -152,13 +141,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
   const getProgressColor = (value: number) => {
     if (value < 94) return "#ef4444"; // Vermelho
-    if (value < 96) return "#facc15"; // Amarelo
-    if (value < 98) return "#facc15"; // Amarelo
-    if (value < 99) return "#facc15"; // Amarelo
     if (value < 100) return "#facc15"; // Amarelo
-    if (value < 101) return "#22c55e"; // Verde
-    if (value < 103) return "#22c55e"; // Verde
-    if (value < 105) return "#22c55e"; // Verde
     return "#22c55e"; // Verde
   };
 
@@ -195,41 +178,36 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             }}
           >
             <div
-              className="h-full rounded-full transition-all duration-700 ease-out"
+              className="h-full rounded-l-full transition-all duration-700 ease-out"
               style={{
                 width: `${Math.min(percentageComplete, 105)}%`, // Suporta até 105%
                 background: getProgressColor(percentageComplete),
                 boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-                position: "relative",
               }}
             />
-            {/* Marcações com Emojis */}
+            {/* Linhas de marco */}
             {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
               <div
                 key={index}
-                className="absolute flex items-center"
+                className="absolute h-4 w-0.5 bg-gray-600"
                 style={{
                   left: `${mark}%`,
-                  top: "-10px", // Posiciona o emoji acima da barra
-                  transform: "translateX(-50%)",
+                  top: "50%",
+                  transform: "translateY(-50%)",
                 }}
+              />
+            ))}
+          </div>
+          {/* Rótulos dos marcos */}
+          <div className="flex justify-between text-xs text-gray-600">
+            {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
+              <span
+                key={index}
+                className="w-1/8 text-center"
+                style={{ left: `${mark * 0.94}%`, position: "relative" }} // Ajuste para alinhamento
               >
-                <div
-                  className="h-3 w-3 bg-gray-600 rounded-full"
-                  style={{
-                    opacity: percentageComplete >= mark ? 1 : 0.3,
-                    transition: "opacity 0.3s",
-                  }}
-                />
-                {percentageComplete >= mark && (
-                  <span
-                    className="ml-1 text-xs"
-                    style={{ color: getProgressColor(mark), opacity: 1 }}
-                  >
-                    ✅
-                  </span>
-                )}
-              </div>
+                {mark}%
+              </span>
             ))}
           </div>
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
