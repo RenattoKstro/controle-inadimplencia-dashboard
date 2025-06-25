@@ -7,30 +7,40 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import ResetPassword from "./pages/ResetPassword"; // Importe o componente ResetPassword
-import { supabase } from "./integrations/supabase/client"; // Importe o Supabase
+import ResetPassword from "./pages/ResetPassword";
+import { supabase } from "./integrations/supabase/client";
 
 // Componente para lidar com o callback do OAuth
 const Callback: React.FC = () => {
   useEffect(() => {
     const handleCallback = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      console.log("Callback session data:", data);
-      console.log("Callback error:", error);
-      if (error) {
-        console.error("Error during callback:", error.message);
-      } else if (data.session) {
-        console.log("Session established, redirecting to dashboard...");
-        window.location.href = "/dashboard"; // Redireciona para o dashboard
-      } else {
-        console.log("No session found, redirecting to auth...");
-        window.location.href = "/auth"; // Redireciona para login se não houver sessão
+      try {
+        console.log("Callback started, current URL:", window.location.href);
+        console.log("Search params:", new URLSearchParams(window.location.search));
+
+        const { data, error } = await supabase.auth.getSession();
+        console.log("Callback session data:", data);
+        console.log("Callback error:", error);
+
+        if (error) {
+          console.error("Error during callback:", error.message);
+          throw new Error(`Falha no callback: ${error.message}`);
+        } else if (data.session) {
+          console.log("Session established, redirecting to dashboard...");
+          window.location.href = "/dashboard";
+        } else {
+          console.log("No session found, redirecting to auth...");
+          window.location.href = "/auth";
+        }
+      } catch (error: any) {
+        console.error("Unexpected error in callback:", error);
+        window.location.href = "/auth?error=" + encodeURIComponent(error.message);
       }
     };
     handleCallback();
   }, []);
 
-  return <div>Processando login... Redirecionando...</div>; // Placeholder enquanto processa
+  return <div>Processando login... Redirecionando...</div>; // Placeholder
 };
 
 const queryClient = new QueryClient();
@@ -46,7 +56,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/auth/callback" element={<Callback />} /> {/* Nova rota para callback */}
+          <Route path="/auth/callback" element={<Callback />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
