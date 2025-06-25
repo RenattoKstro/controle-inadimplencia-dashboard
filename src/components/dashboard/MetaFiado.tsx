@@ -62,9 +62,8 @@ const CardItem = ({
         {showProgress && (
           <div className="mt-3 space-y-2 relative">
             <div
-              className="w-full h-8 md:h-10 rounded-full bg-gray-200 overflow-hidden relative"
+              className="w-full h-8 md:h-10 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 overflow-hidden relative"
               style={{
-                background: "linear-gradient(90deg, #e5e7eb, #d1d5db)",
                 boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             >
@@ -80,7 +79,7 @@ const CardItem = ({
               {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
                 <div
                   key={index}
-                  className="absolute h-4 w-0.5 bg-gray-600"
+                  className="absolute h-5 w-0.5 bg-gray-700"
                   style={{
                     left: `${mark}%`,
                     top: "50%",
@@ -90,12 +89,15 @@ const CardItem = ({
               ))}
             </div>
             {/* Rótulos dos marcos */}
-            <div className="flex justify-between text-xs text-gray-600">
+            <div className="flex justify-between text-xs text-gray-700">
               {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
                 <span
                   key={index}
                   className="w-1/8 text-center"
-                  style={{ left: `${mark * 0.94}%`, position: "relative" }} // Ajuste para alinhamento
+                  style={{
+                    position: "relative",
+                    left: `${(mark / 105) * 100 - (100 / (8 * 2))}%`, // Ajuste proporcional
+                  }}
                 >
                   {mark}%
                 </span>
@@ -171,9 +173,8 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       <CardContent>
         <div className="space-y-2">
           <div
-            className="w-full h-8 md:h-10 rounded-full bg-gray-200 overflow-hidden relative"
+            className="w-full h-8 md:h-10 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 overflow-hidden relative"
             style={{
-              background: "linear-gradient(90deg, #e5e7eb, #d1d5db)",
               boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.1)",
             }}
           >
@@ -189,7 +190,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
               <div
                 key={index}
-                className="absolute h-4 w-0.5 bg-gray-600"
+                className="absolute h-5 w-0.5 bg-gray-700"
                 style={{
                   left: `${mark}%`,
                   top: "50%",
@@ -199,12 +200,15 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             ))}
           </div>
           {/* Rótulos dos marcos */}
-          <div className="flex justify-between text-xs text-gray-600">
+          <div className="flex justify-between text-xs text-gray-700">
             {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
               <span
                 key={index}
                 className="w-1/8 text-center"
-                style={{ left: `${mark * 0.94}%`, position: "relative" }} // Ajuste para alinhamento
+                style={{
+                  position: "relative",
+                  left: `${(mark / 105) * 100 - (100 / (8 * 2))}%`, // Ajuste proporcional
+                }}
               >
                 {mark}%
               </span>
