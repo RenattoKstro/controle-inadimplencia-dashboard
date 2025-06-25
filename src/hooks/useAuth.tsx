@@ -21,12 +21,12 @@ export const useAuth = () => {
       try {
         console.log("Checking session...");
         const { data } = await supabase.auth.getSession();
-        console.log("Session data:", data);
+        console.log("Initial session data:", data);
         if (data.session) {
           navigate("/dashboard");
         }
       } catch (error) {
-        console.error("Error checking session:", error);
+        console.error("Error checking initial session:", error);
       } finally {
         setIsCheckingSession(false);
       }
@@ -52,14 +52,14 @@ export const useAuth = () => {
   };
 
   const handleConnectionError = (error: any) => {
-    console.error("Erro de conexão:", error);
-    let errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet e tente novamente.";
+    console.error("Connection error:", error);
+    let errorMsg = "Failed to connect to the server. Check your internet connection and try again.";
     if (retryCount > 0) {
-      errorMsg += ` Tentativa ${retryCount} de conexão falhou.`;
+      errorMsg += ` Attempt ${retryCount} failed.`;
     }
     setErrorMessage(errorMsg);
     toast({
-      title: "Erro de conexão",
+      title: "Connection Error",
       description: errorMsg,
       variant: "destructive",
     });
@@ -86,8 +86,8 @@ export const useAuth = () => {
         console.log("Login response:", { data, error });
         if (error) throw error;
         toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo ao Dashboard de Controle de Inadimplência.",
+          title: "Login successful!",
+          description: "Welcome to the Inadimplência Dashboard.",
         });
       } else {
         console.log("Attempting signup with:", { email });
@@ -102,20 +102,20 @@ export const useAuth = () => {
         if (error) throw error;
         setIsEmailSent(true);
         toast({
-          title: "Cadastro realizado com sucesso!",
-          description: "Por favor, verifique seu email para confirmar o cadastro.",
+          title: "Signup successful!",
+          description: "Please check your email to confirm your account.",
         });
       }
     } catch (error: any) {
-      console.error("Erro durante autenticação:", error);
+      console.error("Authentication error:", error);
       if (error.message === "Failed to fetch" || error.__isAuthError) {
         handleConnectionError(error);
         setRetryCount((prev) => prev + 1);
       } else {
         setErrorMessage(error.message);
         toast({
-          title: "Erro",
-          description: error.message || "Ocorreu um erro durante a autenticação.",
+          title: "Error",
+          description: error.message || "An error occurred during authentication.",
           variant: "destructive",
         });
       }
@@ -127,21 +127,21 @@ export const useAuth = () => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      console.log("Attempting Google login, redirectTo:", "https://cotroledeinadimpleciateste.netlify.app/auth/callback");
+      console.log("Initiating Google login, redirectTo:", "https://cotroledeinadimpleciateste.netlify.app/auth/callback");
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: "https://cotroledeinadimpleciateste.netlify.app/auth/callback",
         },
       });
-      console.log("Google login response:", data);
-      console.log("Google login error:", error);
+      console.log("Google login initial response:", data);
+      console.log("Google login initial error:", error);
       if (error) throw error;
     } catch (error: any) {
-      console.error("Erro no login com Google:", error);
+      console.error("Google login error:", error);
       toast({
-        title: "Erro",
-        description: error.message || "Falha ao logar com Google.",
+        title: "Error",
+        description: error.message || "Failed to log in with Google.",
         variant: "destructive",
       });
     } finally {
