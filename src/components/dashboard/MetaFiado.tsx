@@ -60,7 +60,7 @@ const CardItem = ({
         </div>
         <div className="text-xl md:text-2xl font-bold">{formatCurrency(value)}</div>
         {showProgress && (
-          <div className="mt-4 space-y-2 relative">
+          <div className="mt-4 space-y-2">
             <div
               className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
               style={{
@@ -75,24 +75,6 @@ const CardItem = ({
                   boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
                 }}
               />
-              {/* Marcações circulares */}
-              {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
-                <div
-                  key={index}
-                  className="absolute h-3 w-3 bg-gray-700 rounded-full"
-                  style={{
-                    left: `${mark}%`,
-                    top: "50%",
-                    transform: "translate(-50%, -50%)",
-                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
-                  }}
-                  title={`${mark}%`}
-                />
-              ))}
-            </div>
-            <div className="flex justify-between text-xs text-gray-600">
-              <span>0%</span>
-              <span>105%</span>
             </div>
             <div className="text-xs text-right text-gray-600">
               {progressValue.toFixed(2)}% do objetivo diário
@@ -177,24 +159,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
                 boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
               }}
             />
-            {/* Marcações circulares */}
-            {[94, 96, 98, 99, 100, 101, 103, 105].map((mark, index) => (
-              <div
-                key={index}
-                className="absolute h-3 w-3 bg-gray-700 rounded-full"
-                style={{
-                  left: `${mark}%`,
-                  top: "50%",
-                  transform: "translate(-50%, -50%)",
-                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.3)",
-                }}
-                title={`${mark}%`}
-              />
-            ))}
-          </div>
-          <div className="flex justify-between text-xs text-gray-600">
-            <span>0%</span>
-            <span>105%</span>
           </div>
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
