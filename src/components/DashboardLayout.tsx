@@ -14,6 +14,7 @@ import AjustesMetas from "./dashboard/AjustesMetas";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import RelatoriosSabium from "./RelatoriosSabium"; // Novo componente de relatórios
 
 export interface DashboardProps {
   userData: any;
@@ -34,6 +35,7 @@ const DashboardLayout = () => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
+  const [showRelatorios, setShowRelatorios] = useState(false); // Estado para os relatórios
   const { 
     userData, 
     updateUserData, 
@@ -452,6 +454,13 @@ const DashboardLayout = () => {
                     </div>
                   )}
                 </div>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                  onClick={() => setShowRelatorios(!showRelatorios)}
+                >
+                  Relatórios Sabium
+                </Button>
                 <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
                   <LogOut size={16} />
                   <span>Sair</span>
@@ -497,6 +506,9 @@ const DashboardLayout = () => {
           {renderTabs()}
           {renderTabsContent()}
         </Tabs>
+
+        {/* Seção de Relatórios */}
+        {showRelatorios && <RelatoriosSabium />}
       </main>
     </div>
   );
