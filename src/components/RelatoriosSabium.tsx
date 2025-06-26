@@ -4,6 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const RelatoriosSabium = () => {
   return (
     <div className="space-y-6 mt-4">
+       {/* Projeção Financeira */}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle>Projeção Fiananceira</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>A Receber</li>
+            <li>Relatórios</li>
+            <li>Projeção Financeira</li>
+            <li>Relatório - 192.2</li>
+            <li><em>Filtro 3 - Data da Posição</em></li>
+            <li><em>Seleciona o último dia do mês</em></li>
+            <li><em>Clica em Gerar</em></li>
+          </ul>
+        </CardContent>
+      </Card>
+      
       {/* Acompanhamento de Recebimento Contas Perdidas */}
       <Card className="shadow-sm">
         <CardHeader>
