@@ -18,7 +18,7 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
-} from "@/components/ui/dialog"; // Supondo que você tenha Dialog
+} from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 
 export interface DashboardProps {
@@ -471,7 +471,7 @@ const DashboardLayout = () => {
                       Relatórios Sabium
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-2xl h-[80vh] overflow-y-auto bg-white p-6 rounded-lg shadow-lg">
                     <RelatoriosSabium />
                   </DialogContent>
                 </Dialog>
