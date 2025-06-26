@@ -57,10 +57,10 @@ const RelatoriosSabium = () => {
         </CardContent>
       </Card>
 
-      {/* Gerenciamento De Desconto (Usuário do Gerente) */}
+      {/* Gerenciamento de Desconto (Usuário do Gerente) */}
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>Gerenciamento De Desconto (Usuário do Gerente)</CardTitle>
+          <CardTitle>Gerenciamento de Desconto (Usuário do Gerente)</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="list-disc pl-5 space-y-2">
