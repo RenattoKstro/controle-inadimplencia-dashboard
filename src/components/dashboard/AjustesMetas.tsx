@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
@@ -13,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Wallet, Building, AlertTriangle, Target, Pencil } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface CardItemProps {
   title: string;
@@ -30,8 +31,10 @@ const AjustesMetas = ({
   userData, 
   updateUserData,
   diasRestantesCalculados, 
-  isLoading 
-}: DashboardProps) => {
+  isLoading,
+  bonusPerdidoAtivado,
+  setBonusPerdidoAtivado, // Adicionado para controlar o estado
+}: DashboardProps & { setBonusPerdidoAtivado: (value: boolean) => void }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData.abertura_vencido_mes || 0,
@@ -40,9 +43,10 @@ const AjustesMetas = ({
     vencido_atual: userData.vencido_atual || 0,
     dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
     meta_desafio: userData.meta_desafio || 0,
+    meta_perdido: userData.meta_perdido || 0,
+    rec_perdido: userData.rec_perdido || 0,
   });
 
-  // Update form state when userData changes
   useEffect(() => {
     setFormState({
       abertura_vencido_mes: userData.abertura_vencido_mes || 0,
@@ -51,6 +55,8 @@ const AjustesMetas = ({
       vencido_atual: userData.vencido_atual || 0,
       dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
       meta_desafio: userData.meta_desafio || 0,
+      meta_perdido: userData.meta_perdido || 0,
+      rec_perdido: userData.rec_perdido || 0,
     });
   }, [userData, diasRestantesCalculados]);
 
@@ -126,13 +132,11 @@ const AjustesMetas = ({
   };
 
   const handleSave = () => {
-    // Save the user entered days remaining value
     updateUserData(formState);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
-    // Reset to previously saved values
     setFormState({
       abertura_vencido_mes: userData.abertura_vencido_mes || 0,
       abertura_dia: userData.abertura_dia || 0,
@@ -140,6 +144,8 @@ const AjustesMetas = ({
       vencido_atual: userData.vencido_atual || 0,
       dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
       meta_desafio: userData.meta_desafio || 0,
+      meta_perdido: userData.meta_perdido || 0,
+      rec_perdido: userData.rec_perdido || 0,
     });
     setIsEditing(false);
   };
@@ -187,13 +193,26 @@ const AjustesMetas = ({
             <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
           </div>
         ) : (
-          <Button 
-            variant="outline" 
-            onClick={() => setIsEditing(true)}
-            className="border-blue-300 text-blue-600 hover:bg-blue-50"
-          >
-            Editar
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditing(true)}
+              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+            >
+              Editar
+            </Button>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={bonusPerdidoAtivado}
+                onCheckedChange={(checked) => {
+                  setBonusPerdidoAtivado(checked);
+                  updateUserData({ ...userData, bonusPerdidoAtivado: checked });
+                }}
+                className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
+              />
+              <Label htmlFor="bonus-perdido-switch">Ativar Meta Perdido</Label>
+            </div>
+          </div>
         )}
       </div>
       
@@ -208,7 +227,6 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
         <CardItem 
           title="Abertura do Dia" 
           value={formState.abertura_dia} 
@@ -219,7 +237,6 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
         <CardItem 
           title="Meta do Mês" 
           value={formState.meta_mes} 
@@ -230,7 +247,6 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
         <CardItem 
           title="Vencido Atual" 
           value={formState.vencido_atual} 
@@ -241,7 +257,6 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
         <CardItem 
           title="Meta Desafio" 
           value={formState.meta_desafio} 
@@ -252,7 +267,30 @@ const AjustesMetas = ({
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />
-        
+        {bonusPerdidoAtivado && (
+          <>
+            <CardItem 
+              title="Meta Perdido" 
+              value={formState.meta_perdido} 
+              icon={<AlertTriangle size={16} />} 
+              isEditable={true}
+              onChange={(value) => handleChange('meta_perdido', value)}
+              color="bg-red-500"
+              isEditMode={isEditing}
+              onEdit={handleItemEdit}
+            />
+            <CardItem 
+              title="Rec. Perdido" 
+              value={formState.rec_perdido} 
+              icon={<Wallet size={16} />} 
+              isEditable={true}
+              onChange={(value) => handleChange('rec_perdido', value)}
+              color="bg-red-500"
+              isEditMode={isEditing}
+              onEdit={handleItemEdit}
+            />
+          </>
+        )}
         <CardItem 
           title="Dias Restantes (mês)" 
           value={formState.dias_restantes} 

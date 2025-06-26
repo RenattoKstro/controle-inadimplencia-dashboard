@@ -45,8 +45,14 @@ const CardItem = ({
   showProgress = false,
   progressValue = 0,
 }: CardItemProps) => {
+  const getProgressStyle = (value: number) => {
+    if (value < 94) return { background: "linear-gradient(90deg, #ef4444, #dc2626)" };
+    if (value < 100) return { background: "linear-gradient(90deg, #facc15, #f59e0b)" };
+    return { background: "linear-gradient(90deg, #22c55e, #16a34a)" };
+  };
+
   return (
-    <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-gray-600">{title}</h3>
@@ -54,25 +60,23 @@ const CardItem = ({
         </div>
         <div className="text-xl md:text-2xl font-bold">{formatCurrency(value)}</div>
         {showProgress && (
-          <div className="mt-3 space-y-1">
+          <div className="mt-4 space-y-2">
             <div
-              className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
+              className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
               style={{
-                backgroundColor: "#ffffff",
-                boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
+                boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
               }}
             >
               <div
-                className="h-full rounded-full transition-all duration-500 ease-in-out"
+                className="h-full rounded-l-full transition-all duration-1000 ease-out"
                 style={{
-                  width: `${Math.min(progressValue, 100)}%`, // Limite visual na barra
-                  background:
-                    "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
-                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                  width: `${Math.min(progressValue, 105)}%`,
+                  ...getProgressStyle(progressValue),
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
                 }}
               />
             </div>
-            <div className="text-xs text-right text-gray-500">
+            <div className="text-xs text-right text-gray-600">
               {progressValue.toFixed(2)}% do objetivo diário
             </div>
           </div>
@@ -85,7 +89,6 @@ const CardItem = ({
 const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
   const isMobile = useIsMobile();
 
-  // Cálculo ajustado para o progresso
   let percentageComplete = 0;
 
   if (userData.vencido_atual > 0) {
@@ -97,18 +100,12 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
   percentageComplete = Math.max(0, percentageComplete);
 
-  // Lista de percentuais alvo
   const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
 
-  // Calcular os valores restantes para cada percentual
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
-    // Calcular o vencido_atual necessário para atingir o percentual
     const vencidoNecessario = userData.meta_mes / (percentual / 100);
-    // Calcular a diferença (valor restante)
     let diferenca = userData.vencido_atual - vencidoNecessario;
-    // Determinar se o percentual foi atingido
     const atingido = percentageComplete >= percentual;
-    // Se atingido, a diferença é positiva; se não, é negativa
     diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
     return {
       percentual,
@@ -117,9 +114,15 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
     };
   });
 
+  const getProgressStyle = (value: number) => {
+    if (value < 94) return { background: "linear-gradient(90deg, #ef4444, #dc2626)" };
+    if (value < 100) return { background: "linear-gradient(90deg, #facc15, #f59e0b)" };
+    return { background: "linear-gradient(90deg, #22c55e, #16a34a)" };
+  };
+
   return (
     <Card
-      className={`shadow-sm hover:shadow transition-shadow duration-200 ${
+      className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${
         isMobile ? "col-span-1" : "col-span-1 md:col-span-3"
       }`}
     >
@@ -129,7 +132,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             {icon}
             {title}
           </CardTitle>
-          {/* Percentual principal centralizado e maior */}
           <div className="text-xl md:text-2xl font-bold text-gray-700">
             {percentageComplete.toFixed(2)}% concluído
           </div>
@@ -144,29 +146,23 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       <CardContent>
         <div className="space-y-2">
           <div
-            className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
+            className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
             style={{
-              backgroundColor: "#ffffff",
-              boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
+              boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
             }}
           >
             <div
-              className="h-full rounded-full transition-all duration-500 ease-in-out"
+              className="h-full rounded-l-full transition-all duration-1000 ease-out"
               style={{
-                width: `${Math.min(percentageComplete, 100)}%`, // Limite visual na barra
-                background:
-                  "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
-                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                width: `${Math.min(percentageComplete, 105)}%`,
+                ...getProgressStyle(percentageComplete),
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
               }}
             />
           </div>
-          {/* Exibir os valores restantes com separadores visuais */}
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
-              <div
-                key={percentual}
-                className="flex items-center gap-2"
-              >
+              <div key={percentual} className="flex items-center gap-2">
                 <div
                   className={cn(
                     "text-sm md:text-base font-medium",
@@ -175,7 +171,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
                 >
                   {percentual}%: {formatCurrency(diferenca)}
                 </div>
-                {/* Adicionar separador |, exceto no último item */}
                 {index < valoresRestantes.length - 1 && (
                   <span className="text-gray-400">|</span>
                 )}
@@ -200,6 +195,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
     : 0;
   const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
+  const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje);
 
   useEffect(() => {
     if (setRecebidoHoje) {
@@ -279,8 +275,12 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           value={receberPorDia}
           icon={<Calculator size={16} />}
           color="bg-orange-500"
-          showProgress={true}
-          progressValue={progressoDiario}
+        />
+        <CardItem
+          title="Falta para Meta Diária"
+          value={faltaParaMetaDiaria}
+          icon={<Target size={16} />}
+          color="bg-yellow-500"
         />
       </div>
     </div>

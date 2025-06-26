@@ -1,4 +1,4 @@
-
+// src/hooks/useAuth.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -16,29 +16,27 @@ export const useAuth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
       try {
         console.log("Checking session...");
         const { data } = await supabase.auth.getSession();
-        console.log("Session data:", data);
+        console.log("Initial session data:", data);
         if (data.session) {
           navigate("/dashboard");
         }
       } catch (error) {
-        console.error("Error checking session:", error);
+        console.error("Error checking initial session:", error);
       } finally {
         setIsCheckingSession(false);
       }
     };
 
     checkSession();
-    
-    // Listen for auth state changes
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, !!session);
-      if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+      if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
         navigate("/dashboard");
       }
     });
@@ -54,54 +52,70 @@ export const useAuth = () => {
   };
 
   const handleConnectionError = (error: any) => {
-    console.error('Erro de conexão:', error);
-    
-    let errorMsg = "Falha na conexão com o servidor. Verifique sua conexão de internet e tente novamente.";
-    
+    console.error("Connection error:", error);
+    let errorMsg = "Failed to connect to the server. Check your internet connection and try again.";
     if (retryCount > 0) {
-      errorMsg += ` Tentativa ${retryCount} de conexão falhou.`;
+      errorMsg += ` Attempt ${retryCount} failed.`;
     }
-    
     setErrorMessage(errorMsg);
     toast({
-      title: "Erro de conexão",
+      title: "Connection Error",
       description: errorMsg,
       variant: "destructive",
     });
   };
 
-  const handleResendConfirmation = async () => {
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
+    resetError();
+
+    if (!navigator.onLine) {
+      handleConnectionError({ message: "Browser is offline" });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-      });
-      
-      if (error) throw error;
-      
-      setIsEmailSent(true);
-      toast({
-        title: "Email reenviado",
-        description: "Verifique sua caixa de entrada para confirmar seu email.",
-      });
-    } catch (error: any) {
-      console.error('Erro ao reenviar email:', error);
-      
-      if (!navigator.onLine) {
-        handleConnectionError({ message: "Browser is offline" });
-        return;
+      if (isLogin) {
+        console.log("Attempting login with:", { email });
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        console.log("Login response:", { data, error });
+        if (error) throw error;
+        toast({
+          title: "Login successful!",
+          description: "Welcome to the Inadimplência Dashboard.",
+        });
+      } else {
+        console.log("Attempting signup with:", { email });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: "https://cotroledeinadimpleciateste.netlify.app/auth",
+          },
+        });
+        console.log("Signup response:", { data, error });
+        if (error) throw error;
+        setIsEmailSent(true);
+        toast({
+          title: "Signup successful!",
+          description: "Please check your email to confirm your account.",
+        });
       }
-      
+    } catch (error: any) {
+      console.error("Authentication error:", error);
       if (error.message === "Failed to fetch" || error.__isAuthError) {
         handleConnectionError(error);
-        setRetryCount(prev => prev + 1);
+        setRetryCount((prev) => prev + 1);
       } else {
-        let errorMsg = error.message || "Ocorreu um erro ao reenviar o email.";
-        setErrorMessage(errorMsg);
+        setErrorMessage(error.message);
         toast({
-          title: "Erro",
-          description: errorMsg,
+          title: "Error",
+          description: error.message || "An error occurred during authentication.",
           variant: "destructive",
         });
       }
@@ -110,80 +124,26 @@ export const useAuth = () => {
     }
   };
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleLogin = async () => {
     setIsLoading(true);
-    resetError();
-    
-    // First check if browser is online
-    if (!navigator.onLine) {
-      handleConnectionError({ message: "Browser is offline" });
-      setIsLoading(false);
-      return;
-    }
-    
     try {
-      if (isLogin) {
-        console.log("Attempting login with:", { email });
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        console.log("Login response:", { data, error });
-        
-        if (error) {
-          if (error.message === "Invalid login credentials") {
-            throw new Error("Email ou senha incorretos. Verifique suas credenciais.");
-          } else if (error.message.includes("Email not confirmed")) {
-            throw new Error("Email não confirmado. Por favor, verifique seu email para confirmar o cadastro.");
-          } else {
-            throw error;
-          }
-        }
-        
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo ao Dashboard de Controle de Inadimplência.",
-        });
-        
-        // Navigation is handled by the useEffect listener for auth state changes
-      } else {
-        console.log("Attempting signup with:", { email });
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin + '/auth'
-          }
-        });
-        
-        console.log("Signup response:", { data, error });
-        
-        if (error) throw error;
-        
-        setIsEmailSent(true);
-        
-        toast({
-          title: "Cadastro realizado com sucesso!",
-          description: "Por favor, verifique seu email para confirmar o cadastro.",
-        });
-      }
+      console.log("Initiating Google login, redirectTo:", "https://cotroledeinadimpleciateste.netlify.app/auth/callback");
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "https://cotroledeinadimpleciateste.netlify.app/auth/callback",
+        },
+      });
+      console.log("Google login initial response:", data);
+      console.log("Google login initial error:", error);
+      if (error) throw error;
     } catch (error: any) {
-      console.error('Erro durante autenticação:', error);
-      
-      if (error.message === "Failed to fetch" || error.__isAuthError) {
-        handleConnectionError(error);
-        setRetryCount(prev => prev + 1);
-      } else {
-        // Handle other errors
-        setErrorMessage(error.message);
-        toast({
-          title: "Erro",
-          description: error.message || "Ocorreu um erro durante a autenticação.",
-          variant: "destructive",
-        });
-      }
+      console.error("Google login error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to log in with Google.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +161,7 @@ export const useAuth = () => {
     isEmailSent,
     isCheckingSession,
     handleAuth,
-    handleResendConfirmation,
-    resetError
+    handleGoogleLogin,
+    resetError,
   };
 };

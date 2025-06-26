@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import MetaFiado from "./dashboard/MetaFiado";
 import MetaDesafio from "./dashboard/MetaDesafio";
+import MetaPerdido from "./dashboard/MetaPerdido";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
@@ -21,14 +22,18 @@ export interface DashboardProps {
   updateDiasSemExpediente: (dias: Date[]) => void;
   diasRestantesCalculados: number;
   isLoading: boolean;
+  bonusPerdidoAtivado: boolean;
+  setBonusPerdidoAtivado: (value: boolean) => void;
 }
 
 const DashboardLayout = () => {
+  console.log("DashboardLayout renderizado");
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { 
     userData, 
     updateUserData, 
@@ -37,18 +42,25 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
-  const today = new Date(); // Fixed to today's date (June 6, 2025)
-  const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1)); // For calendar navigation
+  const today = new Date();
+  const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
+    console.log("userData:", userData);
+    if (userData) {
+      setBonusPerdidoAtivado(!!userData.bonusPerdidoAtivado);
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    console.log("DashboardLayout useEffect executado", userData);
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
         navigate("/auth");
       }
     };
-    
     checkAuth();
   }, [navigate]);
 
@@ -69,7 +81,7 @@ const DashboardLayout = () => {
   };
 
   const renderTabs = () => (
-    <TabsList className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-5'} w-full p-1 bg-white shadow-sm rounded-xl`}>
+    <TabsList className={`grid grid-cols-6 w-full p-1 bg-white shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
       <TabsTrigger 
         value="ajustes-metas" 
         className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
@@ -94,6 +106,16 @@ const DashboardLayout = () => {
         <Trophy className="h-4 w-4" />
         <span>Meta Desafio</span>
       </TabsTrigger>
+      {bonusPerdidoAtivado && (
+        <TabsTrigger 
+          value="meta-perdido" 
+          className="flex items-center gap-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-600"
+          onClick={() => handleTabChange("meta-perdido")}
+        >
+          <AlertTriangle className="h-4 w-4" />
+          <span>Meta Perdido</span>
+        </TabsTrigger>
+      )}
       <TabsTrigger 
         value="meta-alimentacao" 
         className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600"
@@ -123,9 +145,10 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
+          setBonusPerdidoAtivado={setBonusPerdidoAtivado}
         />
       </TabsContent>
-
       <TabsContent value="meta-fiado" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
         <MetaFiado 
           userData={userData}
@@ -134,9 +157,9 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
-
       <TabsContent value="meta-desafio" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
         <MetaDesafio 
           userData={userData}
@@ -145,9 +168,22 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
-
+      <TabsContent value="meta-perdido" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+        {bonusPerdidoAtivado && (
+          <MetaPerdido 
+            userData={userData}
+            updateUserData={updateUserData}
+            diasSemExpediente={diasSemExpediente}
+            updateDiasSemExpediente={updateDiasSemExpediente}
+            diasRestantesCalculados={diasRestantesCalculados}
+            isLoading={isLoading}
+            bonusPerdidoAtivado={bonusPerdidoAtivado}
+          />
+        )}
+      </TabsContent>
       <TabsContent value="meta-alimentacao" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
         <MetaAlimentacao 
           userData={userData}
@@ -156,18 +192,24 @@ const DashboardLayout = () => {
           updateDiasSemExpediente={updateDiasSemExpediente}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
-
       <TabsContent value="meus-premios" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
-        <MeusPremios 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-        />
+        {userData ? (
+          <MeusPremios 
+            userData={userData}
+            updateUserData={updateUserData}
+            diasSemExpediente={diasSemExpediente}
+            updateDiasSemExpediente={updateDiasSemExpediente}
+            diasRestantesCalculados={diasRestantesCalculados}
+            isLoading={isLoading}
+            bonusPerdidoAtivado={bonusPerdidoAtivado}
+            setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+          />
+        ) : (
+          <div>Carregando dados...</div>
+        )}
       </TabsContent>
     </>
   );
@@ -207,9 +249,9 @@ const DashboardLayout = () => {
   const getDayColor = (date: Date | null) => {
     if (!date) return "text-gray-400";
     const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0) return "text-red-500"; // Sunday
-    if (dayOfWeek === 6) return "text-yellow-500"; // Saturday
-    return "text-green-500"; // Monday to Friday
+    if (dayOfWeek === 0) return "text-red-500";
+    if (dayOfWeek === 6) return "text-yellow-500";
+    return "text-green-500";
   };
 
   const handleMonthNavigation = (direction: "prev" | "next") => {
@@ -250,7 +292,7 @@ const DashboardLayout = () => {
                       </div>
                       <div className="py-4 flex-1">
                         <div className="space-y-2">
-                          {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-alimentacao", "meus-premios"].map((tab) => (
+                          {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-perdido", "meta-alimentacao", "meus-premios"].map((tab) => (
                             <Button
                               key={tab}
                               variant="ghost"
@@ -260,11 +302,13 @@ const DashboardLayout = () => {
                               {tab === "ajustes-metas" && <Sliders className="h-4 w-4 mr-2" />}
                               {tab === "meta-fiado" && <Wallet className="h-4 w-4 mr-2" />}
                               {tab === "meta-desafio" && <Trophy className="h-4 w-4 mr-2" />}
+                              {tab === "meta-perdido" && <AlertTriangle className="h-4 w-4 mr-2" />}
                               {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
                               {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
                               {tab === "ajustes-metas" && "Ajustes de Metas"}
                               {tab === "meta-fiado" && "Meta Fiado"}
                               {tab === "meta-desafio" && "Meta Desafio"}
+                              {tab === "meta-perdido" && "Meta Perdido"}
                               {tab === "meta-alimentacao" && "Meta de Ticket"}
                               {tab === "meus-premios" && "Meus Prêmios"}
                             </Button>
@@ -419,12 +463,11 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* Support Section */}
         <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-blue-600" />
             <a
-              href="https://wa.me/68992237305" // Replace with actual WhatsApp number
+              href="https://wa.me/68992237305"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline font-medium"
@@ -435,7 +478,7 @@ const DashboardLayout = () => {
           <div className="flex items-center gap-2">
             <Instagram className="h-5 w-5 text-pink-600" />
             <a
-              href="https://instagram.com/renato_alme1da" // Replace with actual Instagram handle
+              href="https://instagram.com/renato_alme1da"
               target="_blank"
               rel="noopener noreferrer"
               className="text-pink-600 hover:underline font-medium"
@@ -451,11 +494,7 @@ const DashboardLayout = () => {
           onValueChange={handleTabChange}
           className="space-y-6"
         >
-          {isMobile ? (
-            <div className="hidden">{renderTabs()}</div>
-          ) : (
-            renderTabs()
-          )}
+          {renderTabs()}
           {renderTabsContent()}
         </Tabs>
       </main>
