@@ -14,6 +14,12 @@ import AjustesMetas from "./dashboard/AjustesMetas";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog"; // Supondo que você tenha Dialog
+import RelatoriosSabium from "./RelatoriosSabium";
 
 export interface DashboardProps {
   userData: any;
@@ -397,61 +403,78 @@ const DashboardLayout = () => {
               </h1>
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <Button
-                    variant="outline"
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                    onClick={() => setShowCalendar(!showCalendar)}
-                  >
-                    <Calendar className="h-5 w-5" />
-                    <span className="text-sm">
-                      {today.toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </Button>
-                  {showCalendar && (
-                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
-                      <div className="flex justify-between items-center mb-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-lg font-bold"
-                          onClick={() => handleMonthNavigation("prev")}
-                        >
-                          {"<"}
-                        </Button>
-                        <span className="text-base font-semibold">
-                          {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                        onClick={() => setShowCalendar(!showCalendar)}
+                      >
+                        <Calendar className="h-5 w-5" />
+                        <span className="text-sm">
+                          {today.toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
                         </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-lg font-bold"
-                          onClick={() => handleMonthNavigation("next")}
-                        >
-                          {">"}
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-7 gap-2 text-center">
-                        {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                          <div key={day} className="text-sm font-medium text-gray-700">
-                            {day}
-                          </div>
-                        ))}
-                        {getCalendarDays(calendarMonth).map((day, index) => (
-                          <div
-                            key={index}
-                            className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
+                      </Button>
+                    </DialogTrigger>
+                    {showCalendar && (
+                      <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                        <div className="flex justify-between items-center mb-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-lg font-bold"
+                            onClick={() => handleMonthNavigation("prev")}
                           >
-                            {day ? day.getDate() : ""}
-                          </div>
-                        ))}
+                            {"<"}
+                          </Button>
+                          <span className="text-base font-semibold">
+                            {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-lg font-bold"
+                            onClick={() => handleMonthNavigation("next")}
+                          >
+                            {">"}
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-7 gap-2 text-center">
+                          {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
+                            <div key={day} className="text-sm font-medium text-gray-700">
+                              {day}
+                            </div>
+                          ))}
+                          {getCalendarDays(calendarMonth).map((day, index) => (
+                            <div
+                              key={index}
+                              className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
+                            >
+                              {day ? day.getDate() : ""}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </Dialog>
                 </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    >
+                      Relatórios Sabium
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <RelatoriosSabium />
+                  </DialogContent>
+                </Dialog>
                 <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
                   <LogOut size={16} />
                   <span>Sair</span>
