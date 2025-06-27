@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
+import html2canvas from "./node_modules/html2canvas/dist/html2canvas.min.js";
+import jsPDF from "./node_modules/jspdf/dist/jspdf.es.min.js";
 
 export interface DashboardProps {
   userData: any;
@@ -51,6 +53,7 @@ const DashboardLayout = () => {
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     console.log("userData:", userData);
@@ -83,6 +86,43 @@ const DashboardLayout = () => {
     setActiveTab(value);
     if (isMobile) {
       setSheetOpen(false);
+    }
+  };
+
+  const exportToImage = () => {
+    if (dashboardRef.current) {
+      const dialog = document.querySelector("dialog[open]");
+      if (dialog) dialog.style.display = "none";
+      
+      html2canvas(dashboardRef.current, { scale: 2 }).then((canvas) => {
+        if (dialog) dialog.style.display = "";
+        const link = document.createElement("a");
+        link.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+  };
+
+  const exportToPDF = () => {
+    if (dashboardRef.current) {
+      const dialog = document.querySelector("dialog[open]");
+      if (dialog) dialog.style.display = "none";
+      
+      html2canvas(dashboardRef.current, { scale: 2 }).then((canvas) => {
+        if (dialog) dialog.style.display = "";
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+        const imgData = canvas.toDataURL("image/png");
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
+      });
     }
   };
 
@@ -276,7 +316,7 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" ref={dashboardRef}>
       <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           {isMobile ? (
@@ -475,6 +515,16 @@ const DashboardLayout = () => {
                     <RelatoriosSabium />
                   </DialogContent>
                 </Dialog>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                  onClick={() => {
+                    exportToImage();
+                    exportToPDF();
+                  }}
+                >
+                  Exportar Relatório Completo
+                </Button>
                 <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
                   <LogOut size={16} />
                   <span>Sair</span>
