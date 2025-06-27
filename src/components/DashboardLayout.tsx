@@ -20,8 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import html2canvas from "./node_modules/html2canvas/dist/html2canvas.min.js";
-import jsPDF from "./node_modules/jspdf/dist/jspdf.es.min.js";
+import html2canvas from "html2canvas"; // Importação padrão
+import jsPDF from "jspdf"; // Importação padrão
 
 export interface DashboardProps {
   userData: any;
