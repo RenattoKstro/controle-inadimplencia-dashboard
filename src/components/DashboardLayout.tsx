@@ -17,6 +17,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
@@ -90,18 +94,18 @@ const DashboardLayout = () => {
   };
 
   const exportToImage = () => {
-    if (dashboardRef.current) {
-      const dialog = document.querySelector("dialog[open]");
-      if (dialog) dialog.style.display = "none";
-      
-      html2canvas(dashboardRef.current, { scale: 2 }).then((canvas) => {
-        if (dialog) dialog.style.display = "";
-        const link = document.createElement("a");
-        link.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-    }
+    if (!dashboardRef.current) return;
+
+    const dialog = document.querySelector("dialog[open]");
+    if (dialog) dialog.style.display = "none";
+
+    html2canvas(dashboardRef.current, { scale: 4, useCORS: true }).then((canvas) => {
+      if (dialog) dialog.style.display = "";
+      const link = document.createElement("a");
+      link.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL("image/png", 1.0); // Qualidade máxima
+      link.click();
+    });
   };
 
   const exportToPDF = async () => {
@@ -124,24 +128,24 @@ const DashboardLayout = () => {
 
     for (let i = 0; i < tabs.length; i++) {
       const tab = tabs[i];
-      setActiveTab(tab.value); // Ativa a guia temporariamente
-      await new Promise(resolve => setTimeout(resolve, 100)); // Dá tempo para a renderização
+      setActiveTab(tab.value);
+      await new Promise(resolve => setTimeout(resolve, 100)); // Tempo para renderização
 
       const dialog = document.querySelector("dialog[open]");
       if (dialog) dialog.style.display = "none";
 
-      const canvas = await html2canvas(dashboardRef.current, { scale: 2 });
+      const canvas = await html2canvas(dashboardRef.current, { scale: 2, useCORS: true });
       if (dialog) dialog.style.display = "";
 
       const imgData = canvas.toDataURL("image/png");
       const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // Margem de 10mm de cada lado
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-      if (i > 0) pdf.addPage(); // Adiciona nova página após a primeira
+      if (i > 0) pdf.addPage();
       pdf.setFontSize(16);
-      pdf.text(tab.title, 10, 10);
-      pdf.addImage(imgData, "PNG", 10, 20, pdfWidth - 20, pdfHeight - 30); // Ajusta margens
+      pdf.text(`Controle de Inadimplência - ${tab.title}`, 10, 10); // Inclui o título do app
+      pdf.addImage(imgData, "PNG", 10, 20, pdfWidth, Math.min(pdfHeight, pdf.internal.pageSize.getHeight() - 40)); // Ajusta altura máxima
     }
 
     pdf.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -536,16 +540,36 @@ const DashboardLayout = () => {
                     <RelatoriosSabium />
                   </DialogContent>
                 </Dialog>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                  onClick={() => {
-                    exportToImage();
-                    exportToPDF();
-                  }}
-                >
-                  Exportar Relatório Completo
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    >
+                      Exportar Relatório Completo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Escolha o formato de exportação</DialogTitle>
+                      <DialogDescription>
+                        Selecione o tipo de arquivo para exportar o relatório.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={exportToImage}
+                        className="mr-2"
+                      >
+                        Salvar como Imagem (HD)
+                      </Button>
+                      <Button variant="default" onClick={exportToPDF}>
+                        Gerar Relatório em PDF
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
                   <LogOut size={16} />
                   <span>Sair</span>
