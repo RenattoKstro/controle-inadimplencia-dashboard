@@ -24,8 +24,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import jsPDF from "jspdf"; // Mantido para compatibilidade, mas usaremos LaTeX
+import { saveAs } from "file-saver";
 
 export interface DashboardProps {
   userData: any;
@@ -108,47 +108,78 @@ const DashboardLayout = () => {
     });
   };
 
-  const exportToPDF = async () => {
-    if (!dashboardRef.current) return;
-
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-
+  const generateLatexReport = () => {
     const tabs = [
-      { value: "ajustes-metas", title: "Ajustes de Metas" },
-      { value: "meta-fiado", title: "Meta Fiado" },
-      { value: "meta-desafio", title: "Meta Desafio" },
-      ...(bonusPerdidoAtivado ? [{ value: "meta-perdido", title: "Meta Perdido" }] : []),
-      { value: "meta-alimentacao", title: "Meta de Ticket" },
-      { value: "meus-premios", title: "Meus Prêmios" },
+      { value: "ajustes-metas", title: "Ajustes de Metas", data: [
+        { item: "Meta Ativa", value: userData?.metaAtiva || "Não definida" },
+        { item: "Dias Sem Expediente", value: diasSemExpediente?.length || 0 },
+        { item: "Dias Restantes", value: diasRestantesCalculados || 0 },
+      ]},
+      { value: "meta-fiado", title: "Meta Fiado", data: [
+        { item: "Valor Total", value: userData?.fiadoTotal || "0.00" },
+        { item: "Meta", value: userData?.fiadoMeta || "1000.00" },
+        { item: "Status", value: userData?.fiadoStatus || "Pendente" },
+      ]},
+      { value: "meta-desafio", title: "Meta Desafio", data: [
+        { item: "Pontos", value: userData?.desafioPontos || "0" },
+        { item: "Meta", value: userData?.desafioMeta || "100" },
+        { item: "Status", value: userData?.desafioStatus || "Em progresso" },
+      ]},
+      ...(bonusPerdidoAtivado ? [{
+        value: "meta-perdido", title: "Meta Perdido", data: [
+          { item: "Valor Perdido", value: userData?.perdidoValor || "0.00" },
+          { item: "Status", value: userData?.perdidoStatus || "Ativado" },
+        ]
+      }] : []),
+      { value: "meta-alimentacao", title: "Meta de Ticket", data: [
+        { item: "Tickets Vendidos", value: userData?.alimentacaoTickets || "0" },
+        { item: "Meta", value: userData?.alimentacaoMeta || "50" },
+        { item: "Status", value: userData?.alimentacaoStatus || "Pendente" },
+      ]},
+      { value: "meus-premios", title: "Meus Prêmios", data: [
+        { item: "Prêmios Disponíveis", value: userData?.premiosDisponiveis || "0" },
+        { item: "Prêmios Resgatados", value: userData?.premiosResgatados || "0" },
+      ]},
     ];
 
-    for (let i = 0; i < tabs.length; i++) {
-      const tab = tabs[i];
-      setActiveTab(tab.value);
-      await new Promise(resolve => setTimeout(resolve, 100)); // Tempo para renderização
+    const latexContent = `
+\\documentclass[a4paper,12pt]{article}
+\\usepackage[utf8]{inputenc}
+\\usepackage[T1]{fontenc}
+\\usepackage{booktabs}
+\\usepackage{longtable}
+\\usepackage{geometry}
+\\geometry{a4paper, margin=1in}
 
-      const dialog = document.querySelector("dialog[open]");
-      if (dialog) dialog.style.display = "none";
+\\title{Controle de Inadimplência - Relatório Completo}
+\\author{}
+\\date{${new Date().toLocaleDateString("pt-BR")}}
 
-      const canvas = await html2canvas(dashboardRef.current, { scale: 2, useCORS: true });
-      if (dialog) dialog.style.display = "";
+\\begin{document}
 
-      const imgData = canvas.toDataURL("image/png");
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // Margem de 10mm de cada lado
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+\\maketitle
 
-      if (i > 0) pdf.addPage();
-      pdf.setFontSize(16);
-      pdf.text(`Controle de Inadimplência - ${tab.title}`, 10, 10); // Inclui o título do app
-      pdf.addImage(imgData, "PNG", 10, 20, pdfWidth, Math.min(pdfHeight, pdf.internal.pageSize.getHeight() - 40)); // Ajusta altura máxima
-    }
+${tabs.map((tab, index) => `
+\\section*{${tab.title}}
+\\begin{longtable}{lp{8cm}}
+\\toprule
+\\textbf{Item} & \\textbf{Valor} \\\\
+\\midrule
+${tab.data.map(row => `\\textbf{${row.item}} & ${row.value} \\\\`).join('')}
+\\bottomrule
+\\end{longtable}
+${index < tabs.length - 1 ? '\\newpage' : ''}
+`).join('')}
 
-    pdf.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
+\\end{document}
+    `;
+
+    const blob = new Blob([latexContent], { type: "text/x-tex" });
+    saveAs(blob, `relatorio_completo_${new Date().toISOString().split('T')[0]}.tex`);
+    toast({
+      title: "Relatório gerado",
+      description: "O arquivo .tex foi baixado. Compile-o com LaTeX para gerar o PDF.",
+    });
   };
 
   const renderTabs = () => (
@@ -564,7 +595,7 @@ const DashboardLayout = () => {
                       >
                         Salvar como Imagem (HD)
                       </Button>
-                      <Button variant="default" onClick={exportToPDF}>
+                      <Button variant="default" onClick={generateLatexReport}>
                         Gerar Relatório em PDF
                       </Button>
                     </DialogFooter>
