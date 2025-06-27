@@ -20,8 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import html2canvas from "html2canvas"; // Importação padrão
-import jsPDF from "jspdf"; // Importação padrão
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 export interface DashboardProps {
   userData: any;
@@ -104,26 +104,47 @@ const DashboardLayout = () => {
     }
   };
 
-  const exportToPDF = () => {
-    if (dashboardRef.current) {
+  const exportToPDF = async () => {
+    if (!dashboardRef.current) return;
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const tabs = [
+      { value: "ajustes-metas", title: "Ajustes de Metas" },
+      { value: "meta-fiado", title: "Meta Fiado" },
+      { value: "meta-desafio", title: "Meta Desafio" },
+      ...(bonusPerdidoAtivado ? [{ value: "meta-perdido", title: "Meta Perdido" }] : []),
+      { value: "meta-alimentacao", title: "Meta de Ticket" },
+      { value: "meus-premios", title: "Meus Prêmios" },
+    ];
+
+    for (let i = 0; i < tabs.length; i++) {
+      const tab = tabs[i];
+      setActiveTab(tab.value); // Ativa a guia temporariamente
+      await new Promise(resolve => setTimeout(resolve, 100)); // Dá tempo para a renderização
+
       const dialog = document.querySelector("dialog[open]");
       if (dialog) dialog.style.display = "none";
-      
-      html2canvas(dashboardRef.current, { scale: 2 }).then((canvas) => {
-        if (dialog) dialog.style.display = "";
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4",
-        });
-        const imgData = canvas.toDataURL("image/png");
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
-      });
+
+      const canvas = await html2canvas(dashboardRef.current, { scale: 2 });
+      if (dialog) dialog.style.display = "";
+
+      const imgData = canvas.toDataURL("image/png");
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      if (i > 0) pdf.addPage(); // Adiciona nova página após a primeira
+      pdf.setFontSize(16);
+      pdf.text(tab.title, 10, 10);
+      pdf.addImage(imgData, "PNG", 10, 20, pdfWidth - 20, pdfHeight - 30); // Ajusta margens
     }
+
+    pdf.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   const renderTabs = () => (
