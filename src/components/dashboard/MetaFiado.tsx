@@ -12,23 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface CardItemProps {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  color?: string;
-  showProgress?: boolean;
-  progressValue?: number;
-}
-
-interface ProgressCardProps {
-  title: string;
-  current: number;
-  target: number;
-  icon: React.ReactNode;
-  userData: any;
-}
-
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -44,7 +27,14 @@ const CardItem = ({
   color = "bg-blue-500",
   showProgress = false,
   progressValue = 0,
-}: CardItemProps) => {
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  color?: string;
+  showProgress?: boolean;
+  progressValue?: number;
+}) => {
   const getProgressStyle = (value: number) => {
     if (value < 94) return { background: "linear-gradient(90deg, #ef4444, #dc2626)" };
     if (value < 100) return { background: "linear-gradient(90deg, #facc15, #f59e0b)" };
@@ -63,9 +53,7 @@ const CardItem = ({
           <div className="mt-4 space-y-2">
             <div
               className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
-              style={{
-                boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
-              }}
+              style={{ boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)" }}
             >
               <div
                 className="h-full rounded-l-full transition-all duration-1000 ease-out"
@@ -86,9 +74,14 @@ const CardItem = ({
   );
 };
 
-const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
+const ProgressCard = ({ title, current, target, icon, userData }: {
+  title: string;
+  current: number;
+  target: number;
+  icon: React.ReactNode;
+  userData: any;
+}) => {
   const isMobile = useIsMobile();
-
   let percentageComplete = 0;
 
   if (userData.vencido_atual > 0) {
@@ -100,32 +93,8 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
   percentageComplete = Math.max(0, percentageComplete);
 
-  const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
-
-  const valoresRestantes = percentuaisAlvo.map((percentual) => {
-    const vencidoNecessario = userData.meta_mes / (percentual / 100);
-    let diferenca = userData.vencido_atual - vencidoNecessario;
-    const atingido = percentageComplete >= percentual;
-    diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
-    return {
-      percentual,
-      diferenca,
-      atingido,
-    };
-  });
-
-  const getProgressStyle = (value: number) => {
-    if (value < 94) return { background: "linear-gradient(90deg, #ef4444, #dc2626)" };
-    if (value < 100) return { background: "linear-gradient(90deg, #facc15, #f59e0b)" };
-    return { background: "linear-gradient(90deg, #22c55e, #16a34a)" };
-  };
-
   return (
-    <Card
-      className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${
-        isMobile ? "col-span-1" : "col-span-1 md:col-span-3"
-      }`}
-    >
+    <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${isMobile ? "col-span-1" : "col-span-1 md:col-span-3"}`}>
       <CardHeader className="pb-2">
         <div className="flex flex-col items-center gap-2">
           <CardTitle className="text-lg md:text-xl flex items-center gap-2">
@@ -147,35 +116,18 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
         <div className="space-y-2">
           <div
             className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
-            style={{
-              boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
-            }}
+            style={{ boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)" }}
           >
             <div
               className="h-full rounded-l-full transition-all duration-1000 ease-out"
               style={{
                 width: `${Math.min(percentageComplete, 105)}%`,
-                ...getProgressStyle(percentageComplete),
+                ...(percentageComplete < 94 ? { background: "linear-gradient(90deg, #ef4444, #dc2626)" } :
+                  percentageComplete < 100 ? { background: "linear-gradient(90deg, #facc15, #f59e0b)" } :
+                  { background: "linear-gradient(90deg, #22c55e, #16a34a)" }),
                 boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
               }}
             />
-          </div>
-          <div className="flex flex-wrap gap-4 mt-2 justify-center">
-            {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
-              <div key={percentual} className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    "text-sm md:text-base font-medium",
-                    atingido ? "text-green-600" : "text-red-600"
-                  )}
-                >
-                  {percentual}%: {formatCurrency(diferenca)}
-                </div>
-                {index < valoresRestantes.length - 1 && (
-                  <span className="text-gray-400">|</span>
-                )}
-              </div>
-            ))}
           </div>
         </div>
       </CardContent>
@@ -183,26 +135,38 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   );
 };
 
-const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
+const MetaFiado = ({ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, onMetaDataUpdate }: DashboardProps) => {
   const isMobile = useIsMobile();
 
-  const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
-  const faltaReceberMes = Math.max(0, userData.vencido_atual - userData.meta_mes);
-  const recebidosMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  const recebidoHoje = Math.max(0, (userData.abertura_dia || 0) - userData.vencido_atual);
+  const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
+  const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
+  const recebidosMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
+  const recebidoHoje = Math.max(0, (userData.abertura_dia || 0) - (userData.vencido_atual || 0));
   console.log(`[MetaFiado] Calculado recebidoHoje: ${recebidoHoje}, abertura_dia=${userData.abertura_dia}, vencido_atual=${userData.vencido_atual}`);
-  const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
+  const receberPorDia = ((userData.dias_restantes || diasRestantesCalculados) > 0)
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
     : 0;
   const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
   const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje);
 
   useEffect(() => {
-    if (setRecebidoHoje) {
-      console.log(`[MetaFiado] Atualizando recebidoHoje no MetaFiado: ${recebidoHoje}`);
-      setRecebidoHoje(recebidoHoje);
+    if (onMetaDataUpdate) {
+      onMetaDataUpdate({
+        title: "Meta Fiado",
+        data: [
+          { item: "Meta Mensal", value: formatCurrency(userData.meta_mes || 0) },
+          { item: "Vencido Atual", value: formatCurrency(userData.vencido_atual || 0) },
+          { item: "Progresso Mensal", value: `${percentageComplete.toFixed(2)}%` },
+          { item: "A Receber", value: formatCurrency(aReceber) },
+          { item: "Falta Receber/Mês", value: formatCurrency(faltaReceberMes) },
+          { item: "Recebido Mês", value: formatCurrency(recebidosMes) },
+          { item: "Recebido Hoje", value: formatCurrency(recebidoHoje) },
+          { item: "Receber por Dia", value: formatCurrency(receberPorDia) },
+          { item: "Falta para Meta Diária", value: formatCurrency(faltaParaMetaDiaria) },
+        ],
+      });
     }
-  }, [recebidoHoje, setRecebidoHoje]);
+  }, [userData, diasRestantesCalculados, onMetaDataUpdate]);
 
   if (isLoading) {
     return (
@@ -210,11 +174,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         <div className="flex justify-between items-center">
           <Skeleton className="h-8 w-1/4" />
         </div>
-        <div
-          className={`grid grid-cols-1 ${
-            isMobile ? "" : "md:grid-cols-2 lg:grid-cols-3"
-          } gap-4`}
-        >
+        <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2 lg:grid-cols-3"} gap-4`}>
           {[...Array(isMobile ? 4 : 8)].map((_, i) => (
             <Card key={i} className="shadow-sm">
               <CardContent className="p-4 md:p-6">
@@ -236,52 +196,20 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       <div className="flex justify-between items-center">
         <h2 className="text-xl md:text-2xl font-bold">Meta Fiado</h2>
       </div>
-      <div
-        className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
-      >
+      <div className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}>
         <ProgressCard
           title="Progresso da Meta Mensal"
-          current={userData.vencido_atual}
-          target={userData.meta_mes}
+          current={userData.vencido_atual || 0}
+          target={userData.meta_mes || 0}
           icon={<Target className="h-5 w-5 text-blue-600" />}
           userData={userData}
         />
-        <CardItem
-          title="A Receber"
-          value={aReceber}
-          icon={<ArrowDown size={16} />}
-          color="bg-cyan-500"
-        />
-        <CardItem
-          title="Falta Receber/Mês"
-          value={faltaReceberMes}
-          icon={<ArrowDown size={16} />}
-          color="bg-red-500"
-        />
-        <CardItem
-          title="Recebido Mês"
-          value={recebidosMes}
-          icon={<Check size={16} />}
-          color="bg-green-500"
-        />
-        <CardItem
-          title="Recebido Hoje"
-          value={recebidoHoje}
-          icon={<Building size={16} />}
-          color="bg-green-500"
-        />
-        <CardItem
-          title="Receber por Dia"
-          value={receberPorDia}
-          icon={<Calculator size={16} />}
-          color="bg-orange-500"
-        />
-        <CardItem
-          title="Falta para Meta Diária"
-          value={faltaParaMetaDiaria}
-          icon={<Target size={16} />}
-          color="bg-yellow-500"
-        />
+        <CardItem title="A Receber" value={aReceber} icon={<ArrowDown size={16} />} color="bg-cyan-500" />
+        <CardItem title="Falta Receber/Mês" value={faltaReceberMes} icon={<ArrowDown size={16} />} color="bg-red-500" />
+        <CardItem title="Recebido Mês" value={recebidosMes} icon={<Check size={16} />} color="bg-green-500" />
+        <CardItem title="Recebido Hoje" value={recebidoHoje} icon={<Building size={16} />} color="bg-green-500" />
+        <CardItem title="Receber por Dia" value={receberPorDia} icon={<Calculator size={16} />} color="bg-orange-500" />
+        <CardItem title="Falta para Meta Diária" value={faltaParaMetaDiaria} icon={<Target size={16} />} color="bg-yellow-500" />
       </div>
     </div>
   );
