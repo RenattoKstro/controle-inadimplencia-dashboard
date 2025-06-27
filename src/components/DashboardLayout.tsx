@@ -24,8 +24,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import jsPDF from "jspdf"; // Mantido para compatibilidade, mas usaremos LaTeX
-import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+// Tipos para os dados das metas
+interface MetaData {
+  title: string;
+  data: { item: string; value: string }[];
+}
 
 export interface DashboardProps {
   userData: any;
@@ -36,6 +42,7 @@ export interface DashboardProps {
   isLoading: boolean;
   bonusPerdidoAtivado: boolean;
   setBonusPerdidoAtivado: (value: boolean) => void;
+  onMetaDataUpdate?: (data: MetaData) => void; // Nova prop para capturar dados
 }
 
 const DashboardLayout = () => {
@@ -58,6 +65,7 @@ const DashboardLayout = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const [metaDataList, setMetaDataList] = useState<MetaData[]>([]); // Estado para armazenar dados das metas
 
   useEffect(() => {
     console.log("userData:", userData);
@@ -108,77 +116,42 @@ const DashboardLayout = () => {
     });
   };
 
-  const generateLatexReport = () => {
-    const tabs = [
-      { value: "ajustes-metas", title: "Ajustes de Metas", data: [
-        { item: "Meta Ativa", value: userData?.metaAtiva || "Não definida" },
-        { item: "Dias Sem Expediente", value: diasSemExpediente?.length || 0 },
-        { item: "Dias Restantes", value: diasRestantesCalculados || 0 },
-      ]},
-      { value: "meta-fiado", title: "Meta Fiado", data: [
-        { item: "Valor Total", value: userData?.fiadoTotal || "0.00" },
-        { item: "Meta", value: userData?.fiadoMeta || "1000.00" },
-        { item: "Status", value: userData?.fiadoStatus || "Pendente" },
-      ]},
-      { value: "meta-desafio", title: "Meta Desafio", data: [
-        { item: "Pontos", value: userData?.desafioPontos || "0" },
-        { item: "Meta", value: userData?.desafioMeta || "100" },
-        { item: "Status", value: userData?.desafioStatus || "Em progresso" },
-      ]},
-      ...(bonusPerdidoAtivado ? [{
-        value: "meta-perdido", title: "Meta Perdido", data: [
-          { item: "Valor Perdido", value: userData?.perdidoValor || "0.00" },
-          { item: "Status", value: userData?.perdidoStatus || "Ativado" },
-        ]
-      }] : []),
-      { value: "meta-alimentacao", title: "Meta de Ticket", data: [
-        { item: "Tickets Vendidos", value: userData?.alimentacaoTickets || "0" },
-        { item: "Meta", value: userData?.alimentacaoMeta || "50" },
-        { item: "Status", value: userData?.alimentacaoStatus || "Pendente" },
-      ]},
-      { value: "meus-premios", title: "Meus Prêmios", data: [
-        { item: "Prêmios Disponíveis", value: userData?.premiosDisponiveis || "0" },
-        { item: "Prêmios Resgatados", value: userData?.premiosResgatados || "0" },
-      ]},
-    ];
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Controle de Inadimplência - Relatório Completo", 10, 10);
 
-    const latexContent = `
-\\documentclass[a4paper,12pt]{article}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
-\\usepackage{booktabs}
-\\usepackage{longtable}
-\\usepackage{geometry}
-\\geometry{a4paper, margin=1in}
+    metaDataList.forEach((tab, index) => {
+      if (index > 0) doc.addPage();
+      doc.setFontSize(14);
+      doc.text(tab.title, 10, 20);
 
-\\title{Controle de Inadimplência - Relatório Completo}
-\\author{}
-\\date{${new Date().toLocaleDateString("pt-BR")}}
+      autoTable(doc, {
+        startY: 30,
+        head: [["Item", "Valor"]],
+        body: tab.data.map(row => [row.item, row.value]),
+        theme: "grid",
+        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [63, 81, 181], textColor: [255, 255, 255] },
+      });
+    });
 
-\\begin{document}
-
-\\maketitle
-
-${tabs.map((tab, index) => `
-\\section*{${tab.title}}
-\\begin{longtable}{lp{8cm}}
-\\toprule
-\\textbf{Item} & \\textbf{Valor} \\\\
-\\midrule
-${tab.data.map(row => `\\textbf{${row.item}} & ${row.value} \\\\`).join('')}
-\\bottomrule
-\\end{longtable}
-${index < tabs.length - 1 ? '\\newpage' : ''}
-`).join('')}
-
-\\end{document}
-    `;
-
-    const blob = new Blob([latexContent], { type: "text/x-tex" });
-    saveAs(blob, `relatorio_completo_${new Date().toISOString().split('T')[0]}.tex`);
+    doc.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
       title: "Relatório gerado",
-      description: "O arquivo .tex foi baixado. Compile-o com LaTeX para gerar o PDF.",
+      description: "O arquivo PDF foi baixado com sucesso.",
+    });
+  };
+
+  const handleMetaDataUpdate = (data: MetaData) => {
+    setMetaDataList(prev => {
+      const existingIndex = prev.findIndex(item => item.title === data.title);
+      if (existingIndex >= 0) {
+        const newList = [...prev];
+        newList[existingIndex] = data;
+        return newList;
+      }
+      return [...prev, data];
     });
   };
 
@@ -249,6 +222,7 @@ ${index < tabs.length - 1 ? '\\newpage' : ''}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
           setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+          onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
       <TabsContent value="meta-fiado" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -260,6 +234,7 @@ ${index < tabs.length - 1 ? '\\newpage' : ''}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
       <TabsContent value="meta-desafio" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -271,6 +246,7 @@ ${index < tabs.length - 1 ? '\\newpage' : ''}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
       <TabsContent value="meta-perdido" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -283,6 +259,7 @@ ${index < tabs.length - 1 ? '\\newpage' : ''}
             diasRestantesCalculados={diasRestantesCalculados}
             isLoading={isLoading}
             bonusPerdidoAtivado={bonusPerdidoAtivado}
+            onMetaDataUpdate={handleMetaDataUpdate}
           />
         )}
       </TabsContent>
@@ -295,6 +272,7 @@ ${index < tabs.length - 1 ? '\\newpage' : ''}
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
       <TabsContent value="meus-premios" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -308,6 +286,7 @@ ${index < tabs.length - 1 ? '\\newpage' : ''}
             isLoading={isLoading}
             bonusPerdidoAtivado={bonusPerdidoAtivado}
             setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+            onMetaDataUpdate={handleMetaDataUpdate}
           />
         ) : (
           <div>Carregando dados...</div>
@@ -595,7 +574,7 @@ ${index < tabs.length - 1 ? '\\newpage' : ''}
                       >
                         Salvar como Imagem (HD)
                       </Button>
-                      <Button variant="default" onClick={generateLatexReport}>
+                      <Button variant="default" onClick={exportToPDF}>
                         Gerar Relatório em PDF
                       </Button>
                     </DialogFooter>
