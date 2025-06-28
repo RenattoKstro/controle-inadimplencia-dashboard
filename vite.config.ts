@@ -46,11 +46,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ["lucide-react"],
+    include: ["lucide-react", "jspdf-autotable"], // Adiciona jspdf-autotable para otimização
   },
   build: {
     rollupOptions: {
-      external: [],
+      external: [], // Garante que jspdf-autotable não seja externalizado
     },
     chunkSizeWarningLimit: 1000,
   },
