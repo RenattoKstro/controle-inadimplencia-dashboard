@@ -44,10 +44,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    dedupe: ["jspdf-autotable"],
+    dedupe: ["jspdf", "jspdf-autotable"],
   },
   optimizeDeps: {
-    include: ["lucide-react", "jspdf-autotable"],
+    include: ["lucide-react", "jspdf",  "jspdf-autotable"],
   },
   build: {
     rollupOptions: {
