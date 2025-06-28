@@ -4,7 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { AlertTriangle } from "lucide-react";
 
-const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) => {
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+  }).format(value);
+};
+
+const MetaPerdido = ({ userData, updateUserData, isLoading, onMetaDataUpdate }: DashboardProps) => {
   console.log("MetaPerdido renderizado", userData);
   const [metaPerdido, setMetaPerdido] = React.useState(userData.meta_perdido || 0);
   const [recPerdido, setRecPerdido] = React.useState(userData.rec_perdido || 0);
@@ -20,6 +28,21 @@ const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) =>
     : 0;
   const faltam100 = metaPerdido - recPerdido > 0 ? metaPerdido - recPerdido : 0;
   const faltam105 = metaPerdido * 1.05 - recPerdido > 0 ? metaPerdido * 1.05 - recPerdido : 0;
+
+  useEffect(() => {
+    if (onMetaDataUpdate) {
+      onMetaDataUpdate({
+        title: "Meta Perdido",
+        data: [
+          { item: "Meta", value: formatCurrency(metaPerdido) },
+          { item: "Recebido", value: formatCurrency(recPerdido) },
+          { item: "Progresso", value: `${percentual.toFixed(2)}%` },
+          { item: "Falta para 100%", value: formatCurrency(faltam100) },
+          { item: "Falta para 105%", value: formatCurrency(faltam105) },
+        ],
+      });
+    }
+  }, [metaPerdido, recPerdido, onMetaDataUpdate]);
 
   const handleSave = () => {
     updateUserData({ meta_perdido: metaPerdido, rec_perdido: recPerdido });

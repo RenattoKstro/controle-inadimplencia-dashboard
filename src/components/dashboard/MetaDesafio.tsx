@@ -12,7 +12,7 @@ import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Skeleton } from "../../components/ui/skeleton";
 import { useIsMobile } from "../../hooks/use-mobile";
-import { cn } from "../../lib/utils"; // Adicionar para usar a função cn
+import { cn } from "../../lib/utils";
 
 const formatCurrency = (value: number): string => {
   if (typeof value !== "number" || isNaN(value)) return "R$ 0,00";
@@ -51,7 +51,7 @@ const calcularProgressoDiario = (recebidoHoje: number, valorPorDia: number): num
   }
   const progresso = (recebidoHoje / valorPorDia) * 100;
   console.log(`[MetaDesafio] Calculando progressoDiario: recebidoHoje=${recebidoHoje}, valorPorDia=${valorPorDia}, progresso=${progresso}%`);
-  return progresso; // Permite progresso > 100%
+  return progresso;
 };
 
 const MetaDesafio = ({
@@ -59,22 +59,19 @@ const MetaDesafio = ({
   updateUserData,
   isLoading,
   diasRestantesCalculados,
-  recebidoHoje = 0, // Valor vindo de MetaFiado
+  onMetaDataUpdate,
 }: DashboardProps & { recebidoHoje?: number }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
   const isMobile = useIsMobile();
-
-  const [diasRestantes, setDiasRestantes] = useState(
-    userData?.dias_restantes || diasRestantesCalculados || 1
-  );
+  const [diasRestantes, setDiasRestantes] = useState(userData?.dias_restantes || diasRestantesCalculados || 1);
 
   useEffect(() => {
     if (userData?.dias_restantes !== undefined) {
       setDiasRestantes(userData.dias_restantes);
     }
-    console.log(`[MetaDesafio] useEffect: diasRestantes atualizado para ${diasRestantes}, recebidoHoje=${recebidoHoje}`);
-  }, [userData?.dias_restantes, recebidoHoje]);
+    console.log(`[MetaDesafio] useEffect: diasRestantes atualizado para ${diasRestantes}`);
+  }, [userData?.dias_restantes]);
 
   if (!userData) {
     return (
@@ -84,9 +81,7 @@ const MetaDesafio = ({
             <Trophy className="text-yellow-500" />
             Meta Desafio
           </CardTitle>
-          <CardDescription>
-            Erro: Dados do usuário não disponíveis.
-          </CardDescription>
+          <CardDescription>Erro: Dados do usuário não disponíveis.</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -95,40 +90,26 @@ const MetaDesafio = ({
   const vencidoAtual = Number(userData?.vencido_atual) || 0;
   const metaDesafioValor = Number(userData?.meta_desafio) || 0;
 
-  // Novo cálculo do progresso da Meta Desafio usando a sua fórmula
   let progresso = 0;
-
   if (metaDesafioValor > 0 && vencidoAtual > 0) {
     progresso = (metaDesafioValor / vencidoAtual) * 100;
     console.log(`[MetaDesafio] Meta Desafio - Vencido Atual: ${vencidoAtual}, Meta: ${metaDesafioValor}, Progresso Calculado (antes de arredondar): ${progresso}`);
-    // Arredondar para evitar problemas de precisão
     progresso = Number(progresso.toFixed(2));
     console.log(`[MetaDesafio] Meta Desafio - Progresso Calculado (após arredondar): ${progresso}%`);
   }
 
-  const progressoPercentual = Math.max(0, Math.min(100, progresso)); // Limita entre 0 e 100% para a barra
+  const progressoPercentual = Math.max(0, Math.min(100, progresso));
   const valorRestante = Math.max(0, vencidoAtual - metaDesafioValor);
   const valorPorDia = calcularValorPorDia(valorRestante, diasRestantes);
-  const progressoDiario = calcularProgressoDiario(recebidoHoje, valorPorDia);
+  const progressoDiario = calcularProgressoDiario(0, valorPorDia); // Usando 0 como recebidoHoje por agora
 
-  // Lista de percentuais alvo
   const percentuaisAlvo = [96, 98, 100];
-
-  // Calcular os valores restantes para cada percentual
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
-    // Calcular o vencido_atual necessário para atingir o percentual
     const vencidoNecessario = metaDesafioValor / (percentual / 100);
-    // Calcular a diferença (valor restante)
     let diferenca = vencidoAtual - vencidoNecessario;
-    // Determinar se o percentual foi atingido
     const atingido = progresso >= percentual;
-    // Se atingido, a diferença é positiva; se não, é negativa
     diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
-    return {
-      percentual,
-      diferenca,
-      atingido,
-    };
+    return { percentual, diferenca, atingido };
   });
 
   const handleSave = () => {
@@ -140,6 +121,23 @@ const MetaDesafio = ({
     setMetaDesafio(userData?.meta_desafio || 0);
     setIsEditing(false);
   };
+
+  useEffect(() => {
+    if (onMetaDataUpdate) {
+      onMetaDataUpdate({
+        title: "Meta Desafio",
+        data: [
+          { item: "Meta Desafio", value: formatCurrency(metaDesafioValor) },
+          { item: "Vencido Atual", value: formatCurrency(vencidoAtual) },
+          { item: "Progresso", value: `${progresso}%` },
+          { item: "Valor Restante", value: formatCurrency(valorRestante) },
+          { item: "Receber por Dia", value: formatCurrency(valorPorDia) },
+          { item: "Progresso Diário", value: `${progressoDiario.toFixed(2)}%` },
+          { item: "Dias Restantes", value: diasRestantes.toString() },
+        ],
+      });
+    }
+  }, [metaDesafioValor, vencidoAtual, valorRestante, valorPorDia, progressoDiario, diasRestantes, onMetaDataUpdate]);
 
   if (isLoading) {
     return (
@@ -176,35 +174,15 @@ const MetaDesafio = ({
               <Trophy className="text-yellow-500" />
               Meta Desafio
             </CardTitle>
-            <CardDescription>
-              Acompanha seu progresso
-            </CardDescription>
+            <CardDescription>Acompanha seu progresso</CardDescription>
           </div>
           {isEditing ? (
             <div className="flex gap-2">
-              <Button
-                variant="default"
-                size={isMobile ? "sm" : "default"}
-                onClick={handleSave}
-              >
-                Salvar
-              </Button>
-              <Button
-                variant="outline"
-                size={isMobile ? "sm" : "default"}
-                onClick={handleCancel}
-              >
-                Cancelar
-              </Button>
+              <Button variant="default" size={isMobile ? "sm" : "default"} onClick={handleSave}>Salvar</Button>
+              <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={handleCancel}>Cancelar</Button>
             </div>
           ) : (
-            <Button
-              variant="outline"
-              size={isMobile ? "sm" : "default"}
-              onClick={() => setIsEditing(true)}
-            >
-              Editar Meta
-            </Button>
+            <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={() => setIsEditing(true)}>Editar Meta</Button>
           )}
         </div>
       </CardHeader>
@@ -212,106 +190,54 @@ const MetaDesafio = ({
         <div className="space-y-2">
           <div className="text-sm font-medium">Meta Desafio</div>
           {isEditing ? (
-            <Input
-              value={metaDesafio}
-              onChange={(e) => setMetaDesafio(parseFloat(e.target.value) || 0)}
-              className="font-bold text-lg"
-            />
+            <Input value={metaDesafio} onChange={(e) => setMetaDesafio(parseFloat(e.target.value) || 0)} className="font-bold text-lg" />
           ) : (
-            <div className="text-xl md:text-2xl font-bold">
-              {formatCurrency(userData.meta_desafio)}
-            </div>
+            <div className="text-xl md:text-2xl font-bold">{formatCurrency(userData.meta_desafio)}</div>
           )}
         </div>
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-sm font-medium">Progresso</span>
-            <span className="text-sm font-medium">
-              {formatPercentage(progresso)} {/* Exibe o progresso real */}
-            </span>
+            <span className="text-sm font-medium">{formatPercentage(progresso)}</span>
           </div>
-          <div
-            className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
-            style={{
-              backgroundColor: "#ffffff",
-              boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
-            }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500 ease-in-out"
-              style={{
-                width: `${progressoPercentual}%`, // Limita a barra a 100%
-                background:
-                  "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
-                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-              }}
-            />
+          <div className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner" style={{ backgroundColor: "#ffffff", boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)" }}>
+            <div className="h-full rounded-full transition-all duration-500 ease-in-out" style={{ width: `${progressoPercentual}%`, background: "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)" }} />
           </div>
-          {/* Exibir os valores restantes com separadores visuais */}
           <div className="flex flex-wrap gap-4 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
-              <div
-                key={percentual}
-                className="flex items-center gap-2"
-              >
-                <div
-                  className={cn(
-                    "text-sm md:text-base font-medium",
-                    atingido ? "text-green-600" : "text-red-600"
-                  )}
-                >
+              <div key={percentual} className="flex items-center gap-2">
+                <div className={cn("text-sm md:text-base font-medium", atingido ? "text-green-600" : "text-red-600")}>
                   {percentual}%: {formatCurrency(diferenca)}
                 </div>
-                {/* Adicionar separador |, exceto no último item */}
-                {index < valoresRestantes.length - 1 && (
-                  <span className="text-gray-400">|</span>
-                )}
+                {index < valoresRestantes.length - 1 && <span className="text-gray-400">|</span>}
               </div>
             ))}
           </div>
         </div>
-        <div
-          className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-3 gap-4"}`}
-        >
+        <div className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-3 gap-4"}`}>
           <Card className="shadow-sm hover:shadow transition-shadow duration-200">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
-                <h3 className="text-sm font-medium text-gray-600">
-                  Valor Restante
-                </h3>
-                <span className="p-1.5 md:p-2 rounded-full bg-gray-500 text-white">
-                  <Target size={isMobile ? 14 : 16} />
-                </span>
+                <h3 className="text-sm font-medium text-gray-600">Valor Restante</h3>
+                <span className="p-1.5 md:p-2 rounded-full bg-gray-500 text-white"><Target size={isMobile ? 14 : 16} /></span>
               </div>
-              <div className="text-lg md:text-xl font-bold">
-                {formatCurrency(valorRestante)}
-              </div>
+              <div className="text-lg md:text-xl font-bold">{formatCurrency(valorRestante)}</div>
             </CardContent>
           </Card>
           <Card className="shadow-sm hover:shadow transition-shadow duration-200">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
-                <h3 className="text-sm font-medium text-gray-600">
-                  Receber por Dia
-                </h3>
-                <span className="p-1.5 md:p-2 rounded-full bg-orange-500 text-white">
-                  <Calculator size={isMobile ? 14 : 16} />
-                </span>
+                <h3 className="text-sm font-medium text-gray-600">Receber por Dia</h3>
+                <span className="p-1.5 md:p-2 rounded-full bg-orange-500 text-white"><Calculator size={isMobile ? 14 : 16} /></span>
               </div>
-              <div className="text-lg md:text-xl font-bold">
-                {formatCurrency(valorPorDia)}
-              </div>
+              <div className="text-lg md:text-xl font-bold">{formatCurrency(valorPorDia)}</div>
             </CardContent>
           </Card>
           <Card className="shadow-sm hover:shadow transition-shadow duration-200">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
-                <h3 className="text-sm font-medium text-gray-600">
-                  Dias Restantes
-                </h3>
-                <span className="p-1.5 md:p-2 rounded-full bg-gray-500 text-white">
-                  <Target size={isMobile ? 14 : 16} />
-                </span>
+                <h3 className="text-sm font-medium text-gray-600">Dias Restantes</h3>
+                <span className="p-1.5 md:p-2 rounded-full bg-gray-500 text-white"><Target size={isMobile ? 14 : 16} /></span>
               </div>
               <div className="text-lg md:text-xl font-bold">{diasRestantes}</div>
             </CardContent>

@@ -17,11 +17,21 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import html2canvas from "./node_modules/html2canvas/dist/html2canvas.min.js";
-import jsPDF from "./node_modules/jspdf/dist/jspdf.es.min.js";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+// Tipos para os dados das metas
+interface MetaData {
+  title: string;
+  data: { item: string; value: string }[];
+}
 
 export interface DashboardProps {
   userData: any;
@@ -32,6 +42,7 @@ export interface DashboardProps {
   isLoading: boolean;
   bonusPerdidoAtivado: boolean;
   setBonusPerdidoAtivado: (value: boolean) => void;
+  onMetaDataUpdate?: (data: MetaData) => void; // Nova prop para capturar dados
 }
 
 const DashboardLayout = () => {
@@ -54,6 +65,7 @@ const DashboardLayout = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const [metaDataList, setMetaDataList] = useState<MetaData[]>([]); // Estado para armazenar dados das metas
 
   useEffect(() => {
     console.log("userData:", userData);
@@ -90,40 +102,57 @@ const DashboardLayout = () => {
   };
 
   const exportToImage = () => {
-    if (dashboardRef.current) {
-      const dialog = document.querySelector("dialog[open]");
-      if (dialog) dialog.style.display = "none";
-      
-      html2canvas(dashboardRef.current, { scale: 2 }).then((canvas) => {
-        if (dialog) dialog.style.display = "";
-        const link = document.createElement("a");
-        link.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-    }
+    if (!dashboardRef.current) return;
+
+    const dialog = document.querySelector("dialog[open]");
+    if (dialog) dialog.style.display = "none";
+
+    html2canvas(dashboardRef.current, { scale: 4, useCORS: true }).then((canvas) => {
+      if (dialog) dialog.style.display = "";
+      const link = document.createElement("a");
+      link.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.png`;
+      link.href = canvas.toDataURL("image/png", 1.0); // Qualidade máxima
+      link.click();
+    });
   };
 
   const exportToPDF = () => {
-    if (dashboardRef.current) {
-      const dialog = document.querySelector("dialog[open]");
-      if (dialog) dialog.style.display = "none";
-      
-      html2canvas(dashboardRef.current, { scale: 2 }).then((canvas) => {
-        if (dialog) dialog.style.display = "";
-        const pdf = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4",
-        });
-        const imgData = canvas.toDataURL("image/png");
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Controle de Inadimplência - Relatório Completo", 10, 10);
+
+    metaDataList.forEach((tab, index) => {
+      if (index > 0) doc.addPage();
+      doc.setFontSize(14);
+      doc.text(tab.title, 10, 20);
+
+      autoTable(doc, {
+        startY: 30,
+        head: [["Item", "Valor"]],
+        body: tab.data.map(row => [row.item, row.value]),
+        theme: "grid",
+        styles: { fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [63, 81, 181], textColor: [255, 255, 255] },
       });
-    }
+    });
+
+    doc.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
+    toast({
+      title: "Relatório gerado",
+      description: "O arquivo PDF foi baixado com sucesso.",
+    });
+  };
+
+  const handleMetaDataUpdate = (data: MetaData) => {
+    setMetaDataList(prev => {
+      const existingIndex = prev.findIndex(item => item.title === data.title);
+      if (existingIndex >= 0) {
+        const newList = [...prev];
+        newList[existingIndex] = data;
+        return newList;
+      }
+      return [...prev, data];
+    });
   };
 
   const renderTabs = () => (
@@ -193,6 +222,7 @@ const DashboardLayout = () => {
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
           setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+          onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
       <TabsContent value="meta-fiado" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -204,6 +234,7 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
       <TabsContent value="meta-desafio" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -215,6 +246,7 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
       <TabsContent value="meta-perdido" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -227,6 +259,7 @@ const DashboardLayout = () => {
             diasRestantesCalculados={diasRestantesCalculados}
             isLoading={isLoading}
             bonusPerdidoAtivado={bonusPerdidoAtivado}
+            onMetaDataUpdate={handleMetaDataUpdate}
           />
         )}
       </TabsContent>
@@ -239,6 +272,7 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
       <TabsContent value="meus-premios" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -252,6 +286,7 @@ const DashboardLayout = () => {
             isLoading={isLoading}
             bonusPerdidoAtivado={bonusPerdidoAtivado}
             setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+            onMetaDataUpdate={handleMetaDataUpdate}
           />
         ) : (
           <div>Carregando dados...</div>
@@ -515,16 +550,36 @@ const DashboardLayout = () => {
                     <RelatoriosSabium />
                   </DialogContent>
                 </Dialog>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                  onClick={() => {
-                    exportToImage();
-                    exportToPDF();
-                  }}
-                >
-                  Exportar Relatório Completo
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    >
+                      Exportar Relatório Completo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Escolha o formato de exportação</DialogTitle>
+                      <DialogDescription>
+                        Selecione o tipo de arquivo para exportar o relatório.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={exportToImage}
+                        className="mr-2"
+                      >
+                        Salvar como Imagem (HD)
+                      </Button>
+                      <Button variant="default" onClick={exportToPDF}>
+                        Gerar Relatório em PDF
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
                   <LogOut size={16} />
                   <span>Sair</span>
