@@ -24,8 +24,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import jsPDF from "jspdf/dist/jspdf.umd.min.js"; // Usa o bundle UMD para compatibilidade
+import autoTable from "jspdf-autotable"; // Mantém a importação padrão, compatível com 5.0.2
 
 // Tipos para os dados das metas
 interface MetaData {
