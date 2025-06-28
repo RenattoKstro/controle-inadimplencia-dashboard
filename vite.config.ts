@@ -17,24 +17,24 @@ export default defineConfig(({ mode }) => ({
     //   registerType: "autoUpdate",
     //   manifest: {
     //     name: "Controle de Inadimplência",
-    //     short_name: "Controle", // Corrigido: removido " extra
-    //     description: "Controle de Inadimplência Dashboard", // Corrigido
-    //     start_url: "/dashboard", // Corrigido
-    //     display: "standalone", // Corrigido
-    //     background_color: "#ffffff", // Corrigido
-    //     theme_color: "#9b87f5", // Corrigido
+    //     short_name: "Controle",
+    //     description: "Controle de Inadimplência Dashboard",
+    //     start_url: "/dashboard",
+    //     display: "standalone",
+    //     background_color: "#ffffff",
+    //     theme_color: "#9b87f5",
     //     icons: [
     //       {
-    //         src: "/icon-192x192.png", // Corrigido
-    //         sizes: "192x192", // Corrigido
-    //         type: "image/png", // Corrigido
-    //         purpose: "any maskable", // Corrigido
+    //         src: "/icon-192x192.png",
+    //         sizes: "192x192",
+    //         type: "image/png",
+    //         purpose: "any maskable",
     //       },
     //       {
-    //         src: "/icon-512x512.png", // Corrigido
-    //         sizes: "512x512", // Corrigido
-    //         type: "image/png", // Corrigido
-    //         purpose: "any maskable", // Corrigido
+    //         src: "/icon-512x512.png",
+    //         sizes: "512x512",
+    //         type: "image/png",
+    //         purpose: "any maskable",
     //       },
     //     ],
     //   },
@@ -47,5 +47,11 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ["lucide-react"],
+  },
+  build: {
+    rollupOptions: {
+      external: [], // Garante que jspdf-autotable não seja externalizado
+    },
+    chunkSizeWarningLimit: 1000, // Aumenta o limite de tamanho dos chunks para 1000 kB (ajustável)
   },
 }));
