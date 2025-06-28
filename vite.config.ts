@@ -50,8 +50,8 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      external: [], // Garante que jspdf-autotable não seja externalizado
+      external: [],
     },
-    chunkSizeWarningLimit: 1000, // Aumenta o limite de tamanho dos chunks para 1000 kB (ajustável)
+    chunkSizeWarningLimit: 1000,
   },
 }));
