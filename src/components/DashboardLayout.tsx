@@ -24,8 +24,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import jsPDF from "jspdf/dist/jspdf.umd.min.js"; // Mantido, mas não usado
-import autoTable from "jspdf-autotable"; // Mantido, mas não usado
+import jsPDF from "jspdf/dist/jspdf.umd.min.js";
+import autoTable from "jspdf-autotable";
 import gsap from "gsap";
 import html2canvas from "html2canvas";
 
@@ -45,6 +45,7 @@ export interface DashboardProps {
   bonusPerdidoAtivado: boolean;
   setBonusPerdidoAtivado: (value: boolean) => void;
   onMetaDataUpdate?: (data: MetaData) => void;
+  progress?: number;
 }
 
 // Componente da Barra de Navegação Animada
@@ -257,6 +258,7 @@ const DashboardLayout = () => {
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
           onMetaDataUpdate={handleMetaDataUpdate}
+          progress={progress}
         />
       </TabsContent>
       <TabsContent value="meta-desafio" className="bg-[var(--card)] p-4 md:p-6 rounded-xl shadow-sm">
