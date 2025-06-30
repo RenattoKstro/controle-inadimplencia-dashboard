@@ -12,33 +12,32 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    // VitePWA desativado temporariamente
-    // VitePWA({
-    //   registerType: "autoUpdate",
-    //   manifest: {
-    //     name: "Controle de Inadimplência",
-    //     short_name: "Controle",
-    //     description: "Controle de Inadimplência Dashboard",
-    //     start_url: "/dashboard",
-    //     display: "standalone",
-    //     background_color: "#ffffff",
-    //     theme_color: "#9b87f5",
-    //     icons: [
-    //       {
-    //         src: "/icon-192x192.png",
-    //         sizes: "192x192",
-    //         type: "image/png",
-    //         purpose: "any maskable",
-    //       },
-    //       {
-    //         src: "/icon-512x512.png",
-    //         sizes: "512x512",
-    //         type: "image/png",
-    //         purpose: "any maskable",
-    //       },
-    //     ],
-    //   },
-    // }),
+    VitePWA({
+      registerType: "autoUpdate",
+      manifest: {
+        name: "Controle de Inadimplência",
+        short_name: "Controle",
+        description: "Controle de Inadimplência Dashboard",
+        start_url: "/dashboard",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#9b87f5",
+        icons: [
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+          {
+            src: "/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+        ],
+      },
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -47,12 +46,13 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["jspdf", "jspdf-autotable"],
   },
   optimizeDeps: {
-    include: ["lucide-react", "jspdf",  "jspdf-autotable"],
+    include: ["lucide-react", "jspdf", "jspdf-autotable"],
   },
   build: {
     rollupOptions: {
       external: [],
     },
     chunkSizeWarningLimit: 1000,
+    assetsInclude: ['**/*.png'], // Inclui os ícones no build
   },
 }));
