@@ -74,24 +74,15 @@ const CardItem = ({
   );
 };
 
-const ProgressCard = ({ title, current, target, icon, userData }: {
+const ProgressCard = ({ title, current, target, icon, userData, progress }: {
   title: string;
   current: number;
   target: number;
   icon: React.ReactNode;
   userData: any;
+  progress: number;
 }) => {
   const isMobile = useIsMobile();
-  let percentageComplete = 0;
-
-  if (userData.vencido_atual > 0) {
-    percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
-    console.log(`[MetaFiado] Meta Fiado - Meta Mes: ${userData.meta_mes}, Vencido Atual: ${userData.vencido_atual}, Progresso Calculado: ${percentageComplete.toFixed(2)}%`);
-  } else {
-    console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
-  }
-
-  percentageComplete = Math.max(0, percentageComplete);
 
   return (
     <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${isMobile ? "col-span-1" : "col-span-1 md:col-span-3"}`}>
@@ -102,7 +93,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
             {title}
           </CardTitle>
           <div className="text-xl md:text-2xl font-bold text-gray-700">
-            {percentageComplete.toFixed(2)}% concluído
+            {progress.toFixed(2)}% concluído
           </div>
         </div>
         <CardDescription className="text-sm mt-1 text-center">
@@ -121,9 +112,9 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
             <div
               className="h-full rounded-l-full transition-all duration-1000 ease-out"
               style={{
-                width: `${Math.min(percentageComplete, 105)}%`,
-                ...(percentageComplete < 94 ? { background: "linear-gradient(90deg, #ef4444, #dc2626)" } :
-                  percentageComplete < 100 ? { background: "linear-gradient(90deg, #facc15, #f59e0b)" } :
+                width: `${Math.min(progress, 105)}%`,
+                ...(progress < 94 ? { background: "linear-gradient(90deg, #ef4444, #dc2626)" } :
+                  progress < 100 ? { background: "linear-gradient(90deg, #facc15, #f59e0b)" } :
                   { background: "linear-gradient(90deg, #22c55e, #16a34a)" }),
                 boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
               }}
@@ -135,7 +126,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
   );
 };
 
-const MetaFiado = ({ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, onMetaDataUpdate }: DashboardProps) => {
+const MetaFiado = ({ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, onMetaDataUpdate, progress }: DashboardProps & { progress: number }) => {
   const isMobile = useIsMobile();
 
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
@@ -156,7 +147,7 @@ const MetaFiado = ({ userData, updateUserData, diasSemExpediente, updateDiasSemE
         data: [
           { item: "Meta Mensal", value: formatCurrency(userData.meta_mes || 0) },
           { item: "Vencido Atual", value: formatCurrency(userData.vencido_atual || 0) },
-          { item: "Progresso Mensal", value: `${percentageComplete.toFixed(2)}%` },
+          { item: "Progresso Mensal", value: `${progress.toFixed(2)}%` },
           { item: "A Receber", value: formatCurrency(aReceber) },
           { item: "Falta Receber/Mês", value: formatCurrency(faltaReceberMes) },
           { item: "Recebido Mês", value: formatCurrency(recebidosMes) },
@@ -166,7 +157,7 @@ const MetaFiado = ({ userData, updateUserData, diasSemExpediente, updateDiasSemE
         ],
       });
     }
-  }, [userData, diasRestantesCalculados, onMetaDataUpdate]);
+  }, [userData, diasRestantesCalculados, onMetaDataUpdate, progress]);
 
   if (isLoading) {
     return (
@@ -203,6 +194,7 @@ const MetaFiado = ({ userData, updateUserData, diasSemExpediente, updateDiasSemE
           target={userData.meta_mes || 0}
           icon={<Target className="h-5 w-5 text-blue-600" />}
           userData={userData}
+          progress={progress}
         />
         <CardItem title="A Receber" value={aReceber} icon={<ArrowDown size={16} />} color="bg-cyan-500" />
         <CardItem title="Falta Receber/Mês" value={faltaReceberMes} icon={<ArrowDown size={16} />} color="bg-red-500" />
