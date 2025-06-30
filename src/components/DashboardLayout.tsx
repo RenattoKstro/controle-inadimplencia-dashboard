@@ -24,8 +24,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import jsPDF from "jspdf/dist/jspdf.umd.min.js"; // Usa o bundle UMD para compatibilidade
-import autoTable from "jspdf-autotable"; // Mantém a importação padrão, compatível com 5.0.2
+import jsPDF from "jspdf/dist/jspdf.umd.min.js";
+import autoTable from "jspdf-autotable";
+import gsap from "gsap";
+import html2canvas from "html2canvas"; // Adicionado para exportToImage
 
 // Tipos para os dados das metas
 interface MetaData {
@@ -42,8 +44,50 @@ export interface DashboardProps {
   isLoading: boolean;
   bonusPerdidoAtivado: boolean;
   setBonusPerdidoAtivado: (value: boolean) => void;
-  onMetaDataUpdate?: (data: MetaData) => void; // Nova prop para capturar dados
+  onMetaDataUpdate?: (data: MetaData) => void;
 }
+
+// Componente da Barra de Navegação Animada
+const AnimatedNavBar = ({ progress }: { progress: number }) => {
+  const swimmerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    gsap.fromTo(
+      ".water",
+      { backgroundPositionX: "0%" },
+      { backgroundPositionX: "-100%", duration: 2, repeat: -1, ease: "linear" }
+    );
+
+    if (swimmerRef.current) {
+      const maxWidth = 80;
+      const newPosition = (progress / 100) * maxWidth;
+      gsap.to(swimmerRef.current, {
+        left: `${newPosition}%`,
+        duration: 1,
+        ease: "power2.out",
+      });
+    }
+  }, [progress]);
+
+  return (
+    <div className="w-full h-16 relative bg-[var(--sidebar-background)] overflow-hidden mb-4">
+      <div className="absolute right-0 top-0 h-full w-20 bg-[var(--sidebar-primary)] flex items-center justify-center">
+        <span className="text-[var(--sidebar-primary-foreground)] font-bold">Praia</span>
+      </div>
+      <div className="water absolute top-0 left-0 h-full w-[80%] bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] animate-wave" />
+      <div
+        ref={swimmerRef}
+        className="absolute top-2 w-6 h-6 bg-[var(--destructive)] rounded-full flex items-center justify-center text-[var(--destructive-foreground)] text-xs"
+        style={{ left: "0%" }}
+      >
+        🏊‍♂️
+      </div>
+      <div className="absolute top-16 w-full text-center text-[var(--foreground)] text-sm">
+        Progresso: {progress}%
+      </div>
+    </div>
+  );
+};
 
 const DashboardLayout = () => {
   console.log("DashboardLayout renderizado");
@@ -65,14 +109,21 @@ const DashboardLayout = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
-  const [metaDataList, setMetaDataList] = useState<MetaData[]>([]); // Estado para armazenar dados das metas
+  const [metaDataList, setMetaDataList] = useState<MetaData[]>([]);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     console.log("userData:", userData);
     if (userData) {
       setBonusPerdidoAtivado(!!userData.bonusPerdidoAtivado);
+      const totalMetas = metaDataList.length;
+      const completedMetas = metaDataList.filter(meta => 
+        meta.data.some(row => parseFloat(row.value) > 0)
+      ).length;
+      const newProgress = totalMetas > 0 ? (completedMetas / totalMetas) * 100 : 0;
+      setProgress(Math.min(100, Math.max(0, newProgress)));
     }
-  }, [userData]);
+  }, [userData, metaDataList]);
 
   useEffect(() => {
     console.log("DashboardLayout useEffect executado", userData);
@@ -103,15 +154,13 @@ const DashboardLayout = () => {
 
   const exportToImage = () => {
     if (!dashboardRef.current) return;
-
     const dialog = document.querySelector("dialog[open]");
     if (dialog) dialog.style.display = "none";
-
     html2canvas(dashboardRef.current, { scale: 4, useCORS: true }).then((canvas) => {
       if (dialog) dialog.style.display = "";
       const link = document.createElement("a");
       link.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.png`;
-      link.href = canvas.toDataURL("image/png", 1.0); // Qualidade máxima
+      link.href = canvas.toDataURL("image/png", 1.0);
       link.click();
     });
   };
@@ -120,12 +169,10 @@ const DashboardLayout = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text("Controle de Inadimplência - Relatório Completo", 10, 10);
-
     metaDataList.forEach((tab, index) => {
       if (index > 0) doc.addPage();
       doc.setFontSize(14);
       doc.text(tab.title, 10, 20);
-
       autoTable(doc, {
         startY: 30,
         head: [["Item", "Valor"]],
@@ -135,7 +182,6 @@ const DashboardLayout = () => {
         headStyles: { fillColor: [63, 81, 181], textColor: [255, 255, 255] },
       });
     });
-
     doc.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
       title: "Relatório gerado",
@@ -156,10 +202,10 @@ const DashboardLayout = () => {
   };
 
   const renderTabs = () => (
-    <TabsList className={`grid grid-cols-6 w-full p-1 bg-white shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
+    <TabsList className={`grid grid-cols-6 w-full p-1 bg-[var(--card)] shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
       <TabsTrigger 
         value="ajustes-metas" 
-        className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
+        className="flex items-center gap-2 data-[state=active]:bg-[var(--primary)] data-[state=active]:text-[var(--primary-foreground)]"
         onClick={() => handleTabChange("ajustes-metas")}
       >
         <Sliders className="h-4 w-4" />
@@ -167,7 +213,7 @@ const DashboardLayout = () => {
       </TabsTrigger>
       <TabsTrigger 
         value="meta-fiado" 
-        className="flex items-center gap-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-600"
+        className="flex items-center gap-2 data-[state=active]:bg-[var(--secondary)] data-[state=active]:text-[var(--secondary-foreground)]"
         onClick={() => handleTabChange("meta-fiado")}
       >
         <Wallet className="h-4 w-4" />
@@ -175,7 +221,7 @@ const DashboardLayout = () => {
       </TabsTrigger>
       <TabsTrigger 
         value="meta-desafio" 
-        className="flex items-center gap-2 data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600"
+        className="flex items-center gap-2 data-[state=active]:bg-[var(--accent)] data-[state=active]:text-[var(--accent-foreground)]"
         onClick={() => handleTabChange("meta-desafio")}
       >
         <Trophy className="h-4 w-4" />
@@ -184,7 +230,7 @@ const DashboardLayout = () => {
       {bonusPerdidoAtivado && (
         <TabsTrigger 
           value="meta-perdido" 
-          className="flex items-center gap-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-600"
+          className="flex items-center gap-2 data-[state=active]:bg-[var(--destructive)] data-[state=active]:text-[var(--destructive-foreground)]"
           onClick={() => handleTabChange("meta-perdido")}
         >
           <AlertTriangle className="h-4 w-4" />
@@ -193,7 +239,7 @@ const DashboardLayout = () => {
       )}
       <TabsTrigger 
         value="meta-alimentacao" 
-        className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600"
+        className="flex items-center gap-2 data-[state=active]:bg-[var(--muted)] data-[state=active]:text-[var(--muted-foreground)]"
         onClick={() => handleTabChange("meta-alimentacao")}
       >
         <Utensils className="h-4 w-4" />
@@ -201,7 +247,7 @@ const DashboardLayout = () => {
       </TabsTrigger>
       <TabsTrigger 
         value="meus-premios" 
-        className="flex items-center gap-2 data-[state=active]:bg-pink-50 data-[state=active]:text-pink-600"
+        className="flex items-center gap-2 data-[state=active]:bg-[var(--sidebar-accent)] data-[state=active]:text-[var(--sidebar-accent-foreground)]"
         onClick={() => handleTabChange("meus-premios")}
       >
         <Gift className="h-4 w-4" />
@@ -212,7 +258,7 @@ const DashboardLayout = () => {
 
   const renderTabsContent = () => (
     <>
-      <TabsContent value="ajustes-metas" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="ajustes-metas" className="bg-[var(--card)] p-4 md:p-6 rounded-xl shadow-sm">
         <AjustesMetas
           userData={userData}
           updateUserData={updateUserData}
@@ -225,7 +271,7 @@ const DashboardLayout = () => {
           onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
-      <TabsContent value="meta-fiado" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meta-fiado" className="bg-[var(--card)] p-4 md:p-6 rounded-xl shadow-sm">
         <MetaFiado 
           userData={userData}
           updateUserData={updateUserData}
@@ -237,7 +283,7 @@ const DashboardLayout = () => {
           onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
-      <TabsContent value="meta-desafio" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meta-desafio" className="bg-[var(--card)] p-4 md:p-6 rounded-xl shadow-sm">
         <MetaDesafio 
           userData={userData}
           updateUserData={updateUserData}
@@ -249,7 +295,7 @@ const DashboardLayout = () => {
           onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
-      <TabsContent value="meta-perdido" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meta-perdido" className="bg-[var(--card)] p-4 md:p-6 rounded-xl shadow-sm">
         {bonusPerdidoAtivado && (
           <MetaPerdido 
             userData={userData}
@@ -263,7 +309,7 @@ const DashboardLayout = () => {
           />
         )}
       </TabsContent>
-      <TabsContent value="meta-alimentacao" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meta-alimentacao" className="bg-[var(--card)] p-4 md:p-6 rounded-xl shadow-sm">
         <MetaAlimentacao 
           userData={userData}
           updateUserData={updateUserData}
@@ -275,7 +321,7 @@ const DashboardLayout = () => {
           onMetaDataUpdate={handleMetaDataUpdate}
         />
       </TabsContent>
-      <TabsContent value="meus-premios" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meus-premios" className="bg-[var(--card)] p-4 md:p-6 rounded-xl shadow-sm">
         {userData ? (
           <MeusPremios 
             userData={userData}
@@ -328,11 +374,11 @@ const DashboardLayout = () => {
   };
 
   const getDayColor = (date: Date | null) => {
-    if (!date) return "text-gray-400";
+    if (!date) return "text-[var(--muted-foreground)]";
     const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0) return "text-red-500";
-    if (dayOfWeek === 6) return "text-yellow-500";
-    return "text-green-500";
+    if (dayOfWeek === 0) return "text-[var(--destructive)]";
+    if (dayOfWeek === 6) return "text-[var(--accent-foreground)]";
+    return "text-[var(--muted-foreground)]";
   };
 
   const handleMonthNavigation = (direction: "prev" | "next") => {
@@ -351,25 +397,26 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" ref={dashboardRef}>
-      <header className="bg-white shadow-md">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]" ref={dashboardRef}>
+      <header className="bg-[var(--card)] shadow-md">
+        <AnimatedNavBar progress={progress} />
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           {isMobile ? (
             <>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Controle <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent">
+                Controle <span className="text-sm font-normal bg-[var(--primary)] text-[var(--primary-foreground)] px-1 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
               <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-9 w-9">
+                    <Button variant="outline" size="icon" className="h-9 w-9 border-[var(--border)]">
                       <Menu size={18} />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+                  <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-[var(--card)] border-[var(--border)]">
                     <div className="flex flex-col h-full">
-                      <div className="py-6 border-b">
-                        <h2 className="text-lg font-semibold">Menu de Navegação</h2>
+                      <div className="py-6 border-b border-[var(--border)]">
+                        <h2 className="text-lg font-semibold text-[var(--foreground)]">Menu de Navegação</h2>
                       </div>
                       <div className="py-4 flex-1">
                         <div className="space-y-2">
@@ -377,7 +424,7 @@ const DashboardLayout = () => {
                             <Button
                               key={tab}
                               variant="ghost"
-                              className={`w-full justify-start ${activeTab === tab ? 'text-blue-600' : ''}`}
+                              className={`w-full justify-start ${activeTab === tab ? 'text-[var(--primary)]' : 'text-[var(--muted-foreground)]'}`}
                               onClick={() => handleTabChange(tab)}
                             >
                               {tab === "ajustes-metas" && <Sliders className="h-4 w-4 mr-2" />}
@@ -396,10 +443,10 @@ const DashboardLayout = () => {
                           ))}
                         </div>
                       </div>
-                      <div className="py-4 border-t">
+                      <div className="py-4 border-t border-[var(--border)]">
                         <Button 
                           variant="destructive" 
-                          className="w-full" 
+                          className="w-full text-[var(--destructive-foreground)]"
                           onClick={handleLogout}
                         >
                           <LogOut size={16} className="mr-2" />
@@ -413,7 +460,7 @@ const DashboardLayout = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    className="h-9 flex items-center gap-2 text-[var(--foreground)] border-[var(--border)] hover:text-[var(--primary)]"
                     onClick={() => setShowCalendar(!showCalendar)}
                   >
                     <Calendar className="h-5 w-5" />
@@ -426,23 +473,23 @@ const DashboardLayout = () => {
                     </span>
                   </Button>
                   {showCalendar && (
-                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                    <div className="absolute right-0 mt-2 bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-lg p-3 z-50 w-72">
                       <div className="flex justify-between items-center mb-3">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-lg font-bold"
+                          className="text-lg font-bold text-[var(--foreground)]"
                           onClick={() => handleMonthNavigation("prev")}
                         >
                           {"<"}
                         </Button>
-                        <span className="text-base font-semibold">
+                        <span className="text-base font-semibold text-[var(--foreground)]">
                           {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                         </span>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-lg font-bold"
+                          className="text-lg font-bold text-[var(--foreground)]"
                           onClick={() => handleMonthNavigation("next")}
                         >
                           {">"}
@@ -450,7 +497,7 @@ const DashboardLayout = () => {
                       </div>
                       <div className="grid grid-cols-7 gap-2 text-center">
                         {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                          <div key={day} className="text-sm font-medium text-gray-700">
+                          <div key={day} className="text-sm font-medium text-[var(--muted-foreground)]">
                             {day}
                           </div>
                         ))}
@@ -466,15 +513,15 @@ const DashboardLayout = () => {
                     </div>
                   )}
                 </div>
-                <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 flex items-center">
+                <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 flex items-center border-[var(--border)] text-[var(--destructive)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]">
                   <LogOut size={16} />
                 </Button>
               </div>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-[var(--primary)] to-[var(--secondary)] bg-clip-text text-transparent">
+                Controle de Inadimplência <span className="text-sm font-normal bg-[var(--primary)] text-[var(--primary-foreground)] px-1.5 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
               <div className="flex items-center gap-4">
                 <div className="relative">
@@ -482,7 +529,7 @@ const DashboardLayout = () => {
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                        className="flex items-center gap-2 text-[var(--foreground)] border-[var(--border)] hover:text-[var(--primary)]"
                         onClick={() => setShowCalendar(!showCalendar)}
                       >
                         <Calendar className="h-5 w-5" />
@@ -496,23 +543,23 @@ const DashboardLayout = () => {
                       </Button>
                     </DialogTrigger>
                     {showCalendar && (
-                      <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                      <div className="absolute right-0 mt-2 bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-lg p-3 z-50 w-72">
                         <div className="flex justify-between items-center mb-3">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-lg font-bold"
+                            className="text-lg font-bold text-[var(--foreground)]"
                             onClick={() => handleMonthNavigation("prev")}
                           >
                             {"<"}
                           </Button>
-                          <span className="text-base font-semibold">
+                          <span className="text-base font-semibold text-[var(--foreground)]">
                             {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                           </span>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-lg font-bold"
+                            className="text-lg font-bold text-[var(--foreground)]"
                             onClick={() => handleMonthNavigation("next")}
                           >
                             {">"}
@@ -520,7 +567,7 @@ const DashboardLayout = () => {
                         </div>
                         <div className="grid grid-cols-7 gap-2 text-center">
                           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                            <div key={day} className="text-sm font-medium text-gray-700">
+                            <div key={day} className="text-sm font-medium text-[var(--muted-foreground)]">
                               {day}
                             </div>
                           ))}
@@ -541,12 +588,12 @@ const DashboardLayout = () => {
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                      className="flex items-center gap-2 text-[var(--foreground)] border-[var(--border)] hover:text-[var(--primary)]"
                     >
                       Relatórios Sabium
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl h-[80vh] overflow-y-auto bg-white p-6 rounded-lg shadow-lg">
+                  <DialogContent className="max-w-2xl h-[80vh] overflow-y-auto bg-[var(--card)] border-[var(--border)] p-6 rounded-lg shadow-lg">
                     <RelatoriosSabium />
                   </DialogContent>
                 </Dialog>
@@ -554,15 +601,15 @@ const DashboardLayout = () => {
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                      className="flex items-center gap-2 text-[var(--foreground)] border-[var(--border)] hover:text-[var(--primary)]"
                     >
                       Exportar Relatório Completo
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="bg-[var(--card)] border-[var(--border)]">
                     <DialogHeader>
-                      <DialogTitle>Escolha o formato de exportação</DialogTitle>
-                      <DialogDescription>
+                      <DialogTitle className="text-[var(--foreground)]">Escolha o formato de exportação</DialogTitle>
+                      <DialogDescription className="text-[var(--muted-foreground)]">
                         Selecione o tipo de arquivo para exportar o relatório.
                       </DialogDescription>
                     </DialogHeader>
@@ -570,17 +617,17 @@ const DashboardLayout = () => {
                       <Button
                         variant="outline"
                         onClick={exportToImage}
-                        className="mr-2"
+                        className="mr-2 border-[var(--border)] text-[var(--foreground)] hover:text-[var(--primary)]"
                       >
                         Salvar como Imagem (HD)
                       </Button>
-                      <Button variant="default" onClick={exportToPDF}>
+                      <Button variant="default" onClick={exportToPDF} className="bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-foreground)] hover:text-[var(--primary)]">
                         Gerar Relatório em PDF
                       </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
-                <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
+                <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 border-[var(--border)] text-[var(--destructive)] hover:bg-[var(--destructive)] hover:text-[var(--destructive-foreground)]">
                   <LogOut size={16} />
                   <span>Sair</span>
                 </Button>
@@ -591,25 +638,25 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
+        <div className="bg-[var(--muted)] p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
           <div className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-blue-600" />
+            <MessageCircle className="h-5 w-5 text-[var(--primary)]" />
             <a
               href="https://wa.me/68992237305"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline font-medium"
+              className="text-[var(--primary)] hover:underline font-medium"
             >
               Suporte WhatsApp: (68) 99223-7305
             </a>
           </div>
           <div className="flex items-center gap-2">
-            <Instagram className="h-5 w-5 text-pink-600" />
+            <Instagram className="h-5 w-5 text-[var(--accent-foreground)]" />
             <a
               href="https://instagram.com/renato_alme1da"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-pink-600 hover:underline font-medium"
+              className="text-[var(--accent-foreground)] hover:underline font-medium"
             >
               @renato_alme1da
             </a>

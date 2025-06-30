@@ -92,10 +92,20 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-[var(--border)];
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[var(--background)] text-[var(--foreground)];
   }
+}
+
+.animate-wave {
+  background-size: 200% 100%;
+  animation: wave 2s infinite linear;
+}
+
+@keyframes wave {
+  0% { background-position: 0% 0%; }
+  100% { background-position: -100% 0%; }
 }
