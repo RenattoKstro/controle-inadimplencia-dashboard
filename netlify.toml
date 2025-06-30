@@ -1,5 +1,3 @@
 [build]
-  command = "rm -rf node_modules && rm -f package-lock.json && npm install && npm run build"
-  publish = "dist"
- HEAD
-  environment = { NODE_VERSION = "18" }
+publish = "dist"
+environment = { NODE_VERSION = "18" }
