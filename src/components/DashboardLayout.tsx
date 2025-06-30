@@ -24,10 +24,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
-import jsPDF from "jspdf/dist/jspdf.umd.min.js";
-import autoTable from "jspdf-autotable";
+import jsPDF from "jspdf/dist/jspdf.umd.min.js"; // Mantido, mas não usado
+import autoTable from "jspdf-autotable"; // Mantido, mas não usado
 import gsap from "gsap";
-import html2canvas from "html2canvas"; // Adicionado para exportToImage
+import html2canvas from "html2canvas";
 
 // Tipos para os dados das metas
 interface MetaData {
@@ -162,30 +162,6 @@ const DashboardLayout = () => {
       link.download = `relatorio_completo_${new Date().toISOString().split('T')[0]}.png`;
       link.href = canvas.toDataURL("image/png", 1.0);
       link.click();
-    });
-  };
-
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("Controle de Inadimplência - Relatório Completo", 10, 10);
-    metaDataList.forEach((tab, index) => {
-      if (index > 0) doc.addPage();
-      doc.setFontSize(14);
-      doc.text(tab.title, 10, 20);
-      autoTable(doc, {
-        startY: 30,
-        head: [["Item", "Valor"]],
-        body: tab.data.map(row => [row.item, row.value]),
-        theme: "grid",
-        styles: { fontSize: 10, cellPadding: 2 },
-        headStyles: { fillColor: [63, 81, 181], textColor: [255, 255, 255] },
-      });
-    });
-    doc.save(`relatorio_completo_${new Date().toISOString().split('T')[0]}.pdf`);
-    toast({
-      title: "Relatório gerado",
-      description: "O arquivo PDF foi baixado com sucesso.",
     });
   };
 
@@ -603,26 +579,23 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-[var(--foreground)] border-[var(--border)] hover:text-[var(--primary)]"
                     >
-                      Exportar Relatório Completo
+                      Print Tela
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="bg-[var(--card)] border-[var(--border)]">
                     <DialogHeader>
-                      <DialogTitle className="text-[var(--foreground)]">Escolha o formato de exportação</DialogTitle>
+                      <DialogTitle className="text-[var(--foreground)]">Capturar Tela</DialogTitle>
                       <DialogDescription className="text-[var(--muted-foreground)]">
-                        Selecione o tipo de arquivo para exportar o relatório.
+                        Clique no botão abaixo para capturar a tela como imagem.
                       </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
                       <Button
-                        variant="outline"
+                        variant="default"
                         onClick={exportToImage}
-                        className="mr-2 border-[var(--border)] text-[var(--foreground)] hover:text-[var(--primary)]"
+                        className="bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-foreground)] hover:text-[var(--primary)]"
                       >
-                        Salvar como Imagem (HD)
-                      </Button>
-                      <Button variant="default" onClick={exportToPDF} className="bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary-foreground)] hover:text-[var(--primary)]">
-                        Gerar Relatório em PDF
+                        Print Tela
                       </Button>
                     </DialogFooter>
                   </DialogContent>
