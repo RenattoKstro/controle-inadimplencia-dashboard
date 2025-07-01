@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,9 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
-} from "@/components/ui/dialog"; // Supondo que você tenha Dialog
+} from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
+import html2canvas from "html2canvas";
 
 export interface DashboardProps {
   userData: any;
@@ -51,6 +52,7 @@ const DashboardLayout = () => {
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     console.log("userData:", userData);
@@ -83,6 +85,22 @@ const DashboardLayout = () => {
     setActiveTab(value);
     if (isMobile) {
       setSheetOpen(false);
+    }
+  };
+
+  const handlePrintScreen = () => {
+    if (contentRef.current) {
+      html2canvas(document.body, {
+        scale: 2, // Aumenta a resolução para HD (2x)
+        useCORS: true, // Para lidar com imagens de fontes externas, se houver
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight,
+      }).then((canvas) => {
+        const link = document.createElement("a");
+        link.download = `dashboard_${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
     }
   };
 
@@ -276,7 +294,7 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" ref={contentRef}>
       <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           {isMobile ? (
@@ -402,6 +420,12 @@ const DashboardLayout = () => {
                 Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
               </h1>
               <div className="flex items-center gap-4">
+                <Button
+                  onClick={handlePrintScreen}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Print Tela
+                </Button>
                 <div className="relative">
                   <Dialog>
                     <DialogTrigger asChild>
