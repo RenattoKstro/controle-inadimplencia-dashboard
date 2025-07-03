@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import MetaPerdido from "./dashboard/MetaPerdido";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
+import Historicos from "./Historicos"; // Novo componente
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -53,6 +54,7 @@ const DashboardLayout = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isNewHistorico, setIsNewHistorico] = useState(true); // Estado para "novo" na guia Históricos
 
   useEffect(() => {
     console.log("userData:", userData);
@@ -70,6 +72,14 @@ const DashboardLayout = () => {
       }
     };
     checkAuth();
+
+    // Verifica se o usuário já visitou a guia Históricos
+    const hasVisitedHistorico = localStorage.getItem("hasVisitedHistorico");
+    if (!hasVisitedHistorico) {
+      setIsNewHistorico(true);
+    } else {
+      setIsNewHistorico(false);
+    }
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -86,13 +96,18 @@ const DashboardLayout = () => {
     if (isMobile) {
       setSheetOpen(false);
     }
+    // Marca a guia como visitada se for "historicos"
+    if (value === "historicos" && isNewHistorico) {
+      setIsNewHistorico(false);
+      localStorage.setItem("hasVisitedHistorico", "true");
+    }
   };
 
   const handlePrintScreen = () => {
     if (contentRef.current) {
       html2canvas(document.body, {
-        scale: 2, // Aumenta a resolução para HD (2x)
-        useCORS: true, // Para lidar com imagens de fontes externas, se houver
+        scale: 2,
+        useCORS: true,
         windowWidth: document.documentElement.scrollWidth,
         windowHeight: document.documentElement.scrollHeight,
       }).then((canvas) => {
@@ -105,7 +120,7 @@ const DashboardLayout = () => {
   };
 
   const renderTabs = () => (
-    <TabsList className={`grid grid-cols-6 w-full p-1 bg-white shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
+    <TabsList className={`grid grid-cols-7 w-full p-1 bg-white shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
       <TabsTrigger 
         value="ajustes-metas" 
         className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
@@ -155,6 +170,15 @@ const DashboardLayout = () => {
       >
         <Gift className="h-4 w-4" />
         <span>Meus Prêmios</span>
+      </TabsTrigger>
+      <TabsTrigger 
+        value="historicos" 
+        className="flex items-center gap-2 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-600"
+        onClick={() => handleTabChange("historicos")}
+      >
+        <History className="h-4 w-4" />
+        <span>Históricos</span>
+        {isNewHistorico && <span className="ml-1 text-red-500 font-bold">N</span>} {/* "N" vermelho */}
       </TabsTrigger>
     </TabsList>
   );
@@ -234,6 +258,17 @@ const DashboardLayout = () => {
         ) : (
           <div>Carregando dados...</div>
         )}
+      </TabsContent>
+      <TabsContent value="historicos" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+        <Historicos 
+          userData={userData}
+          updateUserData={updateUserData}
+          diasSemExpediente={diasSemExpediente}
+          updateDiasSemExpediente={updateDiasSemExpediente}
+          diasRestantesCalculados={diasRestantesCalculados}
+          isLoading={isLoading}
+          bonusPerdidoAtivado={bonusPerdidoAtivado}
+        />
       </TabsContent>
     </>
   );
@@ -316,7 +351,7 @@ const DashboardLayout = () => {
                       </div>
                       <div className="py-4 flex-1">
                         <div className="space-y-2">
-                          {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-perdido", "meta-alimentacao", "meus-premios"].map((tab) => (
+                          {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-perdido", "meta-alimentacao", "meus-premios", "historicos"].map((tab) => (
                             <Button
                               key={tab}
                               variant="ghost"
@@ -329,12 +364,15 @@ const DashboardLayout = () => {
                               {tab === "meta-perdido" && <AlertTriangle className="h-4 w-4 mr-2" />}
                               {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
                               {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
+                              {tab === "historicos" && <History className="h-4 w-4 mr-2" />}
+                              {isNewHistorico && tab === "historicos" && <span className="ml-1 text-red-500 font-bold">N</span>} {/* "N" vermelho no mobile */}
                               {tab === "ajustes-metas" && "Ajustes de Metas"}
                               {tab === "meta-fiado" && "Meta Fiado"}
                               {tab === "meta-desafio" && "Meta Desafio"}
                               {tab === "meta-perdido" && "Meta Perdido"}
                               {tab === "meta-alimentacao" && "Meta de Ticket"}
                               {tab === "meus-premios" && "Meus Prêmios"}
+                              {tab === "historicos" && "Históricos"}
                             </Button>
                           ))}
                         </div>
