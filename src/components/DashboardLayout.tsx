@@ -54,6 +54,7 @@ const DashboardLayout = () => {
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [isNewHistorico, setIsNewHistorico] = useState(true); // Estado para "novo" na guia Históricos
 
   useEffect(() => {
     console.log("userData:", userData);
@@ -71,6 +72,14 @@ const DashboardLayout = () => {
       }
     };
     checkAuth();
+
+    // Verifica se o usuário já visitou a guia Históricos
+    const hasVisitedHistorico = localStorage.getItem("hasVisitedHistorico");
+    if (!hasVisitedHistorico) {
+      setIsNewHistorico(true);
+    } else {
+      setIsNewHistorico(false);
+    }
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -86,6 +95,11 @@ const DashboardLayout = () => {
     setActiveTab(value);
     if (isMobile) {
       setSheetOpen(false);
+    }
+    // Marca a guia como visitada se for "historicos"
+    if (value === "historicos" && isNewHistorico) {
+      setIsNewHistorico(false);
+      localStorage.setItem("hasVisitedHistorico", "true");
     }
   };
 
@@ -164,6 +178,7 @@ const DashboardLayout = () => {
       >
         <History className="h-4 w-4" />
         <span>Históricos</span>
+        {isNewHistorico && <span className="ml-1 text-red-500 font-bold">N</span>} {/* "N" vermelho */}
       </TabsTrigger>
     </TabsList>
   );
@@ -350,6 +365,7 @@ const DashboardLayout = () => {
                               {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
                               {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
                               {tab === "historicos" && <History className="h-4 w-4 mr-2" />}
+                              {isNewHistorico && tab === "historicos" && <span className="ml-1 text-red-500 font-bold">N</span>} {/* "N" vermelho no mobile */}
                               {tab === "ajustes-metas" && "Ajustes de Metas"}
                               {tab === "meta-fiado" && "Meta Fiado"}
                               {tab === "meta-desafio" && "Meta Desafio"}
