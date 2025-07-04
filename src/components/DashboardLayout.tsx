@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, MessageCircle, Instagram, AlertTriangle, History } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram } from "lucide-react"; // Reimportado Instagram
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
+import { FaWhatsapp } from "react-icons/fa"; // Ícone oficial do WhatsApp
 
 export interface DashboardProps {
   userData: any;
@@ -55,6 +56,7 @@ const DashboardLayout = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isNewHistorico, setIsNewHistorico] = useState(true); // Estado para "novo" na guia Históricos
+  const [showInstagramUsername, setShowInstagramUsername] = useState(false); // Estado para mostrar o nome do Instagram
 
   useEffect(() => {
     console.log("userData:", userData);
@@ -117,6 +119,11 @@ const DashboardLayout = () => {
         link.click();
       });
     }
+  };
+
+  const handleInstagramClick = () => {
+    setShowInstagramUsername(true);
+    setTimeout(() => setShowInstagramUsername(false), 2000); // Oculta após 2 segundos
   };
 
   const renderTabs = () => (
@@ -549,27 +556,36 @@ const DashboardLayout = () => {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-blue-600" />
+          <div className="flex items-center gap-2 blink-slow" style={{ animation: "blink-slow 2s infinite" }}>
+            <FaWhatsapp className="h-5 w-5 text-green-500" /> {/* Ícone oficial do WhatsApp */}
             <a
-              href="https://wa.me/68992237305"
+              href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline font-medium"
+              className="text-blue-600 hover:underline text-xs"
             >
-              Suporte WhatsApp: (68) 99223-7305
+              Ajuda, Dicas e Sugestões entre no grupo e fique atualizado sobre novas funções!
             </a>
           </div>
-          <div className="flex items-center gap-2">
-            <Instagram className="h-5 w-5 text-pink-600" />
-            <a
-              href="https://instagram.com/renato_alme1da"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-pink-600 hover:underline font-medium"
-            >
-              @renato_alme1da
-            </a>
+          <style>
+            {`
+              @keyframes blink-slow {
+                0% { opacity: 1; }
+                50% { opacity: 0.3; }
+                100% { opacity: 1; }
+              }
+            `}
+          </style>
+          <div className="flex items-center gap-2 relative">
+            <Instagram 
+              className="h-5 w-5 text-pink-600 cursor-pointer"
+              onClick={handleInstagramClick}
+            />
+            {showInstagramUsername && (
+              <span className="absolute right-0 top-full mt-1 text-pink-600 text-xs bg-white p-1 rounded shadow-md">
+                @renato_alme1da
+              </span>
+            )}
           </div>
         </div>
 
