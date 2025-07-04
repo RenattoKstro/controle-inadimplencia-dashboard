@@ -126,6 +126,18 @@ const DashboardLayout = () => {
     setTimeout(() => setShowInstagramUsername(false), 2000); // Oculta após 2 segundos
   };
 
+  // Lista de PDFs com URLs fornecidas, incluindo o novo Manual do Patrimonio.pdf
+  const pdfList = [
+    { id: 1, name: "CARTILHA - LIBERAÇÃO GERENCIAL", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Cartilha%20-%20Liberacao%20Gerencial.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NhcnRpbGhhIC0gTGliZXJhY2FvIEdlcmVuY2lhbC5wZGYiLCJpYXQiOjE3NTE2NTc1ODgsImV4cCI6MTc4MzE5MzU4OH0.Kyhu4erX_TsbmcaZ-8-fVNlEH21MAFIYD2v5neSjgEs" },
+    { id: 2, name: "C.I. 006 2025 COMPROVANTE DE ENDEREÇO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%20006%2025%20Revogacao%20da%20obrigatoriedade%20do%20comprovante%20de%20endereco.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIDAwNiAyNSBSZXZvZ2FjYW8gZGEgb2JyaWdhdG9yaWVkYWRlIGRvIGNvbXByb3ZhbnRlIGRlIGVuZGVyZWNvLnBkZiIsImlhdCI6MTc1MTY1NzYxOSwiZXhwIjoxNzgzMTkzNjE5fQ.Lz-wz8OzqkS_fPPF2AumohU8phWJbgOHfaRu3uGTBKg" },
+    { id: 3, name: "C.I. 002 2025 RENDA CLIENTES AUTONOMOS", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%202%202025%20Renda%20clientes%20autonomos.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIDIgMjAyNSBSZW5kYSBjbGllbnRlcyBhdXRvbm9tb3MucGRmIiwiaWF0IjoxNzUxNjU3NjMwLCJleHAiOjE3ODMxOTM2MzB9.U-kHPl8ib_KfxG8Q6-PJ99ku-rBUne7QMel5F1Zfr78" },
+    { id: 4, name: "C.I. 007 2025 CADASTRO NÃO AUTENTICADO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%20cadastro%20nao%20autenticado.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIGNhZGFzdHJvIG5hbyBhdXRlbnRpY2Fkby5wZGYiLCJpYXQiOjE3NTE2NTc2NDEsImV4cCI6MTc4MzE5MzY0MX0.cOfIUD8sR9f_yyI9qOKH93cTf6F3PNLXcERAYJV0kgQ" },
+    { id: 5, name: "ENDEREÇO RURAL", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ENDERECO%20RURAL.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VOREVSRUNPIFJVUkFMLnBkZiIsImlhdCI6MTc1MTY1NzY1NSwiZXhwIjoxNzgzMTkzNjU1fQ.b7pHjnqufaYGz3k5259sWSL-YWWvwnr8tFClYXy_r9A" },
+    { id: 6, name: "ESTORNO PIX", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ESTORNO%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STk8gUElYLnBkZiIsImlhdCI6MTc1MTY1NzY3MCwiZXhwIjoxNzgzMTkzNjcwfQ.kb6dKCz0smc8C1MoOQV_Vn_OM6LgXf7kR2myERYjGJQ" },
+    { id: 7, name: "MANUAL CIONA VENDEDOER", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20Aciona%20Vendedor.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBBY2lvbmEgVmVuZGVkb3IucGRmIiwiaWF0IjoxNzUxNjU3NjgxLCJleHAiOjE3ODMxOTM2ODF9.KAg0YI2s8ZzTMqF1TkKNTR6I5WrJxbZaesEFh_06a0U" },
+    { id: 8, name: "MANUAL DO PATRIMONIO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20do%20Patrimonio.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBkbyBQYXRyaW1vbmlvLnBkZiIsImlhdCI6MTc1MTY1NzkxMiwiZXhwIjoxNzgzMTkzOTEyfQ.nHLabdtztWNLKtiD8iJ1sEwcUFW2_JpkaTK7jWPOZTA" },
+  ];
+
   const renderTabs = () => (
     <TabsList className={`grid grid-cols-7 w-full p-1 bg-white shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
       <TabsTrigger 
@@ -471,6 +483,33 @@ const DashboardLayout = () => {
                 >
                   Print Tela
                 </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    >
+                      Anexos
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <h3 className="text-lg font-semibold mb-4">Lista de Anexos</h3>
+                    <ul className="space-y-2">
+                      {pdfList.map((pdf) => (
+                        <li key={pdf.id}>
+                          <a
+                            href={pdf.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            {pdf.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </DialogContent>
+                </Dialog>
                 <div className="relative">
                   <Dialog>
                     <DialogTrigger asChild>
