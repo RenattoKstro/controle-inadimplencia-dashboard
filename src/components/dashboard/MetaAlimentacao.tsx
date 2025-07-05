@@ -1,4 +1,3 @@
-// src/components/dashboard/MetaAlimentacao.tsx
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,22 +13,30 @@ const formataDinheiro = (valor: number | null): string => {
 };
 
 const isPastDay15 = (): boolean => {
-  const today = new Date("2025-06-18T16:24:00-03:00"); // Atualizado para o horário atual
+  const today = new Date();
   return today.getDate() > 15;
 };
 
 const calcularDiasUteisAte15 = (diasRestantes: number): number => {
-  const today = new Date("2025-06-18T16:24:00-03:00");
-  if (today.getDate() > 15) return 0;
-  const diasAte14 = 15 - today.getDate();
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+  // Verifica se o dia 15 é válido no mês atual
+  if (today.getDate() > 15 || today.getDate() > lastDayOfMonth) return 0;
+
+  const diasAte15 = 15 - today.getDate();
   let diasUteis = 0;
-  for (let i = 0; i < diasAte14; i++) {
+
+  for (let i = 0; i < diasAte15; i++) {
     const currentDate = new Date(today);
-    currentDate.setDate(today.getDate() + i);
+    currentDate.setDate(today.getDate() + i + 1); // +1 para começar no próximo dia
     const dayOfWeek = currentDate.getDay();
-    if (dayOfWeek !== 0) diasUteis++; // Exclude Sundays
+    if (dayOfWeek !== 0) diasUteis++; // Exclui apenas domingos (0), inclui sábados
   }
-  return Math.min(diasRestantes, diasUteis);
+
+  return Math.min(diasRestantes || Infinity, diasUteis); // Garante que não exceda diasRestantes
 };
 
 const MetaAlimentacao = ({
@@ -46,14 +53,15 @@ const MetaAlimentacao = ({
   useEffect(() => {
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
     setDiasUteisAte15(dias);
+    console.log("Dias úteis calculados até 15 (incluindo sábados):", dias); // Depuração
   }, [diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
-  const todayDate = new Date("2025-06-18T16:24:00-03:00");
+  const todayDate = new Date();
   const mesAtual = todayDate.getMonth();
 
   const aReceber = userData?.abertura_vencido_mes - userData?.meta_mes || 0;
-  const recebidoMes = userData?.abertura_vencido_mes - userData?.vencido_atual || 0; // Fallback para evitar NaN
+  const recebidoMes = userData?.abertura_vencido_mes - userData?.vencido_atual || 0;
   const metaTicket = aReceber * 0.8;
 
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
@@ -77,6 +85,9 @@ const MetaAlimentacao = ({
     if (isComplete) return "bg-green-500";
     return isPastDeadline ? "bg-red-500" : "bg-yellow-500";
   };
+
+  const valorRestante = Math.max(0, metaTicket - recebidoMes);
+  const valorPorDia = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
 
   if (isLoading) {
     return (
@@ -144,15 +155,13 @@ const MetaAlimentacao = ({
                   <div className="space-y-1 md:space-y-2">
                     <p className="text-xs md:text-sm font-medium text-gray-500">Valor Restante</p>
                     <p className="text-sm md:text-lg font-semibold text-gray-900">
-                      {formataDinheiro(Math.max(0, metaTicket - recebidoMes))}
+                      {formataDinheiro(valorRestante)}
                     </p>
                   </div>
                   <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-gray-500">Por Dia até o Dia 15</p>
+                    <p className="text-xs md:text-sm font-medium text-gray-500">Receber por dia até o dia 15</p>
                     <p className="text-sm md:text-lg font-semibold text-gray-900">
-                      {formataDinheiro(
-                        diasUteisAte15 > 0 ? (metaTicket - recebidoMes) / diasUteisAte15 : 0
-                      )}
+                      {formataDinheiro(valorPorDia)}
                     </p>
                   </div>
                 </div>
@@ -195,7 +204,7 @@ const MetaAlimentacao = ({
             <div className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-2 gap-3 md:gap-6">
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Dias Úteis Restantes até o dia 15</p>
+                  <p className="text-xs md:text-sm font-medium text-gray-500">Dias úteis restantes até o dia 15</p>
                   <div className="bg-blue-50 rounded-lg p-2 md:p-4 flex justify-center items-center">
                     <p className="text-xl md:text-3xl font-bold text-blue-700">
                       {diasUteisAte15}
