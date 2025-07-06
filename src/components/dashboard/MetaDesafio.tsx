@@ -273,13 +273,13 @@ const MetaDesafio = ({
         <div
           className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-3 gap-4"}`}
         >
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-purple-500 bg-opacity-50">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
                 <h3 className="text-sm font-medium text-gray-600">
                   Valor Restante
                 </h3>
-                <span className="p-1.5 md:p-2 rounded-full bg-gray-500 text-white">
+                <span className="p-1.5 md:p-2 rounded-full bg-purple-500 text-white">
                   <Target size={isMobile ? 14 : 16} />
                 </span>
               </div>
@@ -288,7 +288,7 @@ const MetaDesafio = ({
               </div>
             </CardContent>
           </Card>
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-orange-500 bg-opacity-50">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
                 <h3 className="text-sm font-medium text-gray-600">
@@ -303,7 +303,7 @@ const MetaDesafio = ({
               </div>
             </CardContent>
           </Card>
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200">
+          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-gray-500 bg-opacity-50">
             <CardContent className="p-3 md:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
                 <h3 className="text-sm font-medium text-gray-600">
