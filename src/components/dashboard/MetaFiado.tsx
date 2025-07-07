@@ -46,13 +46,13 @@ const CardItem = ({
   progressValue = 0,
 }: CardItemProps) => {
   const getProgressStyle = (value: number) => {
-    if (value < 94) return { background: "linear-gradient(90deg, #ef4444, #dc2626)" };
-    if (value < 100) return { background: "linear-gradient(90deg, #facc15, #f59e0b)" };
-    return { background: "linear-gradient(90deg, #22c55e, #16a34a)" };
+    if (value < 94) return { background: "#ff0000" }; // Vermelho para menos de 94%
+    if (value < 100) return { background: "#facc15" }; // Amarelo de 94% a 99%
+    return { background: "#22c55e" }; // Verde a partir de 100%
   };
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
+    <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${color} bg-opacity-50`}>
       <CardContent className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-gray-600">{title}</h3>
@@ -62,7 +62,7 @@ const CardItem = ({
         {showProgress && (
           <div className="mt-4 space-y-2">
             <div
-              className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
+              className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative" // Mudado de bg-black para bg-white
               style={{
                 boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
               }}
@@ -76,7 +76,7 @@ const CardItem = ({
                 }}
               />
             </div>
-            <div className="text-xs text-right text-gray-600">
+            <div className="text-xs text-right text-white">
               {progressValue.toFixed(2)}% do objetivo diário
             </div>
           </div>
@@ -115,14 +115,14 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   });
 
   const getProgressStyle = (value: number) => {
-    if (value < 94) return { background: "linear-gradient(90deg, #ef4444, #dc2626)" };
-    if (value < 100) return { background: "linear-gradient(90deg, #facc15, #f59e0b)" };
-    return { background: "linear-gradient(90deg, #22c55e, #16a34a)" };
+    if (value < 94) return { background: "#ff0000" }; // Vermelho para menos de 94%
+    if (value < 100) return { background: "#facc15" }; // Amarelo de 94% a 99%
+    return { background: "#22c55e" }; // Verde a partir de 100%
   };
 
   return (
     <Card
-      className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${
+      className={`shadow-sm hover:shadow-md transition-shadow duration-200 bg-blue-500 bg-opacity-10 ${
         isMobile ? "col-span-1" : "col-span-1 md:col-span-3"
       }`}
     >
@@ -132,11 +132,11 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             {icon}
             {title}
           </CardTitle>
-          <div className="text-xl md:text-2xl font-bold text-gray-700">
+          <div className="text-xl md:text-2xl font-bold text-gray-600">
             {percentageComplete.toFixed(2)}% concluído
           </div>
         </div>
-        <CardDescription className="text-sm mt-1 text-center">
+        <CardDescription className="text-sm mt-1 text-center text-gray-600">
           <div className="flex flex-col md:flex-row md:gap-4 justify-center">
             <span>Meta: {formatCurrency(target)}</span>
             <span>Atual: {formatCurrency(current)}</span>
@@ -146,7 +146,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       <CardContent>
         <div className="space-y-2">
           <div
-            className="w-full h-10 md:h-12 rounded-full bg-gradient-radial from-gray-100 to-gray-300 overflow-hidden relative"
+            className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative" // Mudado de bg-black para bg-white
             style={{
               boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
             }}
@@ -191,6 +191,24 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const recebidosMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const recebidoHoje = Math.max(0, (userData.abertura_dia || 0) - userData.vencido_atual);
   console.log(`[MetaFiado] Calculado recebidoHoje: ${recebidoHoje}, abertura_dia=${userData.abertura_dia}, vencido_atual=${userData.vencido_atual}`);
+
+  // Calcular dias úteis desde o início do mês até hoje
+  const calculateWorkedDays = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    let workedDays = 0;
+    for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek !== 0) workedDays++; // Exclui apenas domingos
+    }
+    return workedDays;
+  };
+
+  const diasUteisTrabalhados = calculateWorkedDays();
+  const valorPorDia = userData.meta_mes / 27; // Baseado em 27 dias úteis totais (exemplo)
+  const valorEsperadoAcumulado = valorPorDia * diasUteisTrabalhados;
+  const gap = recebidosMes - valorEsperadoAcumulado; // GAP com base em "Recebido Mês"
+
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
     : 0;
@@ -269,6 +287,8 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           value={recebidoHoje}
           icon={<Building size={16} />}
           color="bg-green-500"
+          showProgress={true}
+          progressValue={progressoDiario}
         />
         <CardItem
           title="Receber por Dia"
@@ -282,6 +302,30 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           icon={<Target size={16} />}
           color="bg-yellow-500"
         />
+        <Card
+          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
+        >
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-gray-600">{gap >= 0 ? "GAP (Acima)" : "GAP (Abaixo)"}</h3>
+              <span
+                className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
+              >
+                <Wallet size={16} />
+              </span>
+            </div>
+            <div className="text-xl md:text-2xl font-bold">{formatCurrency(gap)}</div>
+            <div className="mt-2 text-sm text-gray-600">
+              {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
+            </div>
+            <div className="mt-1 text-xs text-gray-600">
+              Dias úteis trabalhados: {diasUteisTrabalhados}
+            </div>
+            <div className="mt-1 text-xs text-gray-600">
+              Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
