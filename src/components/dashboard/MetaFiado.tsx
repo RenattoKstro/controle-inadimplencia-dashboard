@@ -45,12 +45,6 @@ const CardItem = ({
   showProgress = false,
   progressValue = 0,
 }: CardItemProps) => {
-  const getProgressStyle = (value: number) => {
-    if (value < 94) return { background: "#ff0000" }; // Vermelho para menos de 94%
-    if (value < 100) return { background: "#facc15" }; // Amarelo de 94% a 99%
-    return { background: "#22c55e" }; // Verde a partir de 100%
-  };
-
   return (
     <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${color} bg-opacity-50`}>
       <CardContent className="p-4 md:p-6">
@@ -60,24 +54,9 @@ const CardItem = ({
         </div>
         <div className="text-xl md:text-2xl font-bold">{formatCurrency(value)}</div>
         {showProgress && (
-          <div className="mt-4 space-y-2">
-            <div
-              className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative" // Mudado de bg-black para bg-white
-              style={{
-                boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <div
-                className="h-full rounded-l-full transition-all duration-1000 ease-out"
-                style={{
-                  width: `${Math.min(progressValue, 105)}%`,
-                  ...getProgressStyle(progressValue),
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-                }}
-              />
-            </div>
-            <div className="text-xs text-right text-white">
-              {progressValue.toFixed(2)}% do objetivo diário
+          <div className="mt-4">
+            <div className="text-3xl font-bold text-red-600">
+              {progressValue.toFixed(2)}%
             </div>
           </div>
         )}
@@ -115,9 +94,9 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   });
 
   const getProgressStyle = (value: number) => {
-    if (value < 94) return { background: "#ff0000" }; // Vermelho para menos de 94%
-    if (value < 100) return { background: "#facc15" }; // Amarelo de 94% a 99%
-    return { background: "#22c55e" }; // Verde a partir de 100%
+    if (value < 94) return { background: "#ff0000" };
+    if (value < 100) return { background: "#facc15" };
+    return { background: "#22c55e" };
   };
 
   return (
@@ -146,7 +125,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
       <CardContent>
         <div className="space-y-2">
           <div
-            className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative" // Mudado de bg-black para bg-white
+            className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative"
             style={{
               boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
             }}
@@ -307,7 +286,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         >
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-gray-600">{gap >= 0 ? "GAP (Acima)" : "GAP (Abaixo)"}</h3>
+              <h3 className="text-sm font-medium text-gray-600">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
               <span
                 className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
               >
