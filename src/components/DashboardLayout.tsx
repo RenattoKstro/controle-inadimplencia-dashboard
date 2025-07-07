@@ -23,6 +23,8 @@ import {
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa"; // Ícone oficial do WhatsApp
+import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade"; // Novo componente
+import { Calculator } from "lucide-react"; // Ícone para Calculadora
 
 export interface DashboardProps {
   userData: any;
@@ -70,6 +72,11 @@ const DashboardLayout = () => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
+        toast({
+          title: "Autenticação não verificada",
+          description: "Você não está autenticado. Deve sair do app e entrar novamente.",
+          variant: "destructive",
+        });
         navigate("/auth");
       }
     };
@@ -82,7 +89,7 @@ const DashboardLayout = () => {
     } else {
       setIsNewHistorico(false);
     }
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -126,14 +133,14 @@ const DashboardLayout = () => {
     setTimeout(() => setShowInstagramUsername(false), 2000); // Oculta após 2 segundos
   };
 
-  // Lista de PDFs com URLs fornecidas, incluindo o novo Manual do Patrimonio.pdf
+  // Lista de PDFs com URLs fornecidas
   const pdfList = [
     { id: 1, name: "CARTILHA - LIBERAÇÃO GERENCIAL", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Cartilha%20-%20Liberacao%20Gerencial.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NhcnRpbGhhIC0gTGliZXJhY2FvIEdlcmVuY2lhbC5wZGYiLCJpYXQiOjE3NTE2NTc1ODgsImV4cCI6MTc4MzE5MzU4OH0.Kyhu4erX_TsbmcaZ-8-fVNlEH21MAFIYD2v5neSjgEs" },
     { id: 2, name: "C.I. 006 2025 COMPROVANTE DE ENDEREÇO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%20006%2025%20Revogacao%20da%20obrigatoriedade%20do%20comprovante%20de%20endereco.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIDAwNiAyNSBSZXZvZ2FjYW8gZGEgb2JyaWdhdG9yaWVkYWRlIGRvIGNvbXByb3ZhbnRlIGRlIGVuZGVyZWNvLnBkZiIsImlhdCI6MTc1MTY1NzYxOSwiZXhwIjoxNzgzMTkzNjE5fQ.Lz-wz8OzqkS_fPPF2AumohU8phWJbgOHfaRu3uGTBKg" },
     { id: 3, name: "C.I. 002 2025 RENDA CLIENTES AUTONOMOS", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%202%202025%20Renda%20clientes%20autonomos.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIDIgMjAyNSBSZW5kYSBjbGllbnRlcyBhdXRvbm9tb3MucGRmIiwiaWF0IjoxNzUxNjU3NjMwLCJleHAiOjE3ODMxOTM2MzB9.U-kHPl8ib_KfxG8Q6-PJ99ku-rBUne7QMel5F1Zfr78" },
     { id: 4, name: "C.I. 007 2025 CADASTRO NÃO AUTENTICADO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%20cadastro%20nao%20autenticado.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIGNhZGFzdHJvIG5hbyBhdXRlbnRpY2Fkby5wZGYiLCJpYXQiOjE3NTE2NTc2NDEsImV4cCI6MTc4MzE5MzY0MX0.cOfIUD8sR9f_yyI9qOKH93cTf6F3PNLXcERAYJV0kgQ" },
     { id: 5, name: "ENDEREÇO RURAL", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ENDERECO%20RURAL.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VOREVSRUNPIFJVUkFMLnBkZiIsImlhdCI6MTc1MTY1NzY1NSwiZXhwIjoxNzgzMTkzNjU1fQ.b7pHjnqufaYGz3k5259sWSL-YWWvwnr8tFClYXy_r9A" },
-    { id: 6, name: "ESTORNO PIX", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ESTORNO%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STk8gUElYLnBkZiIsImlhdCI6MTc1MTY1NzY3MCwiZXhwIjoxNzgzMTkzNjcwfQ.kb6dKCz0smc8C1MoOQV_Vn_OM6LgXf7kR2myERYjGJQ" },
+    { id: 6, name: "ESTORNO PIX", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ESTORNO%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STn20%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STk8gUElYLnBkZiIsImlhdCI6MTc1MTY1NzY3MCwiZXhwIjoxNzgzMTkzNjcwfQ.kb6dKCz0smc8C1MoOQV_Vn_OM6LgXf7kR2myERYjGJQ" },
     { id: 7, name: "MANUAL CIONA VENDEDOER", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20Aciona%20Vendedor.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBBY2lvbmEgVmVuZGVkb3IucGRmIiwiaWF0IjoxNzUxNjU3NjgxLCJleHAiOjE3ODMxOTM2ODF9.KAg0YI2s8ZzTMqF1TkKNTR6I5WrJxbZaesEFh_06a0U" },
     { id: 8, name: "MANUAL DO PATRIMONIO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20do%20Patrimonio.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBkbyBQYXRyaW1vbmlvLnBkZiIsImlhdCI6MTc1MTY1NzkxMiwiZXhwIjoxNzgzMTkzOTEyfQ.nHLabdtztWNLKtiD8iJ1sEwcUFW2_JpkaTK7jWPOZTA" },
   ];
@@ -347,6 +354,12 @@ const DashboardLayout = () => {
     });
   };
 
+  // Lista de apps disponíveis
+  const apps = [
+    { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
+    // Adicione mais apps aqui no futuro, ex.: { id: "outro", name: "Outro App", icon: AnotherIcon, component: OutroComponent }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" ref={contentRef}>
       <header className="bg-white shadow-md">
@@ -366,35 +379,25 @@ const DashboardLayout = () => {
                   <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
                     <div className="flex flex-col h-full">
                       <div className="py-6 border-b">
-                        <h2 className="text-lg font-semibold">Menu de Navegação</h2>
+                        <h2 className="text-lg font-semibold">Apps</h2>
                       </div>
-                      <div className="py-4 flex-1">
-                        <div className="space-y-2">
-                          {["ajustes-metas", "meta-fiado", "meta-desafio", "meta-perdido", "meta-alimentacao", "meus-premios", "historicos"].map((tab) => (
-                            <Button
-                              key={tab}
-                              variant="ghost"
-                              className={`w-full justify-start ${activeTab === tab ? 'text-blue-600' : ''}`}
-                              onClick={() => handleTabChange(tab)}
-                            >
-                              {tab === "ajustes-metas" && <Sliders className="h-4 w-4 mr-2" />}
-                              {tab === "meta-fiado" && <Wallet className="h-4 w-4 mr-2" />}
-                              {tab === "meta-desafio" && <Trophy className="h-4 w-4 mr-2" />}
-                              {tab === "meta-perdido" && <AlertTriangle className="h-4 w-4 mr-2" />}
-                              {tab === "meta-alimentacao" && <Utensils className="h-4 w-4 mr-2" />}
-                              {tab === "meus-premios" && <Gift className="h-4 w-4 mr-2" />}
-                              {tab === "historicos" && <History className="h-4 w-4 mr-2" />}
-                              {isNewHistorico && tab === "historicos" && <span className="ml-1 text-red-500 font-bold">N</span>} {/* "N" vermelho no mobile */}
-                              {tab === "ajustes-metas" && "Ajustes de Metas"}
-                              {tab === "meta-fiado" && "Meta Fiado"}
-                              {tab === "meta-desafio" && "Meta Desafio"}
-                              {tab === "meta-perdido" && "Meta Perdido"}
-                              {tab === "meta-alimentacao" && "Meta de Ticket"}
-                              {tab === "meus-premios" && "Meus Prêmios"}
-                              {tab === "historicos" && "Históricos"}
-                            </Button>
-                          ))}
-                        </div>
+                      <div className="py-4 flex-1 space-y-2">
+                        {apps.map((app) => (
+                          <Dialog key={app.id}>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-start text-gray-600 hover:text-blue-600"
+                              >
+                                <app.icon className="h-4 w-4 mr-2" />
+                                {app.name}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                              <app.component />
+                            </DialogContent>
+                          </Dialog>
+                        ))}
                       </div>
                       <div className="py-4 border-t">
                         <Button 
@@ -466,9 +469,6 @@ const DashboardLayout = () => {
                     </div>
                   )}
                 </div>
-                <Button variant="outline" size="sm" onClick={handleLogout} className="h-9 flex items-center">
-                  <LogOut size={16} />
-                </Button>
               </div>
             </>
           ) : (
@@ -583,10 +583,52 @@ const DashboardLayout = () => {
                     <RelatoriosSabium />
                   </DialogContent>
                 </Dialog>
-                <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600 transition-colors">
-                  <LogOut size={16} />
-                  <span>Sair</span>
-                </Button>
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-gray-600 hover:text-gray-900"
+                    >
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+                    <div className="flex flex-col h-full">
+                      <div className="py-6 border-b">
+                        <h2 className="text-lg font-semibold">Apps</h2>
+                      </div>
+                      <div className="py-4 flex-1 space-y-2">
+                        {apps.map((app) => (
+                          <Dialog key={app.id}>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className="w-full justify-start text-gray-600 hover:text-blue-600"
+                              >
+                                <app.icon className="h-4 w-4 mr-2" />
+                                {app.name}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                              <app.component />
+                            </DialogContent>
+                          </Dialog>
+                        ))}
+                      </div>
+                      <div className="py-4 border-t">
+                        <Button 
+                          variant="destructive" 
+                          className="w-full" 
+                          onClick={handleLogout}
+                        >
+                          <LogOut size={16} className="mr-2" />
+                          Sair
+                        </Button>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </div>
             </>
           )}
