@@ -53,7 +53,7 @@ export const useAuth = () => {
 
   const handleConnectionError = (error: any) => {
     console.error("Connection error:", error);
-    let errorMsg = "Failed to connect to the server. Check your internet connection and try again.";
+    let errorMsg = "Falha ao conectar ao servidor. Verifique sua conexão com a internet e tente novamente.";
     if (retryCount > 0) {
       errorMsg += ` Attempt ${retryCount} failed.`;
     }
@@ -71,7 +71,7 @@ export const useAuth = () => {
     resetError();
 
     if (!navigator.onLine) {
-      handleConnectionError({ message: "Browser is offline" });
+      handleConnectionError({ message: "Offline" });
       setIsLoading(false);
       return;
     }
@@ -86,8 +86,8 @@ export const useAuth = () => {
         console.log("Login response:", { data, error });
         if (error) throw error;
         toast({
-          title: "Login successful!",
-          description: "Welcome to the Inadimplência Dashboard.",
+          title: "Login efetuado com sucesso!",
+          description: "Bem vindo ao Controle de Inadimplência Dashboard.",
         });
       } else {
         console.log("Attempting signup with:", { email });
@@ -102,8 +102,8 @@ export const useAuth = () => {
         if (error) throw error;
         setIsEmailSent(true);
         toast({
-          title: "Signup successful!",
-          description: "Please check your email to confirm your account.",
+          title: "Inscrição realizada com sucesso!",
+          description: "Verifique seu e-mail para confirmar sua conta.",
         });
       }
     } catch (error: any) {
@@ -115,7 +115,7 @@ export const useAuth = () => {
         setErrorMessage(error.message);
         toast({
           title: "Error",
-          description: error.message || "An error occurred during authentication.",
+          description: error.message || "Ocorreu um erro durante a autenticação.",
           variant: "destructive",
         });
       }
@@ -141,7 +141,7 @@ export const useAuth = () => {
       console.error("Google login error:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to log in with Google.",
+        description: error.message || "Falha ao efetuar login com o Google.",
         variant: "destructive",
       });
     } finally {
