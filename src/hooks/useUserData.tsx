@@ -24,7 +24,7 @@ export function useUserData() {
       try {
         setIsLoading(true);
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Usuário não autenticado");
+        if (!user) throw new Error("Usuário não autenticado. Faça login novamente!");
 
         const { data, error } = await supabase
           .from("user_dashboard")
@@ -59,7 +59,7 @@ export function useUserData() {
     try {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
+      if (!user) throw new Error("Usuário não autenticado. Faça login novamente");
 
       const updatedData = { ...userData, ...newData, user_id: user.id };
       const { error } = await supabase
