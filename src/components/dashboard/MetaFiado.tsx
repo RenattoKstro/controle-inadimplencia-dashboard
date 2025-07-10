@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import {
   Card,
@@ -11,6 +11,7 @@ import { Calculator, Building, Wallet, ArrowDown, Check, Target } from "lucide-r
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CardItemProps {
   title: string;
@@ -34,6 +35,7 @@ const formatCurrency = (value: number): string => {
     style: "currency",
     currency: "BRL",
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
 };
 
@@ -133,7 +135,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             <div
               className="h-full rounded-l-full transition-all duration-1000 ease-out"
               style={{
-                width: `${Math.min(percentageComplete, 105)}%`,
+                width: `${Math.min(percentageComplete, 105)}%`, // Mantém o limite de 105% para a barra
                 ...getProgressStyle(percentageComplete),
                 boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
               }}
@@ -164,29 +166,71 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
 const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
   const isMobile = useIsMobile();
+  const [projectedValue, setProjectedValue] = useState(0);
+  const [projectionPercentage, setProjectionPercentage] = useState(0);
+
+  useEffect(() => {
+    const fetchProjection = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const authUserId = user?.id;
+      if (authUserId && userData && (userData.dias_restantes || diasRestantesCalculados)) {
+        const currentDate = new Date();
+        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
+        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().slice(0, 10);
+        const { data, error } = await supabase
+          .from("historico_diario")
+          .select("recebido")
+          .eq("user_id", authUserId)
+          .gte("data_recebimento", firstDay)
+          .lte("data_recebimento", lastDay);
+
+        if (error) {
+          console.error("Erro ao buscar registros diários:", error.message);
+          return;
+        }
+
+        const totalReceived = data && data.length > 0 ? data.reduce((sum, record) => sum + (record.recebido || 0), 0) : 0;
+        console.log("Total recebido de historico_diario:", totalReceived);
+
+        const daysPassed = currentDate.getDate() || 1;
+        const dailyAverage = totalReceived > 0 ? totalReceived / daysPassed : 0;
+        const remainingDays = userData.dias_restantes || diasRestantesCalculados || 0;
+        console.log("Dias passados:", daysPassed, "Dias restantes:", remainingDays);
+
+        const projectedAmount = totalReceived + (dailyAverage * remainingDays);
+        const percentage = projectedAmount > 0 && userData.meta_mes > 0
+          ? (projectedAmount / userData.meta_mes) * 100
+          : 0; // Remove Math.min(100, percentage)
+        setProjectedValue(projectedAmount);
+        setProjectionPercentage(percentage); // Permite ultrapassar 100%
+        console.log("Projeção calculada:", projectedAmount, "Percentual:", percentage);
+      }
+    };
+
+    fetchProjection();
+  }, [userData, diasRestantesCalculados]);
 
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
   const faltaReceberMes = Math.max(0, userData.vencido_atual - userData.meta_mes);
   const recebidosMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  const recebidoHoje = Math.max(0, (userData.abertura_dia || 0) - userData.vencido_atual);
+  const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - userData.vencido_atual).toFixed(2)));
   console.log(`[MetaFiado] Calculado recebidoHoje: ${recebidoHoje}, abertura_dia=${userData.abertura_dia}, vencido_atual=${userData.vencido_atual}`);
 
-  // Calcular dias úteis desde o início do mês até hoje
   const calculateWorkedDays = () => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     let workedDays = 0;
     for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
       const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0) workedDays++; // Exclui apenas domingos
+      if (dayOfWeek !== 0) workedDays++;
     }
     return workedDays;
   };
 
   const diasUteisTrabalhados = calculateWorkedDays();
-  const valorPorDia = userData.meta_mes / 27; // Baseado em 27 dias úteis totais (exemplo)
+  const valorPorDia = userData.meta_mes / 27;
   const valorEsperadoAcumulado = valorPorDia * diasUteisTrabalhados;
-  const gap = recebidosMes - valorEsperadoAcumulado; // GAP com base em "Recebido Mês"
+  const gap = recebidosMes - valorEsperadoAcumulado;
 
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
@@ -305,6 +349,14 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             </div>
           </CardContent>
         </Card>
+        <CardItem
+          title="Previsão de Recebimento"
+          value={projectedValue}
+          icon={<Calculator size={16} />}
+          color="bg-purple-500"
+          showProgress={true}
+          progressValue={projectionPercentage} // Agora reflete o valor real, podendo ultrapassar 100%
+        />
       </div>
     </div>
   );

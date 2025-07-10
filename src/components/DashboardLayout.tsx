@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram } from "lucide-react"; // Reimportado Instagram
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import MetaPerdido from "./dashboard/MetaPerdido";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
-import Historicos from "./Historicos"; // Novo componente
+import Historicos from "./Historicos";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,9 +22,9 @@ import {
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
-import { FaWhatsapp } from "react-icons/fa"; // Ícone oficial do WhatsApp
-import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade"; // Novo componente
-import { Calculator } from "lucide-react"; // Ícone para Calculadora
+import { FaWhatsapp } from "react-icons/fa";
+import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
+import { Calculator } from "lucide-react";
 
 export interface DashboardProps {
   userData: any;
@@ -53,12 +53,13 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
+  const [recebidoHoje, setRecebidoHoje] = useState(0); // Novo estado para recebidoHoje
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [isNewHistorico, setIsNewHistorico] = useState(true); // Estado para "novo" na guia Históricos
-  const [showInstagramUsername, setShowInstagramUsername] = useState(false); // Estado para mostrar o nome do Instagram
+  const [isNewHistorico, setIsNewHistorico] = useState(true);
+  const [showInstagramUsername, setShowInstagramUsername] = useState(false);
 
   useEffect(() => {
     console.log("userData:", userData);
@@ -82,7 +83,6 @@ const DashboardLayout = () => {
     };
     checkAuth();
 
-    // Verifica se o usuário já visitou a guia Históricos
     const hasVisitedHistorico = localStorage.getItem("hasVisitedHistorico");
     if (!hasVisitedHistorico) {
       setIsNewHistorico(true);
@@ -105,7 +105,6 @@ const DashboardLayout = () => {
     if (isMobile) {
       setSheetOpen(false);
     }
-    // Marca a guia como visitada se for "historicos"
     if (value === "historicos" && isNewHistorico) {
       setIsNewHistorico(false);
       localStorage.setItem("hasVisitedHistorico", "true");
@@ -130,10 +129,9 @@ const DashboardLayout = () => {
 
   const handleInstagramClick = () => {
     setShowInstagramUsername(true);
-    setTimeout(() => setShowInstagramUsername(false), 2000); // Oculta após 2 segundos
+    setTimeout(() => setShowInstagramUsername(false), 2000);
   };
 
-  // Lista de PDFs com URLs fornecidas
   const pdfList = [
     { id: 1, name: "CARTILHA - LIBERAÇÃO GERENCIAL", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Cartilha%20-%20Liberacao%20Gerencial.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NhcnRpbGhhIC0gTGliZXJhY2FvIEdlcmVuY2lhbC5wZGYiLCJpYXQiOjE3NTE2NTc1ODgsImV4cCI6MTc4MzE5MzU4OH0.Kyhu4erX_TsbmcaZ-8-fVNlEH21MAFIYD2v5neSjgEs" },
     { id: 2, name: "C.I. 006 2025 COMPROVANTE DE ENDEREÇO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%20006%2025%20Revogacao%20da%20obrigatoriedade%20do%20comprovante%20de%20endereco.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIDAwNiAyNSBSZXZvZ2FjYW8gZGEgb2JyaWdhdG9yaWVkYWRlIGRvIGNvbXByb3ZhbnRlIGRlIGVuZGVyZWNvLnBkZiIsImlhdCI6MTc1MTY1NzYxOSwiZXhwIjoxNzgzMTkzNjE5fQ.Lz-wz8OzqkS_fPPF2AumohU8phWJbgOHfaRu3uGTBKg" },
@@ -205,7 +203,7 @@ const DashboardLayout = () => {
       >
         <History className="h-4 w-4" />
         <span>Históricos</span>
-        {isNewHistorico && <span className="ml-1 text-red-500 font-bold">N</span>} {/* "N" vermelho */}
+        {isNewHistorico && <span className="ml-1 text-red-500 font-bold">N</span>}
       </TabsTrigger>
     </TabsList>
   );
@@ -233,6 +231,7 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          setRecebidoHoje={setRecebidoHoje} // Passa a função para MetaFiado
         />
       </TabsContent>
       <TabsContent value="meta-desafio" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
@@ -295,6 +294,7 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
+          recebido={recebidoHoje} // Passa o valor atualizado para Historicos
         />
       </TabsContent>
     </>
@@ -355,10 +355,8 @@ const DashboardLayout = () => {
     });
   };
 
-  // Lista de apps disponíveis
   const apps = [
     { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
-    // Adicione mais apps aqui no futuro, ex.: { id: "outro", name: "Outro App", icon: AnotherIcon, component: OutroComponent }
   ];
 
   return (
@@ -639,7 +637,7 @@ const DashboardLayout = () => {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
           <div className="flex items-center gap-2 blink-slow" style={{ animation: "blink-slow 2s infinite" }}>
-            <FaWhatsapp className="h-5 w-5 text-green-500" /> {/* Ícone oficial do WhatsApp */}
+            <FaWhatsapp className="h-5 w-5 text-green-500" />
             <a
               href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl"
               target="_blank"

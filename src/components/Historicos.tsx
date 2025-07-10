@@ -1,4 +1,4 @@
-import React from 'react'; // Importação do React
+import React from "react"; // Importação do React
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ interface HistoricosProps {
   diasRestantesCalculados: number;
   isLoading: boolean;
   bonusPerdidoAtivado: boolean;
-  recebido?: number;
+  recebido?: number; // Recebido Hoje de MetaFiado
 }
 
 const Historicos = ({
@@ -51,6 +51,14 @@ const Historicos = ({
     console.log("Full userData in Historicos:", userData);
     fetchHistorico();
   }, [userData]);
+
+  useEffect(() => {
+    // Sincroniza o campo "Recebido Diário" com o valor de "Recebido Hoje" (recebido prop)
+    setFormData((prev) => ({
+      ...prev,
+      recebidoDiario: recebido || 0,
+    }));
+  }, [recebido]);
 
   const formatCurrency = (value: number) => {
     return isNaN(value) || value === null || value === undefined
@@ -135,7 +143,7 @@ const Historicos = ({
         percentual_meta_desafio: percentualMetaDesafio,
         premiosrecebidos: `R$ ${premiosrecebidos}`,
         data_recebimento: existingRecord?.data_recebimento || new Date().toISOString().slice(0, 10),
-        recebidoDiario: 0, // Recebido Diário inicial
+        recebidoDiario: recebido || 0, // Preenche com Recebido Hoje
       });
       setEditMode(!!existingRecord);
       setShowForm(true);
@@ -230,7 +238,7 @@ const Historicos = ({
     setFormData({
       ...item,
       data_recebimento: lastDaily.date || new Date().toISOString().slice(0, 10),
-      recebidoDiario: lastDaily.recebido || 0,
+      recebidoDiario: lastDaily.recebido || recebido || 0, // Usa Recebido Hoje como fallback
     });
     setEditMode(true);
     setShowForm(true);
@@ -439,7 +447,7 @@ const Historicos = ({
               className="w-full p-2 border rounded bg-green-200 mt-2"
               required
               min="2025-01-01"
-              max={new Date().toISOString().split('T')[0]}
+              max={new Date().toISOString().split("T")[0]}
             />
           </div>
           {bonusPerdidoAtivado && (
