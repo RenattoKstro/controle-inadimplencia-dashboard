@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
+import Previsao from "./Previsao"; // Import do novo componente
 
 interface CardItemProps {
   title: string;
@@ -135,7 +136,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             <div
               className="h-full rounded-l-full transition-all duration-1000 ease-out"
               style={{
-                width: `${Math.min(percentageComplete, 105)}%`, // Mantém o limite de 105% para a barra
+                width: `${Math.min(percentageComplete, 105)}%`,
                 ...getProgressStyle(percentageComplete),
                 boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
               }}
@@ -166,20 +167,19 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
 const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
   const isMobile = useIsMobile();
-  const [projectedValue, setProjectedValue] = useState(0);
-  const [projectionPercentage, setProjectionPercentage] = useState(0);
+  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
 
   useEffect(() => {
-    const fetchProjection = async () => {
+    const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const authUserId = user?.id;
       if (authUserId && userData && (userData.dias_restantes || diasRestantesCalculados)) {
         const currentDate = new Date();
         const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
-        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().slice(0, 10);
+        const lastDay = currentDate.toISOString().slice(0, 10);
         const { data, error } = await supabase
           .from("historico_diario")
-          .select("recebido")
+          .select("recebido, data_recebimento")
           .eq("user_id", authUserId)
           .gte("data_recebimento", firstDay)
           .lte("data_recebimento", lastDay);
@@ -189,25 +189,17 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           return;
         }
 
-        const totalReceived = data && data.length > 0 ? data.reduce((sum, record) => sum + (record.recebido || 0), 0) : 0;
-        console.log("Total recebido de historico_diario:", totalReceived);
-
-        const daysPassed = currentDate.getDate() || 1;
-        const dailyAverage = totalReceived > 0 ? totalReceived / daysPassed : 0;
-        const remainingDays = userData.dias_restantes || diasRestantesCalculados || 0;
-        console.log("Dias passados:", daysPassed, "Dias restantes:", remainingDays);
-
-        const projectedAmount = totalReceived + (dailyAverage * remainingDays);
-        const percentage = projectedAmount > 0 && userData.meta_mes > 0
-          ? (projectedAmount / userData.meta_mes) * 100
-          : 0; // Remove Math.min(100, percentage)
-        setProjectedValue(projectedAmount);
-        setProjectionPercentage(percentage); // Permite ultrapassar 100%
-        console.log("Projeção calculada:", projectedAmount, "Percentual:", percentage);
+        if (data) {
+          const receipts = data.map((record) => ({
+            date: record.data_recebimento,
+            value: record.recebido || 0,
+          }));
+          setDailyReceipts(receipts);
+        }
       }
     };
 
-    fetchProjection();
+    fetchData();
   }, [userData, diasRestantesCalculados]);
 
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
@@ -244,6 +236,16 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       setRecebidoHoje(recebidoHoje);
     }
   }, [recebidoHoje, setRecebidoHoje]);
+
+  // Integração com Previsao (somente para o super card)
+  const previsaoData = Previsao({
+    abertura_vencido_mes: userData.abertura_vencido_mes,
+    meta_mes: userData.meta_mes,
+    vencido_atual: userData.vencido_atual,
+    dias_trabalhados: diasUteisTrabalhados,
+    dias_restantes: diasRestantesCalculados || userData.dias_restantes || 0,
+    dailyReceipts,
+  });
 
   if (isLoading) {
     return (
@@ -284,8 +286,9 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           title="Progresso da Meta Mensal"
           current={userData.vencido_atual}
           target={userData.meta_mes}
-          icon={<Target className="h-5 w-5 text-blue-600" />}
+          icon={<Target className="h-5 w-5 text-blue-500" />}
           userData={userData}
+          className="bg-blue-500 bg-opacity-10"
         />
         <CardItem
           title="A Receber"
@@ -349,14 +352,36 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             </div>
           </CardContent>
         </Card>
-        <CardItem
-          title="Previsão de Recebimento"
-          value={projectedValue}
-          icon={<Calculator size={16} />}
-          color="bg-purple-500"
-          showProgress={true}
-          progressValue={projectionPercentage} // Agora reflete o valor real, podendo ultrapassar 100%
-        />
+      </div>
+      {/* Super Card com Previsao como três cards lado a lado com fundo branco e cores originais */}
+      <div className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}>
+        <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-medium text-gray-200">Média Diária de Recebimento</h3>
+            <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.mediaDiaria)}</div>
+            <div className="text-gray-300 text-sm mt-1">Baseado em {dailyReceipts.length} dias com recebimento</div>
+            <div className="text-gray-300 text-sm mt-1">Total recebido (diário): {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
+          </CardContent>
+        </Card>
+        <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-medium text-gray-200">Previsão de Recebimento</h3>
+            <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal)}</div>
+            <div className="text-gray-300 text-sm mt-1">Total estimado para o mês</div>
+            <div className="text-gray-300 text-sm mt-1">Já recebido: {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
+            <div className="text-gray-300 text-sm mt-1">Previsão restante: {previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal - dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
+            <div className="text-gray-300 text-sm mt-1">Fórmula: Recebido + (Média Diária × Dias Restantes)</div>
+          </CardContent>
+        </Card>
+        <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
+          <CardContent className="p-4">
+            <h3 className="text-sm font-medium text-gray-200">Previsão de Fechamento</h3>
+            <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoFechamento)}</div>
+            <div className={`text-sm mt-1 ${previsaoData.metaStatus.color}`}>{previsaoData.metaStatus.text}</div>
+            <div className="text-gray-300 text-sm mt-1">Redução extra de {previsaoData.formatCurrency(userData.abertura_vencido_mes - previsaoData.previsaoRecebimentoTotal)}</div>
+            <div className="text-gray-300 text-sm mt-1">Fórmula: Abertura do Mês - Previsão de Recebimento</div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
