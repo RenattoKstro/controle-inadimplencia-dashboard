@@ -1,4 +1,4 @@
-import React from "react"; // Importação do React
+import React from "react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -180,7 +180,7 @@ const Historicos = ({
       console.log("Historico payload to insert/update:", historicoPayload);
 
       let historicoResult;
-      if (editMode && formData.id) {
+      if (editMode && formData.id && !editingDailyId) {
         console.log("Performing update for id:", formData.id, "with user_id:", authUserId);
         historicoResult = await supabase
           .from("historico")
@@ -188,11 +188,11 @@ const Historicos = ({
           .eq("id", formData.id)
           .eq("user_id", authUserId)
           .select();
-      } else {
+      } else if (!editingDailyId) {
         console.log("Performing insert into historico with user_id:", authUserId);
         historicoResult = await supabase.from("historico").insert(historicoPayload).select();
       }
-      const { data: historicoData, error: historicoError } = historicoResult;
+      const { data: historicoData, error: historicoError } = historicoResult || { data: null, error: null };
       if (historicoError) {
         console.error("Error saving historico:", historicoError.message, "Details:", historicoError.details, "Code:", historicoError.code);
         throw historicoError;
@@ -203,27 +203,46 @@ const Historicos = ({
         console.log("Historico saved successfully, response:", historicoData);
       }
 
-      // Salvar dados diários em historico_diario
-      const diarioPayload = {
-        user_id: authUserId,
-        data_recebimento: formData.data_recebimento,
-        recebido: formData.recebidoDiario, // Recebido Diário
-        historico_id: historicoData[0]?.id,
-      };
-      console.log("Diario payload to insert:", diarioPayload);
-      const diarioResult = await supabase.from("historico_diario").insert(diarioPayload).select();
-      const { data: diarioData, error: diarioError } = diarioResult;
-      if (diarioError) {
-        console.error("Error saving historico_diario:", diarioError.message, "Details:", diarioError.details, "Code:", diarioError.code);
-        throw diarioError;
-      }
-      if (!diarioData || diarioData.length === 0) {
-        console.warn("No data returned from Supabase after historico_diario save");
-      } else {
-        console.log("Historico_diario saved successfully, response:", diarioData);
+      // Salvar ou atualizar dados diários em historico_diario
+      if (editingDailyId) {
+        const diarioPayload = {
+          data_recebimento: formData.data_recebimento,
+          recebido: formData.recebidoDiario,
+        };
+        console.log("Diario payload to update:", diarioPayload, "for id:", editingDailyId);
+        const { error: diarioError } = await supabase
+          .from("historico_diario")
+          .update(diarioPayload)
+          .eq("id", editingDailyId)
+          .eq("user_id", authUserId);
+        if (diarioError) {
+          console.error("Error updating historico_diario:", diarioError.message, "Details:", diarioError.details, "Code:", diarioError.code);
+          throw diarioError;
+        }
+        console.log("Historico_diario updated successfully");
+      } else if (historicoData) {
+        const diarioPayload = {
+          user_id: authUserId,
+          data_recebimento: formData.data_recebimento,
+          recebido: formData.recebidoDiario,
+          historico_id: historicoData[0]?.id,
+        };
+        console.log("Diario payload to insert:", diarioPayload);
+        const diarioResult = await supabase.from("historico_diario").insert(diarioPayload).select();
+        const { data: diarioData, error: diarioError } = diarioResult;
+        if (diarioError) {
+          console.error("Error saving historico_diario:", diarioError.message, "Details:", diarioError.details, "Code:", diarioError.code);
+          throw diarioError;
+        }
+        if (!diarioData || diarioData.length === 0) {
+          console.warn("No data returned from Supabase after historico_diario save");
+        } else {
+          console.log("Historico_diario saved successfully, response:", diarioData);
+        }
       }
 
       setShowForm(false);
+      setEditingDailyId(null);
       await fetchHistorico();
       await fetchDailyRecords();
     } catch (error) {
@@ -286,6 +305,7 @@ const Historicos = ({
         recebidoDiario: record.recebido,
       });
       setEditingDailyId(dailyId);
+      setEditMode(true);
       setShowForm(true);
     }
   };
@@ -381,169 +401,198 @@ const Historicos = ({
       <Button onClick={handleAutoFill}>Adicionar/Atualizar Dados</Button>
       {showForm && (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label>Mês:</label>
-            <input
-              type="month"
-              value={formData.month}
-              onChange={(e) => setFormData({ ...formData, month: e.target.value })}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label>Abertura Vencido Mês:</label>
-            <input
-              type="number"
-              value={formData.aberturavencidomes}
-              onChange={(e) => setFormData({ ...formData, aberturavencidomes: Number(e.target.value) })}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label>Meta Mês:</label>
-            <input
-              type="number"
-              value={formData.metames}
-              onChange={(e) => setFormData({ ...formData, metames: Number(e.target.value) })}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label>Meta Desafio:</label>
-            <input
-              type="number"
-              value={formData.metadesafio}
-              onChange={(e) => setFormData({ ...formData, metadesafio: Number(e.target.value) })}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label>Recebido Mensal:</label>
-            <input
-              type="number"
-              value={formData.vencidoatual}
-              onChange={(e) => setFormData({ ...formData, vencidoatual: Number(e.target.value) })}
-              className="w-full p-2 border rounded bg-green-200"
-              required
-            />
-          </div>
-          <div>
-            <label>Recebido Diário:</label>
-            <input
-              type="number"
-              value={formData.recebidoDiario}
-              onChange={(e) => setFormData({ ...formData, recebidoDiario: Number(e.target.value) })}
-              className="w-full p-2 border rounded bg-green-200"
-              required
-            />
-            <input
-              type="date"
-              value={formData.data_recebimento}
-              onChange={(e) => setFormData({ ...formData, data_recebimento: e.target.value })}
-              className="w-full p-2 border rounded bg-green-200 mt-2"
-              required
-              min="2025-01-01"
-              max={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-          {bonusPerdidoAtivado && (
+          {editingDailyId ? (
             <>
               <div>
-                <label>Meta Perdido:</label>
+                <label>Data:</label>
                 <input
-                  type="number"
-                  value={formData.metaperdido}
-                  onChange={(e) => setFormData({ ...formData, metaperdido: Number(e.target.value) })}
-                  className="w-full p-2 border rounded"
+                  type="date"
+                  value={formData.data_recebimento}
+                  onChange={(e) => setFormData({ ...formData, data_recebimento: e.target.value })}
+                  className="w-full p-2 border rounded bg-green-200"
+                  required
+                  min="2025-01-01"
+                  max={new Date().toISOString().split("T")[0]}
                 />
               </div>
               <div>
-                <label>Rec Perdido:</label>
+                <label>Recebido Diário:</label>
                 <input
                   type="number"
-                  value={formData.recperdido}
-                  onChange={(e) => setFormData({ ...formData, recperdido: Number(e.target.value) })}
+                  value={formData.recebidoDiario}
+                  onChange={(e) => setFormData({ ...formData, recebidoDiario: Number(e.target.value) })}
+                  className="w-full p-2 border rounded bg-green-200"
+                  required
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label>Mês:</label>
+                <input
+                  type="month"
+                  value={formData.month}
+                  onChange={(e) => setFormData({ ...formData, month: e.target.value })}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label>Abertura Vencido Mês:</label>
+                <input
+                  type="number"
+                  value={formData.aberturavencidomes}
+                  onChange={(e) => setFormData({ ...formData, aberturavencidomes: Number(e.target.value) })}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label>Meta Mês:</label>
+                <input
+                  type="number"
+                  value={formData.metames}
+                  onChange={(e) => setFormData({ ...formData, metames: Number(e.target.value) })}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label>Meta Desafio:</label>
+                <input
+                  type="number"
+                  value={formData.metadesafio}
+                  onChange={(e) => setFormData({ ...formData, metadesafio: Number(e.target.value) })}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label>Recebido Mensal:</label>
+                <input
+                  type="number"
+                  value={formData.vencidoatual}
+                  onChange={(e) => setFormData({ ...formData, vencidoatual: Number(e.target.value) })}
+                  className="w-full p-2 border rounded bg-green-200"
+                  required
+                />
+              </div>
+              <div>
+                <label>Recebido Diário:</label>
+                <input
+                  type="number"
+                  value={formData.recebidoDiario}
+                  onChange={(e) => setFormData({ ...formData, recebidoDiario: Number(e.target.value) })}
+                  className="w-full p-2 border rounded bg-green-200"
+                  required
+                />
+                <input
+                  type="date"
+                  value={formData.data_recebimento}
+                  onChange={(e) => setFormData({ ...formData, data_recebimento: e.target.value })}
+                  className="w-full p-2 border rounded bg-green-200 mt-2"
+                  required
+                  min="2025-01-01"
+                  max={new Date().toISOString().split("T")[0]}
+                />
+              </div>
+              {bonusPerdidoAtivado && (
+                <>
+                  <div>
+                    <label>Meta Perdido:</label>
+                    <input
+                      type="number"
+                      value={formData.metaperdido}
+                      onChange={(e) => setFormData({ ...formData, metaperdido: Number(e.target.value) })}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                  <div>
+                    <label>Rec Perdido:</label>
+                    <input
+                      type="number"
+                      value={formData.recperdido}
+                      onChange={(e) => setFormData({ ...formData, recperdido: Number(e.target.value) })}
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                </>
+              )}
+              <div>
+                <label>Fiado (%):</label>
+                <input
+                  type="number"
+                  value={formData.percentual_meta_fiado}
+                  onChange={(e) => setFormData({ ...formData, percentual_meta_fiado: Number(e.target.value) })}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label>Desafio (%):</label>
+                <input
+                  type="number"
+                  value={formData.percentual_meta_desafio}
+                  onChange={(e) => setFormData({ ...formData, percentual_meta_desafio: Number(e.target.value) })}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label>Prêmios Recebidos:</label>
+                <input
+                  type="text"
+                  value={formData.premiosrecebidos}
+                  onChange={(e) => setFormData({ ...formData, premiosrecebidos: e.target.value })}
                   className="w-full p-2 border rounded"
                 />
               </div>
             </>
           )}
-          <div>
-            <label>Fiado (%):</label>
-            <input
-              type="number"
-              value={formData.percentual_meta_fiado}
-              onChange={(e) => setFormData({ ...formData, percentual_meta_fiado: Number(e.target.value) })}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label>Desafio (%):</label>
-            <input
-              type="number"
-              value={formData.percentual_meta_desafio}
-              onChange={(e) => setFormData({ ...formData, percentual_meta_desafio: Number(e.target.value) })}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label>Prêmios Recebidos:</label>
-            <input
-              type="text"
-              value={formData.premiosrecebidos}
-              onChange={(e) => setFormData({ ...formData, premiosrecebidos: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
-          </div>
           <Button type="submit">{editMode ? "Atualizar" : "Salvar"}</Button>
-          <Button type="button" onClick={() => setShowForm(false)}>Cancelar</Button>
+          <Button type="button" onClick={() => { setShowForm(false); setEditingDailyId(null); }}>Cancelar</Button>
         </form>
       )}
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 p-2 text-center">Mês</th>
-              <th className="border border-gray-300 p-2 text-center">Abertura Vencido Mês</th>
-              <th className="border border-gray-300 p-2 text-center">Meta Mês</th>
-              <th className="border border-gray-300 p-2 text-center">Meta Desafio</th>
-              <th className="border border-gray-300 p-2 text-center">Recebido Mensal</th>
+            <tr className="bg-card">
+              <th className="border border-gray-300 p-2 text-center text-foreground">Mês</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Abertura Vencido Mês</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Meta Mês</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Meta Desafio</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Vencido</th>
               {bonusPerdidoAtivado && (
                 <>
-                  <th className="border border-gray-300 p-2 text-center">Meta Perdido</th>
-                  <th className="border border-gray-300 p-2 text-center">Rec Perdido</th>
+                  <th className="border border-gray-300 p-2 text-center text-foreground">Meta Perdido</th>
+                  <th className="border border-gray-300 p-2 text-center text-foreground">Rec Perdido</th>
                 </>
               )}
-              <th className="border border-gray-300 p-2 text-center">Fiado (%)</th>
-              <th className="border border-gray-300 p-2 text-center">Desafio (%)</th>
-              <th className="border border-gray-300 p-2 text-center">Prêmios Recebidos</th>
-              <th className="border border-gray-300 p-2 text-center">Ações</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Fiado (%)</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Desafio (%)</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Prêmios Recebidos</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Ações</th>
             </tr>
           </thead>
           <tbody>
             {historico.map((item) => (
               <React.Fragment key={item.id}>
                 <tr className="border border-gray-300">
-                  <td className="border border-gray-300 p-2 text-center">{item.month}</td>
-                  <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.aberturavencidomes || 0)}</td>
-                  <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.metames || 0)}</td>
-                  <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.metadesafio || 0)}</td>
-                  <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.vencidoatual || 0)}</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{item.month}</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.aberturavencidomes || 0)}</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.metames || 0)}</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.metadesafio || 0)}</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.vencidoatual || 0)}</td>
                   {bonusPerdidoAtivado && (
                     <>
-                      <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.metaperdido || 0)}</td>
-                      <td className="border border-gray-300 p-2 text-center">{formatCurrency(item.recperdido || 0)}</td>
+                      <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.metaperdido || 0)}</td>
+                      <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.recperdido || 0)}</td>
                     </>
                   )}
-                  <td className="border border-gray-300 p-2 text-center">{item.percentual_meta_fiado || 0}%</td>
-                  <td className="border border-gray-300 p-2 text-center">{item.percentual_meta_desafio || 0}%</td>
-                  <td className="border border-gray-300 p-2 text-center">{item.premiosrecebidos || "Nenhum"}</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{item.percentual_meta_fiado || 0}%</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{item.percentual_meta_desafio || 0}%</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{item.premiosrecebidos || "Nenhum"}</td>
                   <td className="border border-gray-300 p-2 text-center">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="mr-2">Editar</Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>Excluir</Button>
@@ -559,21 +608,21 @@ const Historicos = ({
                 </tr>
                 {expandedRows.has(item.id) && (
                   <tr>
-                    <td colSpan={bonusPerdidoAtivado ? 11 : 9} className="border border-gray-300 p-2 bg-gray-50">
-                      <h3 className="text-lg font-semibold">Recebimentos Diários</h3>
+                    <td colSpan={bonusPerdidoAtivado ? 11 : 9} className="border border-gray-300 p-2 bg-card">
+                      <h3 className="text-lg font-semibold text-foreground">Recebimentos Diários</h3>
                       <table className="min-w-full border-collapse mt-2">
                         <thead>
-                          <tr className="bg-gray-200">
-                            <th className="border border-gray-300 p-2 text-center">Data</th>
-                            <th className="border border-gray-300 p-2 text-center">Recebido Diário</th>
-                            <th className="border border-gray-300 p-2 text-center">Ações</th>
+                          <tr className="bg-card">
+                            <th className="border border-gray-300 p-2 text-center text-foreground">Data</th>
+                            <th className="border border-gray-300 p-2 text-center text-foreground">Recebido Diário</th>
+                            <th className="border border-gray-300 p-2 text-center text-foreground">Ações</th>
                           </tr>
                         </thead>
                         <tbody>
                           {getDailyRecordsForRow(item.id).map((daily) => (
                             <tr key={daily.id} className="border border-gray-300">
-                              <td className="border border-gray-300 p-2 text-center">{daily.date}</td>
-                              <td className="border border-gray-300 p-2 text-center">{formatCurrency(daily.recebido)}</td>
+                              <td className="border border-gray-300 p-2 text-center text-foreground">{daily.date}</td>
+                              <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(daily.recebido)}</td>
                               <td className="border border-gray-300 p-2 text-center">
                                 <Button
                                   variant="outline"
@@ -602,7 +651,7 @@ const Historicos = ({
             ))}
             {historico.length === 0 && (
               <tr>
-                <td colSpan={bonusPerdidoAtivado ? 11 : 9} className="border border-gray-300 p-2 text-center">Nenhum histórico disponível.</td>
+                <td colSpan={bonusPerdidoAtivado ? 11 : 9} className="border border-gray-300 p-2 text-center text-foreground">Nenhum histórico disponível.</td>
               </tr>
             )}
           </tbody>

@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
-import Previsao from "./Previsao"; // Import do novo componente
+import Previsao from "./Previsao";
 
 interface CardItemProps {
   title: string;
@@ -52,10 +52,10 @@ const CardItem = ({
     <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${color} bg-opacity-50`}>
       <CardContent className="p-4 md:p-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+          <h3 className="text-sm font-medium text-foreground">{title}</h3>
           <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
         </div>
-        <div className="text-xl md:text-2xl font-bold">{formatCurrency(value)}</div>
+        <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
         {showProgress && (
           <div className="mt-4">
             <div className="text-3xl font-bold text-red-600">
@@ -75,7 +75,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
   if (userData.vencido_atual > 0) {
     percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
-    console.log(`[MetaFiado] Meta Fiado - Meta Mes: ${userData.meta_mes}, Vencido Atual: ${userData.vencido_atual}, Progresso Calculado: ${percentageComplete.toFixed(2)}%`);
   } else {
     console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
   }
@@ -114,11 +113,11 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
             {icon}
             {title}
           </CardTitle>
-          <div className="text-xl md:text-2xl font-bold text-gray-600">
+          <div className="text-xl md:text-2xl font-bold text-foreground">
             {percentageComplete.toFixed(2)}% concluído
           </div>
         </div>
-        <CardDescription className="text-sm mt-1 text-center text-gray-600">
+        <CardDescription className="text-sm mt-1 text-center text-foreground">
           <div className="flex flex-col md:flex-row md:gap-4 justify-center">
             <span>Meta: {formatCurrency(target)}</span>
             <span>Atual: {formatCurrency(current)}</span>
@@ -206,7 +205,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const faltaReceberMes = Math.max(0, userData.vencido_atual - userData.meta_mes);
   const recebidosMes = userData.abertura_vencido_mes - userData.vencido_atual;
   const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - userData.vencido_atual).toFixed(2)));
-  console.log(`[MetaFiado] Calculado recebidoHoje: ${recebidoHoje}, abertura_dia=${userData.abertura_dia}, vencido_atual=${userData.vencido_atual}`);
 
   const calculateWorkedDays = () => {
     const today = new Date();
@@ -232,12 +230,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
 
   useEffect(() => {
     if (setRecebidoHoje) {
-      console.log(`[MetaFiado] Atualizando recebidoHoje no MetaFiado: ${recebidoHoje}`);
       setRecebidoHoje(recebidoHoje);
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  // Integração com Previsao (somente para o super card)
   const previsaoData = Previsao({
     abertura_vencido_mes: userData.abertura_vencido_mes,
     meta_mes: userData.meta_mes,
@@ -277,7 +273,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl md:text-2xl font-bold">Meta Fiado</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-foreground">Meta Fiado</h2>
       </div>
       <div
         className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
@@ -288,7 +284,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           target={userData.meta_mes}
           icon={<Target className="h-5 w-5 text-blue-500" />}
           userData={userData}
-          className="bg-blue-500 bg-opacity-10"
         />
         <CardItem
           title="A Receber"
@@ -333,27 +328,26 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         >
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-gray-600">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
+              <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
               <span
                 className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
               >
                 <Wallet size={16} />
               </span>
             </div>
-            <div className="text-xl md:text-2xl font-bold">{formatCurrency(gap)}</div>
-            <div className="mt-2 text-sm text-gray-600">
+            <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(gap)}</div>
+            <div className="mt-2 text-sm text-foreground">
               {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
             </div>
-            <div className="mt-1 text-xs text-gray-600">
+            <div className="mt-1 text-xs text-foreground">
               Dias úteis trabalhados: {diasUteisTrabalhados}
             </div>
-            <div className="mt-1 text-xs text-gray-600">
+            <div className="mt-1 text-xs text-foreground">
               Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
             </div>
           </CardContent>
         </Card>
       </div>
-      {/* Super Card com Previsao como três cards lado a lado com fundo branco e cores originais */}
       <div className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}>
         <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
           <CardContent className="p-4">

@@ -23,7 +23,6 @@ const calcularDiasUteisAte15 = (diasRestantes: number): number => {
   const currentYear = today.getFullYear();
   const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-  // Verifica se o dia 15 é válido no mês atual
   if (today.getDate() > 15 || today.getDate() > lastDayOfMonth) return 0;
 
   const diasAte15 = 15 - today.getDate();
@@ -31,12 +30,12 @@ const calcularDiasUteisAte15 = (diasRestantes: number): number => {
 
   for (let i = 0; i < diasAte15; i++) {
     const currentDate = new Date(today);
-    currentDate.setDate(today.getDate() + i + 1); // +1 para começar no próximo dia
+    currentDate.setDate(today.getDate() + i + 1);
     const dayOfWeek = currentDate.getDay();
-    if (dayOfWeek !== 0) diasUteis++; // Exclui apenas domingos (0), inclui sábados
+    if (dayOfWeek !== 0) diasUteis++;
   }
 
-  return Math.min(diasRestantes || Infinity, diasUteis); // Garante que não exceda diasRestantes
+  return Math.min(diasRestantes || Infinity, diasUteis);
 };
 
 const MetaAlimentacao = ({
@@ -53,7 +52,6 @@ const MetaAlimentacao = ({
   useEffect(() => {
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
     setDiasUteisAte15(dias);
-    console.log("Dias úteis calculados até 15 (incluindo sábados):", dias); // Depuração
   }, [diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
@@ -115,7 +113,7 @@ const MetaAlimentacao = ({
               <Target className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
               Meta de Ticket
             </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
+            <CardDescription className="text-xs md:text-sm text-foreground">
               80% de "A Receber" até o dia 15 do mês
             </CardDescription>
           </CardHeader>
@@ -123,22 +121,22 @@ const MetaAlimentacao = ({
             <div className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-2 gap-3 md:gap-4">
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Valor da Meta (80%)</p>
-                  <p className="text-base md:text-2xl font-bold text-gray-900">
+                  <p className="text-xs md:text-sm font-medium text-foreground">Valor da Meta (80%)</p>
+                  <p className="text-base md:text-2xl font-bold text-foreground">
                     {formataDinheiro(metaTicket)}
                   </p>
                 </div>
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Recebido até agora</p>
-                  <p className="text-base md:text-2xl font-bold text-gray-900">
+                  <p className="text-xs md:text-sm font-medium text-foreground">Recebido até agora</p>
+                  <p className="text-base md:text-2xl font-bold text-foreground">
                     {formataDinheiro(recebidoMes)}
                   </p>
                 </div>
               </div>
               <div className="space-y-2 md:space-y-3">
                 <div className="flex justify-between items-center">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Progresso da Meta</p>
-                  <p className="text-xs md:text-sm font-medium text-gray-700">
+                  <p className="text-xs md:text-sm font-medium text-foreground">Progresso da Meta</p>
+                  <p className="text-xs md:text-sm font-medium text-foreground">
                     {progressoExibido.toFixed(2)}%
                   </p>
                 </div>
@@ -153,14 +151,14 @@ const MetaAlimentacao = ({
               <div className="space-y-2 md:space-y-3">
                 <div className="grid grid-cols-2 gap-3 md:gap-4">
                   <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-gray-500">Valor Restante</p>
-                    <p className="text-sm md:text-lg font-semibold text-gray-900">
+                    <p className="text-xs md:text-sm font-medium text-foreground">Valor Restante</p>
+                    <p className="text-sm md:text-lg font-semibold text-foreground">
                       {formataDinheiro(valorRestante)}
                     </p>
                   </div>
                   <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-gray-500">Receber por dia até o dia 15</p>
-                    <p className="text-sm md:text-lg font-semibold text-gray-900">
+                    <p className="text-xs md:text-sm font-medium text-foreground">Receber por dia até o dia 15</p>
+                    <p className="text-sm md:text-lg font-semibold text-foreground">
                       {formataDinheiro(valorPorDia)}
                     </p>
                   </div>
@@ -178,7 +176,7 @@ const MetaAlimentacao = ({
                         <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-amber-600" />
                       </div>
                     )}
-                    <span className="text-xs md:text-sm font-medium">
+                    <span className="text-xs md:text-sm font-medium text-foreground">
                       {metaTicketBatida
                         ? "Meta atingida! Vale alimentação garantido"
                         : "Meta ainda não atingida"}
@@ -196,7 +194,7 @@ const MetaAlimentacao = ({
               <Calendar className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
               Detalhes do Período
             </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
+            <CardDescription className="text-xs md:text-sm text-foreground">
               Informações sobre o período de avaliação
             </CardDescription>
           </CardHeader>
@@ -204,7 +202,7 @@ const MetaAlimentacao = ({
             <div className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-2 gap-3 md:gap-6">
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Dias úteis restantes até o dia 15</p>
+                  <p className="text-xs md:text-sm font-medium text-foreground">Dias úteis restantes até o dia 15</p>
                   <div className="bg-blue-50 rounded-lg p-2 md:p-4 flex justify-center items-center">
                     <p className="text-xl md:text-3xl font-bold text-blue-700">
                       {diasUteisAte15}
@@ -212,7 +210,7 @@ const MetaAlimentacao = ({
                   </div>
                 </div>
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Status do Período</p>
+                  <p className="text-xs md:text-sm font-medium text-foreground">Status do Período</p>
                   <div
                     className={cn(
                       "rounded-lg p-2 md:p-4 flex justify-center items-center",
@@ -232,8 +230,8 @@ const MetaAlimentacao = ({
               </div>
               <div className="pt-2 md:pt-4 space-y-2 md:space-y-3">
                 <div className="flex justify-between items-center">
-                  <p className="text-xs md:text-sm font-medium text-gray-500">Dia Atual</p>
-                  <p className="text-xs md:text-sm font-medium text-gray-700">
+                  <p className="text-xs md:text-sm font-medium text-foreground">Dia Atual</p>
+                  <p className="text-xs md:text-sm font-medium text-foreground">
                     {todayDate.getDate()}
                   </p>
                 </div>
@@ -243,7 +241,7 @@ const MetaAlimentacao = ({
                     style={{ width: `${Math.min(100, (todayDate.getDate() / 15) * 100)}%` }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500 text-right">Dias até 15 do mês</p>
+                <p className="text-xs text-foreground text-right">Dias até 15 do mês</p>
               </div>
               <div className="pt-2 md:pt-3 border-t">
                 <div className="flex items-center justify-between">

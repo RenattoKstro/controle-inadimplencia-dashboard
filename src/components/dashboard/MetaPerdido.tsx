@@ -5,14 +5,12 @@ import { Progress } from "@/components/ui/progress";
 import { AlertTriangle } from "lucide-react";
 
 const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) => {
-  console.log("MetaPerdido renderizado", userData);
   const [metaPerdido, setMetaPerdido] = React.useState(userData.meta_perdido || 0);
   const [recPerdido, setRecPerdido] = React.useState(userData.rec_perdido || 0);
 
   React.useEffect(() => {
     setMetaPerdido(userData.meta_perdido || 0);
     setRecPerdido(userData.rec_perdido || 0);
-    console.log("MetaPerdido useEffect executado", userData);
   }, [userData]);
 
   const percentual = userData.vencido_atual > 0 
@@ -33,19 +31,19 @@ const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) =>
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-foreground">
             <AlertTriangle className="h-5 w-5 text-red-600" />
             Meta Perdido
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <p>Meta: {metaPerdido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-            <p>Recebido: {recPerdido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-foreground">Meta: {metaPerdido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-foreground">Recebido: {recPerdido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
             <Progress value={percentual} className="w-full" />
-            <p>Progresso: {percentual.toFixed(2)}%</p>
-            <p>Falta para 100%: {faltam100.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-            <p>Falta para 105%: {faltam105.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-foreground">Progresso: {percentual.toFixed(2)}%</p>
+            <p className="text-foreground">Falta para 100%: {faltam100.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p className="text-foreground">Falta para 105%: {faltam105.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
           </div>
         </CardContent>
       </Card>

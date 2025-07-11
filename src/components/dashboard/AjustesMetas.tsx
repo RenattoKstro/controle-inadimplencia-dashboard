@@ -3,7 +3,6 @@ import { DashboardProps } from "../DashboardLayout";
 import { 
   Card, 
   CardContent, 
-  CardDescription, 
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
@@ -33,7 +32,7 @@ const AjustesMetas = ({
   diasRestantesCalculados, 
   isLoading,
   bonusPerdidoAtivado,
-  setBonusPerdidoAtivado, // Adicionado para controlar o estado
+  setBonusPerdidoAtivado,
 }: DashboardProps & { setBonusPerdidoAtivado: (value: boolean) => void }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formState, setFormState] = useState({
@@ -90,7 +89,7 @@ const AjustesMetas = ({
       <Card className={`shadow-sm hover:shadow transition-shadow duration-200 ${color} bg-opacity-50`}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+            <h3 className="text-sm font-medium text-foreground">{title}</h3>
             <div className="flex items-center gap-2">
               {isEditable && !isEditMode && onEdit && (
                 <Button 

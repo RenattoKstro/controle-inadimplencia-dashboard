@@ -24,7 +24,8 @@ import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
-import { Calculator } from "lucide-react";
+import { Calculator, Moon, Sun } from "lucide-react";
+import VersaoLog from "./VersaoLog"; // Importando o componente VersaoLog
 
 export interface DashboardProps {
   userData: any;
@@ -40,6 +41,7 @@ export interface DashboardProps {
 const DashboardLayout = () => {
   console.log("DashboardLayout renderizado");
   const [activeTab, setActiveTab] = useState("meta-fiado");
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -53,7 +55,7 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
-  const [recebidoHoje, setRecebidoHoje] = useState(0); // Novo estado para recebidoHoje
+  const [recebidoHoje, setRecebidoHoje] = useState(0); // Estado sincronizado
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
@@ -61,11 +63,39 @@ const DashboardLayout = () => {
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
 
+  // Sincroniza recebidoHoje com base em userData e historico_diario
   useEffect(() => {
-    console.log("userData:", userData);
-    if (userData) {
-      setBonusPerdidoAtivado(!!userData.bonusPerdidoAtivado);
-    }
+    console.log("Sincronizando recebidoHoje com userData:", userData);
+    const fetchReceivedToday = async () => {
+      if (userData && userData.abertura_vencido_mes && userData.vencido_atual) {
+        const currentDate = new Date();
+        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
+        const lastDay = currentDate.toISOString().slice(0, 10);
+        const { data, error } = await supabase
+          .from("historico_diario")
+          .select("recebido, data_recebimento")
+          .eq("user_id", userData.id)
+          .gte("data_recebimento", firstDay)
+          .lte("data_recebimento", lastDay);
+
+        if (error) {
+          console.error("Erro ao buscar histórico diário:", error.message);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const todayData = data.find((record) => record.data_recebimento === lastDay);
+          const receivedToday = todayData ? todayData.recebido || 0 : 0;
+          const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
+          const daysPassed = currentDate.getDate();
+          const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
+          const adjustedReceivedToday = Math.max(0, receivedToday || dailyAverage); // Usa o valor do dia ou a média
+          setRecebidoHoje(adjustedReceivedToday);
+          console.log("Recebido Hoje calculado:", adjustedReceivedToday);
+        }
+      }
+    };
+    fetchReceivedToday();
   }, [userData]);
 
   useEffect(() => {
@@ -89,7 +119,18 @@ const DashboardLayout = () => {
     } else {
       setIsNewHistorico(false);
     }
-  }, [navigate, toast]);
+
+    // Aplica o tema ao montar o componente
+    document.body.classList.toggle("dark", isDarkMode);
+  }, [navigate, toast, isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => {
+      const newMode = !prev;
+      document.body.classList.toggle("dark", newMode);
+      return newMode;
+    });
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -145,72 +186,72 @@ const DashboardLayout = () => {
   ];
 
   const renderTabs = () => (
-    <TabsList className={`grid grid-cols-7 w-full p-1 bg-white shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
+    <TabsList className={`grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
       <TabsTrigger 
         value="ajustes-metas" 
-        className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600"
+        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
         onClick={() => handleTabChange("ajustes-metas")}
       >
         <Sliders className="h-4 w-4" />
-        <span>Ajustes de Metas</span>
+        <span className="text-foreground">Ajustes de Metas</span>
       </TabsTrigger>
       <TabsTrigger 
         value="meta-fiado" 
-        className="flex items-center gap-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-600"
+        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
         onClick={() => handleTabChange("meta-fiado")}
       >
         <Wallet className="h-4 w-4" />
-        <span>Meta Fiado</span>
+        <span className="text-foreground">Meta Fiado</span>
       </TabsTrigger>
       <TabsTrigger 
         value="meta-desafio" 
-        className="flex items-center gap-2 data-[state=active]:bg-yellow-50 data-[state=active]:text-yellow-600"
+        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
         onClick={() => handleTabChange("meta-desafio")}
       >
         <Trophy className="h-4 w-4" />
-        <span>Meta Desafio</span>
+        <span className="text-foreground">Meta Desafio</span>
       </TabsTrigger>
       {bonusPerdidoAtivado && (
         <TabsTrigger 
           value="meta-perdido" 
-          className="flex items-center gap-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-600"
+          className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
           onClick={() => handleTabChange("meta-perdido")}
         >
           <AlertTriangle className="h-4 w-4" />
-          <span>Meta Perdido</span>
+          <span className="text-foreground">Meta Perdido</span>
         </TabsTrigger>
       )}
       <TabsTrigger 
         value="meta-alimentacao" 
-        className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600"
+        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
         onClick={() => handleTabChange("meta-alimentacao")}
       >
         <Utensils className="h-4 w-4" />
-        <span>Meta de Ticket</span>
+        <span className="text-foreground">Meta de Ticket</span>
       </TabsTrigger>
       <TabsTrigger 
         value="meus-premios" 
-        className="flex items-center gap-2 data-[state=active]:bg-pink-50 data-[state=active]:text-pink-600"
+        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
         onClick={() => handleTabChange("meus-premios")}
       >
         <Gift className="h-4 w-4" />
-        <span>Meus Prêmios</span>
+        <span className="text-foreground">Meus Prêmios</span>
       </TabsTrigger>
       <TabsTrigger 
         value="historicos" 
-        className="flex items-center gap-2 data-[state=active]:bg-gray-50 data-[state=active]:text-gray-600"
+        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
         onClick={() => handleTabChange("historicos")}
       >
         <History className="h-4 w-4" />
-        <span>Históricos</span>
-        {isNewHistorico && <span className="ml-1 text-red-500 font-bold">N</span>}
+        <span className="text-foreground">Históricos</span>
+        {isNewHistorico && <span className="text-destructive font-bold">N</span>}
       </TabsTrigger>
     </TabsList>
   );
 
   const renderTabsContent = () => (
     <>
-      <TabsContent value="ajustes-metas" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="ajustes-metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         <AjustesMetas
           userData={userData}
           updateUserData={updateUserData}
@@ -222,7 +263,7 @@ const DashboardLayout = () => {
           setBonusPerdidoAtivado={setBonusPerdidoAtivado}
         />
       </TabsContent>
-      <TabsContent value="meta-fiado" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         <MetaFiado 
           userData={userData}
           updateUserData={updateUserData}
@@ -234,7 +275,7 @@ const DashboardLayout = () => {
           setRecebidoHoje={setRecebidoHoje} // Passa a função para MetaFiado
         />
       </TabsContent>
-      <TabsContent value="meta-desafio" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         <MetaDesafio 
           userData={userData}
           updateUserData={updateUserData}
@@ -245,7 +286,7 @@ const DashboardLayout = () => {
           bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
-      <TabsContent value="meta-perdido" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         {bonusPerdidoAtivado && (
           <MetaPerdido 
             userData={userData}
@@ -258,7 +299,7 @@ const DashboardLayout = () => {
           />
         )}
       </TabsContent>
-      <TabsContent value="meta-alimentacao" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meta-alimentacao" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         <MetaAlimentacao 
           userData={userData}
           updateUserData={updateUserData}
@@ -269,7 +310,7 @@ const DashboardLayout = () => {
           bonusPerdidoAtivado={bonusPerdidoAtivado}
         />
       </TabsContent>
-      <TabsContent value="meus-premios" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         {userData ? (
           <MeusPremios 
             userData={userData}
@@ -282,10 +323,10 @@ const DashboardLayout = () => {
             setBonusPerdidoAtivado={setBonusPerdidoAtivado}
           />
         ) : (
-          <div>Carregando dados...</div>
+          <div className="text-foreground">Carregando dados...</div>
         )}
       </TabsContent>
-      <TabsContent value="historicos" className="bg-white p-4 md:p-6 rounded-xl shadow-sm">
+      <TabsContent value="historicos" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         <Historicos 
           userData={userData}
           updateUserData={updateUserData}
@@ -360,13 +401,15 @@ const DashboardLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100" ref={contentRef}>
-      <header className="bg-white shadow-md">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
+      <header className="bg-card shadow-md">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           {isMobile ? (
             <>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Controle <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
+                Controle{" "}
+                <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
+                <VersaoLog className="ml-2" /> {/* Integração do VersaoLog ao lado de Beta */}
               </h1>
               <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -375,10 +418,10 @@ const DashboardLayout = () => {
                       <Menu size={18} />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+                  <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-card">
                     <div className="flex flex-col h-full">
-                      <div className="py-6 border-b">
-                        <h2 className="text-lg font-semibold">Apps</h2>
+                      <div className="py-6 border-b border-border">
+                        <h2 className="text-lg font-semibold text-foreground">Apps</h2>
                       </div>
                       <div className="py-4 flex-1 space-y-2">
                         {apps.map((app) => (
@@ -386,22 +429,22 @@ const DashboardLayout = () => {
                             <DialogTrigger asChild>
                               <Button
                                 variant="ghost"
-                                className="w-full justify-start text-gray-600 hover:text-blue-600"
+                                className="w-full justify-start text-foreground hover:text-primary"
                               >
                                 <app.icon className="h-4 w-4 mr-2" />
                                 {app.name}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md">
+                            <DialogContent className="max-w-md bg-card">
                               <app.component />
                             </DialogContent>
                           </Dialog>
                         ))}
                       </div>
-                      <div className="py-4 border-t">
+                      <div className="py-4 border-t border-border">
                         <Button 
                           variant="destructive" 
-                          className="w-full" 
+                          className="w-full"
                           onClick={handleLogout}
                         >
                           <LogOut size={16} className="mr-2" />
@@ -411,11 +454,19 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={toggleDarkMode}
+                >
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </Button>
                 <div className="relative">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                    className="h-9 flex items-center gap-2 text-foreground hover:text-primary"
                     onClick={() => setShowCalendar(!showCalendar)}
                   >
                     <Calendar className="h-5 w-5" />
@@ -428,23 +479,23 @@ const DashboardLayout = () => {
                     </span>
                   </Button>
                   {showCalendar && (
-                    <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                    <div className="absolute right-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-3 z-50 w-72">
                       <div className="flex justify-between items-center mb-3">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-lg font-bold"
+                          className="text-lg font-bold text-foreground"
                           onClick={() => handleMonthNavigation("prev")}
                         >
                           {"<"}
                         </Button>
-                        <span className="text-base font-semibold">
+                        <span className="text-base font-semibold text-foreground">
                           {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                         </span>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-lg font-bold"
+                          className="text-lg font-bold text-foreground"
                           onClick={() => handleMonthNavigation("next")}
                         >
                           {">"}
@@ -452,7 +503,7 @@ const DashboardLayout = () => {
                       </div>
                       <div className="grid grid-cols-7 gap-2 text-center">
                         {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                          <div key={day} className="text-sm font-medium text-gray-700">
+                          <div key={day} className="text-sm font-medium text-muted-foreground">
                             {day}
                           </div>
                         ))}
@@ -472,13 +523,15 @@ const DashboardLayout = () => {
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
+                Controle de Inadimplência{" "}
+                <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
+                <VersaoLog className="ml-2" /> {/* Integração do VersaoLog ao lado de Versão 1.1 */}
               </h1>
               <div className="flex items-center gap-4">
                 <Button
                   onClick={handlePrintScreen}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
                 >
                   Print Tela
                 </Button>
@@ -486,13 +539,13 @@ const DashboardLayout = () => {
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                      className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
                       Anexos
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <h3 className="text-lg font-semibold mb-4">Lista de Anexos</h3>
+                  <DialogContent className="max-w-md bg-card">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Lista de Anexos</h3>
                     <ul className="space-y-2">
                       {pdfList.map((pdf) => (
                         <li key={pdf.id}>
@@ -500,7 +553,7 @@ const DashboardLayout = () => {
                             href={pdf.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="text-primary hover:underline"
                           >
                             {pdf.name}
                           </a>
@@ -514,7 +567,7 @@ const DashboardLayout = () => {
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
-                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                        className="flex items-center gap-2 text-foreground hover:text-primary"
                         onClick={() => setShowCalendar(!showCalendar)}
                       >
                         <Calendar className="h-5 w-5" />
@@ -528,23 +581,23 @@ const DashboardLayout = () => {
                       </Button>
                     </DialogTrigger>
                     {showCalendar && (
-                      <div className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg p-3 z-50 w-72">
+                      <div className="absolute right-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-3 z-50 w-72">
                         <div className="flex justify-between items-center mb-3">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-lg font-bold"
+                            className="text-lg font-bold text-foreground"
                             onClick={() => handleMonthNavigation("prev")}
                           >
                             {"<"}
                           </Button>
-                          <span className="text-base font-semibold">
+                          <span className="text-base font-semibold text-foreground">
                             {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
                           </span>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-lg font-bold"
+                            className="text-lg font-bold text-foreground"
                             onClick={() => handleMonthNavigation("next")}
                           >
                             {">"}
@@ -552,7 +605,7 @@ const DashboardLayout = () => {
                         </div>
                         <div className="grid grid-cols-7 gap-2 text-center">
                           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                            <div key={day} className="text-sm font-medium text-gray-700">
+                            <div key={day} className="text-sm font-medium text-muted-foreground">
                               {day}
                             </div>
                           ))}
@@ -573,12 +626,12 @@ const DashboardLayout = () => {
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+                      className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
                       Relatórios Sabium
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-2xl bg-card">
                     <RelatoriosSabium />
                   </DialogContent>
                 </Dialog>
@@ -587,15 +640,15 @@ const DashboardLayout = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="text-gray-600 hover:text-gray-900"
+                      className="text-foreground hover:text-primary"
                     >
                       <Menu className="h-5 w-5" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+                  <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-card">
                     <div className="flex flex-col h-full">
-                      <div className="py-6 border-b">
-                        <h2 className="text-lg font-semibold">Apps</h2>
+                      <div className="py-6 border-b border-border">
+                        <h2 className="text-lg font-semibold text-foreground">Apps</h2>
                       </div>
                       <div className="py-4 flex-1 space-y-2">
                         {apps.map((app) => (
@@ -603,22 +656,22 @@ const DashboardLayout = () => {
                             <DialogTrigger asChild>
                               <Button
                                 variant="ghost"
-                                className="w-full justify-start text-gray-600 hover:text-blue-600"
+                                className="w-full justify-start text-foreground hover:text-primary"
                               >
                                 <app.icon className="h-4 w-4 mr-2" />
                                 {app.name}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md">
+                            <DialogContent className="max-w-md bg-card">
                               <app.component />
                             </DialogContent>
                           </Dialog>
                         ))}
                       </div>
-                      <div className="py-4 border-t">
+                      <div className="py-4 border-t border-border">
                         <Button 
                           variant="destructive" 
-                          className="w-full" 
+                          className="w-full"
                           onClick={handleLogout}
                         >
                           <LogOut size={16} className="mr-2" />
@@ -628,6 +681,14 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={toggleDarkMode}
+                >
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </Button>
               </div>
             </>
           )}
@@ -635,14 +696,14 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-blue-50 p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
+        <div className="bg-card p-4 rounded-lg flex flex-col md:flex-row justify-between items-center gap-3 shadow-sm mb-6">
           <div className="flex items-center gap-2 blink-slow" style={{ animation: "blink-slow 2s infinite" }}>
-            <FaWhatsapp className="h-5 w-5 text-green-500" />
+            <FaWhatsapp className="h-5 w-5 text-success" />
             <a
               href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline text-xs"
+              className="text-primary hover:underline text-xs"
             >
               Ajuda, Dicas e Sugestões entre no grupo e fique atualizado sobre novas funções!
             </a>
@@ -662,7 +723,7 @@ const DashboardLayout = () => {
               onClick={handleInstagramClick}
             />
             {showInstagramUsername && (
-              <span className="absolute right-0 top-full mt-1 text-pink-600 text-xs bg-white p-1 rounded shadow-md">
+              <span className="absolute right-0 top-full mt-1 text-pink-600 text-xs bg-card p-1 rounded shadow-md">
                 @renato_alme1da
               </span>
             )}
