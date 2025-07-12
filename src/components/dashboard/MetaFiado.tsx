@@ -359,7 +359,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         </Card>
         <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
           <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-gray-200">Previsão de Recebimento</h3>
+            <h3 className="text-sm font-medium text-gray-200">Previsão de Recebimento (teste)</h3>
             <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal)}</div>
             <div className="text-gray-300 text-sm mt-1">Total estimado para o mês</div>
             <div className="text-gray-300 text-sm mt-1">Já recebido: {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
@@ -369,7 +369,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         </Card>
         <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
           <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-gray-200">Previsão de Fechamento</h3>
+            <h3 className="text-sm font-medium text-gray-200">Previsão de Fechamento (teste)</h3>
             <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoFechamento)}</div>
             <div className={`text-sm mt-1 ${previsaoData.metaStatus.color}`}>{previsaoData.metaStatus.text}</div>
             <div className="text-gray-300 text-sm mt-1">Redução extra de {previsaoData.formatCurrency(userData.abertura_vencido_mes - previsaoData.previsaoRecebimentoTotal)}</div>
