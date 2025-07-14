@@ -6,10 +6,9 @@ const VersaoLog = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const versionLog = [
-    { version: "1.0.8", date: "11-07-2025", changes: "Add Tema Escuro/Claro" },
-    { version: "1.0.7", date: "11-07-2025", changes: "Add Cards de Projeções" },
+    { version: "1.0.7", date: "11-07-2025", changes: "Add Cards de Projeções e Tema Escuro/Claro" },
     { version: "1.0.6", date: "09-07-2025", changes: "Add Guia Históricos mensal e diário" },
-    { version: "1.0.5", date: "08-07-2025", changes: "Add Card de GAP Positivo/Negativo" },
+    { version: "1.0.5", date: "07-07-2025", changes: "Add Card de GAP Positivo/Negativo" },
     { version: "1.0.4", date: "01-07-2025", changes: "Add Calc. Rentabilidade" },
     { version: "1.0.3", date: "26-06-2025", changes: "Add Print Tela, Anexos, Rel. Sabium" },
     { version: "1.0.2", date: "22-06-2025", changes: "Add Calendário" },

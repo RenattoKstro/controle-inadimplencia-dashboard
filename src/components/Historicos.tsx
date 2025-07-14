@@ -641,7 +641,7 @@ const Historicos = ({
                             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                             .map((daily, index) => {
                               const { diff, isIncrease } = getDifference(getDailyRecordsForRow(item.id), index);
-                              const diffText = diff === 0 ? "" : formatCurrency(Math.abs(diff));
+                              const diffText = diff === 0 ? "" : isIncrease ? `+${formatCurrency(diff)}` : `-${formatCurrency(Math.abs(diff))}`;
                               const diffClass = isIncrease ? "text-green-500" : "text-red-500";
 
                               return (
@@ -652,7 +652,7 @@ const Historicos = ({
                                     {diffText && (
                                       <span className={`text-[0.6rem] ${diffClass} ml-auto flex items-center`}>
                                         {isIncrease ? <FiTrendingUp size={10} /> : <FiTrendingDown size={10} />}
-                                        {diffText}
+                                        <span className="ml-1">{diffText}</span>
                                       </span>
                                     )}
                                   </td>
