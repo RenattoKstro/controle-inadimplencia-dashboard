@@ -2,6 +2,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { FiTrendingUp, FiTrendingDown } from "react-icons/fi";
 
 interface HistoricosProps {
   userData: any;
@@ -394,6 +395,23 @@ const Historicos = ({
     setExpandedRows(newExpandedRows);
   };
 
+  // Função para determinar a cor com base no percentual com opacidade reduzida
+  const getColorClass = (percentual: number) => {
+    if (percentual < 94) return "bg-red-500/50 text-white";
+    if (percentual >= 94 && percentual < 100) return "bg-yellow-500/50 text-black";
+    if (percentual >= 100) return "bg-green-500/50 text-white";
+    return ""; // Caso padrão, sem cor
+  };
+
+  // Função para calcular a diferença em relação ao dia anterior
+  const getDifference = (records: any[], index: number) => {
+    if (index === 0) return { diff: 0, isIncrease: false }; // Primeiro dia não tem diferença
+    const current = records[index].recebido;
+    const previous = records[index - 1].recebido;
+    const diff = current - previous;
+    return { diff, isIncrease: diff > 0 };
+  };
+
   if (isLoading) return <div>Carregando histórico...</div>;
 
   return (
@@ -578,7 +596,7 @@ const Historicos = ({
           <tbody>
             {historico.map((item) => (
               <React.Fragment key={item.id}>
-                <tr className="border border-gray-300">
+                <tr className={`border border-gray-300 ${getColorClass(item.percentual_meta_fiado || 0)}`}>
                   <td className="border border-gray-300 p-2 text-center text-foreground">{item.month}</td>
                   <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.aberturavencidomes || 0)}</td>
                   <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.metames || 0)}</td>
@@ -594,12 +612,12 @@ const Historicos = ({
                   <td className="border border-gray-300 p-2 text-center text-foreground">{item.percentual_meta_desafio || 0}%</td>
                   <td className="border border-gray-300 p-2 text-center text-foreground">{item.premiosrecebidos || "Nenhum"}</td>
                   <td className="border border-gray-300 p-2 text-center">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="mr-2">Editar</Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>Excluir</Button>
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="bg-white text-gray-800 mr-2">Editar</Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)} className="bg-white text-gray-800">Excluir</Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="ml-2"
+                      className="bg-white text-gray-800 ml-2"
                       onClick={() => toggleExpand(item.id)}
                     >
                       {expandedRows.has(item.id) ? "▲" : "▼"} {/* Ícone customizado */}
@@ -619,29 +637,45 @@ const Historicos = ({
                           </tr>
                         </thead>
                         <tbody>
-                          {getDailyRecordsForRow(item.id).map((daily) => (
-                            <tr key={daily.id} className="border border-gray-300">
-                              <td className="border border-gray-300 p-2 text-center text-foreground">{daily.date}</td>
-                              <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(daily.recebido)}</td>
-                              <td className="border border-gray-300 p-2 text-center">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditDaily(item.id, daily.id)}
-                                  className="mr-2"
-                                >
-                                  Editar
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleDeleteDaily(item.id, daily.id)}
-                                >
-                                  Excluir
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
+                          {getDailyRecordsForRow(item.id)
+                            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                            .map((daily, index) => {
+                              const { diff, isIncrease } = getDifference(getDailyRecordsForRow(item.id), index);
+                              const diffText = diff === 0 ? "" : formatCurrency(Math.abs(diff));
+                              const diffClass = isIncrease ? "text-green-500" : "text-red-500";
+
+                              return (
+                                <tr key={daily.id} className="border border-gray-300">
+                                  <td className="border border-gray-300 p-2 text-center text-foreground">{daily.date}</td>
+                                  <td className="border border-gray-300 p-2 text-center text-foreground flex justify-between">
+                                    <span className="text-center flex-1">{formatCurrency(daily.recebido)}</span>
+                                    {diffText && (
+                                      <span className={`text-[0.6rem] ${diffClass} ml-auto flex items-center`}>
+                                        {isIncrease ? <FiTrendingUp size={10} /> : <FiTrendingDown size={10} />}
+                                        {diffText}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="border border-gray-300 p-2 text-center">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleEditDaily(item.id, daily.id)}
+                                      className="mr-2"
+                                    >
+                                      Editar
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleDeleteDaily(item.id, daily.id)}
+                                    >
+                                      Excluir
+                                    </Button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                         </tbody>
                       </table>
                     </td>
