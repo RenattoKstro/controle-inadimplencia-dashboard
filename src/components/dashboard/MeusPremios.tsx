@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { 
   Card, 
@@ -46,6 +46,15 @@ const formatPercentage = (value: number): string => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value / 100);
+};
+
+const isPastDeadline = (): boolean => {
+  const now = new Date();
+  now.setHours(now.getHours() - 4); // Ajuste para UTC-04
+  const deadline = new Date(now.getFullYear(), now.getMonth(), 16, 0, 0, 0, 0); // 00:00 do dia 16 no fuso -04
+  const isPast = now >= deadline;
+  console.log("Debug - isPastDeadline:", { now: now.toISOString(), deadline: deadline.toISOString(), isPast });
+  return isPast;
 };
 
 const isPastDay15 = (): boolean => {
@@ -108,8 +117,8 @@ const MeusPremios = ({
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<"lider" | "cadastro">("lider");
-
-  // Estados para prêmios e totais
+  const [maxMetaAtingida, setMaxMetaAtingida] = useState(0); // Rastreia o pico do progresso da meta de ticket
+  const [isPastDeadlineState, setIsPastDeadlineState] = useState(false); // Inicializa como false
   const [premios, setPremios] = useState<{
     fiadoLider: PremioProps[];
     desafioLider: PremioProps[];
@@ -125,11 +134,63 @@ const MeusPremios = ({
   });
   const [totalPremiosLider, setTotalPremiosLider] = useState(0);
   const [totalPremiosCadastro, setTotalPremiosCadastro] = useState(0);
+  const [isReady, setIsReady] = useState(false); // Controle de readiness
+  const maxMetaRef = useRef(0); // Ref para rastrear o pico máximo
+  const todayDate = new Date();
+  const mesAtual = todayDate.getMonth();
+  const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
+  const [mesCongelado, setMesCongelado] = useState<number | null>(null);
 
-  // Cálculos iniciais
+  // Inicializa isPastDeadlineState e maxMetaAtingida
   useEffect(() => {
-    if (!userData) {
-      console.warn("userData não está disponível, pulando cálculos.");
+    const newIsPastDeadline = isPastDeadline();
+    setIsPastDeadlineState(newIsPastDeadline);
+    console.log("Debug - Inicializando isPastDeadlineState:", { newIsPastDeadline });
+
+    if (userData && userData.abertura_vencido_mes && userData.meta_mes && userData.vencido_atual) {
+      const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
+      const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual || 0;
+      const metaTicket = aReceber * 0.8;
+      const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
+      const progressoExibido = Math.min(100, progressoTicketAtual);
+      maxMetaRef.current = Math.max(maxMetaRef.current, progressoExibido);
+      setMaxMetaAtingida(maxMetaRef.current);
+      console.log("Debug - Inicializando maxMetaAtingida:", { aReceber, recebidoMes, metaTicket, progressoTicketAtual, progressoExibido, maxMetaRef: maxMetaRef.current });
+    }
+  }, []);
+
+  // Atualiza progresso da meta de ticket e maxMetaAtingida com base em userData
+  useEffect(() => {
+    if (!userData || !userData.abertura_vencido_mes || !userData.meta_mes || !userData.vencido_atual) {
+      console.warn("Debug - userData incompleto:", userData);
+      return;
+    }
+
+    const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
+    const recebidoMes = userData.abertura_vencido_mes - userData.vencido_atual || 0;
+    const metaTicket = aReceber * 0.8;
+    const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
+    const passouDia15 = isPastDay15();
+
+    if (passouDia15 && progressoCongelado === null) {
+      const progressoNoDia15 = Math.min(100, progressoTicketAtual);
+      setProgressoCongelado(progressoNoDia15);
+      setMesCongelado(mesAtual);
+    } else if (mesCongelado !== null && mesCongelado !== mesAtual) {
+      setProgressoCongelado(null);
+      setMesCongelado(null);
+    }
+
+    const progressoExibido = progressoCongelado !== null ? progressoCongelado : Math.min(100, progressoTicketAtual);
+    maxMetaRef.current = Math.max(maxMetaRef.current, progressoExibido);
+    setMaxMetaAtingida(maxMetaRef.current);
+    console.log("Debug - Atualizando maxMetaAtingida:", { aReceber, recebidoMes, metaTicket, progressoTicketAtual, progressoExibido, maxMetaRef: maxMetaRef.current });
+  }, [userData, progressoCongelado, mesCongelado]);
+
+  // Calcula prêmios apenas após estados estarem prontos
+  useEffect(() => {
+    if (!userData || isPastDeadlineState === undefined || maxMetaAtingida === undefined) {
+      console.warn("Debug - Estados incompletos para cálculo de prêmios.");
       return;
     }
 
@@ -139,19 +200,18 @@ const MeusPremios = ({
     const safeMetaPerdido = userData.meta_perdido || 0;
     const safeRecPerdido = userData.rec_perdido || 0;
 
-    // Cálculos para Líder
-    let metaAtingidaPercentualLider = safeVencidoAtual > 0 ? Number(((safeMetaMes / safeVencidoAtual) * 100).toFixed(2)) : 0;
-    metaAtingidaPercentualLider = Math.max(0, metaAtingidaPercentualLider);
+    let metaAtingidaPercentualFiadoLider = safeVencidoAtual > 0 ? Number(((safeMetaMes / safeVencidoAtual) * 100).toFixed(2)) : 0;
+    metaAtingidaPercentualFiadoLider = Math.max(0, metaAtingidaPercentualFiadoLider);
 
     const premiosFiadoLider = [
-      { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentualLider >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "96%", percentual: 96, valor: 63.00, atingido: metaAtingidaPercentualLider >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "98%", percentual: 98, valor: 84.00, atingido: metaAtingidaPercentualLider >= 98, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "99%", percentual: 99, valor: 94.50, atingido: metaAtingidaPercentualLider >= 99, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "100%", percentual: 100, valor: 241.50, atingido: metaAtingidaPercentualLider >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "101%", percentual: 101, valor: 84.00, atingido: metaAtingidaPercentualLider >= 101, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "103%", percentual: 103, valor: 84.00, atingido: metaAtingidaPercentualLider >= 103, icon: <Wallet size={16} />, color: "text-blue-500" },
-      { nome: "105%", percentual: 105, valor: 84.00, atingido: metaAtingidaPercentualLider >= 105, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "94%", percentual: 94, valor: 52.50, atingido: metaAtingidaPercentualFiadoLider >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "96%", percentual: 96, valor: 63.00, atingido: metaAtingidaPercentualFiadoLider >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "98%", percentual: 98, valor: 84.00, atingido: metaAtingidaPercentualFiadoLider >= 98, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "99%", percentual: 99, valor: 94.50, atingido: metaAtingidaPercentualFiadoLider >= 99, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "100%", percentual: 100, valor: 241.50, atingido: metaAtingidaPercentualFiadoLider >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "101%", percentual: 101, valor: 84.00, atingido: metaAtingidaPercentualFiadoLider >= 101, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "103%", percentual: 103, valor: 84.00, atingido: metaAtingidaPercentualFiadoLider >= 103, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "105%", percentual: 105, valor: 84.00, atingido: metaAtingidaPercentualFiadoLider >= 105, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
 
     let metaDesafioPercentualLider = safeVencidoAtual > 0 && safeMetaDesafio > 0 ? Number(((safeMetaDesafio / safeVencidoAtual) * 100).toFixed(2)) : 0;
@@ -164,10 +224,10 @@ const MeusPremios = ({
     ];
 
     const premiosAlimentacaoLider = [
-      { nome: "Disponível após dia 15", percentual: 100, valor: 100.00, atingido: isPastDay15() && metaAtingidaPercentualLider >= 100, icon: <Gift size={16} />, color: "text-green-500" },
+      { nome: "Disponível até 23:59 do dia 15", percentual: 100, valor: 100.00, atingido: !isPastDeadlineState && maxMetaAtingida >= 100, icon: <Gift size={16} />, color: "text-green-500" },
     ];
+    console.log("Debug - Calculando Vale Alimentação:", { maxMetaAtingida, isPastDeadlineState, atingido: !isPastDeadlineState && maxMetaAtingida >= 100 });
 
-    // Cálculos para Cadastro
     let metaAtingidaPercentualCadastro = safeVencidoAtual > 0 ? Number(((safeMetaMes / safeVencidoAtual) * 100).toFixed(2)) : 0;
     metaAtingidaPercentualCadastro = Math.max(0, metaAtingidaPercentualCadastro);
 
@@ -186,7 +246,6 @@ const MeusPremios = ({
       { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentualCadastro >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
 
-    // Atualiza estados
     setPremios({
       fiadoLider: premiosFiadoLider,
       desafioLider: premiosDesafioLider,
@@ -203,10 +262,13 @@ const MeusPremios = ({
       premiosFiadoCadastro.reduce((acc, p) => acc + p.valor, 0) +
       premiosDesafioCadastro.reduce((acc, p) => acc + p.valor, 0)
     );
-  }, [userData]);
+    setIsReady(true);
+  }, [userData, isPastDeadlineState, maxMetaAtingida, progressoCongelado, mesCongelado]);
 
-  // Cálculo de ganhos
   const calculoGanhos = (tipo: "lider" | "cadastro") => {
+    if (!isReady || !premios || !premios[tipo === "lider" ? "fiadoLider" : "fiadoCadastro"]) {
+      return 0;
+    }
     const fiadoGanhos = premios[tipo === "lider" ? "fiadoLider" : "fiadoCadastro"]
       .filter((p) => p.atingido)
       .reduce((acc, p) => acc + p.valor, 0);
@@ -227,7 +289,7 @@ const MeusPremios = ({
   const totalGanhosLider = calculoGanhos("lider");
   const totalGanhosCadastro = calculoGanhos("cadastro");
 
-  if (isLoading) {
+  if (isLoading || !isReady) {
     return (
       <div className="space-y-4 md:space-y-6">
         <Skeleton className="h-6 md:h-8 w-48" />

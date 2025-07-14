@@ -25,14 +25,17 @@ const calcularDiasUteisAte15 = (diasRestantes: number): number => {
 
   if (today.getDate() > 15 || today.getDate() > lastDayOfMonth) return 0;
 
-  const diasAte15 = 15 - today.getDate();
   let diasUteis = 0;
 
-  for (let i = 0; i < diasAte15; i++) {
-    const currentDate = new Date(today);
-    currentDate.setDate(today.getDate() + i + 1);
-    const dayOfWeek = currentDate.getDay();
-    if (dayOfWeek !== 0) diasUteis++;
+  // Inclui o dia atual como dia útil
+  if (today.getDate() <= 15) {
+    const diasAte15 = 15 - today.getDate();
+    for (let i = 0; i <= diasAte15; i++) {
+      const currentDate = new Date(today);
+      currentDate.setDate(today.getDate() + i);
+      const dayOfWeek = currentDate.getDay();
+      if (dayOfWeek !== 0) diasUteis++; // Conta o dia atual e os dias até 15, se não for domingo
+    }
   }
 
   return Math.min(diasRestantes || Infinity, diasUteis);
