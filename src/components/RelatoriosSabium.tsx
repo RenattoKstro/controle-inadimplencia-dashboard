@@ -34,8 +34,8 @@ const RelatoriosSabium = () => {
               <li>Pesquisa</li>
               <li>Acompanhamento Renegociação</li>
               <li>Relatório - 309.2</li>
-              <li><em>Não selecionar nenhuma Classificação</em></li>
-              <li><em>alterar somente Filial e Data</em></li>
+              <li><em>Selecionar todas Classificação</em></li>
+              <li><em>Alterar filial e data</em></li>
             </ul>
           </AccordionContent>
         </AccordionItem>
