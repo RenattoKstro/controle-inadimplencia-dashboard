@@ -128,12 +128,24 @@ const Historicos = ({
         return fiadoGanhos + desafioGanhos + alimentacaoGanhos + bonusPerdidoGanhos;
       };
 
-      const premiosrecebidos = calculoGanhos();
+      const currentMonth = new Date().toISOString().slice(0, 7); // Ex.: "2025-07"
+      const { data: existingRecords, error: fetchError } = await supabase
+        .from("historico")
+        .select("*")
+        .eq("user_id", authUserId)
+        .eq("month", currentMonth);
+      if (fetchError) {
+        console.error("Error fetching existing record:", fetchError.message);
+        return;
+      }
+      const existingRecord = existingRecords?.[0]; // Pega o primeiro registro, se existir
 
-      const existingRecord = historico.find((h) => h.month === new Date().toISOString().slice(0, 7) && h.user_id === authUserId);
+      const premiosrecebidos = existingRecord ? existingRecord.premiosrecebidos : calculoGanhos();
+
+      console.log("Existing record found:", existingRecord);
       setFormData({
         id: existingRecord?.id || "",
-        month: new Date().toISOString().slice(0, 7),
+        month: currentMonth,
         aberturavencidomes: userData.abertura_vencido_mes || 0,
         metames: userData.meta_mes || 0,
         vencidoatual: safeVencidoatual, // Recebido Mensal
@@ -162,7 +174,7 @@ const Historicos = ({
       return;
     }
     console.log("Auth UID:", authUserId);
-    console.log("Submitting form data:", formData);
+    console.log("Submitting form data - ID before submit:", formData.id); // Log para debug
     try {
       const historicoPayload = {
         id: formData.id || crypto.randomUUID(),
@@ -181,16 +193,28 @@ const Historicos = ({
       console.log("Historico payload to insert/update:", historicoPayload);
 
       let historicoResult;
-      if (editMode && formData.id && !editingDailyId) {
-        console.log("Performing update for id:", formData.id, "with user_id:", authUserId);
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const { data: existingRecords, error: fetchError } = await supabase
+        .from("historico")
+        .select("*")
+        .eq("user_id", authUserId)
+        .eq("month", currentMonth);
+      if (fetchError) {
+        console.error("Error fetching existing record:", fetchError.message);
+        throw fetchError;
+      }
+      const existingRecord = existingRecords?.[0];
+
+      if (existingRecord && formData.month === currentMonth) {
+        console.log("Updating existing record for month:", currentMonth, "with id:", existingRecord.id);
         historicoResult = await supabase
           .from("historico")
           .update(historicoPayload)
-          .eq("id", formData.id)
+          .eq("id", existingRecord.id)
           .eq("user_id", authUserId)
           .select();
-      } else if (!editingDailyId) {
-        console.log("Performing insert into historico with user_id:", authUserId);
+      } else {
+        console.log("Inserting new record for month:", formData.month);
         historicoResult = await supabase.from("historico").insert(historicoPayload).select();
       }
       const { data: historicoData, error: historicoError } = historicoResult || { data: null, error: null };
@@ -228,8 +252,32 @@ const Historicos = ({
           recebido: formData.recebidoDiario,
           historico_id: historicoData[0]?.id,
         };
-        console.log("Diario payload to insert:", diarioPayload);
-        const diarioResult = await supabase.from("historico_diario").insert(diarioPayload).select();
+        console.log("Checking for existing daily record with historico_id:", historicoData[0]?.id, "and date:", formData.data_recebimento);
+        const { data: existingDailyRecords, error: dailyFetchError } = await supabase
+          .from("historico_diario")
+          .select("*")
+          .eq("historico_id", historicoData[0]?.id)
+          .eq("data_recebimento", formData.data_recebimento)
+          .eq("user_id", authUserId);
+        if (dailyFetchError) {
+          console.error("Error fetching existing daily record:", dailyFetchError.message);
+          throw dailyFetchError;
+        }
+        const existingDailyRecord = existingDailyRecords?.[0];
+
+        let diarioResult;
+        if (existingDailyRecord) {
+          console.log("Updating existing daily record with id:", existingDailyRecord.id);
+          diarioResult = await supabase
+            .from("historico_diario")
+            .update(diarioPayload)
+            .eq("id", existingDailyRecord.id)
+            .eq("user_id", authUserId)
+            .select();
+        } else {
+          console.log("Inserting new daily record for historico_id:", historicoData[0]?.id);
+          diarioResult = await supabase.from("historico_diario").insert(diarioPayload).select();
+        }
         const { data: diarioData, error: diarioError } = diarioResult;
         if (diarioError) {
           console.error("Error saving historico_diario:", diarioError.message, "Details:", diarioError.details, "Code:", diarioError.code);
@@ -242,7 +290,7 @@ const Historicos = ({
         }
       }
 
-      // Atualiza userData com os novos valores
+      // Atualiza userData apenas com campos relevantes para user_dashboard
       updateUserData({
         ...userData,
         abertura_vencido_mes: formData.aberturavencidomes,
@@ -251,9 +299,6 @@ const Historicos = ({
         meta_desafio: formData.metadesafio,
         meta_perdido: formData.metaperdido,
         rec_perdido: formData.recperdido,
-        percentual_meta_fiado: formData.percentual_meta_fiado,
-        percentual_meta_desafio: formData.percentual_meta_desafio,
-        premiosrecebidos: formData.premiosrecebidos,
       });
 
       setShowForm(false);
