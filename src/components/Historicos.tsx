@@ -37,7 +37,7 @@ const Historicos = ({
     recperdido: 0,
     percentual_meta_fiado: 0,
     percentual_meta_desafio: 0,
-    premiosrecebidos: "",
+    premiosrecebidos: 0,
     data_recebimento: "",
     recebidoDiario: 0, // Recebido Diário
   });
@@ -106,12 +106,9 @@ const Historicos = ({
           { percentual: 105, valor: 84.00, atingido: percentualMetaFiado >= 105 },
         ];
         const premiosDesafio = [
-          { percentual: 96, valor: 200.00, atingido: percentualMetaFiado >= 96 },
-          { percentual: 98, valor: 150.00, atingido: percentualMetaFiado >= 98 },
-          { percentual: 100, valor: 150.00, atingido: percentualMetaFiado >= 100 },
-        ];
-        const premiosAlimentacao = [
-          { percentual: 100, valor: 100.00, atingido: new Date().getDate() > 15 && percentualMetaFiado >= 100 },
+          { percentual: 96, valor: 200.00, atingido: percentualMetaDesafio >= 96 },
+          { percentual: 98, valor: 150.00, atingido: percentualMetaDesafio >= 98 },
+          { percentual: 100, valor: 150.00, atingido: percentualMetaDesafio >= 100 },
         ];
         const bonusPerdido = bonusPerdidoAtivado
           ? [
@@ -122,13 +119,16 @@ const Historicos = ({
 
         const fiadoGanhos = premiosFiado.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
         const desafioGanhos = premiosDesafio.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
-        const alimentacaoGanhos = premiosAlimentacao.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
         const bonusPerdidoGanhos = bonusPerdido.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
+
+        // Adiciona o prêmio manual de R$ 100,00 se metaTicketConfirmada for true e após o dia 15
+        const isPastDay15 = new Date().getDate() > 15;
+        const alimentacaoGanhos = userData.metaTicketConfirmada && isPastDay15 ? 100.00 : 0;
 
         return fiadoGanhos + desafioGanhos + alimentacaoGanhos + bonusPerdidoGanhos;
       };
 
-      const premiosrecebidos = calculoGanhos().toFixed(2);
+      const premiosrecebidos = calculoGanhos();
 
       const existingRecord = historico.find((h) => h.month === new Date().toISOString().slice(0, 7) && h.user_id === authUserId);
       setFormData({
@@ -142,7 +142,7 @@ const Historicos = ({
         recperdido: userData.rec_perdido || 0,
         percentual_meta_fiado: percentualMetaFiado,
         percentual_meta_desafio: percentualMetaDesafio,
-        premiosrecebidos: `R$ ${premiosrecebidos}`,
+        premiosrecebidos: premiosrecebidos,
         data_recebimento: existingRecord?.data_recebimento || new Date().toISOString().slice(0, 10),
         recebidoDiario: recebido || 0, // Preenche com Recebido Hoje
       });
@@ -241,6 +241,20 @@ const Historicos = ({
           console.log("Historico_diario saved successfully, response:", diarioData);
         }
       }
+
+      // Atualiza userData com os novos valores
+      updateUserData({
+        ...userData,
+        abertura_vencido_mes: formData.aberturavencidomes,
+        meta_mes: formData.metames,
+        vencido_atual: formData.vencidoatual,
+        meta_desafio: formData.metadesafio,
+        meta_perdido: formData.metaperdido,
+        rec_perdido: formData.recperdido,
+        percentual_meta_fiado: formData.percentual_meta_fiado,
+        percentual_meta_desafio: formData.percentual_meta_desafio,
+        premiosrecebidos: formData.premiosrecebidos,
+      });
 
       setShowForm(false);
       setEditingDailyId(null);
@@ -560,10 +574,12 @@ const Historicos = ({
               <div>
                 <label>Prêmios Recebidos:</label>
                 <input
-                  type="text"
+                  type="number"
                   value={formData.premiosrecebidos}
-                  onChange={(e) => setFormData({ ...formData, premiosrecebidos: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, premiosrecebidos: Number(e.target.value) || 0 })}
                   className="w-full p-2 border rounded"
+                  step="0.01"
+                  min="0"
                 />
               </div>
             </>
@@ -610,7 +626,7 @@ const Historicos = ({
                   )}
                   <td className="border border-gray-300 p-2 text-center text-foreground">{item.percentual_meta_fiado || 0}%</td>
                   <td className="border border-gray-300 p-2 text-center text-foreground">{item.percentual_meta_desafio || 0}%</td>
-                  <td className="border border-gray-300 p-2 text-center text-foreground">{item.premiosrecebidos || "Nenhum"}</td>
+                  <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.premiosrecebidos || 0)}</td>
                   <td className="border border-gray-300 p-2 text-center">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="bg-white text-gray-800 mr-2">Editar</Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)} className="bg-white text-gray-800">Excluir</Button>

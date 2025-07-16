@@ -44,6 +44,7 @@ const AjustesMetas = ({
     meta_desafio: userData.meta_desafio || 0,
     meta_perdido: userData.meta_perdido || 0,
     rec_perdido: userData.rec_perdido || 0,
+    role: userData.role || "líder", // Estado para controlar a aba ativa
   });
 
   useEffect(() => {
@@ -56,6 +57,7 @@ const AjustesMetas = ({
       meta_desafio: userData.meta_desafio || 0,
       meta_perdido: userData.meta_perdido || 0,
       rec_perdido: userData.rec_perdido || 0,
+      role: userData.role || "líder",
     });
   }, [userData, diasRestantesCalculados]);
 
@@ -145,11 +147,12 @@ const AjustesMetas = ({
       meta_desafio: userData.meta_desafio || 0,
       meta_perdido: userData.meta_perdido || 0,
       rec_perdido: userData.rec_perdido || 0,
+      role: userData.role || "líder",
     });
     setIsEditing(false);
   };
 
-  const handleChange = (field: string, value: number) => {
+  const handleChange = (field: string, value: number | string) => {
     setFormState(prev => ({
       ...prev,
       [field]: value
@@ -210,6 +213,28 @@ const AjustesMetas = ({
                 className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
               />
               <Label htmlFor="bonus-perdido-switch">Ativar Meta Perdido</Label>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button
+                variant={formState.role === "líder" ? "default" : "outline"}
+                onClick={() => {
+                  handleChange("role", "líder");
+                  updateUserData({ ...userData, role: "líder" });
+                }}
+                className="px-4 py-2 rounded-md flex items-center gap-2"
+              >
+                {formState.role === "líder" ? "✅" : "🚫"} Op. Líder
+              </Button>
+              <Button
+                variant={formState.role === "auxiliar" ? "default" : "outline"}
+                onClick={() => {
+                  handleChange("role", "auxiliar");
+                  updateUserData({ ...userData, role: "auxiliar" });
+                }}
+                className="px-4 py-2 rounded-md flex items-center gap-2"
+              >
+                {formState.role === "auxiliar" ? "✅" : "🚫"} Op. Auxiliar
+              </Button>
             </div>
           </div>
         )}

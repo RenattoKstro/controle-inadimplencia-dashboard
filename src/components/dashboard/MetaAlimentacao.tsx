@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Utensils, Check, AlertTriangle, Calendar, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 
 const formataDinheiro = (valor: number | null): string => {
   if (valor === null || isNaN(valor)) return "R$ 0,00";
@@ -27,7 +28,6 @@ const calcularDiasUteisAte15 = (diasRestantes: number): number => {
 
   let diasUteis = 0;
 
-  // Inclui o dia atual como dia útil
   if (today.getDate() <= 15) {
     const diasAte15 = 15 - today.getDate();
     for (let i = 0; i <= diasAte15; i++) {
@@ -50,6 +50,7 @@ const MetaAlimentacao = ({
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
   const [mesCongelado, setMesCongelado] = useState<number | null>(null);
+  const [metaTicketConfirmada, setMetaTicketConfirmada] = useState(userData?.metaTicketConfirmada || false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -89,6 +90,11 @@ const MetaAlimentacao = ({
 
   const valorRestante = Math.max(0, metaTicket - recebidoMes);
   const valorPorDia = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
+
+  const handleConfirmacaoChange = (confirmed: boolean) => {
+    setMetaTicketConfirmada(confirmed);
+    updateUserData({ ...userData, metaTicketConfirmada: confirmed });
+  };
 
   if (isLoading) {
     return (
@@ -259,6 +265,27 @@ const MetaAlimentacao = ({
           </CardContent>
         </Card>
       </div>
+      {passouDia15 && (
+        <div className="pt-4 border-t">
+          <p className="text-sm md:text-base font-medium text-foreground">Meta de ticket foi batida?</p>
+          <div className="flex items-center gap-4 mt-2">
+            <Button
+              variant={metaTicketConfirmada ? "default" : "outline"}
+              onClick={() => handleConfirmacaoChange(true)}
+              className="px-4 py-2 rounded-md"
+            >
+              Sim
+            </Button>
+            <Button
+              variant={!metaTicketConfirmada ? "default" : "outline"}
+              onClick={() => handleConfirmacaoChange(false)}
+              className="px-4 py-2 rounded-md"
+            >
+              Não
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

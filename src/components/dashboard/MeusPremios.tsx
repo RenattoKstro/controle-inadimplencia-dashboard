@@ -116,9 +116,8 @@ const MeusPremios = ({
 }: DashboardProps) => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState<"lider" | "cadastro">("lider");
-  const [maxMetaAtingida, setMaxMetaAtingida] = useState(0); // Rastreia o pico do progresso da meta de ticket
-  const [isPastDeadlineState, setIsPastDeadlineState] = useState(false); // Inicializa como false
+  const [maxMetaAtingida, setMaxMetaAtingida] = useState(0);
+  const [isPastDeadlineState, setIsPastDeadlineState] = useState(false);
   const [premios, setPremios] = useState<{
     fiadoLider: PremioProps[];
     desafioLider: PremioProps[];
@@ -134,14 +133,13 @@ const MeusPremios = ({
   });
   const [totalPremiosLider, setTotalPremiosLider] = useState(0);
   const [totalPremiosCadastro, setTotalPremiosCadastro] = useState(0);
-  const [isReady, setIsReady] = useState(false); // Controle de readiness
-  const maxMetaRef = useRef(0); // Ref para rastrear o pico máximo
+  const [isReady, setIsReady] = useState(false);
+  const maxMetaRef = useRef(0);
   const todayDate = new Date();
   const mesAtual = todayDate.getMonth();
   const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
   const [mesCongelado, setMesCongelado] = useState<number | null>(null);
 
-  // Inicializa isPastDeadlineState e maxMetaAtingida
   useEffect(() => {
     const newIsPastDeadline = isPastDeadline();
     setIsPastDeadlineState(newIsPastDeadline);
@@ -159,7 +157,6 @@ const MeusPremios = ({
     }
   }, []);
 
-  // Atualiza progresso da meta de ticket e maxMetaAtingida com base em userData
   useEffect(() => {
     if (!userData || !userData.abertura_vencido_mes || !userData.meta_mes || !userData.vencido_atual) {
       console.warn("Debug - userData incompleto:", userData);
@@ -187,7 +184,6 @@ const MeusPremios = ({
     console.log("Debug - Atualizando maxMetaAtingida:", { aReceber, recebidoMes, metaTicket, progressoTicketAtual, progressoExibido, maxMetaRef: maxMetaRef.current });
   }, [userData, progressoCongelado, mesCongelado]);
 
-  // Calcula prêmios apenas após estados estarem prontos
   useEffect(() => {
     if (!userData || isPastDeadlineState === undefined || maxMetaAtingida === undefined) {
       console.warn("Debug - Estados incompletos para cálculo de prêmios.");
@@ -224,9 +220,9 @@ const MeusPremios = ({
     ];
 
     const premiosAlimentacaoLider = [
-      { nome: "Disponível até 23:59 do dia 15", percentual: 100, valor: 100.00, atingido: !isPastDeadlineState && maxMetaAtingida >= 100, icon: <Gift size={16} />, color: "text-green-500" },
+      { nome: "Confirmado manualmente", percentual: 100, valor: 100.00, atingido: isPastDeadlineState && userData?.metaTicketConfirmada === true, icon: <Gift size={16} />, color: "text-green-500" },
     ];
-    console.log("Debug - Calculando Vale Alimentação:", { maxMetaAtingida, isPastDeadlineState, atingido: !isPastDeadlineState && maxMetaAtingida >= 100 });
+    console.log("Debug - Calculando Vale Alimentação:", { isPastDeadlineState, metaTicketConfirmada: userData?.metaTicketConfirmada, atingidoManual: isPastDeadlineState && userData?.metaTicketConfirmada === true });
 
     let metaAtingidaPercentualCadastro = safeVencidoAtual > 0 ? Number(((safeMetaMes / safeVencidoAtual) * 100).toFixed(2)) : 0;
     metaAtingidaPercentualCadastro = Math.max(0, metaAtingidaPercentualCadastro);
@@ -323,7 +319,7 @@ const MeusPremios = ({
   }
 
   const renderTabContent = () => {
-    const isLider = activeTab === "lider";
+    const isLider = userData.role === "líder";
     const totalPremios = isLider ? totalPremiosLider : totalPremiosCadastro;
     const totalGanhos = isLider ? totalGanhosLider : totalGanhosCadastro;
     const premiosFiado = isLider ? premios.fiadoLider : premios.fiadoCadastro;
@@ -396,22 +392,6 @@ const MeusPremios = ({
       <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
         <Gift className="text-pink-500" /> Meus Prêmios
       </h2>
-      <div className="flex space-x-2 mb-4">
-        <Button
-          variant={activeTab === "lider" ? "default" : "outline"}
-          onClick={() => setActiveTab("lider")}
-          className="px-4 py-2 rounded-md"
-        >
-          Op. Cadastro Líder
-        </Button>
-        <Button
-          variant={activeTab === "cadastro" ? "default" : "outline"}
-          onClick={() => setActiveTab("cadastro")}
-          className="px-4 py-2 rounded-md"
-        >
-          Op. Cadastro
-        </Button>
-      </div>
       {renderTabContent()}
       <div className="flex items-center gap-2">
         <Switch

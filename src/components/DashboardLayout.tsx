@@ -180,7 +180,7 @@ const DashboardLayout = () => {
     { id: 4, name: "C.I. 007 2025 CADASTRO NÃO AUTENTICADO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%20cadastro%20nao%20autenticado.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIGNhZGFzdHJvIG5hbyBhdXRlbnRpY2Fkby5wZGYiLCJpYXQiOjE3NTE2NTc2NDEsImV4cCI6MTc4MzE5MzY0MX0.cOfIUD8sR9f_yyI9qOKH93cTf6F3PNLXcERAYJV0kgQ" },
     { id: 5, name: "ENDEREÇO RURAL", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ENDERECO%20RURAL.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VOREVSRUNPIFJVUkFMLnBkZiIsImlhdCI6MTc1MTY1NzY1NSwiZXhwIjoxNzgzMTkzNjU1fQ.b7pHjnqufaYGz3k5259sWSL-YWWvwnr8tFClYXy_r9A" },
     { id: 6, name: "ESTORNO PIX", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ESTORNO%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STn20%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STk8gUElYLnBkZiIsImlhdCI6MTc1MTY1NzY3MCwiZXhwIjoxNzgzMTkzNjcwfQ.kb6dKCz0smc8C1MoOQV_Vn_OM6LgXf7kR2myERYjGJQ" },
-    { id: 7, name: "MANUAL ACIONA VENDEDOER", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20Aciona%20Vendedor.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBBY2lvbmEgVmVuZGVkb3IucGRmIiwiaWF0IjoxNzUxNjU3NjgxLCJleHAiOjE3ODMxOTM2ODF9.KAg0YI2s8ZzTMqF1TkKNTR6I5WrJxbZaesEFh_06a0U" },
+    { id: 7, name: "MANUAL CIONA VENDEDOER", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20Aciona%20Vendedor.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBBY2lvbmEgVmVuZGVkb3IucGRmIiwiaWF0IjoxNzUxNjU3NjgxLCJleHAiOjE3ODMxOTM2ODF9.KAg0YI2s8ZzTMqF1TkKNTR6I5WrJxbZaesEFh_06a0U" },
     { id: 8, name: "MANUAL DO PATRIMONIO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20do%20Patrimonio.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBkbyBQYXRyaW1vbmlvLnBkZiIsImlhdCI6MTc1MTY1NzkxMiwiZXhwIjoxNzgzMTkzOTEyfQ.nHLabdtztWNLKtiD8iJ1sEwcUFW2_JpkaTK7jWPOZTA" },
     { id: 9, name: "C.I. SIGA - TELA DE RENEGOCIAÇÃO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/COMUNICADO%20INTERNO%20%20SIGA%20TELA%20DE%20RENEGOCIACAO.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NPTVVOSUNBRE8gSU5URVJOTyAgU0lHQSBURUxBIERFIFJFTkVHT0NJQUNBTy5wZGYiLCJpYXQiOjE3NTIwNjg3NjUsImV4cCI6MTc4MzYwNDc2NX0.SuF1pAb_Fz3W6lvtwzuEf_6oCM5QkuIKkfoqB1djmxg" },
   ];
@@ -398,6 +398,7 @@ const DashboardLayout = () => {
 
   const apps = [
     { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
+    { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
   ];
 
   return (
@@ -425,8 +426,14 @@ const DashboardLayout = () => {
                       </div>
                       <div className="py-4 flex-1 space-y-2">
                         {apps.map((app) => (
-                          <Dialog key={app.id}>
-                            <DialogTrigger asChild>
+                          app.url ? (
+                            <a
+                              key={app.id}
+                              href={app.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
                               <Button
                                 variant="ghost"
                                 className="w-full justify-start text-foreground hover:text-primary"
@@ -434,11 +441,23 @@ const DashboardLayout = () => {
                                 <app.icon className="h-4 w-4 mr-2" />
                                 {app.name}
                               </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md bg-card">
-                              <app.component />
-                            </DialogContent>
-                          </Dialog>
+                            </a>
+                          ) : (
+                            <Dialog key={app.id}>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="w-full justify-start text-foreground hover:text-primary"
+                                >
+                                  <app.icon className="h-4 w-4 mr-2" />
+                                  {app.name}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md bg-card">
+                                <app.component />
+                              </DialogContent>
+                            </Dialog>
+                          )
                         ))}
                       </div>
                       <div className="py-4 border-t border-border">
@@ -652,8 +671,14 @@ const DashboardLayout = () => {
                       </div>
                       <div className="py-4 flex-1 space-y-2">
                         {apps.map((app) => (
-                          <Dialog key={app.id}>
-                            <DialogTrigger asChild>
+                          app.url ? (
+                            <a
+                              key={app.id}
+                              href={app.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
                               <Button
                                 variant="ghost"
                                 className="w-full justify-start text-foreground hover:text-primary"
@@ -661,11 +686,23 @@ const DashboardLayout = () => {
                                 <app.icon className="h-4 w-4 mr-2" />
                                 {app.name}
                               </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md bg-card">
-                              <app.component />
-                            </DialogContent>
-                          </Dialog>
+                            </a>
+                          ) : (
+                            <Dialog key={app.id}>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className="w-full justify-start text-foreground hover:text-primary"
+                                >
+                                  <app.icon className="h-4 w-4 mr-2" />
+                                  {app.name}
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-md bg-card">
+                                <app.component />
+                              </DialogContent>
+                            </Dialog>
+                          )
                         ))}
                       </div>
                       <div className="py-4 border-t border-border">
