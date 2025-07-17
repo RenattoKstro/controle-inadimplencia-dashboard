@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram, Video, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,8 +179,8 @@ const DashboardLayout = () => {
     { id: 3, name: "C.I. 002 2025 RENDA CLIENTES AUTONOMOS", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%202%202025%20Renda%20clientes%20autonomos.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIDIgMjAyNSBSZW5kYSBjbGllbnRlcyBhdXRvbm9tb3MucGRmIiwiaWF0IjoxNzUxNjU3NjMwLCJleHAiOjE3ODMxOTM2MzB9.U-kHPl8ib_KfxG8Q6-PJ99ku-rBUne7QMel5F1Zfr78" },
     { id: 4, name: "C.I. 007 2025 CADASTRO NÃO AUTENTICADO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%20cadastro%20nao%20autenticado.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIGNhZGFzdHJvIG5hbyBhdXRlbnRpY2Fkby5wZGYiLCJpYXQiOjE3NTE2NTc2NDEsImV4cCI6MTc4MzE5MzY0MX0.cOfIUD8sR9f_yyI9qOKH93cTf6F3PNLXcERAYJV0kgQ" },
     { id: 5, name: "ENDEREÇO RURAL", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ENDERECO%20RURAL.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VOREVSRUNPIFJVUkFMLnBkZiIsImlhdCI6MTc1MTY1NzY1NSwiZXhwIjoxNzgzMTkzNjU1fQ.b7pHjnqufaYGz3k5259sWSL-YWWvwnr8tFClYXy_r9A" },
-    { id: 6, name: "ESTORNO PIX", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ESTORNO%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STn20%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STk8gUElYLnBkZiIsImlhdCI6MTc1MTY1NzY3MCwiZXhwIjoxNzgzMTkzNjcwfQ.kb6dKCz0smc8C1MoOQV_Vn_OM6LgXf7kR2myERYjGJQ" },
-    { id: 7, name: "MANUAL CIONA VENDEDOER", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20Aciona%20Vendedor.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBBY2lvbmEgVmVuZGVkb3IucGRmIiwiaWF0IjoxNzUxNjU3NjgxLCJleHAiOjE3ODMxOTM2ODF9.KAg0YI2s8ZzTMqF1TkKNTR6I5WrJxbZaesEFh_06a0U" },
+    { id: 6, name: "ESTORNO PIX", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ESTORNO%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STk8gUElYLnBkZiIsImlhdCI6MTc1Mjc3NzgzNSwiZXhwIjoxNzg0MzEzODM1fQ.IaVwenQRgY1Zjbdf19-L8mCD8G1WcovHQtjy3BrUNzA" },
+    { id: 7, name: "MANUAL ACIONA VENDEDOR", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20Aciona%20Vendedor.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBBY2lvbmEgVmVuZGVkb3IucGRmIiwiaWF0IjoxNzUxNjU3NjgxLCJleHAiOjE3ODMxOTM2ODF9.KAg0YI2s8ZzTMqF1TkKNTR6I5WrJxbZaesEFh_06a0U" },
     { id: 8, name: "MANUAL DO PATRIMONIO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20do%20Patrimonio.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBkbyBQYXRyaW1vbmlvLnBkZiIsImlhdCI6MTc1MTY1NzkxMiwiZXhwIjoxNzgzMTkzOTEyfQ.nHLabdtztWNLKtiD8iJ1sEwcUFW2_JpkaTK7jWPOZTA" },
     { id: 9, name: "C.I. SIGA - TELA DE RENEGOCIAÇÃO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/COMUNICADO%20INTERNO%20%20SIGA%20TELA%20DE%20RENEGOCIACAO.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NPTVVOSUNBRE8gSU5URVJOTyAgU0lHQSBURUxBIERFIFJFTkVHT0NJQUNBTy5wZGYiLCJpYXQiOjE3NTIwNjg3NjUsImV4cCI6MTc4MzYwNDc2NX0.SuF1pAb_Fz3W6lvtwzuEf_6oCM5QkuIKkfoqB1djmxg" },
   ];
@@ -567,7 +567,8 @@ const DashboardLayout = () => {
                     <h3 className="text-lg font-semibold text-foreground mb-4">Lista de Anexos</h3>
                     <ul className="space-y-2">
                       {pdfList.map((pdf) => (
-                        <li key={pdf.id}>
+                        <li key={pdf.id} className="flex items-center gap-2">
+                          <File className="h-4 w-4 text-gray-500" />
                           <a
                             href={pdf.url}
                             target="_blank"
@@ -578,6 +579,17 @@ const DashboardLayout = () => {
                           </a>
                         </li>
                       ))}
+                      <li className="flex items-center gap-2">
+                        <Video className="h-4 w-4 text-gray-500" />
+                        <a
+                          href="https://archive.org/embed/tuto-cobranca-com-nome"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          TUTO DE COBRANÇA COM O NOME DO CLIENTE
+                        </a>
+                      </li>
                     </ul>
                   </DialogContent>
                 </Dialog>
