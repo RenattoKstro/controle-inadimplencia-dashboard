@@ -183,7 +183,8 @@ const DashboardLayout = () => {
     { id: 7, name: "MANUAL ACIONA VENDEDOR", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20Aciona%20Vendedor.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBBY2lvbmEgVmVuZGVkb3IucGRmIiwiaWF0IjoxNzUxNjU3NjgxLCJleHAiOjE3ODMxOTM2ODF9.KAg0YI2s8ZzTMqF1TkKNTR6I5WrJxbZaesEFh_06a0U" },
     { id: 8, name: "MANUAL DO PATRIMONIO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20do%20Patrimonio.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBkbyBQYXRyaW1vbmlvLnBkZiIsImlhdCI6MTc1MTY1NzkxMiwiZXhwIjoxNzgzMTkzOTEyfQ.nHLabdtztWNLKtiD8iJ1sEwcUFW2_JpkaTK7jWPOZTA" },
     { id: 9, name: "C.I. SIGA - TELA DE RENEGOCIAÇÃO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/COMUNICADO%20INTERNO%20%20SIGA%20TELA%20DE%20RENEGOCIACAO.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NPTVVOSUNBRE8gSU5URVJOTyAgU0lHQSBURUxBIERFIFJFTkVHT0NJQUNBTy5wZGYiLCJpYXQiOjE3NTIwNjg3NjUsImV4cCI6MTc4MzYwNDc2NX0.SuF1pAb_Fz3W6lvtwzuEf_6oCM5QkuIKkfoqB1djmxg" },
-  ];
+    { id: 10, name: "TEMPLATE DE COBRANÇA", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Template%20Cobrancas.xlsx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL1RlbXBsYXRlIENvYnJhbmNhcy54bHN4IiwiaWF0IjoxNzUyNzgxODIzLCJleHAiOjE3ODQzMTc4MjN9.r5VeppFW_ZlW1nSOysSmEnQ7JxK68BO4IOdXlJAvr4Y" },
+    ];
 
   const renderTabs = () => (
     <TabsList className={`grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
