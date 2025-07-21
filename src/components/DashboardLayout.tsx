@@ -19,6 +19,7 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
@@ -42,7 +43,6 @@ export interface DashboardProps {
 }
 
 const DashboardLayout = () => {
-  console.log("DashboardLayout renderizado");
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
@@ -68,7 +68,6 @@ const DashboardLayout = () => {
   const [isScriptsOpen, setIsScriptsOpen] = useState(false);
 
   useEffect(() => {
-    console.log("Sincronizando recebidoHoje com userData:", userData);
     const fetchReceivedToday = async () => {
       if (userData && userData.abertura_vencido_mes && userData.vencido_atual) {
         const currentDate = new Date();
@@ -94,7 +93,6 @@ const DashboardLayout = () => {
           const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
           const adjustedReceivedToday = Math.max(0, receivedToday || dailyAverage);
           setRecebidoHoje(adjustedReceivedToday);
-          console.log("Recebido Hoje calculado:", adjustedReceivedToday);
         }
       }
     };
@@ -102,7 +100,6 @@ const DashboardLayout = () => {
   }, [userData]);
 
   useEffect(() => {
-    console.log("DashboardLayout useEffect executado", userData);
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
@@ -190,161 +187,14 @@ const DashboardLayout = () => {
     { id: 12, name: "TEMPLATE DE RENEGOCIAÇÃO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Template%20Renegociacao%20.xlsx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL1RlbXBsYXRlIFJlbmVnb2NpYWNhbyAueGxzeCIsImlhdCI6MTc1Mjg0NTE4NSwiZXhwIjoxNzg0MzgxMTg1fQ.EzrIi3rgp2VfNbSjK4yoW9EOgHNA7qBAZZ39fmRMdNk" },
   ];
 
-  const renderTabs = () => (
-    <TabsList className={`grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
-      <TabsTrigger 
-        value="ajustes-metas" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("ajustes-metas")}
-      >
-        <Sliders className="h-4 w-4" />
-        <span className="text-foreground">Ajustes de Metas</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="meta-fiado" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("meta-fiado")}
-      >
-        <Wallet className="h-4 w-4" />
-        <span className="text-foreground">Meta Fiado</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="meta-desafio" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("meta-desafio")}
-      >
-        <Trophy className="h-4 w-4" />
-        <span className="text-foreground">Meta Desafio</span>
-      </TabsTrigger>
-      {bonusPerdidoAtivado && (
-        <TabsTrigger 
-          value="meta-perdido" 
-          className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-          onClick={() => handleTabChange("meta-perdido")}
-        >
-          <AlertTriangle className="h-4 w-4" />
-          <span className="text-foreground">Meta Perdido</span>
-        </TabsTrigger>
-      )}
-      <TabsTrigger 
-        value="meta-alimentacao" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("meta-alimentacao")}
-      >
-        <Utensils className="h-4 w-4" />
-        <span className="text-foreground">Meta de Ticket</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="meus-premios" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("meus-premios")}
-      >
-        <Gift className="h-4 w-4" />
-        <span className="text-foreground">Meus Prêmios</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="historicos" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("historicos")}
-      >
-        <History className="h-4 w-4" />
-        <span className="text-foreground">Históricos</span>
-        {isNewHistorico && <span className="text-destructive font-bold">N</span>}
-      </TabsTrigger>
-    </TabsList>
-  );
+  const apps = [
+    { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
+    { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
+  ];
 
-  const renderTabsContent = () => (
-    <>
-      <TabsContent value="ajustes-metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <AjustesMetas
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-          setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-        />
-      </TabsContent>
-      <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <MetaFiado 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-          setRecebidoHoje={setRecebidoHoje}
-        />
-      </TabsContent>
-      <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <MetaDesafio 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-        />
-      </TabsContent>
-      <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        {bonusPerdidoAtivado && (
-          <MetaPerdido 
-            userData={userData}
-            updateUserData={updateUserData}
-            diasSemExpediente={diasSemExpediente}
-            updateDiasSemExpediente={updateDiasSemExpediente}
-            diasRestantesCalculados={diasRestantesCalculados}
-            isLoading={isLoading}
-            bonusPerdidoAtivado={bonusPerdidoAtivado}
-          />
-        )}
-      </TabsContent>
-      <TabsContent value="meta-alimentacao" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <MetaAlimentacao 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-        />
-      </TabsContent>
-      <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        {userData ? (
-          <MeusPremios 
-            userData={userData}
-            updateUserData={updateUserData}
-            diasSemExpediente={diasSemExpediente}
-            updateDiasSemExpediente={updateDiasSemExpediente}
-            diasRestantesCalculados={diasRestantesCalculados}
-            isLoading={isLoading}
-            bonusPerdidoAtivado={bonusPerdidoAtivado}
-            setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-          />
-        ) : (
-          <div className="text-foreground">Carregando dados...</div>
-        )}
-      </TabsContent>
-      <TabsContent value="historicos" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <Historicos 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-          recebido={recebidoHoje}
-        />
-      </TabsContent>
-    </>
-  );
+  const carteiraTotal = userData?.carteira_total || 100000;
+  const vencidoAtual = userData?.vencido_atual || 0;
+  const percentualVencido = ((vencidoAtual / carteiraTotal) * 100).toFixed(2);
 
   const getDaysInMonth = (date: Date) => {
     if (!(date instanceof Date) || isNaN(date.getTime())) return 0;
@@ -400,16 +250,6 @@ const DashboardLayout = () => {
       return newMonth;
     });
   };
-
-  const apps = [
-    { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
-    { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
-  ];
-
-  // Calcular percentual vencido
-  const carteiraTotal = userData?.carteira_total || 100000; // Valor padrão caso não exista
-  const vencidoAtual = userData?.vencido_atual || 0;
-  const percentualVencido = ((vencidoAtual / carteiraTotal) * 100).toFixed(2);
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
@@ -502,8 +342,13 @@ const DashboardLayout = () => {
                     <DialogTrigger>
                       <VersaoLog size={18} />
                     </DialogTrigger>
-                    <DialogContent className="max-w-md bg-card p-6">
+                    <DialogContent className="max-w-lg bg-card p-6 overflow-y-auto max-h-[80vh]">
                       <VersaoLog />
+                      <DialogClose asChild>
+                        <Button variant="outline" className="mt-4 w-full">
+                          Fechar
+                        </Button>
+                      </DialogClose>
                     </DialogContent>
                   </Dialog>
                 </Button>
@@ -790,10 +635,16 @@ const DashboardLayout = () => {
                 >
                   <Dialog>
                     <DialogTrigger>
+                      <span className="sr-only">Abrir Logs</span> {/* Acessibilidade */}
                       <VersaoLog size={18} />
                     </DialogTrigger>
-                    <DialogContent className="max-w-md bg-card p-6">
+                    <DialogContent className="max-w-lg bg-card p-6 overflow-y-auto max-h-[80vh]">
                       <VersaoLog />
+                      <DialogClose asChild>
+                        <Button variant="outline" className="mt-4 w-full">
+                          Fechar
+                        </Button>
+                      </DialogClose>
                     </DialogContent>
                   </Dialog>
                 </Button>
@@ -844,8 +695,154 @@ const DashboardLayout = () => {
           onValueChange={handleTabChange}
           className="space-y-6"
         >
-          {renderTabs()}
-          {renderTabsContent()}
+          <TabsList className="grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl">
+            <TabsTrigger 
+              value="ajustes-metas" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("ajustes-metas")}
+            >
+              <Sliders className="h-4 w-4" />
+              <span className="text-foreground">Ajustes de Metas</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="meta-fiado" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meta-fiado")}
+            >
+              <Wallet className="h-4 w-4" />
+              <span className="text-foreground">Meta Fiado</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="meta-desafio" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meta-desafio")}
+            >
+              <Trophy className="h-4 w-4" />
+              <span className="text-foreground">Meta Desafio</span>
+            </TabsTrigger>
+            {bonusPerdidoAtivado && (
+              <TabsTrigger 
+                value="meta-perdido" 
+                className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+                onClick={() => handleTabChange("meta-perdido")}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-foreground">Meta Perdido</span>
+              </TabsTrigger>
+            )}
+            <TabsTrigger 
+              value="meta-alimentacao" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meta-alimentacao")}
+            >
+              <Utensils className="h-4 w-4" />
+              <span className="text-foreground">Meta de Ticket</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="meus-premios" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meus-premios")}
+            >
+              <Gift className="h-4 w-4" />
+              <span className="text-foreground">Meus Prêmios</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="historicos" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("historicos")}
+            >
+              <History className="h-4 w-4" />
+              <span className="text-foreground">Históricos</span>
+              {isNewHistorico && <span className="text-destructive font-bold">N</span>}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="ajustes-metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <AjustesMetas
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+            />
+          </TabsContent>
+          <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <MetaFiado 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setRecebidoHoje={setRecebidoHoje}
+            />
+          </TabsContent>
+          <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <MetaDesafio 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+            />
+          </TabsContent>
+          <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            {bonusPerdidoAtivado && (
+              <MetaPerdido 
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+              />
+            )}
+          </TabsContent>
+          <TabsContent value="meta-alimentacao" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <MetaAlimentacao 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+            />
+          </TabsContent>
+          <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            {userData ? (
+              <MeusPremios 
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+                setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+              />
+            ) : (
+              <div className="text-foreground">Carregando dados...</div>
+            )}
+          </TabsContent>
+          <TabsContent value="historicos" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <Historicos 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              recebido={recebidoHoje}
+            />
+          </TabsContent>
         </Tabs>
       </main>
       <style>
