@@ -6,7 +6,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"; // Ajuste o caminho conforme sua estrutura
+} from "@/components/ui/accordion";
 
 const Scripts = ({ onClose }) => {
   const cobrancas = [
