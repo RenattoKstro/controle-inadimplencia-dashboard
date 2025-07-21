@@ -19,7 +19,6 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
@@ -332,26 +331,7 @@ const DashboardLayout = () => {
                 >
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  asChild
-                >
-                  <Dialog>
-                    <DialogTrigger>
-                      <VersaoLog size={18} />
-                    </DialogTrigger>
-                    <DialogContent className="max-w-lg bg-card p-6 overflow-y-auto max-h-[80vh]">
-                      <VersaoLog />
-                      <DialogClose asChild>
-                        <Button variant="outline" className="mt-4 w-full">
-                          Fechar
-                        </Button>
-                      </DialogClose>
-                    </DialogContent>
-                  </Dialog>
-                </Button>
+                <VersaoLog />
                 <div className="relative">
                   <Button
                     variant="outline"
@@ -627,27 +607,7 @@ const DashboardLayout = () => {
                 >
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  asChild
-                >
-                  <Dialog>
-                    <DialogTrigger>
-                      <span className="sr-only">Abrir Logs</span> {/* Acessibilidade */}
-                      <VersaoLog size={18} />
-                    </DialogTrigger>
-                    <DialogContent className="max-w-lg bg-card p-6 overflow-y-auto max-h-[80vh]">
-                      <VersaoLog />
-                      <DialogClose asChild>
-                        <Button variant="outline" className="mt-4 w-full">
-                          Fechar
-                        </Button>
-                      </DialogClose>
-                    </DialogContent>
-                  </Dialog>
-                </Button>
+                <VersaoLog />
               </div>
             </>
           )}
