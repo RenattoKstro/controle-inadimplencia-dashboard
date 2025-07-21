@@ -75,7 +75,7 @@ const Scripts = ({ onClose }) => {
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-foreground mb-2">Scripts</h3>
         <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
+          <FECHAR className="h-4 w-4" />
         </Button>
       </div>
       <Accordion type="single" collapsible className="w-full">
