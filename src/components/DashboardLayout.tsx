@@ -15,11 +15,7 @@ import Historicos from "./Historicos";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import CustomDialog from "@/components/ui/CustomDialog"; // Importação do CustomDialog
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
@@ -29,6 +25,7 @@ import VersaoLog from "./VersaoLog";
 import Scripts from "./dashboard/Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri"; // Ícone para Print Tela
 import { BiSolidReport } from "react-icons/bi"; // Ícone para Relatórios Sabium
+import { X } from "lucide-react"; // Importação do ícone X
 
 export interface DashboardProps {
   userData: any;
@@ -600,20 +597,19 @@ const DashboardLayout = () => {
                     </ul>
                   </DialogContent>
                 </Dialog>
-                <Dialog open={isScriptsOpen} onOpenChange={setIsScriptsOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2 text-foreground hover:text-primary"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Scripts
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl bg-card">
+                <div>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 text-foreground hover:text-primary"
+                    onClick={() => setIsScriptsOpen(true)}
+                  >
+                    <FileText className="h-4 w-4" />
+                    Scripts
+                  </Button>
+                  <CustomDialog isOpen={isScriptsOpen} onClose={() => setIsScriptsOpen(false)}>
                     <Scripts onClose={() => setIsScriptsOpen(false)} />
-                  </DialogContent>
-                </Dialog>
+                  </CustomDialog>
+                </div>
                 <div className="relative">
                   <Dialog>
                     <DialogTrigger asChild>
