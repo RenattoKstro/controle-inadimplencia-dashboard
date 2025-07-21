@@ -191,10 +191,10 @@ const DashboardLayout = () => {
     { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
   ];
 
-  // Calcula o percentual de vencido com fallback para evitar erro
-  const carteiraTotal = userData?.carteira_total || 100000; // Valor padrão caso a coluna não exista
+  // Calcula o percentual apenas se carteira_total for maior que 0
+  const carteiraTotal = userData?.carteira_total || 0;
   const vencidoAtual = userData?.vencido_atual || 0;
-  const percentualVencido = carteiraTotal > 0 ? ((vencidoAtual / carteiraTotal) * 100).toFixed(2) : "0.00";
+  const percentualVencido = carteiraTotal > 0 ? ((vencidoAtual / carteiraTotal) * 100).toFixed(2) : null;
 
   const getDaysInMonth = (date: Date) => {
     if (!(date instanceof Date) || isNaN(date.getTime())) return 0;
@@ -259,9 +259,11 @@ const DashboardLayout = () => {
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
                 Controle de Inadimplência
-                <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text ml-2">
-                  {percentualVencido}%
-                </span>
+                {percentualVencido !== null && (
+                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text ml-2">
+                    {percentualVencido}%
+                  </span>
+                )}
               </h1>
               <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -396,7 +398,9 @@ const DashboardLayout = () => {
             <>
               <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 <span>Controle de Inadimplência</span>
-                <span className="ml-2">{percentualVencido}%</span>
+                {percentualVencido !== null && (
+                  <span className="ml-2">{percentualVencido}%</span>
+                )}
               </h1>
               <div className="flex items-center gap-4">
                 <Button
