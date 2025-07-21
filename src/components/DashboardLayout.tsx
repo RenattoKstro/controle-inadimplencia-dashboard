@@ -65,6 +65,7 @@ const DashboardLayout = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
+  const [isScriptsOpen, setIsScriptsOpen] = useState(false); // Estado para controlar o diálogo de Scripts
 
   // Sincroniza recebidoHoje com base em userData e historico_diario
   useEffect(() => {
@@ -599,7 +600,7 @@ const DashboardLayout = () => {
                     </ul>
                   </DialogContent>
                 </Dialog>
-                <Dialog>
+                <Dialog open={isScriptsOpen} onOpenChange={setIsScriptsOpen}>
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
@@ -610,7 +611,7 @@ const DashboardLayout = () => {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl bg-card">
-                    <Scripts onClose={() => {}} />
+                    <Scripts onClose={() => setIsScriptsOpen(false)} />
                   </DialogContent>
                 </Dialog>
                 <div className="relative">
