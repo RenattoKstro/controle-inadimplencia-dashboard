@@ -1,10 +1,7 @@
-// VersaoLog.tsx
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 
 const VersaoLog = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
   const versionLog = [
     { version: "1.0.8", date: "16-07-2025", changes: "Add Calc. Rent. externa, Bugs corrigidos e alterações" }, 
     { version: "1.0.7", date: "11-07-2025", changes: "Add Cards de Projeções e Tema Escuro/Claro" },
@@ -20,33 +17,17 @@ const VersaoLog = () => {
   return (
     <div className="relative inline-flex items-center">
       <span className="text-foreground font-semibold mr-2"></span>
-      <Button
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-purple-400 hover:bg-purple-500 text-white font-medium rounded-md px-3 py-1 text-sm transition-colors duration-200"
-      >
-        Logs
-      </Button>
-      {isOpen && (
-        <div className="absolute z-10 mt-2 w-80 bg-card border border-gray-300 rounded-md shadow-lg p-4 top-full left-0">
-          <h3 className="text-lg font-semibold text-foreground">Logs de Atualizações</h3>
-          <ul className="mt-2 space-y-2">
-            {versionLog.map((log, index) => (
-              <li key={index} className="text-sm text-foreground">
-                <span className="font-medium">{log.version}</span> - {log.date}
-                <p className="text-muted-foreground ml-4">{log.changes}</p>
-              </li>
-            ))}
-          </ul>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-4 w-full"
-            onClick={() => setIsOpen(false)}
-          >
-            Fechar
-          </Button>
-        </div>
-      )}
+      <div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Logs de Atualizações</h3>
+        <ul className="space-y-2">
+          {versionLog.map((log, index) => (
+            <li key={index} className="text-sm text-foreground">
+              <span className="font-medium">{log.version}</span> - {log.date}
+              <p className="text-muted-foreground ml-4">{log.changes}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
