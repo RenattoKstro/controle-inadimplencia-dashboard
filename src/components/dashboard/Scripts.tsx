@@ -1,6 +1,12 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"; // Ajuste o caminho conforme sua estrutura
 
 const Scripts = ({ onClose }) => {
   const cobrancas = [
@@ -67,44 +73,49 @@ const Scripts = ({ onClose }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-foreground mb-2">Scripts de Cobranças</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Scripts</h3>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>
-      <ul className="space-y-4 max-h-[70vh] overflow-y-auto">
-        {cobrancas.map((script) => (
-          <li key={script.id} className="bg-muted p-3 rounded-lg">
-            <pre className="whitespace-pre-wrap text-sm text-foreground">{script.text}</pre>
-          </li>
-        ))}
-      </ul>
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-foreground mb-2">Scripts de Renegociações</h3>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      <ul className="space-y-4 max-h-[70vh] overflow-y-auto">
-        {renegociacoes.map((script) => (
-          <li key={script.id} className="bg-muted p-3 rounded-lg">
-            <pre className="whitespace-pre-wrap text-sm text-foreground">{script.text}</pre>
-          </li>
-        ))}
-      </ul>
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-foreground mb-2">Scripts de Empréstimos</h3>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-      <ul className="space-y-4 max-h-[70vh] overflow-y-auto">
-        {emprestimos.map((script) => (
-          <li key={script.id} className="bg-muted p-3 rounded-lg">
-            <pre className="whitespace-pre-wrap text-sm text-foreground">{script.text}</pre>
-          </li>
-        ))}
-      </ul>
+      <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value="cobrancas">
+          <AccordionTrigger>Scripts de Cobranças</AccordionTrigger>
+          <AccordionContent>
+            <ul className="space-y-4 max-h-[70vh] overflow-y-auto">
+              {cobrancas.map((script) => (
+                <li key={script.id} className="bg-muted p-3 rounded-lg">
+                  <pre className="whitespace-pre-wrap text-sm text-foreground">{script.text}</pre>
+                </li>
+              ))}
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="renegociacoes">
+          <AccordionTrigger>Scripts de Renegociações</AccordionTrigger>
+          <AccordionContent>
+            <ul className="space-y-4 max-h-[70vh] overflow-y-auto">
+              {renegociacoes.map((script) => (
+                <li key={script.id} className="bg-muted p-3 rounded-lg">
+                  <pre className="whitespace-pre-wrap text-sm text-foreground">{script.text}</pre>
+                </li>
+              ))}
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="emprestimos">
+          <AccordionTrigger>Scripts de Empréstimos</AccordionTrigger>
+          <AccordionContent>
+            <ul className="space-y-4 max-h-[70vh] overflow-y-auto">
+              {emprestimos.map((script) => (
+                <li key={script.id} className="bg-muted p-3 rounded-lg">
+                  <pre className="whitespace-pre-wrap text-sm text-foreground">{script.text}</pre>
+                </li>
+              ))}
+            </ul>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 };
