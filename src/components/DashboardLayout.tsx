@@ -19,7 +19,7 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
-} from "@/components/ui/dialog"; // Usando Dialog da biblioteca ui
+} from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
@@ -27,8 +27,8 @@ import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import { Calculator, Moon, Sun } from "lucide-react";
 import VersaoLog from "./VersaoLog";
 import Scripts from "./dashboard/Scripts";
-import { RiScreenshot2Fill } from "react-icons/ri"; // Ícone para Print Tela
-import { BiSolidReport } from "react-icons/bi"; // Ícone para Relatórios Sabium
+import { RiScreenshot2Fill } from "react-icons/ri";
+import { BiSolidReport } from "react-icons/bi";
 
 export interface DashboardProps {
   userData: any;
@@ -58,16 +58,15 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
-  const [recebidoHoje, setRecebidoHoje] = useState(0); // Estado sincronizado
+  const [recebidoHoje, setRecebidoHoje] = useState(0);
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
-  const [isScriptsOpen, setIsScriptsOpen] = useState(false); // Estado para controlar o diálogo de Scripts
+  const [isScriptsOpen, setIsScriptsOpen] = useState(false);
 
-  // Sincroniza recebidoHoje com base em userData e historico_diario
   useEffect(() => {
     console.log("Sincronizando recebidoHoje com userData:", userData);
     const fetchReceivedToday = async () => {
@@ -93,7 +92,7 @@ const DashboardLayout = () => {
           const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
           const daysPassed = currentDate.getDate();
           const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
-          const adjustedReceivedToday = Math.max(0, receivedToday || dailyAverage); // Usa o valor do dia ou a média
+          const adjustedReceivedToday = Math.max(0, receivedToday || dailyAverage);
           setRecebidoHoje(adjustedReceivedToday);
           console.log("Recebido Hoje calculado:", adjustedReceivedToday);
         }
@@ -124,7 +123,6 @@ const DashboardLayout = () => {
       setIsNewHistorico(false);
     }
 
-    // Aplica o tema ao montar o componente
     document.body.classList.toggle("dark", isDarkMode);
   }, [navigate, toast, isDarkMode]);
 
@@ -269,6 +267,19 @@ const DashboardLayout = () => {
           bonusPerdidoAtivado={bonusPerdidoAtivado}
           setBonusPerdidoAtivado={setBonusPerdidoAtivado}
         />
+        {/* Novo Card Carteira */}
+        <div className="mt-4 p-4 bg-muted rounded-lg shadow-sm">
+          <h4 className="text-md font-semibold text-foreground mb-2">Carteira</h4>
+          <p className="text-sm text-foreground">
+            Valor Total: {userData?.carteira_total?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00'}
+          </p>
+          <p className="text-sm text-foreground">
+            Vencido Atual: {userData?.vencido_atual?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00'}
+          </p>
+          <p className="text-sm text-foreground">
+            Percentual Vencido: {((userData?.vencido_atual / userData?.carteira_total) * 100 || 0).toFixed(2)}%
+          </p>
+        </div>
       </TabsContent>
       <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         <MetaFiado 
@@ -279,7 +290,7 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
-          setRecebidoHoje={setRecebidoHoje} // Passa a função para MetaFiado
+          setRecebidoHoje={setRecebidoHoje}
         />
       </TabsContent>
       <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
@@ -342,7 +353,7 @@ const DashboardLayout = () => {
           diasRestantesCalculados={diasRestantesCalculados}
           isLoading={isLoading}
           bonusPerdidoAtivado={bonusPerdidoAtivado}
-          recebido={recebidoHoje} // Passa o valor atualizado para Historicos
+          recebido={recebidoHoje}
         />
       </TabsContent>
     </>
@@ -408,6 +419,11 @@ const DashboardLayout = () => {
     { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
   ];
 
+  // Calcular percentual vencido
+  const carteiraTotal = userData?.carteira_total || 100000; // Valor padrão caso não exista
+  const vencidoAtual = userData?.vencido_atual || 0;
+  const percentualVencido = ((vencidoAtual / carteiraTotal) * 100).toFixed(2);
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
       <header className="bg-card shadow-md">
@@ -415,7 +431,7 @@ const DashboardLayout = () => {
           {isMobile ? (
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
-                Controle{" "}
+                Controle de Inadimplência <span className="text-sm text-foreground ml-2">({percentualVencido}%)</span>
                 <VersaoLog className="ml-2" />
               </h1>
               <div className="flex items-center gap-2">
@@ -487,6 +503,13 @@ const DashboardLayout = () => {
                 >
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                >
+                  <VersaoLog size={18} />
+                </Button>
                 <div className="relative">
                   <Button
                     variant="outline"
@@ -549,8 +572,7 @@ const DashboardLayout = () => {
           ) : (
             <>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
-                Controle de Inadimplência{" "}
-                <VersaoLog className="ml-2" />
+                Controle de Inadimplência <span className="text-sm text-foreground ml-2">({percentualVencido}%)</span>
               </h1>
               <div className="flex items-center gap-4">
                 <Button
@@ -759,6 +781,13 @@ const DashboardLayout = () => {
                   onClick={toggleDarkMode}
                 >
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                >
+                  <VersaoLog size={18} />
                 </Button>
               </div>
             </>
