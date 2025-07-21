@@ -26,7 +26,8 @@ import { FaWhatsapp } from "react-icons/fa";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import { Calculator, Moon, Sun } from "lucide-react";
 import VersaoLog from "./VersaoLog";
-import Scripts from "./dashboard/Scripts";
+import Scripts from "./Scripts";
+import { Book, FileText, FileCode, FileSpreadsheet, BarChart } from "lucide-react"; // Ícones adicionados
 
 export interface DashboardProps {
   userData: any;
@@ -413,8 +414,7 @@ const DashboardLayout = () => {
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
                 Controle{" "}
-                <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
-                <VersaoLog className="ml-2" /> {/* Integração do VersaoLog ao lado de Beta */}
+                <VersaoLog className="ml-2" /> {/* Removido "Beta" */}
               </h1>
               <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -548,15 +548,14 @@ const DashboardLayout = () => {
             <>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
                 Controle de Inadimplência{" "}
-                <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
-                <VersaoLog className="ml-2" /> {/* Integração do VersaoLog ao lado de Versão 1.1 */}
+                <VersaoLog className="ml-2" /> {/* Removido "Beta" */}
               </h1>
               <div className="flex items-center gap-4">
                 <Button
                   onClick={handlePrintScreen}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
                 >
-                  Print Tela
+                  <FileText className="h-4 w-4" /> {/* Ícone para Print Tela */}
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
@@ -564,7 +563,7 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      Anexos
+                      <File className="h-4 w-4" /> {/* Ícone para Anexos */}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md bg-card">
@@ -603,7 +602,7 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      Scripts
+                      <FileCode className="h-4 w-4" /> {/* Ícone para Scripts */}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl bg-card">
@@ -676,7 +675,7 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      Relatórios Sabium
+                      <BarChart className="h-4 w-4" /> {/* Ícone para Relatórios Sabium */}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl bg-card">
