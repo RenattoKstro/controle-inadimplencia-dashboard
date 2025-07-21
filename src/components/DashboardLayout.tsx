@@ -267,19 +267,6 @@ const DashboardLayout = () => {
           bonusPerdidoAtivado={bonusPerdidoAtivado}
           setBonusPerdidoAtivado={setBonusPerdidoAtivado}
         />
-        {/* Novo Card Carteira */}
-        <div className="mt-4 p-4 bg-muted rounded-lg shadow-sm">
-          <h4 className="text-md font-semibold text-foreground mb-2">Carteira</h4>
-          <p className="text-sm text-foreground">
-            Valor Total: {userData?.carteira_total?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00'}
-          </p>
-          <p className="text-sm text-foreground">
-            Vencido Atual: {userData?.vencido_atual?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00'}
-          </p>
-          <p className="text-sm text-foreground">
-            Percentual Vencido: {((userData?.vencido_atual / userData?.carteira_total) * 100 || 0).toFixed(2)}%
-          </p>
-        </div>
       </TabsContent>
       <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
         <MetaFiado 
@@ -431,8 +418,10 @@ const DashboardLayout = () => {
           {isMobile ? (
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
-                Controle de Inadimplência <span className="text-sm text-foreground ml-2">({percentualVencido}%)</span>
-                <VersaoLog className="ml-2" />
+                Controle de Inadimplência
+                <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text ml-2">
+                  {percentualVencido}%
+                </span>
               </h1>
               <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -507,8 +496,16 @@ const DashboardLayout = () => {
                   variant="outline"
                   size="icon"
                   className="h-9 w-9"
+                  asChild
                 >
-                  <VersaoLog size={18} />
+                  <Dialog>
+                    <DialogTrigger>
+                      <VersaoLog size={18} />
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md bg-card p-6">
+                      <VersaoLog />
+                    </DialogContent>
+                  </Dialog>
                 </Button>
                 <div className="relative">
                   <Button
@@ -572,7 +569,10 @@ const DashboardLayout = () => {
           ) : (
             <>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
-                Controle de Inadimplência <span className="text-sm text-foreground ml-2">({percentualVencido}%)</span>
+                Controle de Inadimplência
+                <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text ml-2">
+                  {percentualVencido}%
+                </span>
               </h1>
               <div className="flex items-center gap-4">
                 <Button
@@ -786,8 +786,16 @@ const DashboardLayout = () => {
                   variant="outline"
                   size="icon"
                   className="h-9 w-9"
+                  asChild
                 >
-                  <VersaoLog size={18} />
+                  <Dialog>
+                    <DialogTrigger>
+                      <VersaoLog size={18} />
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md bg-card p-6">
+                      <VersaoLog />
+                    </DialogContent>
+                  </Dialog>
                 </Button>
               </div>
             </>
