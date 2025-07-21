@@ -27,7 +27,9 @@ import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import { Calculator, Moon, Sun } from "lucide-react";
 import VersaoLog from "./VersaoLog";
 import Scripts from "./dashboard/Scripts";
-import { Book, FileText, FileCode, FileSpreadsheet, BarChart } from "lucide-react"; // Ícones adicionados
+import { Book, FileText, FileCode, FileSpreadsheet, BarChart } from "lucide-react";
+import { RiScreenshot2Fill } from "react-icons/ri"; // Ícone para Print Tela
+import { BiSolidReport } from "react-icons/bi"; // Ícone para Relatórios Sabium
 
 export interface DashboardProps {
   userData: any;
@@ -414,7 +416,7 @@ const DashboardLayout = () => {
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
                 Controle{" "}
-                <VersaoLog className="ml-2" /> {/* Removido "Beta" */}
+                <VersaoLog className="ml-2" />
               </h1>
               <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -548,14 +550,29 @@ const DashboardLayout = () => {
             <>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
                 Controle de Inadimplência{" "}
-                <VersaoLog className="ml-2" /> {/* Removido "Beta" */}
+                <VersaoLog className="ml-2" />
               </h1>
               <div className="flex items-center gap-4">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-black text-white flex items-center gap-2 text-foreground hover:text-primary"
+                    >
+                      <Book className="h-4 w-4" />
+                      LOGs
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md bg-card">
+                    {/* Conteúdo de LOGs aqui, se aplicável */}
+                  </DialogContent>
+                </Dialog>
                 <Button
                   onClick={handlePrintScreen}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
                 >
-                  <FileText className="h-4 w-4" /> {/* Ícone para Print Tela */}
+                  <RiScreenshot2Fill className="h-4 w-4" />
+                  Print Tela
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
@@ -563,7 +580,8 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      <File className="h-4 w-4" /> {/* Ícone para Anexos */}
+                      <File className="h-4 w-4" />
+                      Anexos
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md bg-card">
@@ -602,11 +620,12 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      <FileCode className="h-4 w-4" /> {/* Ícone para Scripts */}
+                      <FileCode className="h-4 w-4" />
+                      Scripts
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl bg-card">
-                    <Scripts />
+                    <Scripts onClose={() => {}} />
                   </DialogContent>
                 </Dialog>
                 <div className="relative">
@@ -675,7 +694,8 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      <BarChart className="h-4 w-4" /> {/* Ícone para Relatórios Sabium */}
+                      <BiSolidReport className="h-4 w-4" />
+                      Relatórios Sabium
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl bg-card">
