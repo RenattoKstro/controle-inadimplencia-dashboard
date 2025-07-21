@@ -11,6 +11,7 @@ import MetaPerdido from "./dashboard/MetaPerdido";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
+import Scripts from "./dashboard/Scripts";
 import Historicos from "./Historicos";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
