@@ -15,7 +15,12 @@ import Historicos from "./Historicos";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import CustomDialog from "@/components/ui/CustomDialog"; // Importação do CustomDialog
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog"; // Reintroduzindo Dialog
+import CustomDialog from "@/components/ui/CustomDialog"; // Mantendo CustomDialog para Scripts
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
