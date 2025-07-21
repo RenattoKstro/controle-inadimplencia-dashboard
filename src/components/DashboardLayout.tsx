@@ -26,8 +26,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import { Calculator, Moon, Sun } from "lucide-react";
 import VersaoLog from "./VersaoLog";
-import Scripts from "./dashboard/Scripts";
-import { Book, FileText, FileCode, FileSpreadsheet, BarChart } from "lucide-react";
+import Scripts from "./Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri"; // Ícone para Print Tela
 import { BiSolidReport } from "react-icons/bi"; // Ícone para Relatórios Sabium
 
@@ -553,20 +552,6 @@ const DashboardLayout = () => {
                 <VersaoLog className="ml-2" />
               </h1>
               <div className="flex items-center gap-4">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="bg-black text-white flex items-center gap-2 text-foreground hover:text-primary"
-                    >
-                      <Book className="h-4 w-4" />
-                      LOGs
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md bg-card">
-                    {/* Conteúdo de LOGs aqui, se aplicável */}
-                  </DialogContent>
-                </Dialog>
                 <Button
                   onClick={handlePrintScreen}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
