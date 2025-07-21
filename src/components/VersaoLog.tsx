@@ -28,7 +28,7 @@ const VersaoLog = () => {
       <DialogTrigger asChild>
         <Button
           onClick={() => setIsOpen(true)}
-          className="bg-purple-400 hover:bg-purple-500 text-white font-medium rounded-md px-3 py-1 text-sm transition-colors duration-200"
+          className="bg-black hover:bg-red-600 text-white font-medium rounded-md px-3 py-1 text-sm transition-colors duration-200"
         >
           Logs
         </Button>
