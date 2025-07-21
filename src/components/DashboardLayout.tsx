@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram, Video, File, FileText } from "lucide-react"; // Adicionei FileText explicitamente
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram, Video, File, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -605,12 +605,26 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      <FileText className="h-4 w-4" /> {/* Substituído FileCode por FileText */}
+                      <FileText className="h-4 w-4" />
                       Scripts
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl bg-card">
                     <Scripts onClose={() => {}} />
+                  </DialogContent>
+                </Dialog>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-foreground hover:text-primary bg-black text-white hover:bg-gray-800" // Cor preta com texto branco
+                    >
+                      <FileText className="h-4 w-4" /> {/* Ícone para LOGs */}
+                      LOGs
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl bg-card">
+                    {/* Implemente o conteúdo de LOGs aqui, se desejar */}
                   </DialogContent>
                 </Dialog>
                 <div className="relative">
