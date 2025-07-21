@@ -72,12 +72,7 @@ const Scripts = ({ onClose }) => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-foreground mb-2">Scripts</h3>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+      <h3 className="text-lg font-semibold text-foreground mb-2">Scripts</h3>
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="cobrancas">
           <AccordionTrigger>Scripts de Cobranças</AccordionTrigger>
