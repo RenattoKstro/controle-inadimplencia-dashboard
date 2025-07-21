@@ -26,7 +26,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import { Calculator, Moon, Sun } from "lucide-react";
 import VersaoLog from "./VersaoLog";
-import Scripts from "./Scripts";
+import Scripts from "./dashboard/Scripts";
 import { Book, FileText, FileCode, FileSpreadsheet, BarChart } from "lucide-react"; // Ícones adicionados
 
 export interface DashboardProps {
