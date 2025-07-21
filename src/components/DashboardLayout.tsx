@@ -613,20 +613,6 @@ const DashboardLayout = () => {
                     <Scripts onClose={() => {}} />
                   </DialogContent>
                 </Dialog>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2 text-foreground hover:text-primary bg-black text-white hover:bg-gray-800" // Cor preta com texto branco
-                    >
-                      <FileText className="h-4 w-4" /> {/* Ícone para LOGs */}
-                      LOGs
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl bg-card">
-                    {/* Implemente o conteúdo de LOGs aqui, se desejar */}
-                  </DialogContent>
-                </Dialog>
                 <div className="relative">
                   <Dialog>
                     <DialogTrigger asChild>
