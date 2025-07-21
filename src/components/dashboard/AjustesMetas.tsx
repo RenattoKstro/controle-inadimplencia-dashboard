@@ -44,7 +44,8 @@ const AjustesMetas = ({
     meta_desafio: userData.meta_desafio || 0,
     meta_perdido: userData.meta_perdido || 0,
     rec_perdido: userData.rec_perdido || 0,
-    role: userData.role || "líder", // Estado para controlar a aba ativa
+    carteira_total: userData.carteira_total || 0, // Novo campo para Carteira
+    role: userData.role || "líder",
   });
 
   useEffect(() => {
@@ -57,6 +58,7 @@ const AjustesMetas = ({
       meta_desafio: userData.meta_desafio || 0,
       meta_perdido: userData.meta_perdido || 0,
       rec_perdido: userData.rec_perdido || 0,
+      carteira_total: userData.carteira_total || 0, // Inicializa com valor de userData ou 0
       role: userData.role || "líder",
     });
   }, [userData, diasRestantesCalculados]);
@@ -147,6 +149,7 @@ const AjustesMetas = ({
       meta_desafio: userData.meta_desafio || 0,
       meta_perdido: userData.meta_perdido || 0,
       rec_perdido: userData.rec_perdido || 0,
+      carteira_total: userData.carteira_total || 0,
       role: userData.role || "líder",
     });
     setIsEditing(false);
@@ -323,6 +326,16 @@ const AjustesMetas = ({
           formatAsCurrency={false}
           isEditable={true}
           onChange={(value) => handleChange('dias_restantes', value)}
+          isEditMode={isEditing}
+          onEdit={handleItemEdit}
+        />
+        <CardItem 
+          title="Carteira Total" 
+          value={formState.carteira_total} 
+          icon={<Wallet size={16} />} 
+          isEditable={true}
+          onChange={(value) => handleChange('carteira_total', value)}
+          color="bg-teal-500"
           isEditMode={isEditing}
           onEdit={handleItemEdit}
         />

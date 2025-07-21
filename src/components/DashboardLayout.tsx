@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram, Video, File } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram, Video, File, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +25,10 @@ import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import { Calculator, Moon, Sun } from "lucide-react";
-import VersaoLog from "./VersaoLog"; // Importando o componente VersaoLog
+import VersaoLog from "./VersaoLog";
+import Scripts from "./dashboard/Scripts";
+import { RiScreenshot2Fill } from "react-icons/ri";
+import { BiSolidReport } from "react-icons/bi";
 
 export interface DashboardProps {
   userData: any;
@@ -39,7 +42,6 @@ export interface DashboardProps {
 }
 
 const DashboardLayout = () => {
-  console.log("DashboardLayout renderizado");
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
@@ -55,17 +57,16 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados
   } = useUserData();
-  const [recebidoHoje, setRecebidoHoje] = useState(0); // Estado sincronizado
+  const [recebidoHoje, setRecebidoHoje] = useState(0);
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
+  const [isScriptsOpen, setIsScriptsOpen] = useState(false);
 
-  // Sincroniza recebidoHoje com base em userData e historico_diario
   useEffect(() => {
-    console.log("Sincronizando recebidoHoje com userData:", userData);
     const fetchReceivedToday = async () => {
       if (userData && userData.abertura_vencido_mes && userData.vencido_atual) {
         const currentDate = new Date();
@@ -89,9 +90,8 @@ const DashboardLayout = () => {
           const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
           const daysPassed = currentDate.getDate();
           const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
-          const adjustedReceivedToday = Math.max(0, receivedToday || dailyAverage); // Usa o valor do dia ou a média
+          const adjustedReceivedToday = Math.max(0, receivedToday || dailyAverage);
           setRecebidoHoje(adjustedReceivedToday);
-          console.log("Recebido Hoje calculado:", adjustedReceivedToday);
         }
       }
     };
@@ -99,7 +99,6 @@ const DashboardLayout = () => {
   }, [userData]);
 
   useEffect(() => {
-    console.log("DashboardLayout useEffect executado", userData);
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
@@ -120,7 +119,6 @@ const DashboardLayout = () => {
       setIsNewHistorico(false);
     }
 
-    // Aplica o tema ao montar o componente
     document.body.classList.toggle("dark", isDarkMode);
   }, [navigate, toast, isDarkMode]);
 
@@ -179,170 +177,24 @@ const DashboardLayout = () => {
     { id: 3, name: "C.I. 002 2025 RENDA CLIENTES AUTONOMOS", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%202%202025%20Renda%20clientes%20autonomos.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIDIgMjAyNSBSZW5kYSBjbGllbnRlcyBhdXRvbm9tb3MucGRmIiwiaWF0IjoxNzUxNjU3NjMwLCJleHAiOjE3ODMxOTM2MzB9.U-kHPl8ib_KfxG8Q6-PJ99ku-rBUne7QMel5F1Zfr78" },
     { id: 4, name: "C.I. 007 2025 CADASTRO NÃO AUTENTICADO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CI%20cadastro%20nao%20autenticado.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NJIGNhZGFzdHJvIG5hbyBhdXRlbnRpY2Fkby5wZGYiLCJpYXQiOjE3NTE2NTc2NDEsImV4cCI6MTc4MzE5MzY0MX0.cOfIUD8sR9f_yyI9qOKH93cTf6F3PNLXcERAYJV0kgQ" },
     { id: 5, name: "ENDEREÇO RURAL", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ENDERECO%20RURAL.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VOREVSRUNPIFJVUkFMLnBkZiIsImlhdCI6MTc1MTY1NzY1NSwiZXhwIjoxNzgzMTkzNjU1fQ.b7pHjnqufaYGz3k5259sWSL-YWWvwnr8tFClYXy_r9A" },
-    { id: 6, name: "ESTORNO PIX", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ESTORNO%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STk8gUElYLnBkZiIsImlhdCI6MTc1Mjc3NzgzNSwiZXhwIjoxNzg0MzEzODM1fQ.IaVwenQRgY1Zjbdf19-L8mCD8G1WcovHQtjy3BrUNzA" },
+    { id: 6, name: "ESTORNO PIX", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/ESTORNO%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STn20%20PIX.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0VTVE9STk8gUElYLnBkZiIsImlhdCI6MTc1MTY1NzY3MCwiZXhwIjoxNzgzMTkzNjcwfQ.kb6dKCz0smc8C1MoOQV_Vn_OM6LgXf7kR2myERYjGJQ" },
     { id: 7, name: "MANUAL ACIONA VENDEDOR", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20Aciona%20Vendedor.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBBY2lvbmEgVmVuZGVkb3IucGRmIiwiaWF0IjoxNzUxNjU3NjgxLCJleHAiOjE3ODMxOTM2ODF9.KAg0YI2s8ZzTMqF1TkKNTR6I5WrJxbZaesEFh_06a0U" },
     { id: 8, name: "MANUAL DO PATRIMONIO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Manual%20do%20Patrimonio.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL01hbnVhbCBkbyBQYXRyaW1vbmlvLnBkZiIsImlhdCI6MTc1MTY1NzkxMiwiZXhwIjoxNzgzMTkzOTEyfQ.nHLabdtztWNLKtiD8iJ1sEwcUFW2_JpkaTK7jWPOZTA" },
     { id: 9, name: "C.I. SIGA - TELA DE RENEGOCIAÇÃO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/COMUNICADO%20INTERNO%20%20SIGA%20TELA%20DE%20RENEGOCIACAO.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NPTVVOSUNBRE8gSU5URVJOTyAgU0lHQSBURUxBIERFIFJFTkVHT0NJQUNBTy5wZGYiLCJpYXQiOjE3NTIwNjg3NjUsImV4cCI6MTc4MzYwNDc2NX0.SuF1pAb_Fz3W6lvtwzuEf_6oCM5QkuIKkfoqB1djmxg" },
     { id: 10, name: "TEMPLATE DE COBRANÇA", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Template%20Cobrancas.xlsx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL1RlbXBsYXRlIENvYnJhbmNhcy54bHN4IiwiaWF0IjoxNzUyNzgxODIzLCJleHAiOjE3ODQzMTc4MjN9.r5VeppFW_ZlW1nSOysSmEnQ7JxK68BO4IOdXlJAvr4Y" },
     { id: 11, name: "TEMPLATE DE COBRANÇA 2", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Template%20Cobrancas%203.xlsx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL1RlbXBsYXRlIENvYnJhbmNhcyAzLnhsc3giLCJpYXQiOjE3NTI4NDQ5ODUsImV4cCI6MTc4NDM4MDk4NX0.vUHF3pHMkPc2njoAmHygKDObu-vGNY0DDlRDaE2NRp4" },
     { id: 12, name: "TEMPLATE DE RENEGOCIAÇÃO", url: "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/Template%20Renegociacao%20.xlsx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL1RlbXBsYXRlIFJlbmVnb2NpYWNhbyAueGxzeCIsImlhdCI6MTc1Mjg0NTE4NSwiZXhwIjoxNzg0MzgxMTg1fQ.EzrIi3rgp2VfNbSjK4yoW9EOgHNA7qBAZZ39fmRMdNk" },
-    ];
+  ];
 
-  const renderTabs = () => (
-    <TabsList className={`grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl ${isMobile ? 'grid-cols-1 gap-2' : ''}`}>
-      <TabsTrigger 
-        value="ajustes-metas" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("ajustes-metas")}
-      >
-        <Sliders className="h-4 w-4" />
-        <span className="text-foreground">Ajustes de Metas</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="meta-fiado" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("meta-fiado")}
-      >
-        <Wallet className="h-4 w-4" />
-        <span className="text-foreground">Meta Fiado</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="meta-desafio" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("meta-desafio")}
-      >
-        <Trophy className="h-4 w-4" />
-        <span className="text-foreground">Meta Desafio</span>
-      </TabsTrigger>
-      {bonusPerdidoAtivado && (
-        <TabsTrigger 
-          value="meta-perdido" 
-          className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-          onClick={() => handleTabChange("meta-perdido")}
-        >
-          <AlertTriangle className="h-4 w-4" />
-          <span className="text-foreground">Meta Perdido</span>
-        </TabsTrigger>
-      )}
-      <TabsTrigger 
-        value="meta-alimentacao" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("meta-alimentacao")}
-      >
-        <Utensils className="h-4 w-4" />
-        <span className="text-foreground">Meta de Ticket</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="meus-premios" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("meus-premios")}
-      >
-        <Gift className="h-4 w-4" />
-        <span className="text-foreground">Meus Prêmios</span>
-      </TabsTrigger>
-      <TabsTrigger 
-        value="historicos" 
-        className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-        onClick={() => handleTabChange("historicos")}
-      >
-        <History className="h-4 w-4" />
-        <span className="text-foreground">Históricos</span>
-        {isNewHistorico && <span className="text-destructive font-bold">N</span>}
-      </TabsTrigger>
-    </TabsList>
-  );
+  const apps = [
+    { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
+    { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
+  ];
 
-  const renderTabsContent = () => (
-    <>
-      <TabsContent value="ajustes-metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <AjustesMetas
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-          setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-        />
-      </TabsContent>
-      <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <MetaFiado 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-          setRecebidoHoje={setRecebidoHoje} // Passa a função para MetaFiado
-        />
-      </TabsContent>
-      <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <MetaDesafio 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-        />
-      </TabsContent>
-      <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        {bonusPerdidoAtivado && (
-          <MetaPerdido 
-            userData={userData}
-            updateUserData={updateUserData}
-            diasSemExpediente={diasSemExpediente}
-            updateDiasSemExpediente={updateDiasSemExpediente}
-            diasRestantesCalculados={diasRestantesCalculados}
-            isLoading={isLoading}
-            bonusPerdidoAtivado={bonusPerdidoAtivado}
-          />
-        )}
-      </TabsContent>
-      <TabsContent value="meta-alimentacao" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <MetaAlimentacao 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-        />
-      </TabsContent>
-      <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        {userData ? (
-          <MeusPremios 
-            userData={userData}
-            updateUserData={updateUserData}
-            diasSemExpediente={diasSemExpediente}
-            updateDiasSemExpediente={updateDiasSemExpediente}
-            diasRestantesCalculados={diasRestantesCalculados}
-            isLoading={isLoading}
-            bonusPerdidoAtivado={bonusPerdidoAtivado}
-            setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-          />
-        ) : (
-          <div className="text-foreground">Carregando dados...</div>
-        )}
-      </TabsContent>
-      <TabsContent value="historicos" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-        <Historicos 
-          userData={userData}
-          updateUserData={updateUserData}
-          diasSemExpediente={diasSemExpediente}
-          updateDiasSemExpediente={updateDiasSemExpediente}
-          diasRestantesCalculados={diasRestantesCalculados}
-          isLoading={isLoading}
-          bonusPerdidoAtivado={bonusPerdidoAtivado}
-          recebido={recebidoHoje} // Passa o valor atualizado para Historicos
-        />
-      </TabsContent>
-    </>
-  );
+  // Calcula o percentual apenas se carteira_total for maior que 0
+  const carteiraTotal = userData?.carteira_total || 0;
+  const vencidoAtual = userData?.vencido_atual || 0;
+  const percentualVencido = carteiraTotal > 0 ? ((vencidoAtual / carteiraTotal) * 100).toFixed(2) : null;
 
   const getDaysInMonth = (date: Date) => {
     if (!(date instanceof Date) || isNaN(date.getTime())) return 0;
@@ -399,11 +251,6 @@ const DashboardLayout = () => {
     });
   };
 
-  const apps = [
-    { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
-    { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
-  ];
-
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
       <header className="bg-card shadow-md">
@@ -411,9 +258,12 @@ const DashboardLayout = () => {
           {isMobile ? (
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
-                Controle{" "}
-                <span className="text-sm font-normal bg-purple-500 text-white px-1 py-0.5 rounded-md ml-1">Beta</span>
-                <VersaoLog className="ml-2" /> {/* Integração do VersaoLog ao lado de Beta */}
+                Controle de Inadimplência
+                {percentualVencido !== null && (
+                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text ml-2">
+                    {percentualVencido}%
+                  </span>
+                )}
               </h1>
               <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -484,6 +334,7 @@ const DashboardLayout = () => {
                 >
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </Button>
+                <VersaoLog />
                 <div className="relative">
                   <Button
                     variant="outline"
@@ -545,16 +396,18 @@ const DashboardLayout = () => {
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
-                Controle de Inadimplência{" "}
-                <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
-                <VersaoLog className="ml-2" /> {/* Integração do VersaoLog ao lado de Versão 1.1 */}
+              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                <span>Controle de Inadimplência</span>
+                {percentualVencido !== null && (
+                  <span className="ml-2">{percentualVencido}%</span>
+                )}
               </h1>
               <div className="flex items-center gap-4">
                 <Button
                   onClick={handlePrintScreen}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
                 >
+                  <RiScreenshot2Fill className="h-4 w-4" />
                   Print Tela
                 </Button>
                 <Dialog>
@@ -563,6 +416,7 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
+                      <File className="h-4 w-4" />
                       Anexos
                     </Button>
                   </DialogTrigger>
@@ -594,6 +448,20 @@ const DashboardLayout = () => {
                         </a>
                       </li>
                     </ul>
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={isScriptsOpen} onOpenChange={setIsScriptsOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-foreground hover:text-primary"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Scripts
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl bg-card custom-dialog-no-close">
+                    <Scripts onClose={() => setIsScriptsOpen(false)} />
                   </DialogContent>
                 </Dialog>
                 <div className="relative">
@@ -662,6 +530,7 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
+                      <BiSolidReport className="h-4 w-4" />
                       Relatórios Sabium
                     </Button>
                   </DialogTrigger>
@@ -741,6 +610,7 @@ const DashboardLayout = () => {
                 >
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </Button>
+                <VersaoLog />
               </div>
             </>
           )}
@@ -788,10 +658,163 @@ const DashboardLayout = () => {
           onValueChange={handleTabChange}
           className="space-y-6"
         >
-          {renderTabs()}
-          {renderTabsContent()}
+          <TabsList className="grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl">
+            <TabsTrigger 
+              value="ajustes-metas" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("ajustes-metas")}
+            >
+              <Sliders className="h-4 w-4" />
+              <span className="text-foreground">Ajustes de Metas</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="meta-fiado" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meta-fiado")}
+            >
+              <Wallet className="h-4 w-4" />
+              <span className="text-foreground">Meta Fiado</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="meta-desafio" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meta-desafio")}
+            >
+              <Trophy className="h-4 w-4" />
+              <span className="text-foreground">Meta Desafio</span>
+            </TabsTrigger>
+            {bonusPerdidoAtivado && (
+              <TabsTrigger 
+                value="meta-perdido" 
+                className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+                onClick={() => handleTabChange("meta-perdido")}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-foreground">Meta Perdido</span>
+              </TabsTrigger>
+            )}
+            <TabsTrigger 
+              value="meta-alimentacao" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meta-alimentacao")}
+            >
+              <Utensils className="h-4 w-4" />
+              <span className="text-foreground">Meta de Ticket</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="meus-premios" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meus-premios")}
+            >
+              <Gift className="h-4 w-4" />
+              <span className="text-foreground">Meus Prêmios</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="historicos" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("historicos")}
+            >
+              <History className="h-4 w-4" />
+              <span className="text-foreground">Históricos</span>
+              {isNewHistorico && <span className="text-destructive font-bold">N</span>}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="ajustes-metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <AjustesMetas
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+            />
+          </TabsContent>
+          <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <MetaFiado 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setRecebidoHoje={setRecebidoHoje}
+            />
+          </TabsContent>
+          <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <MetaDesafio 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+            />
+          </TabsContent>
+          <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            {bonusPerdidoAtivado && (
+              <MetaPerdido 
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+              />
+            )}
+          </TabsContent>
+          <TabsContent value="meta-alimentacao" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <MetaAlimentacao 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+            />
+          </TabsContent>
+          <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            {userData ? (
+              <MeusPremios 
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+                setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+              />
+            ) : (
+              <div className="text-foreground">Carregando dados...</div>
+            )}
+          </TabsContent>
+          <TabsContent value="historicos" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <Historicos 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              recebido={recebidoHoje}
+            />
+          </TabsContent>
         </Tabs>
       </main>
+      <style>
+        {`
+          .custom-dialog-no-close .radix-dialog-close {
+            display: none;
+          }
+        `}
+      </style>
     </div>
   );
 };
