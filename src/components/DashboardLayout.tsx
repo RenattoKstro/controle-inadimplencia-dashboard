@@ -610,7 +610,7 @@ const DashboardLayout = () => {
                       Scripts
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl bg-card" closeButton={false}>
+                  <DialogContent className="max-w-2xl bg-card custom-dialog-no-close">
                     <Scripts onClose={() => setIsScriptsOpen(false)} />
                   </DialogContent>
                 </Dialog>
@@ -811,6 +811,13 @@ const DashboardLayout = () => {
           {renderTabsContent()}
         </Tabs>
       </main>
+      <style>
+        {`
+          .custom-dialog-no-close .radix-dialog-close {
+            display: none;
+          }
+        `}
+      </style>
     </div>
   );
 };
