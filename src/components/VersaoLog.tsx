@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 
 const VersaoLog = () => {
@@ -31,9 +32,9 @@ const VersaoLog = () => {
           Logs
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md bg-card border border-gray-300 rounded-md shadow-lg p-4 top-0 left-0 transform -translate-x-1/2 -translate-y-1/2 fixed inset-0 m-auto z-50 max-h-[80vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold text-foreground">Logs de Atualizações</h3>
-        <ul className="mt-2 space-y-2">
+      <DialogContent className="max-w-md bg-card border border-gray-300 rounded-md shadow-lg p-6 max-h-[80vh] overflow-y-auto">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Logs de Atualizações</h3>
+        <ul className="space-y-2">
           {versionLog.map((log, index) => (
             <li key={index} className="text-sm text-foreground">
               <span className="font-medium">{log.version}</span> - {log.date}
@@ -41,14 +42,16 @@ const VersaoLog = () => {
             </li>
           ))}
         </ul>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-4 w-full"
-          onClick={() => setIsOpen(false)}
-        >
-          Fechar
-        </Button>
+        <DialogClose asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4 w-full"
+            onClick={() => setIsOpen(false)}
+          >
+            Fechar
+          </Button>
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );
