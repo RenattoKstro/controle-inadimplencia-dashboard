@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram, Video, File } from "lucide-react";
+import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram, Video, File, FileText } from "lucide-react"; // Adicionei FileText explicitamente
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +26,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import { Calculator, Moon, Sun } from "lucide-react";
 import VersaoLog from "./VersaoLog";
-import Scripts from "./dashboard/Scripts";
+import Scripts from "./Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri"; // Ícone para Print Tela
 import { BiSolidReport } from "react-icons/bi"; // Ícone para Relatórios Sabium
 
@@ -605,7 +605,7 @@ const DashboardLayout = () => {
                       variant="outline"
                       className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      <FileCode className="h-4 w-4" />
+                      <FileText className="h-4 w-4" /> {/* Substituído FileCode por FileText */}
                       Scripts
                     </Button>
                   </DialogTrigger>
