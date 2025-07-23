@@ -55,14 +55,14 @@ const CardItem = ({
           <h3 className="text-sm font-medium text-foreground">{title}</h3>
           <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
         </div>
-        <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
-        {showProgress && (
-          <div className="mt-4">
-            <div className="text-3xl font-bold text-red-600">
+        <div className="flex items-center gap-2">
+          <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
+          {showProgress && (
+            <div className="text-lg font-bold text-red-600">
               {progressValue.toFixed(2)}%
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -221,6 +221,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const valorPorDia = userData.meta_mes / 27;
   const valorEsperadoAcumulado = valorPorDia * diasUteisTrabalhados;
   const gap = recebidosMes - valorEsperadoAcumulado;
+  const diferenca = gap - valorEsperadoAcumulado;
 
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
@@ -324,20 +325,20 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           color="bg-yellow-500"
         />
         <Card
-          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
+          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= valorEsperadoAcumulado ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
         >
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
+              <h3 className="text-sm font-medium text-foreground">{gap >= valorEsperadoAcumulado ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
               <span
-                className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
+                className={`p-2 rounded-full ${gap >= valorEsperadoAcumulado ? "bg-green-500" : "bg-red-500"} text-white`}
               >
                 <Wallet size={16} />
               </span>
             </div>
             <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(gap)}</div>
             <div className="mt-2 text-sm text-foreground">
-              {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
+              {gap >= valorEsperadoAcumulado ? "Acima da meta" : "Abaixo da meta"}
             </div>
             <div className="mt-1 text-xs text-foreground">
               Dias úteis trabalhados: {diasUteisTrabalhados}
@@ -345,10 +346,14 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             <div className="mt-1 text-xs text-foreground">
               Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
             </div>
+            <div className="mt-1">
+              <span className="text-sm font-medium text-foreground">Diferença: </span>
+              <span className={diferenca >= 0 ? "text-black" : "text-red-600"}>
+                {formatCurrency(diferenca)}
+              </span>
+            </div>
           </CardContent>
         </Card>
-      </div>
-      <div className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}>
         <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
           <CardContent className="p-4">
             <h3 className="text-sm font-medium text-gray-200">Média Diária de Recebimento</h3>
@@ -364,16 +369,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             <div className="text-gray-300 text-sm mt-1">Total estimado para o mês</div>
             <div className="text-gray-300 text-sm mt-1">Já recebido: {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
             <div className="text-gray-300 text-sm mt-1">Previsão restante: {previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal - dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
-            <div className="text-gray-300 text-sm mt-1">Fórmula: Recebido + (Média Diária × Dias Restantes)</div>
-          </CardContent>
-        </Card>
-        <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-gray-200">Previsão de Fechamento (teste)</h3>
-            <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoFechamento)}</div>
-            <div className={`text-sm mt-1 ${previsaoData.metaStatus.color}`}>{previsaoData.metaStatus.text}</div>
-            <div className="text-gray-300 text-sm mt-1">Redução extra de {previsaoData.formatCurrency(userData.abertura_vencido_mes - previsaoData.previsaoRecebimentoTotal)}</div>
-            <div className="text-gray-300 text-sm mt-1">Fórmula: Abertura do Mês - Previsão de Recebimento</div>
           </CardContent>
         </Card>
       </div>
