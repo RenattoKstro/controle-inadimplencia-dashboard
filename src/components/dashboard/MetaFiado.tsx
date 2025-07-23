@@ -58,8 +58,8 @@ const CardItem = ({
         <div className="flex items-center gap-2">
           <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
           {showProgress && (
-            <div className="text-3xl font-bold text-red-600">
-              {progressValue.toFixed(2)}%
+            <div className="text-lg font-bold text-red-600">
+              [{progressValue.toFixed(2)}%]
             </div>
           )}
         </div>
@@ -321,7 +321,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         <CardItem
           title="Falta para Meta Diária"
           value={faltaParaMetaDiaria}
-          icon={<Target size={16} />}
+          icon {<Target size={16} />}
           color="bg-yellow-500"
         />
         <Card
