@@ -59,7 +59,7 @@ const CardItem = ({
           <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
           {showProgress && (
             <div className="text-lg font-bold text-red-600">
-              [{progressValue.toFixed(2)}%]
+              {progressValue.toFixed(2)}%
             </div>
           )}
         </div>
