@@ -321,7 +321,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         <CardItem
           title="Falta para Meta Diária"
           value={faltaParaMetaDiaria}
-          icon {<Target size={16} />}
+          icon={<Target size={16} />}
           color="bg-yellow-500"
         />
         <Card
