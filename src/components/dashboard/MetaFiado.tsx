@@ -55,14 +55,14 @@ const CardItem = ({
           <h3 className="text-sm font-medium text-foreground">{title}</h3>
           <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
         </div>
-        <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
-        {showProgress && (
-          <div className="mt-4">
+        <div className="flex items-center gap-2">
+          <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
+          {showProgress && (
             <div className="text-3xl font-bold text-red-600">
               {progressValue.toFixed(2)}%
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );
