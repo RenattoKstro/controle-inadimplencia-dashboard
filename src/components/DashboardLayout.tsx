@@ -125,15 +125,16 @@ const DashboardLayout = () => {
   useEffect(() => {
     // Atualiza sugestão com base nos dados
     if (userData && userData.meta_mes && userData.vencido_atual) {
-      const progresso = userData.vencido_atual > 0 ? (userData.meta_mes / userData.vencido_atual) * 100 : 0;
-      const dailyProgress = recebidoHoje > 0 && userData.meta_mes > 0 ? (recebidoHoje / (userData.meta_mes / 27)) * 100 : 0;
+      const progressoMensal = userData.vencido_atual > 0 ? (userData.meta_mes / userData.vencido_atual) * 100 : 0;
+      const metaDiaria = userData.meta_mes / 27; // Receber por Dia (assumindo 27 dias úteis)
+      const progressoDiario = metaDiaria > 0 ? (recebidoHoje / metaDiaria) * 100 : 0;
 
-      if (progresso >= 100) {
+      if (progressoMensal >= 100) {
         setSuggestion("Parabéns! Você atingiu 100% da meta! Continue assim!");
-      } else if (dailyProgress >= 100) {
-        setSuggestion("Excelente! Seu desempenho diário superou a meta. Mantenha o ritmo!");
+      } else if (progressoDiario >= 100) {
+        setSuggestion("Excelente! Você bateu a meta diária de hoje! Mantenha o ritmo!");
       } else {
-        setSuggestion(`Continue se esforçando! Você está a ${(100 - progresso).toFixed(2)}% de atingir a meta e a ${(100 - dailyProgress).toFixed(2)}% da meta diária.`);
+        setSuggestion(`Continue se esforçando! Você está a ${(100 - progressoMensal).toFixed(2)}% de atingir a meta e a ${(100 - progressoDiario).toFixed(2)}% da meta diária.`);
       }
     } else {
       setSuggestion("Aguarde os dados serem carregados...");
