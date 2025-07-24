@@ -233,7 +233,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const diasUteisTrabalhados = calculateWorkedDays();
   const diasUteisRestantes = calculateRemainingWorkDays();
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
-  const gap = Math.max(0, recebidosMes - valorEsperadoAcumulado);
+  const gap = recebidosMes - valorEsperadoAcumulado; // Removido Math.max para permitir valores negativos
   const diferenca = recebidosMes - userData.meta_mes;
 
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
@@ -338,20 +338,20 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           color="bg-yellow-500"
         />
         <Card
-          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= valorEsperadoAcumulado ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
+          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
         >
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-foreground">{gap >= valorEsperadoAcumulado ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
+              <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
               <span
-                className={`p-2 rounded-full ${gap >= valorEsperadoAcumulado ? "bg-green-500" : "bg-red-500"} text-white`}
+                className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
               >
                 <Wallet size={16} />
               </span>
             </div>
             <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(gap)}</div>
             <div className="mt-2 text-sm text-foreground">
-              {gap >= valorEsperadoAcumulado ? "Acima da meta" : "Abaixo da meta"}
+              {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
             </div>
             <div className="mt-1 text-xs text-foreground">
               Dias úteis trabalhados: {diasUteisTrabalhados}
