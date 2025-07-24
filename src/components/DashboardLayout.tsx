@@ -30,6 +30,7 @@ import Scripts from "./dashboard/Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
+import TensorFlowSuggestions from "./TensorFlowSuggestions"; // Importe o novo componente
 
 export interface DashboardProps {
   userData: any;
@@ -121,13 +122,6 @@ const DashboardLayout = () => {
 
     document.body.classList.toggle("dark", isDarkMode);
   }, [navigate, toast, userData, isDarkMode]);
-
-  useEffect(() => {
-    if (userData && recebidoHoje > 0) {
-      // Placeholder até o componente TensorFlow ser integrado
-      setSuggestion("Sugestão temporária: Verifique seu desempenho diário.");
-    }
-  }, [userData, recebidoHoje]);
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => {
@@ -613,12 +607,11 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <Card className="bg-card p-4 rounded-lg shadow-sm mb-6">
-          <CardContent className="p-0">
-            <p className="text-foreground">{suggestion}</p>
-          </CardContent>
-        </Card>
-
+        <TensorFlowSuggestions
+          userData={userData}
+          recebidoHoje={recebidoHoje}
+          onSuggestionChange={setSuggestion}
+        />
         <Tabs 
           defaultValue="meta-fiado" 
           value={activeTab} 
