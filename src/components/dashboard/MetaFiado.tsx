@@ -231,10 +231,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const diasUteisTrabalhados = calculateWorkedDays();
   const diasUteisRestantes = calculateRemainingWorkDays();
   const totalWorkDaysInMonth = diasUteisTrabalhados + diasUteisRestantes;
-  const valorPorDiaTotal = userData.meta_mes / totalWorkDaysInMonth || 1;
-  const valorEsperadoAcumulado = valorPorDiaTotal * diasUteisTrabalhados;
+  const valorPorDiaTotal = totalWorkDaysInMonth > 0 ? userData.meta_mes / totalWorkDaysInMonth : 0;
+  const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaTotal * diasUteisTrabalhados : 0;
   const valorPorDia = aReceber > 0 && diasUteisRestantes > 0 ? aReceber / diasUteisRestantes : 0;
-  const gap = recebidosMes - valorEsperadoAcumulado;
+  const gap = Math.max(0, recebidosMes - valorEsperadoAcumulado); // Garante que o GAP não seja negativo
   const diferenca = recebidosMes - userData.meta_mes;
 
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
