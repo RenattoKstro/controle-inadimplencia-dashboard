@@ -214,6 +214,8 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       const dayOfWeek = d.getDay();
       if (dayOfWeek !== 0) workedDays++; // Inclui sábados, exclui apenas domingos
     }
+    // Inclui o dia atual como trabalhado
+    if (today.getDay() !== 0) workedDays++; // Só adiciona se não for domingo
     return workedDays;
   };
 
@@ -225,16 +227,17 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       const dayOfWeek = d.getDay();
       if (dayOfWeek !== 0) remainingDays++; // Inclui sábados, exclui apenas domingos
     }
+    // Remove o dia atual do restante, pois já foi contado como trabalhado
+    if (today.getDay() !== 0) remainingDays--;
     return remainingDays;
   };
 
-  const totalWorkDaysInMonth = 27; // Fixado para julho de 2025, pode ser dinâmico se necessário
+  const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const diasUteisTrabalhados = calculateWorkedDays();
   const diasUteisRestantes = calculateRemainingWorkDays();
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
-  const gap = recebidosMes - valorEsperadoAcumulado; // Removido Math.max para permitir valores negativos
-  const diferenca = recebidosMes - userData.meta_mes;
+  const gap = recebidosMes - valorEsperadoAcumulado;
 
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
@@ -361,12 +364,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             </div>
             <div className="mt-1 text-xs text-foreground">
               Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
-            </div>
-            <div className="mt-1">
-              <span className="text-sm font-medium text-foreground">Diferença: </span>
-              <span className={diferenca >= 0 ? "text-black" : "text-red-600"}>
-                {formatCurrency(diferenca)}
-              </span>
             </div>
           </CardContent>
         </Card>
