@@ -30,7 +30,6 @@ import Scripts from "./dashboard/Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
-import TensorFlowSuggestions from "./TensorFlowSuggestions"; // Importe o novo componente
 
 export interface DashboardProps {
   userData: any;
@@ -41,6 +40,95 @@ export interface DashboardProps {
   isLoading: boolean;
   bonusPerdidoAtivado: boolean;
   setBonusPerdidoAtivado: (value: boolean) => void;
+}
+
+const TensorFlowSuggestions = ({ userData, recebidoHoje, onSuggestionChange }) => {
+  useEffect(() => {
+    const loadTensorFlow = async () => {
+      if (!window.tf) {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js";
+        script.async = true;
+        script.onload = () => {
+          // Inicializa o modelo após carregar
+          const model = window.tf.sequential();
+          model.add(window.tf.layers.dense({ units: 16, activation: "relu", inputShape: [3] }));
+          model.add(window.tf.layers.dense({ units: 1, activation: "sigmoid" }));
+
+          model.compile({
+            optimizer: "adam",
+            loss: "binaryCrossentropy",
+            metrics: ["accuracy"],
+          });
+
+          // Prepara dados de treinamento
+          const dailyReceipts = userData?.historico_diario || [];
+          const data = dailyReceipts.map((item) => ({
+            value: item.recebido || 0,
+            average: userData?.meta_mes / 27 || 0,
+            target: userData?.meta_mes || 0,
+          }));
+
+          if (data.length === 0) {
+            onSuggestionChange("Nenhum dado histórico disponível para análise.");
+            return;
+          }
+
+          const xs = window.tf.tensor2d(
+            data.map((item) => [item.value, item.average, item.target]),
+            [data.length, 3]
+          );
+          const ys = window.tf.tensor2d(
+            data.map((item) => [categorizePerformance(item.value, item.average, item.target) === "above" ? 1 : 0]),
+            [data.length, 1]
+          );
+
+          // Treina o modelo
+          model.fit(xs, ys, {
+            epochs: 50,
+            callbacks: {
+              onEpochEnd: async (epoch, log) => {
+                console.log(`Época ${epoch}: perda = ${log.loss}, acurácia = ${log.acc}`);
+              },
+            },
+          }).then(() => {
+            // Faz a previsão
+            const input = window.tf.tensor2d([[recebidoHoje, userData?.meta_mes / 27 || 0, userData?.meta_mes || 0]], [1, 3]);
+            const prediction = model.predict(input) as any;
+            const probability = prediction.dataSync()[0];
+            const category = probability > 0.5 ? "above" : "below";
+
+            const suggestions = {
+              above: ["Excelente! Seu desempenho ultrapassou a média. Continue com esse ritmo!", "Dias acima da meta detectados. Parabéns!"],
+              below: ["Você está abaixo da média. Reforce as abordagens com clientes.", "Reavalie suas estratégias de cobrança."],
+            };
+
+            const selectedSuggestion = suggestions[category]?.[Math.floor(Math.random() * suggestions[category].length)] || "Sem sugestões.";
+            onSuggestionChange(selectedSuggestion);
+
+            // Libera memória
+            xs.dispose();
+            ys.dispose();
+            input.dispose();
+            prediction.dispose();
+          }).catch((err) => {
+            console.error("Erro no treinamento ou previsão:", err);
+            onSuggestionChange("Erro ao gerar sugestão.");
+          });
+        };
+        document.body.appendChild(script);
+      }
+    };
+    loadTensorFlow();
+  }, [userData, recebidoHoje, onSuggestionChange]);
+
+  return <div></div>; // Componente vazio, pois a sugestão é atualizada via callback
+};
+
+function categorizePerformance(value, average, target) {
+  if (value > average * 1.2) return "above";
+  if (value < average * 0.8) return "below";
+  return "neutral";
 }
 
 const DashboardLayout = () => {
@@ -67,7 +155,7 @@ const DashboardLayout = () => {
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const [isScriptsOpen, setIsScriptsOpen] = useState(false);
-  const [suggestion, setSuggestion] = useState("Analisando dados..."); // Estado para sugestão
+  const [suggestion, setSuggestion] = useState("Analisando dados...");
 
   useEffect(() => {
     const fetchReceivedToday = async () => {
@@ -612,6 +700,11 @@ const DashboardLayout = () => {
           recebidoHoje={recebidoHoje}
           onSuggestionChange={setSuggestion}
         />
+        <Card className="bg-card p-4 rounded-lg shadow-sm mb-6">
+          <CardContent className="p-0">
+            <p className="text-foreground">{suggestion}</p>
+          </CardContent>
+        </Card>
         <Tabs 
           defaultValue="meta-fiado" 
           value={activeTab} 
