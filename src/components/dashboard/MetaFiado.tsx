@@ -219,28 +219,17 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     return workedDays;
   };
 
-  const calculateRemainingWorkDays = () => {
-    const today = new Date();
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Último dia do mês
-    let remainingDays = 0;
-    for (let d = new Date(today); d <= lastDay; d.setDate(d.getDate() + 1)) {
-      const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0) remainingDays++; // Inclui sábados, exclui domingos
-    }
-    // O dia atual já foi contado como trabalhado, então subtrai 1 se não for domingo
-    if (today.getDay() !== 0) remainingDays--;
-    return remainingDays;
-  };
+  // Usa o valor manual de dias restantes do AjustesMetas
+  const diasUteisRestantes = userData.dias_restantes || 0;
 
   const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
-  const diasUteisTrabalhados = calculateWorkedDays();
-  const diasUteisRestantes = calculateRemainingWorkDays();
+  const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes; // Calcula dinamicamente com base nos dias restantes
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
   const gap = recebidosMes - valorEsperadoAcumulado;
 
-  const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
-    ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
+  const receberPorDia = diasUteisRestantes > 0
+    ? faltaReceberMes / diasUteisRestantes
     : 0;
   const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
   const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje);
@@ -256,7 +245,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     meta_mes: userData.meta_mes,
     vencido_atual: userData.vencido_atual,
     dias_trabalhados: diasUteisTrabalhados,
-    dias_restantes: diasRestantesCalculados || userData.dias_restantes || 0,
+    dias_restantes: diasUteisRestantes,
     dailyReceipts,
   });
 
