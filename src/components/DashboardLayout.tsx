@@ -123,8 +123,9 @@ const DashboardLayout = () => {
   }, [navigate, toast, userData, isDarkMode]);
 
   useEffect(() => {
-    if (userData && recebidoHoje > 0 && window.ml5) {
-      generateSuggestions();
+    if (userData && recebidoHoje > 0) {
+      // Placeholder até o componente TensorFlow ser integrado
+      setSuggestion("Sugestão temporária: Verifique seu desempenho diário.");
     }
   }, [userData, recebidoHoje]);
 
@@ -242,111 +243,6 @@ const DashboardLayout = () => {
         return prev;
       }
       return newMonth;
-    });
-  };
-
-  const generateSuggestions = () => {
-    if (!window.ml5 || !userData || !userData.abertura_vencido_mes || !userData.vencido_atual) {
-      setSuggestion("Erro: ml5.js não carregado ou dados indisponíveis.");
-      return;
-    }
-
-    const neuralNetwork = new ml5.neuralNetwork();
-    const dailyReceipts = userData.historico_diario || [];
-    const data = dailyReceipts.map(item => ({
-      date: item.data_recebimento,
-      value: item.recebido || 0,
-      average: userData.meta_mes / 27,
-      target: userData.meta_mes
-    }));
-
-    data.forEach(item => {
-      neuralNetwork.addData({
-        input: [item.value, item.average, item.target],
-        output: { category: categorizePerformance(item.value, item.average, item.target) }
-      });
-    });
-
-    function categorizePerformance(value, average, target) {
-      if (value > average * 1.2) return "above";
-      if (value < average * 0.8) return "below";
-      if (isTrendingDown(data)) return "downtrend";
-      if (isTrendingUp(data)) return "uptrend";
-      if (target - value < target * 0.1) return "near_target";
-      return "neutral";
-    }
-
-    function isTrendingDown(data) {
-      const lastThree = data.slice(-3).map(d => d.value || 0);
-      return lastThree[0] > lastThree[1] && lastThree[1] > lastThree[2];
-    }
-
-    function isTrendingUp(data) {
-      const lastThree = data.slice(-3).map(d => d.value || 0);
-      return lastThree[0] < lastThree[1] && lastThree[1] < lastThree[2];
-    }
-
-    neuralNetwork.train({ epochs: 50 }, () => {
-      neuralNetwork.predict([recebidoHoje, userData.meta_mes / 27, userData.meta_mes], (err, results) => {
-        if (err) {
-          console.error("Erro na previsão:", err);
-          setSuggestion("Erro ao gerar sugestão.");
-          return;
-        }
-        const category = results[0].category;
-        const daysLeft = userData.dias_restantes || diasRestantesCalculados;
-        const remaining = Math.max(0, userData.meta_mes - userData.vencido_atual);
-        const suggestions = {
-          below: [
-            "Você está abaixo da média nos últimos dias. Reforce as abordagens com os clientes recorrentes.",
-            "Muitos dias consecutivos com baixo desempenho. Reavalie suas estratégias de cobrança.",
-            "Evite deixar o desempenho fraco para o final do mês. Antecipe as ações.",
-            "O valor médio diário caiu. Que tal revisar sua carteira de clientes?"
-          ],
-          above: [
-            "Excelente! Seu desempenho ultrapassou a média. Continue com esse ritmo!",
-            "Dias acima da meta detectados. Parabéns pela consistência!",
-            "Você teve um pico de performance. Aproveite o momento para avançar mais.",
-            "Resultados fortes! Use esse impulso para adiantar metas."
-          ],
-          downtrend: [
-            "Houve uma queda no ritmo nos últimos 3 dias. Verifique se há atrasos acumulados.",
-            "Tendência negativa detectada. É hora de ajustar o foco.",
-            "Diminuição contínua nos valores recebidos. Reforce os contatos pendentes.",
-            "O desempenho desacelerou. Considere ações imediatas para recuperar."
-          ],
-          uptrend: [
-            "Sua performance está em alta. Mantenha o ritmo!",
-            "A tendência de crescimento é clara. Aproveite para antecipar metas.",
-            "Progresso consistente nos últimos dias. Ótimo trabalho!",
-            "O gráfico mostra melhora. Continue com as estratégias atuais."
-          ],
-          near_target: [
-            "Você está bem perto da meta! Foco total nos detalhes finais.",
-            "Com mais um bom dia, você pode garantir sua meta. Força!",
-            "Meta quase batida! Use isso como motivação extra.",
-            "Reta final! Um pequeno esforço te separa do objetivo."
-          ],
-          neutral: daysLeft < 5
-            ? [
-                "Faltam poucos dias! Reforce as cobranças para garantir a meta.",
-                "O prazo está acabando. Concentre-se nos clientes de maior valor.",
-                "A reta final chegou. Foco total nos próximos dias!",
-                "Use os últimos dias com inteligência: priorize os contatos com maior chance de retorno."
-              ]
-            : remaining > 0
-            ? [
-                "A meta ainda está longe. Divida-a em etapas e avance diariamente.",
-                `R$ ${(remaining).toFixed(2)} ainda faltam para a meta. Planeje bem os próximos dias.`,
-                "Com o ritmo atual, você pode não alcançar a meta. Que tal aumentar a média diária?",
-                "Há tempo, mas será preciso intensificar os recebimentos."
-              ]
-            : []
-        };
-
-        const selectedSuggestion = suggestions[category]?.[Math.floor(Math.random() * suggestions[category].length)] || "Sem sugestões no momento.";
-        setSuggestion(selectedSuggestion);
-      });
     });
   };
 
