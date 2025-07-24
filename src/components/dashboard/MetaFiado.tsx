@@ -228,13 +228,12 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     return remainingDays;
   };
 
+  const totalWorkDaysInMonth = 27; // Fixado para julho de 2025, pode ser dinâmico se necessário
+  const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const diasUteisTrabalhados = calculateWorkedDays();
   const diasUteisRestantes = calculateRemainingWorkDays();
-  const totalWorkDaysInMonth = diasUteisTrabalhados + diasUteisRestantes;
-  const valorPorDiaTotal = totalWorkDaysInMonth > 0 ? userData.meta_mes / totalWorkDaysInMonth : 0;
-  const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaTotal * diasUteisTrabalhados : 0;
-  const valorPorDia = aReceber > 0 && diasUteisRestantes > 0 ? aReceber / diasUteisRestantes : 0;
-  const gap = Math.max(0, recebidosMes - valorEsperadoAcumulado); // Garante que o GAP não seja negativo
+  const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
+  const gap = Math.max(0, recebidosMes - valorEsperadoAcumulado);
   const diferenca = recebidosMes - userData.meta_mes;
 
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
