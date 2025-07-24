@@ -1,3 +1,169 @@
+import { useEffect, useState } from "react";
+import { DashboardProps } from "../DashboardLayout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Calculator, Building, Wallet, ArrowDown, Check, Target } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
+import Previsao from "./Previsao";
+
+interface CardItemProps {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  color?: string;
+  showProgress?: boolean;
+  progressValue?: number;
+}
+
+interface ProgressCardProps {
+  title: string;
+  current: number;
+  target: number;
+  icon: React.ReactNode;
+  userData: any;
+}
+
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
+const CardItem = ({
+  title,
+  value,
+  icon,
+  color = "bg-blue-500",
+  showProgress = false,
+  progressValue = 0,
+}: CardItemProps) => {
+  return (
+    <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${color} bg-opacity-50`}>
+      <CardContent className="p-4 md:p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-foreground">{title}</h3>
+          <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
+          {showProgress && (
+            <div className="text-lg font-bold text-red-600">
+              {progressValue.toFixed(2)}%
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
+  const isMobile = useIsMobile();
+
+  let percentageComplete = 0;
+
+  if (userData.vencido_atual > 0) {
+    percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
+  } else {
+    console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
+  }
+
+  percentageComplete = Math.max(0, percentageComplete);
+
+  const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
+
+  const valoresRestantes = percentuaisAlvo.map((percentual) => {
+    const vencidoNecessario = userData.meta_mes / (percentual / 100);
+    let diferenca = userData.vencido_atual - vencidoNecessario;
+    const atingido = percentageComplete >= percentual;
+    diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
+    return {
+      percentual,
+      diferenca,
+      atingido,
+    };
+  });
+
+  const getProgressStyle = (value: number) => {
+    if (value < 94) return { background: "#ff0000" };
+    if (value < 100) return { background: "#facc15" };
+    return { background: "#22c55e" };
+  };
+
+  return (
+    <Card
+      className={`shadow-sm hover:shadow-md transition-shadow duration-200 bg-blue-500 bg-opacity-10 ${
+        isMobile ? "col-span-1" : "col-span-1 md:col-span-3"
+      }`}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex flex-col items-center gap-2">
+          <CardTitle className="text-lg md:text-xl flex items-center gap-2">
+            {icon}
+            {title}
+          </CardTitle>
+          <div className="text-xl md:text-2xl font-bold text-foreground">
+            {percentageComplete.toFixed(2)}% concluído
+          </div>
+        </div>
+        <CardDescription className="text-sm mt-1 text-center text-foreground">
+          <div className="flex flex-col md:flex-row md:gap-4 justify-center">
+            <span>Meta: {formatCurrency(target)}</span>
+            <span>Atual: {formatCurrency(current)}</span>
+          </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <div
+            className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative"
+            style={{
+              boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <div
+              className="h-full rounded-l-full transition-all duration-1000 ease-out"
+              style={{
+                width: `${Math.min(percentageComplete, 105)}%`,
+                ...getProgressStyle(percentageComplete),
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+              }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4 mt-2 justify-center">
+            {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
+              <div key={percentual} className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    "text-sm md:text-base font-medium",
+                    atingido ? "text-green-600" : "text-red-600"
+                  )}
+                >
+                  {percentual}%: {formatCurrency(diferenca)}
+                </div>
+                {index < valoresRestantes.length - 1 && (
+                  <span className="text-gray-400">|</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
   const isMobile = useIsMobile();
   const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
@@ -46,28 +212,16 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     let workedDays = 0;
     for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
       const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0) workedDays++; // Exclui domingos
+      if (dayOfWeek !== 0) workedDays++;
     }
     return workedDays;
   };
 
-  const calculateRemainingWorkDays = () => {
-    const today = new Date();
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Último dia do mês
-    let remainingDays = 0;
-    for (let d = new Date(today); d <= lastDay; d.setDate(d.getDate() + 1)) {
-      const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) remainingDays++; // Exclui sábados e domingos
-    }
-    return remainingDays;
-  };
-
   const diasUteisTrabalhados = calculateWorkedDays();
-  const diasUteisRestantes = calculateRemainingWorkDays();
-  const valorPorDia = aReceber > 0 && diasUteisRestantes > 0 ? aReceber / diasUteisRestantes : 0;
-  const valorEsperadoAcumulado = valorPorDia * (diasUteisTrabalhados || 1); // Evita divisão por zero
+  const valorPorDia = userData.meta_mes / 27;
+  const valorEsperadoAcumulado = valorPorDia * diasUteisTrabalhados;
   const gap = recebidosMes - valorEsperadoAcumulado;
-  const diferenca = recebidosMes - userData.meta_mes; // Correção sugerida para refletir a meta total
+  const diferenca = gap - valorEsperadoAcumulado;
 
   const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
     ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
@@ -188,9 +342,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             </div>
             <div className="mt-1 text-xs text-foreground">
               Dias úteis trabalhados: {diasUteisTrabalhados}
-            </div>
-            <div className="mt-1 text-xs text-foreground">
-              Dias úteis restantes: {diasUteisRestantes}
             </div>
             <div className="mt-1 text-xs text-foreground">
               Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
