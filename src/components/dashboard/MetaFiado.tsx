@@ -212,19 +212,24 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     let workedDays = 0;
     for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
       const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0) workedDays++;
+      if (dayOfWeek !== 0) workedDays++; // Exclui domingos
     }
+    // Remove 1 dia se o dia atual for domingo (não deve contar como trabalhado)
+    if (today.getDay() === 0) workedDays--;
     return workedDays;
   };
 
-  const diasUteisTrabalhados = calculateWorkedDays();
-  const valorPorDia = userData.meta_mes / 27;
-  const valorEsperadoAcumulado = valorPorDia * diasUteisTrabalhados;
-  const gap = recebidosMes - valorEsperadoAcumulado;
-  const diferenca = gap - valorEsperadoAcumulado;
+  // Usa o valor manual de dias restantes do AjustesMetas
+  const diasUteisRestantes = userData.dias_restantes || 0;
 
-  const receberPorDia = (userData.dias_restantes || diasRestantesCalculados) > 0
-    ? faltaReceberMes / (userData.dias_restantes || diasRestantesCalculados)
+  const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
+  const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
+  const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes; // Calcula dinamicamente com base nos dias restantes
+  const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
+  const gap = recebidosMes - valorEsperadoAcumulado;
+
+  const receberPorDia = diasUteisRestantes > 0
+    ? faltaReceberMes / diasUteisRestantes
     : 0;
   const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
   const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje);
@@ -240,7 +245,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     meta_mes: userData.meta_mes,
     vencido_atual: userData.vencido_atual,
     dias_trabalhados: diasUteisTrabalhados,
-    dias_restantes: diasRestantesCalculados || userData.dias_restantes || 0,
+    dias_restantes: diasUteisRestantes,
     dailyReceipts,
   });
 
@@ -325,32 +330,29 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           color="bg-yellow-500"
         />
         <Card
-          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= valorEsperadoAcumulado ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
+          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
         >
           <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-foreground">{gap >= valorEsperadoAcumulado ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
+              <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
               <span
-                className={`p-2 rounded-full ${gap >= valorEsperadoAcumulado ? "bg-green-500" : "bg-red-500"} text-white`}
+                className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
               >
                 <Wallet size={16} />
               </span>
             </div>
             <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(gap)}</div>
             <div className="mt-2 text-sm text-foreground">
-              {gap >= valorEsperadoAcumulado ? "Acima da meta" : "Abaixo da meta"}
+              {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
             </div>
             <div className="mt-1 text-xs text-foreground">
               Dias úteis trabalhados: {diasUteisTrabalhados}
             </div>
             <div className="mt-1 text-xs text-foreground">
-              Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
+              Dias úteis restantes: {diasUteisRestantes}
             </div>
-            <div className="mt-1">
-              <span className="text-sm font-medium text-foreground">Diferença: </span>
-              <span className={diferenca >= 0 ? "text-black" : "text-red-600"}>
-                {formatCurrency(diferenca)}
-              </span>
+            <div className="mt-1 text-xs text-foreground">
+              Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
             </div>
           </CardContent>
         </Card>
