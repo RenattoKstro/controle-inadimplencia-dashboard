@@ -210,12 +210,12 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     let workedDays = 0;
-    for (let d = new Date(firstDay); d < today; d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
       const dayOfWeek = d.getDay();
       if (dayOfWeek !== 0) workedDays++; // Exclui domingos
     }
-    // Adiciona o dia atual apenas se não for domingo
-    if (today.getDay() !== 0) workedDays++;
+    // Remove 1 dia se o dia atual for domingo (não deve contar como trabalhado)
+    if (today.getDay() === 0) workedDays--;
     return workedDays;
   };
 
@@ -227,7 +227,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       const dayOfWeek = d.getDay();
       if (dayOfWeek !== 0) remainingDays++; // Inclui sábados, exclui domingos
     }
-    // Remove o dia atual do restante, pois já foi contado como trabalhado
+    // O dia atual já foi contado como trabalhado, então subtrai 1 se não for domingo
     if (today.getDay() !== 0) remainingDays--;
     return remainingDays;
   };
