@@ -30,6 +30,7 @@ import Scripts from "./dashboard/Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
+import AvisosESugestoes from "./dashboard/AvisosESugestoes"; // Novo componente
 
 export interface DashboardProps {
   userData: any;
@@ -66,7 +67,6 @@ const DashboardLayout = () => {
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const [isScriptsOpen, setIsScriptsOpen] = useState(false);
-  const [suggestion, setSuggestion] = useState("Analisando dados...");
 
   useEffect(() => {
     const fetchReceivedToday = async () => {
@@ -121,25 +121,6 @@ const DashboardLayout = () => {
 
     document.body.classList.toggle("dark", isDarkMode);
   }, [navigate, toast, userData, isDarkMode]);
-
-  useEffect(() => {
-    // Atualiza sugestão com base nos dados
-    if (userData && userData.meta_mes && userData.vencido_atual) {
-      const progressoMensal = userData.vencido_atual > 0 ? (userData.meta_mes / userData.vencido_atual) * 100 : 0;
-      const metaDiaria = userData.meta_mes / 27; // Receber por Dia (assumindo 27 dias úteis)
-      const progressoDiario = metaDiaria > 0 ? (recebidoHoje / metaDiaria) * 100 : 0;
-
-      if (progressoMensal >= 100) {
-        setSuggestion("Parabéns! Você atingiu 100% da meta! Continue assim!");
-      } else if (progressoDiario >= 100) {
-        setSuggestion("Excelente! Você bateu a meta diária de hoje! Mantenha o ritmo!");
-      } else {
-        setSuggestion(`Continue se esforçando! Você está a ${(100 - progressoMensal).toFixed(2)}% de atingir a meta e a ${(100 - progressoDiario).toFixed(2)}% da meta diária.`);
-      }
-    } else {
-      setSuggestion("Aguarde os dados serem carregados...");
-    }
-  }, [userData, recebidoHoje]);
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => {
@@ -625,11 +606,7 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <Card className="bg-card p-4 rounded-lg shadow-sm mb-6">
-          <CardContent className="p-0">
-            <p className="text-foreground">{suggestion}</p>
-          </CardContent>
-        </Card>
+        <AvisosESugestoes userData={userData} recebidoHoje={recebidoHoje} />
         <Tabs 
           defaultValue="meta-fiado" 
           value={activeTab} 
