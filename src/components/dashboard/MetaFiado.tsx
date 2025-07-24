@@ -212,7 +212,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     let workedDays = 0;
     for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
       const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) workedDays++; // Exclui sábados e domingos
+      if (dayOfWeek !== 0) workedDays++; // Inclui sábados, exclui apenas domingos
     }
     return workedDays;
   };
@@ -223,7 +223,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     let remainingDays = 0;
     for (let d = new Date(today); d <= lastDay; d.setDate(d.getDate() + 1)) {
       const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) remainingDays++; // Exclui sábados e domingos
+      if (dayOfWeek !== 0) remainingDays++; // Inclui sábados, exclui apenas domingos
     }
     return remainingDays;
   };
