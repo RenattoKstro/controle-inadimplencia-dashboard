@@ -68,7 +68,7 @@ const RelatoriosSabium = () => {
 
         {/* Benefícios Que Permitem Empréstimo Para Aposentados E Pensionistas */}
         <AccordionItem value="item-5">
-          <AccordionTrigger>Benefícios Que Permitem Empréstimo Para Aposentados E Pensionistas</AccordionTrigger>
+          <AccordionTrigger>Benefícios Que Permitem Empréstimo Para Aposentados E Pensionistas (GazinBank)</AccordionTrigger>
           <AccordionContent>
             <ol className="list-decimal pl-5 space-y-1">
               <li>001 Pensão Por Morte - Trabalhador Rural</li>
