@@ -650,7 +650,7 @@ const Historicos = ({
               )}
               <th className="border border-gray-300 p-2 text-center text-foreground">Fiado (%)</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Desafio (%)</th>
-              <th className="border border-gray-300 p-2 text-center text-foreground">Prêmios Recebidos</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Prêmios Recebidos (manual)</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Ações</th>
             </tr>
           </thead>
