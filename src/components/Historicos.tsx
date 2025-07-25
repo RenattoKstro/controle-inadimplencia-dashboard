@@ -617,7 +617,7 @@ const Historicos = ({
                 />
               </div>
               <div>
-                <label>Prêmios Recebidos:</label>
+                <label>Prêmios Recebidos (manual):</label>
                 <input
                   type="number"
                   value={formData.premiosrecebidos}
