@@ -12,7 +12,7 @@ interface HistoricosProps {
   isLoading: boolean;
   bonusPerdidoAtivado: boolean;
   recebido?: number; // Recebido Hoje de MetaFiado
-  totalGanhos: number; // Novo prop para Total Geral de Ganhos
+  totalGanhos: number; // Total Geral de Ganhos (Líder)
 }
 
 const Historicos = ({
@@ -24,7 +24,7 @@ const Historicos = ({
   isLoading,
   bonusPerdidoAtivado,
   recebido = 0,
-  totalGanhos, // Adicionado como prop
+  totalGanhos,
 }: HistoricosProps) => {
   const [historico, setHistorico] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -80,31 +80,11 @@ const Historicos = ({
     return { percentualMetaFiado, percentualMetaDesafio };
   };
 
-  const calculoGanhos = (percentualMetaFiado: number, existingPremios: number = 0) => {
-    const premiosFiado = [
-      { percentual: 94, valor: 52.50, atingido: percentualMetaFiado >= 94 },
-      { percentual: 96, valor: 63.00, atingido: percentualMetaFiado >= 96 },
-      { percentual: 98, valor: 84.00, atingido: percentualMetaFiado >= 98 },
-      { percentual: 99, valor: 94.50, atingido: percentualMetaFiado >= 99 },
-      { percentual: 100, valor: 241.50, atingido: percentualMetaFiado >= 100 },
-      { percentual: 101, valor: 84.00, atingido: percentualMetaFiado >= 101 },
-      { percentual: 103, valor: 84.00, atingido: percentualMetaFiado >= 103 },
-      { percentual: 105, valor: 84.00, atingido: percentualMetaFiado >= 105 },
-    ];
-    const fiadoGanhos = premiosFiado.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
-
-    // Adiciona o valor do ticket (R$ 100,00) se a condição for atendida
-    const isPastDay15 = new Date().getDate() > 15; // 25 > 15, então verdadeiro
-    const ticketGanhos = userData.metaTicketConfirmada && isPastDay15 ? 100.00 : 0;
-
-    return fiadoGanhos + ticketGanhos + existingPremios;
-  };
-
   const handleAutoFill = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     const authUserId = user?.id;
     if (authUserId) {
-      console.log("Attempting to autofill with userData:", userData);
+      console.log("Attempting to autofill with userData:", userData, "Total Ganhos:", totalGanhos);
       const safeVencidoatual = userData.vencido_atual || 0;
       const safeMetames = userData.meta_mes || 0;
       const safeMetadesafio = userData.meta_desafio || 433994;
@@ -125,12 +105,11 @@ const Historicos = ({
         return;
       }
       const existingRecord = existingRecords?.[0];
-      const existingPremios = existingRecord?.premiosrecebidos || 0;
-      const calculatedPremios = calculoGanhos(percentualMetaFiado, existingPremios);
-      // Usa totalGanhos como base inicial, ajustado com cálculos adicionais
-      const premiosrecebidos = totalGanhos + (calculatedPremios - existingPremios); // Adiciona apenas o incremento calculado
 
-      console.log("Existing record found:", existingRecord, "Total Ganhos:", totalGanhos, "Calculated Premios:", calculatedPremios);
+      // Preenche diretamente com totalGanhos como valor inicial
+      const premiosrecebidos = totalGanhos;
+
+      console.log("Existing record found:", existingRecord, "Premios Recebidos set to:", premiosrecebidos);
       setFormData({
         id: existingRecord?.id || "",
         month: currentMonth,
