@@ -12,6 +12,7 @@ interface HistoricosProps {
   isLoading: boolean;
   bonusPerdidoAtivado: boolean;
   recebido?: number; // Recebido Hoje de MetaFiado
+  totalGanhos: number; // Novo prop para Total Geral de Ganhos
 }
 
 const Historicos = ({
@@ -23,6 +24,7 @@ const Historicos = ({
   isLoading,
   bonusPerdidoAtivado,
   recebido = 0,
+  totalGanhos, // Adicionado como prop
 }: HistoricosProps) => {
   const [historico, setHistorico] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -91,8 +93,8 @@ const Historicos = ({
     ];
     const fiadoGanhos = premiosFiado.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
 
-    // Adiciona o valor do ticket (R$ 100,00) se a condição for atendida (após o dia 15, por exemplo)
-    const isPastDay15 = new Date().getDate() > 15;
+    // Adiciona o valor do ticket (R$ 100,00) se a condição for atendida
+    const isPastDay15 = new Date().getDate() > 15; // 25 > 15, então verdadeiro
     const ticketGanhos = userData.metaTicketConfirmada && isPastDay15 ? 100.00 : 0;
 
     return fiadoGanhos + ticketGanhos + existingPremios;
@@ -124,9 +126,11 @@ const Historicos = ({
       }
       const existingRecord = existingRecords?.[0];
       const existingPremios = existingRecord?.premiosrecebidos || 0;
-      const premiosrecebidos = calculoGanhos(percentualMetaFiado, existingPremios);
+      const calculatedPremios = calculoGanhos(percentualMetaFiado, existingPremios);
+      // Usa totalGanhos como base inicial, ajustado com cálculos adicionais
+      const premiosrecebidos = totalGanhos + (calculatedPremios - existingPremios); // Adiciona apenas o incremento calculado
 
-      console.log("Existing record found:", existingRecord);
+      console.log("Existing record found:", existingRecord, "Total Ganhos:", totalGanhos, "Calculated Premios:", calculatedPremios);
       setFormData({
         id: existingRecord?.id || "",
         month: currentMonth,
@@ -159,22 +163,6 @@ const Historicos = ({
     }
     console.log("Submitting form data - ID before submit:", formData.id);
 
-    // Forçar cálculo dos prêmios antes de salvar
-    const { percentualMetaFiado } = calculatePercentages(formData.metames, formData.vencidoatual, formData.metadesafio);
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const { data: existingRecords, error: fetchError } = await supabase
-      .from("historico")
-      .select("*")
-      .eq("user_id", authUserId)
-      .eq("month", currentMonth);
-    if (fetchError) {
-      console.error("Error fetching existing record:", fetchError.message);
-      throw fetchError;
-    }
-    const existingRecord = existingRecords?.[0];
-    const existingPremios = existingRecord?.premiosrecebidos || 0;
-    const calculatedPremios = calculoGanhos(percentualMetaFiado, existingPremios);
-
     const historicoPayload = {
       id: formData.id || crypto.randomUUID(),
       user_id: authUserId,
@@ -187,11 +175,23 @@ const Historicos = ({
       recperdido: formData.recperdido,
       percentual_meta_fiado: formData.percentual_meta_fiado,
       percentual_meta_desafio: formData.percentual_meta_desafio,
-      premiosrecebidos: calculatedPremios,
+      premiosrecebidos: formData.premiosrecebidos, // Usa o valor editado manualmente
     };
     console.log("Historico payload to insert/update:", historicoPayload);
 
     let historicoResult;
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const { data: existingRecords, error: fetchError } = await supabase
+      .from("historico")
+      .select("*")
+      .eq("user_id", authUserId)
+      .eq("month", currentMonth);
+    if (fetchError) {
+      console.error("Error fetching existing record:", fetchError.message);
+      throw fetchError;
+    }
+    const existingRecord = existingRecords?.[0];
+
     if (existingRecord && formData.month === currentMonth) {
       console.log("Updating existing record for month:", currentMonth, "with id:", existingRecord.id);
       historicoResult = await supabase
@@ -573,10 +573,9 @@ const Historicos = ({
                   type="number"
                   value={formData.premiosrecebidos}
                   onChange={(e) => setFormData({ ...formData, premiosrecebidos: Number(e.target.value) || 0 })}
-                  className="w-full p-2 border rounded bg-gray-200"
+                  className="w-full p-2 border rounded"
                   step="0.01"
                   min="0"
-                  disabled
                 />
               </div>
             </>
