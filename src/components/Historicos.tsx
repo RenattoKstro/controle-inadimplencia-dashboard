@@ -91,8 +91,11 @@ const Historicos = ({
     ];
     const fiadoGanhos = premiosFiado.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
 
-    // Adiciona prêmios existentes ao novo cálculo
-    return fiadoGanhos + existingPremios;
+    // Adiciona o valor do ticket (R$ 100,00) se a condição for atendida (após o dia 15, por exemplo)
+    const isPastDay15 = new Date().getDate() > 15;
+    const ticketGanhos = userData.metaTicketConfirmada && isPastDay15 ? 100.00 : 0;
+
+    return fiadoGanhos + ticketGanhos + existingPremios;
   };
 
   const handleAutoFill = async () => {
@@ -184,7 +187,7 @@ const Historicos = ({
       recperdido: formData.recperdido,
       percentual_meta_fiado: formData.percentual_meta_fiado,
       percentual_meta_desafio: formData.percentual_meta_desafio,
-      premiosrecebidos: calculatedPremios, // Usa o valor calculado
+      premiosrecebidos: calculatedPremios,
     };
     console.log("Historico payload to insert/update:", historicoPayload);
 
@@ -203,11 +206,10 @@ const Historicos = ({
     }
     const { data: historicoData, error: historicoError } = historicoResult || { data: null, error: null };
     if (historicoError) {
-      console.error("Error saving historico:", historicoError.message, "Details:", historicoError.details, "Code:", historicoError.code);
+      console.error("Error saving historico:", historicoError.message);
       throw historicoError;
     }
 
-    // Salvar ou atualizar dados diários
     if (editingDailyId) {
       const diarioPayload = {
         data_recebimento: formData.data_recebimento,
@@ -574,7 +576,7 @@ const Historicos = ({
                   className="w-full p-2 border rounded bg-gray-200"
                   step="0.01"
                   min="0"
-                  disabled // Desativa edição manual para forçar cálculo
+                  disabled
                 />
               </div>
             </>
