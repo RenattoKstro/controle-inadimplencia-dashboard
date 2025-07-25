@@ -30,7 +30,7 @@ import Scripts from "./dashboard/Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
-import AvisosESugestoes from "./dashboard/AvisosESugestoes";
+import AvisosESugestoes from "./dashboard/AvisosESugestoes"; // Novo componente
 
 export interface DashboardProps {
   userData: any;
@@ -41,8 +41,6 @@ export interface DashboardProps {
   isLoading: boolean;
   bonusPerdidoAtivado: boolean;
   setBonusPerdidoAtivado: (value: boolean) => void;
-  setTotalGanhos: (value: number) => void; // Added to pass to MeusPremios
-  totalGanhos: number; // Added to manage and pass to Historicos
 }
 
 const DashboardLayout = () => {
@@ -62,7 +60,6 @@ const DashboardLayout = () => {
     diasRestantesCalculados
   } = useUserData();
   const [recebidoHoje, setRecebidoHoje] = useState(0);
-  const [totalGanhos, setTotalGanhos] = useState(0); // New state for totalGanhos
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
@@ -747,7 +744,6 @@ const DashboardLayout = () => {
                 isLoading={isLoading}
                 bonusPerdidoAtivado={bonusPerdidoAtivado}
                 setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-                setTotalGanhos={setTotalGanhos} // Pass the callback to update totalGanhos
               />
             ) : (
               <div className="text-foreground">Carregando dados...</div>
@@ -763,7 +759,6 @@ const DashboardLayout = () => {
               isLoading={isLoading}
               bonusPerdidoAtivado={bonusPerdidoAtivado}
               recebido={recebidoHoje}
-              totalGanhos={totalGanhos} // Pass totalGanhos to Historicos
             />
           </TabsContent>
         </Tabs>
