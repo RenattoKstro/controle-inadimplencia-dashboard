@@ -3,6 +3,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FiTrendingUp, FiTrendingDown } from "react-icons/fi";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"; // Adicionei Dialog
 
 interface HistoricosProps {
   userData: any;
@@ -45,7 +52,9 @@ const Historicos = ({
   const [editMode, setEditMode] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [dailyRecords, setDailyRecords] = useState<{ [key: string]: any[] }>({});
-  const [editingDailyId, setEditingDailyId] = useState<string | null>(null); // Para editar registros diários
+  const [editingDailyId, setEditingDailyId] = useState<string | null>(null);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false); // Estado para controle do modal de confirmação
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null); // ID do item a ser excluído
 
   useEffect(() => {
     console.log("User ID from userData:", userData.id);
@@ -324,13 +333,20 @@ const Historicos = ({
   };
 
   const handleDelete = async (id: string) => {
-    console.log("Attempting to delete item with id:", id);
+    console.log("Confirming deletion for item with id:", id);
+    setItemToDelete(id); // Armazena o ID do item a ser excluído
+    setDeleteConfirmationOpen(true); // Abre o modal de confirmação
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    console.log("Attempting to delete item with id:", itemToDelete);
     try {
       // Deletar registros associados em historico_diario primeiro
       const { error: diarioError } = await supabase
         .from("historico_diario")
         .delete()
-        .eq("historico_id", id)
+        .eq("historico_id", itemToDelete)
         .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
       if (diarioError) {
         console.error("Erro ao excluir registros diários:", diarioError.message, diarioError.details);
@@ -341,7 +357,7 @@ const Historicos = ({
       const { data, error } = await supabase
         .from("historico")
         .delete()
-        .eq("id", id)
+        .eq("id", itemToDelete)
         .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
         .select();
       if (error) {
@@ -353,7 +369,15 @@ const Historicos = ({
       }
     } catch (error) {
       console.error("Error in handleDelete (catch):", error.message, (error as any).details);
+    } finally {
+      setDeleteConfirmationOpen(false); // Fecha o modal após a operação
+      setItemToDelete(null); // Limpa o ID do item a ser excluído
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmationOpen(false); // Fecha o modal sem excluir
+    setItemToDelete(null); // Limpa o ID do item a ser excluído
   };
 
   const handleEditDaily = (historicoId: string, dailyId: string) => {
@@ -752,6 +776,22 @@ const Historicos = ({
           </tbody>
         </table>
       </div>
+
+      {/* Modal de Confirmação de Exclusão */}
+      <Dialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>Tem certeza de que deseja excluir este mês? Essa ação não poderá ser desfeita.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={cancelDelete}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Confirmar Exclusão</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
