@@ -107,11 +107,11 @@ const CalculadoraVendedor90 = () => {
                 Como Calcular?
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl bg-card"> {/* Aumentado para max-w-4xl */}
+            <DialogContent className="max-w-4xl bg-card">
               <img
                 src="https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CCG%20EVOL.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NDRyBFVk9MLnBuZyIsImlhdCI6MTc1MzczODkzMCwiZXhwIjoxNzg1Mjc0OTMwfQ.IgoCpozOizGKubCcctvl5kVonakAFYkvXy6qxitQ0qg"
                 alt="Como Calcular CCG"
-                className="w-full h-auto object-contain" {/* Removido max-h-[80vh] */}
+                className="w-full h-auto object-contain" // Comentário removido do atributo
               />
               {/* Ajustes: w-full h-auto object-contain para maximizar o tamanho */}
             </DialogContent>
