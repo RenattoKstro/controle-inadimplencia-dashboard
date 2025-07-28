@@ -6,7 +6,7 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import CalculadoraRentabilidade from "../dashboard/CalculadoraRentabilidade"; // Ajuste o caminho conforme necessário
+import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade"; // Ajuste o caminho aqui
 
 const apps = [
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
