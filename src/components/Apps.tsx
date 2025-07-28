@@ -1,4 +1,3 @@
-// src/components/Apps.tsx
 import React from "react";
 import { Calculator } from "lucide-react";
 import {
