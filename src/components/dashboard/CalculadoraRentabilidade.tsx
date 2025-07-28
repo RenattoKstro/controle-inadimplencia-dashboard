@@ -11,9 +11,9 @@ import {
 import { Button } from "@/components/ui/button";
 
 const CalculadoraRentabilidade = () => {
-  const [custo, setCusto] = useState(0);
-  const [venda, setVenda] = useState(0);
-  const [percentual, setPercentual] = useState(0); // Percentual de margem
+  const [custo, setCusto] = useState<number | "">(0);
+  const [venda, setVenda] = useState<number | "">(0);
+  const [percentual, setPercentual] = useState<number | "">(0); // Percentual de margem
   const [isPercentageMode, setIsPercentageMode] = useState(false);
   const [resultado, setResultado] = useState("0,00%");
 
@@ -29,29 +29,44 @@ const CalculadoraRentabilidade = () => {
 
   // Função para calcular a margem de lucro
   const calculateMarginPercentage = (costPrice: number, salePrice: number): string => {
-    if (!costPrice || costPrice <= 0 || !salePrice || salePrice <= 0 || salePrice <= costPrice) return "0,00%";
+    if (!costPrice || costPrice <= 0 || !salePrice || salePrice <= 0 || salePrice <= costPrice) {
+      console.log("Invalid input for margin calculation:", { costPrice, salePrice });
+      return "0,00%";
+    }
     const marginPercentage = ((salePrice - costPrice) / salePrice) * 100;
     return formatPercentage(Math.max(0, marginPercentage));
   };
 
   // Função para calcular o preço de venda baseado na margem de lucro
   const calculateSalePrice = (costPrice: number, marginPercentage: number): number => {
-    if (!costPrice || costPrice <= 0 || !marginPercentage || marginPercentage <= 0) return costPrice;
+    if (!costPrice || costPrice <= 0 || !marginPercentage || marginPercentage <= 0) {
+      console.log("Invalid input for sale price calculation:", { costPrice, marginPercentage });
+      return costPrice;
+    }
     const marginValue = Math.max(0, marginPercentage) / 100;
     return costPrice / (1 - marginValue);
   };
 
   useEffect(() => {
-    if (isPercentageMode && custo > 0 && percentual > 0) {
+    console.log("useEffect triggered:", { custo, venda, percentual, isPercentageMode });
+    let newResult = "";
+    if (isPercentageMode && typeof custo === "number" && custo > 0 && typeof percentual === "number" && percentual > 0) {
       const salePrice = calculateSalePrice(custo, percentual);
+      newResult = formatCurrency(salePrice);
       setVenda(salePrice);
-      setResultado(formatCurrency(salePrice));
-    } else if (custo > 0 && venda > 0) {
-      setResultado(calculateMarginPercentage(custo, venda));
+    } else if (typeof custo === "number" && custo > 0 && typeof venda === "number" && venda > 0) {
+      newResult = calculateMarginPercentage(custo, venda);
     } else {
-      setResultado(isPercentageMode ? "R$ 0,00" : "0,00%");
+      newResult = isPercentageMode ? "R$ 0,00" : "0,00%";
     }
+    setResultado(newResult);
+    console.log("Result set to:", newResult);
   }, [custo, venda, percentual, isPercentageMode]);
+
+  const handleInputChange = (setter: (value: number | "") => void, value: string) => {
+    const parsedValue = value === "" ? "" : Math.abs(parseFloat(value)) || 0;
+    setter(parsedValue);
+  };
 
   return (
     <Card className="bg-gray-800 text-white shadow-md w-full max-w-sm">
@@ -64,29 +79,31 @@ const CalculadoraRentabilidade = () => {
           <label className="text-sm font-medium">Preço de Custo</label>
           <Input
             type="number"
-            value={custo || ""}
-            onChange={(e) => setCusto(Math.abs(parseFloat(e.target.value)) || 0)}
+            value={custo === 0 ? "" : custo}
+            onChange={(e) => handleInputChange(setCusto, e.target.value)}
             className="mt-1 bg-gray-700 text-white border-gray-600 w-full"
             placeholder="0.00"
             step="0.01"
+            min="0"
           />
         </div>
         <div>
           <label className="text-sm font-medium">{isPercentageMode ? "Percentual" : "Preço de Venda"}</label>
           <Input
             type="number"
-            value={isPercentageMode ? percentual || "" : venda || ""}
+            value={isPercentageMode ? (percentual === 0 ? "" : percentual) : (venda === 0 ? "" : venda)}
             onChange={(e) => {
-              const value = Math.abs(parseFloat(e.target.value)) || 0;
+              const value = e.target.value === "" ? "" : Math.abs(parseFloat(e.target.value)) || 0;
               if (isPercentageMode) {
-                setPercentual(value);
+                handleInputChange(setPercentual, value.toString());
               } else {
-                setVenda(value);
+                handleInputChange(setVenda, value.toString());
               }
             }}
             className="mt-1 bg-gray-700 text-white border-gray-600 w-full"
             placeholder={isPercentageMode ? "Ex: 28,57" : "0.00"}
             step="0.01"
+            min="0"
           />
         </div>
         <div>
