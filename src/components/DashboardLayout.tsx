@@ -23,7 +23,6 @@ import {
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
-import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import { Calculator, Moon, Sun } from "lucide-react";
 import VersaoLog from "./VersaoLog";
 import Scripts from "./dashboard/Scripts";
@@ -32,6 +31,7 @@ import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
 import AvisosESugestoes from "./dashboard/AvisosESugestoes";
 import Anexos from "./Anexos";
+import Apps from "./Apps"; // Novo componente importado
 
 export interface DashboardProps {
   userData: any;
@@ -45,11 +45,6 @@ export interface DashboardProps {
   setTotalGanhos: (value: number) => void;
   totalGanhos: number;
 }
-
-const apps = [
-  { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
-  { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
-];
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
@@ -265,42 +260,7 @@ const DashboardLayout = () => {
                       <div className="py-6 border-b border-border">
                         <h2 className="text-lg font-semibold text-foreground">Apps</h2>
                       </div>
-                      <div className="py-4 flex-1 space-y-2">
-                        {apps.map((app) => (
-                          app.url ? (
-                            <a
-                              key={app.id}
-                              href={app.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block"
-                            >
-                              <Button
-                                variant="ghost"
-                                className="w-full justify-start text-foreground hover:text-primary"
-                              >
-                                <app.icon className="h-4 w-4 mr-2" />
-                                {app.name}
-                              </Button>
-                            </a>
-                          ) : (
-                            <Dialog key={app.id}>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  className="w-full justify-start text-foreground hover:text-primary"
-                                >
-                                  <app.icon className="h-4 w-4 mr-2" />
-                                  {app.name}
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-md bg-card">
-                                <app.component />
-                              </DialogContent>
-                            </Dialog>
-                          )
-                        ))}
-                      </div>
+                      <Apps /> {/* Integração do novo componente Apps */}
                       <div className="py-4 border-t border-border">
                         <Button 
                           variant="destructive" 
@@ -515,42 +475,7 @@ const DashboardLayout = () => {
                       <div className="py-6 border-b border-border">
                         <h2 className="text-lg font-semibold text-foreground">Apps</h2>
                       </div>
-                      <div className="py-4 flex-1 space-y-2">
-                        {apps.map((app) => (
-                          app.url ? (
-                            <a
-                              key={app.id}
-                              href={app.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block"
-                            >
-                              <Button
-                                variant="ghost"
-                                className="w-full justify-start text-foreground hover:text-primary"
-                              >
-                                <app.icon className="h-4 w-4 mr-2" />
-                                {app.name}
-                              </Button>
-                            </a>
-                          ) : (
-                            <Dialog key={app.id}>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  className="w-full justify-start text-foreground hover:text-primary"
-                                >
-                                  <app.icon className="h-4 w-4 mr-2" />
-                                  {app.name}
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-md bg-card">
-                                <app.component />
-                              </DialogContent>
-                            </Dialog>
-                          )
-                        ))}
-                      </div>
+                      <Apps /> {/* Integração do novo componente Apps */}
                       <div className="py-4 border-t border-border">
                         <Button 
                           variant="destructive" 
