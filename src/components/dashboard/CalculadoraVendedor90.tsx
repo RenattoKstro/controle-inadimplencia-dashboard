@@ -111,7 +111,7 @@ const CalculadoraVendedor90 = () => {
               <img
                 src="https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/CCG%20EVOL.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL0NDRyBFVk9MLnBuZyIsImlhdCI6MTc1MzczODkzMCwiZXhwIjoxNzg1Mjc0OTMwfQ.IgoCpozOizGKubCcctvl5kVonakAFYkvXy6qxitQ0qg"
                 alt="Como Calcular CCG"
-                style={{ width: "1300px", height: "560px" }} // Tamanho fixo em pixels
+                style={{ width: "1200px", height: "560px" }} // Tamanho fixo em pixels
               />
             </DialogContent>
           </Dialog>
