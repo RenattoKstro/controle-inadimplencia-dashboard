@@ -11,6 +11,7 @@ const VersaoLog = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const versionLog = [
+    { version: "2.0.0", date: "29-07-2025", changes: "Add Calculadora Vendedor 90%" },
     { version: "1.0.9", date: "21-07-2025", changes: "Add Scripts e Percentual de Inadimplência" },
     { version: "1.0.8", date: "16-07-2025", changes: "Add Calc. Rent. externa, Bugs corrigidos e alterações" }, 
     { version: "1.0.7", date: "11-07-2025", changes: "Add Cards de Projeções e Tema Escuro/Claro" },
