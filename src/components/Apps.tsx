@@ -7,12 +7,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
-import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90"; // Novo componente
+import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90"; // Certifique-se de que o caminho está correto
 
 const apps = [
+  { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
   { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
-  { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 }, // Nova calculadora
 ];
 
 const Apps = () => {
