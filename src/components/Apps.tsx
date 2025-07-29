@@ -11,6 +11,7 @@ import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90"; // Certif
 
 const apps = [
   { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
+  { id: "fechamento-caixa", name: "Fechamento Caixa Geral (em breve)", icon: Calculator, disabled: true }, // Segunda posição
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
   { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
 ];
@@ -34,6 +35,15 @@ const Apps = () => {
               {app.name}
             </button>
           </a>
+        ) : app.disabled ? (
+          <button
+            key={app.id}
+            className="w-full justify-start text-gray-400 cursor-not-allowed flex items-center gap-2 px-4 py-2 rounded-md bg-muted"
+            disabled
+          >
+            <app.icon className="h-4 w-4 mr-2" />
+            {app.name}
+          </button>
         ) : (
           <Dialog key={app.id}>
             <DialogTrigger asChild>
