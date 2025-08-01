@@ -169,8 +169,35 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const isMobile = useIsMobile();
   const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]); // Inicializado como array vazio
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false); // Novo estado para sincronizar autenticação
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsAuthReady(true);
+      } else {
+        console.warn("Sessão não encontrada. Tentando reautenticar...");
+        // Tentar reautenticar ou redirecionar para login, se aplicável
+      }
+    };
+
+    checkAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        setIsAuthReady(true);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+
     const fetchData = async () => {
       setIsLoadingData(true);
       console.log("Iniciando fetch, userData:", userData, "authUserId:", await supabase.auth.getUser().then(u => u.data.user?.id)); // Depuração
@@ -229,7 +256,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     };
 
     fetchData();
-  }, [userData, diasRestantesCalculados]);
+  }, [userData, diasRestantesCalculados, isAuthReady]);
 
   const safeUserData = userData || {};
   const aReceber = (safeUserData.abertura_vencido_mes || 0) - (safeUserData.meta_mes || 0);
@@ -268,7 +295,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  if (isLoading || isLoadingData) {
+  if (isLoading || isLoadingData || !isAuthReady) {
     console.log("Renderizando skeleton, dailyReceipts:", dailyReceipts); // Depuração
     return (
       <div className="space-y-4">
