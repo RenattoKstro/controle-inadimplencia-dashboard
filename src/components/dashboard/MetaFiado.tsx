@@ -173,11 +173,11 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingData(true);
+      console.log("Iniciando fetch, userData:", userData); // Depuração
       try {
         const { data: { user } } = await supabase.auth.getUser();
         const authUserId = user?.id;
         const safeUserData = userData || {};
-        console.log("userData no fetch:", safeUserData); // Depuração
         if (!authUserId || !safeUserData || (!safeUserData.dias_restantes && !diasRestantesCalculados)) {
           console.warn("Usuário não autenticado ou dados insuficientes para fetch. Usando dados padrão.");
           setDailyReceipts([]); // Fallback imediato
@@ -268,7 +268,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  if (isLoading || isLoadingData || !safeUserData.vencido_atual || !Array.isArray(dailyReceipts)) {
+  if (isLoading || isLoadingData) {
     console.log("Renderizando skeleton, dailyReceipts:", dailyReceipts); // Depuração
     return (
       <div className="space-y-4">
