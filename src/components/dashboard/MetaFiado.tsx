@@ -178,7 +178,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         const { data: { user } } = await supabase.auth.getUser();
         const authUserId = user?.id;
         const safeUserData = userData || {};
-        if (!authUserId || !safeUserData || (!safeUserData.dias_restantes && !diasRestantesCalculados)) {
+        if (!authUserId || Object.keys(safeUserData).length === 0 || (!safeUserData.dias_restantes && !diasRestantesCalculados)) {
           console.warn("Usuário não autenticado ou dados insuficientes para fetch. Usando dados padrão.");
           setDailyReceipts([]); // Fallback imediato
           setIsLoadingData(false);
