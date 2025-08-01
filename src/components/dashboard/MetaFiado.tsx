@@ -168,7 +168,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
 const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
   const isMobile = useIsMobile();
-  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
+  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]); // Sempre inicializado como array
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
@@ -216,10 +216,12 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     fetchData();
   }, [userData, diasRestantesCalculados]);
 
-  const aReceber = (userData.abertura_vencido_mes || 0) - (userData.meta_mes || 0);
-  const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
-  const recebidosMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
-  const recebidoHoje = Math.max(0, Number((((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2))));
+  // Validação de userData
+  const safeUserData = userData || {};
+  const aReceber = (safeUserData.abertura_vencido_mes || 0) - (safeUserData.meta_mes || 0);
+  const faltaReceberMes = Math.max(0, (safeUserData.vencido_atual || 0) - (safeUserData.meta_mes || 0));
+  const recebidosMes = (safeUserData.abertura_vencido_mes || 0) - (safeUserData.vencido_atual || 0);
+  const recebidoHoje = Math.max(0, Number((((safeUserData.abertura_dia || 0) - (safeUserData.vencido_atual || 0)).toFixed(2))));
 
   const calculateWorkedDays = () => {
     const today = new Date();
@@ -233,7 +235,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     return workedDays;
   };
 
-  const diasUteisRestantes = userData.dias_restantes || 0;
+  const diasUteisRestantes = safeUserData.dias_restantes || 0;
 
   const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
@@ -253,7 +255,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  if (isLoading || isLoadingData) {
+  if (isLoading || isLoadingData || !safeUserData.vencido_atual) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -290,10 +292,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       >
         <ProgressCard
           title="Progresso da Meta Mensal"
-          current={userData.vencido_atual || 0}
-          target={userData.meta_mes || 0}
+          current={safeUserData.vencido_atual || 0}
+          target={safeUserData.meta_mes || 0}
           icon={<Target className="h-5 w-5 text-blue-500" />}
-          userData={userData}
+          userData={safeUserData}
         />
         <CardItem
           title="A Receber"
