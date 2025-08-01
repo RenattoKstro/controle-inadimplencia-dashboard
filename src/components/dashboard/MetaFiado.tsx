@@ -176,8 +176,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       try {
         const { data: { user } } = await supabase.auth.getUser();
         const authUserId = user?.id;
-        if (!authUserId || !userData || (!userData.dias_restantes && !diasRestantesCalculados)) {
-          console.warn("Usuário não autenticado ou dados insuficientes para fetch.");
+        const safeUserData = userData || {};
+        if (!authUserId || !safeUserData || (!safeUserData.dias_restantes && !diasRestantesCalculados)) {
+          console.warn("Usuário não autenticado ou dados insuficientes para fetch. Usando dados padrão.");
+          setDailyReceipts([]); // Fallback para array vazio
           setIsLoadingData(false);
           return;
         }
@@ -185,6 +187,17 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         const currentDate = new Date();
         const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
         const lastDay = currentDate.toISOString().slice(0, 10);
+        const abertura = safeUserData.abertura_vencido_mes || 0;
+        const vencido = safeUserData.vencido_atual || 0;
+
+        // Verifica se há diferença para buscar dados
+        if (abertura === vencido) {
+          console.log("abertura_vencido_mes igual a vencido_atual, usando dados padrão.");
+          setDailyReceipts([]); // Não busca se não houver diferença
+          setIsLoadingData(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("historico_diario")
           .select("recebido, data_recebimento")
@@ -194,6 +207,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
 
         if (error) {
           console.error("Erro ao buscar registros diários:", error.message);
+          setDailyReceipts([]); // Fallback para array vazio
           setIsLoadingData(false);
           return;
         }
@@ -208,6 +222,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         setIsLoadingData(false);
       } catch (error) {
         console.error("Erro inesperado no fetch de dados:", error);
+        setDailyReceipts([]); // Fallback em caso de erro
         setIsLoadingData(false);
       }
     };
@@ -236,7 +251,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const diasUteisRestantes = safeUserData.dias_restantes || diasRestantesCalculados || 0;
   const totalWorkDaysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(); // Dias totais do mês
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
-  const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes;
+  const diasUteisTrabalhados = calculateWorkedDays();
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
   const gap = recebidosMes - valorEsperadoAcumulado;
 
@@ -252,7 +267,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  if (isLoading || isLoadingData || !safeUserData.vencido_atual || dailyReceipts === undefined) {
+  if (isLoading || isLoadingData || !safeUserData.vencido_atual || !Array.isArray(dailyReceipts)) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
