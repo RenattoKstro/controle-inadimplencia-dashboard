@@ -72,19 +72,22 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
   let percentageComplete = 0;
 
-  if (userData.vencido_atual > 0) {
-    percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
+  // Validação de valores antes do cálculo
+  const safeCurrent = Number(userData.vencido_atual) || 0;
+  const safeTarget = Number(userData.meta_mes) || 0;
+
+  if (safeCurrent > 0 && Number.isFinite(safeCurrent) && Number.isFinite(safeTarget)) {
+    percentageComplete = (safeTarget / safeCurrent) * 100;
   } else {
-    console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
+    console.warn(`[ProgressCard] Valores inválidos: vencido_atual=${safeCurrent}, meta_mes=${safeTarget}`);
   }
 
-  percentageComplete = Math.max(0, percentageComplete);
+  percentageComplete = Math.max(0, Math.min(percentageComplete, 100)); // Limita entre 0 e 100%
 
-  const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
-
+  const percentuaisAlvo = [94, 96, 98, 99, 100];
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
-    const vencidoNecessario = userData.meta_mes / (percentual / 100);
-    let diferenca = userData.vencido_atual - vencidoNecessario;
+    const vencidoNecessario = safeTarget / (percentual / 100);
+    let diferenca = safeCurrent - vencidoNecessario;
     const atingido = percentageComplete >= percentual;
     diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
     return {
@@ -118,8 +121,8 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
         </div>
         <CardDescription className="text-sm mt-1 text-center text-foreground">
           <div className="flex flex-col md:flex-row md:gap-4 justify-center">
-            <span>Meta: {formatCurrency(target)}</span>
-            <span>Atual: {formatCurrency(current)}</span>
+            <span>Meta: {formatCurrency(safeTarget)}</span>
+            <span>Atual: {formatCurrency(safeCurrent)}</span>
           </div>
         </CardDescription>
       </CardHeader>
@@ -165,8 +168,8 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
 const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
   const isMobile = useIsMobile();
-  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]); // Inicializado como array vazio
-  const [isLoadingData, setIsLoadingData] = useState(true); // Estado de carregamento
+  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -213,10 +216,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     fetchData();
   }, [userData, diasRestantesCalculados]);
 
-  const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
-  const faltaReceberMes = Math.max(0, userData.vencido_atual - userData.meta_mes);
-  const recebidosMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - userData.vencido_atual).toFixed(2)));
+  const aReceber = (userData.abertura_vencido_mes || 0) - (userData.meta_mes || 0);
+  const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
+  const recebidosMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
+  const recebidoHoje = Math.max(0, Number((((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2))));
 
   const calculateWorkedDays = () => {
     const today = new Date();
@@ -287,8 +290,8 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       >
         <ProgressCard
           title="Progresso da Meta Mensal"
-          current={userData.vencido_atual}
-          target={userData.meta_mes}
+          current={userData.vencido_atual || 0}
+          target={userData.meta_mes || 0}
           icon={<Target className="h-5 w-5 text-blue-500" />}
           userData={userData}
         />
@@ -301,7 +304,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         <CardItem
           title="Falta Receber/Mês"
           value={faltaReceberMes}
-          icon=<ArrowDown size={16} />
+          icon={<ArrowDown size={16} />}
           color="bg-red-500"
         />
         <CardItem
