@@ -12,7 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
-import Previsao from "./Previsao";
 
 interface CardItemProps {
   title: string;
@@ -214,17 +213,15 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       const dayOfWeek = d.getDay();
       if (dayOfWeek !== 0) workedDays++; // Exclui domingos
     }
-    // Remove 1 dia se o dia atual for domingo (não deve contar como trabalhado)
-    if (today.getDay() === 0) workedDays--;
+    if (today.getDay() === 0) workedDays--; // Remove 1 dia se for domingo
     return workedDays;
   };
 
-  // Usa o valor manual de dias restantes do AjustesMetas
   const diasUteisRestantes = userData.dias_restantes || 0;
 
   const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
-  const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes; // Calcula dinamicamente com base nos dias restantes
+  const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
   const gap = recebidosMes - valorEsperadoAcumulado;
 
@@ -239,18 +236,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       setRecebidoHoje(recebidoHoje);
     }
   }, [recebidoHoje, setRecebidoHoje]);
-
-  const previsaoData = Previsao({
-    abertura_vencido_mes: userData.abertura_vencido_mes,
-    meta_mes: userData.meta_mes,
-    vencido_atual: userData.vencido_atual,
-    dias_trabalhados: diasUteisTrabalhados,
-    dias_restantes: diasUteisRestantes,
-    dailyReceipts,
-  });
-
-  // Verifica se há dados no histórico diário (exclui valores zerados)
-  const hasDailyData = dailyReceipts.length > 0 && dailyReceipts.some((receipt) => receipt.value > 0);
 
   if (isLoading) {
     return (
@@ -359,27 +344,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             </div>
           </CardContent>
         </Card>
-        {hasDailyData && (
-          <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
-            <CardContent className="p-4">
-              <h3 className="text-sm font-medium text-gray-200">Média Diária de Recebimento</h3>
-              <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.mediaDiaria)}</div>
-              <div className="text-gray-300 text-sm mt-1">Baseado em {dailyReceipts.length} dias com recebimento</div>
-              <div className="text-gray-300 text-sm mt-1">Total recebido (diário): {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
-            </CardContent>
-          </Card>
-        )}
-        {hasDailyData && (
-          <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
-            <CardContent className="p-4">
-              <h3 className="text-sm font-medium text-gray-200">Previsão de Recebimento (teste)</h3>
-              <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal)}</div>
-              <div className="text-gray-300 text-sm mt-1">Total estimado para o mês</div>
-              <div className="text-gray-300 text-sm mt-1">Já recebido: {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
-              <div className="text-gray-300 text-sm mt-1">Previsão restante: {previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal - dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
