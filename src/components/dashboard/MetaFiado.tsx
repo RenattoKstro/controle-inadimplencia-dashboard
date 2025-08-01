@@ -165,13 +165,21 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
 const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
   const isMobile = useIsMobile();
-  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
+  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]); // Inicializado como array vazio
+  const [isLoadingData, setIsLoadingData] = useState(true); // Estado de carregamento
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const authUserId = user?.id;
-      if (authUserId && userData && (userData.dias_restantes || diasRestantesCalculados)) {
+      setIsLoadingData(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const authUserId = user?.id;
+        if (!authUserId || !userData || (!userData.dias_restantes && !diasRestantesCalculados)) {
+          console.warn("Usuário não autenticado ou dados insuficientes para fetch.");
+          setIsLoadingData(false);
+          return;
+        }
+
         const currentDate = new Date();
         const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
         const lastDay = currentDate.toISOString().slice(0, 10);
@@ -184,6 +192,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
 
         if (error) {
           console.error("Erro ao buscar registros diários:", error.message);
+          setIsLoadingData(false);
           return;
         }
 
@@ -194,6 +203,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           }));
           setDailyReceipts(receipts);
         }
+        setIsLoadingData(false);
+      } catch (error) {
+        console.error("Erro inesperado no fetch de dados:", error);
+        setIsLoadingData(false);
       }
     };
 
@@ -237,7 +250,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingData) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -288,7 +301,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         <CardItem
           title="Falta Receber/Mês"
           value={faltaReceberMes}
-          icon={<ArrowDown size={16} />}
+          icon=<ArrowDown size={16} />
           color="bg-red-500"
         />
         <CardItem
