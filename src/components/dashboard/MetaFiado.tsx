@@ -82,7 +82,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   percentageComplete = Math.max(0, percentageComplete);
 
   const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
-
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
     const vencidoNecessario = userData.meta_mes / (percentual / 100);
     let diferenca = userData.vencido_atual - vencidoNecessario;
@@ -152,9 +151,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
                 >
                   {percentual}%: {formatCurrency(diferenca)}
                 </div>
-                {index < valoresRestantes.length - 1 && (
-                  <span className="text-gray-400">|</span>
-                )}
+                {index < valoresRestantes.length - 1 && <span className="text-gray-400">|</span>}
               </div>
             ))}
           </div>
@@ -167,44 +164,57 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
   const isMobile = useIsMobile();
   const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const authUserId = user?.id;
-      if (authUserId && userData && (userData.dias_restantes || diasRestantesCalculados)) {
-        const currentDate = new Date();
-        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
-        const lastDay = currentDate.toISOString().slice(0, 10);
-        const { data, error } = await supabase
-          .from("historico_diario")
-          .select("recebido, data_recebimento")
-          .eq("user_id", authUserId)
-          .gte("data_recebimento", firstDay)
-          .lte("data_recebimento", lastDay);
+      setIsLoadingData(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const authUserId = user?.id;
+        if (authUserId && userData && (userData.dias_restantes || diasRestantesCalculados)) {
+          const currentDate = new Date();
+          const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
+          const lastDay = currentDate.toISOString().slice(0, 10);
+          const { data, error } = await supabase
+            .from("historico_diario")
+            .select("recebido, data_recebimento")
+            .eq("user_id", authUserId)
+            .gte("data_recebimento", firstDay)
+            .lte("data_recebimento", lastDay);
 
-        if (error) {
-          console.error("Erro ao buscar registros diários:", error.message);
-          return;
-        }
+          if (error) {
+            console.error("Erro ao buscar registros diários:", error.message);
+            setDailyReceipts([]);
+            setIsLoadingData(false);
+            return;
+          }
 
-        if (data) {
-          const receipts = data.map((record) => ({
-            date: record.data_recebimento,
-            value: record.recebido || 0,
-          }));
-          setDailyReceipts(receipts);
+          if (data) {
+            const receipts = data.map((record) => ({
+              date: record.data_recebimento,
+              value: record.recebido || 0,
+            }));
+            setDailyReceipts(receipts);
+          }
+        } else {
+          setDailyReceipts([]);
         }
+        setIsLoadingData(false);
+      } catch (error) {
+        console.error("Erro inesperado no fetch de dados:", error);
+        setDailyReceipts([]);
+        setIsLoadingData(false);
       }
     };
 
     fetchData();
   }, [userData, diasRestantesCalculados]);
 
-  const aReceber = userData.abertura_vencido_mes - userData.meta_mes;
-  const faltaReceberMes = Math.max(0, userData.vencido_atual - userData.meta_mes);
-  const recebidosMes = userData.abertura_vencido_mes - userData.vencido_atual;
-  const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - userData.vencido_atual).toFixed(2)));
+  const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
+  const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
+  const recebidosMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
+  const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
 
   const calculateWorkedDays = () => {
     const today = new Date();
@@ -214,23 +224,18 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       const dayOfWeek = d.getDay();
       if (dayOfWeek !== 0) workedDays++; // Exclui domingos
     }
-    // Remove 1 dia se o dia atual for domingo (não deve contar como trabalhado)
-    if (today.getDay() === 0) workedDays--;
+    if (today.getDay() === 0) workedDays--; // Remove 1 dia se for domingo
     return workedDays;
   };
 
-  // Usa o valor manual de dias restantes do AjustesMetas
   const diasUteisRestantes = userData.dias_restantes || 0;
-
   const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes; // Calcula dinamicamente com base nos dias restantes
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
   const gap = recebidosMes - valorEsperadoAcumulado;
 
-  const receberPorDia = diasUteisRestantes > 0
-    ? faltaReceberMes / diasUteisRestantes
-    : 0;
+  const receberPorDia = diasUteisRestantes > 0 ? faltaReceberMes / diasUteisRestantes : 0;
   const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
   const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje);
 
@@ -241,15 +246,16 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   }, [recebidoHoje, setRecebidoHoje]);
 
   const previsaoData = Previsao({
-    abertura_vencido_mes: userData.abertura_vencido_mes,
-    meta_mes: userData.meta_mes,
-    vencido_atual: userData.vencido_atual,
+    abertura_vencido_mes: userData.abertura_vencido_mes || 0,
+    meta_mes: userData.meta_mes || 0,
+    vencido_atual: userData.vencido_atual || 0,
     dias_trabalhados: diasUteisTrabalhados,
     dias_restantes: diasUteisRestantes,
-    dailyReceipts,
+    dailyReceipts: dailyReceipts || [], // Proteção contra undefined
   });
 
-  if (isLoading) {
+  if (isLoading || isLoadingData) {
+    console.log("Renderizando skeleton, dailyReceipts:", dailyReceipts);
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -286,8 +292,8 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
       >
         <ProgressCard
           title="Progresso da Meta Mensal"
-          current={userData.vencido_atual}
-          target={userData.meta_mes}
+          current={userData.vencido_atual || 0}
+          target={userData.meta_mes || 0}
           icon={<Target className="h-5 w-5 text-blue-500" />}
           userData={userData}
         />
