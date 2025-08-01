@@ -177,9 +177,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         const { data: { user } } = await supabase.auth.getUser();
         const authUserId = user?.id;
         const safeUserData = userData || {};
+        console.log("userData no fetch:", safeUserData); // Depuração
         if (!authUserId || !safeUserData || (!safeUserData.dias_restantes && !diasRestantesCalculados)) {
           console.warn("Usuário não autenticado ou dados insuficientes para fetch. Usando dados padrão.");
-          setDailyReceipts([]); // Fallback para array vazio
+          setDailyReceipts([]); // Fallback imediato
           setIsLoadingData(false);
           return;
         }
@@ -190,7 +191,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         const abertura = safeUserData.abertura_vencido_mes || 0;
         const vencido = safeUserData.vencido_atual || 0;
 
-        // Verifica se há diferença para buscar dados
         if (abertura === vencido) {
           console.log("abertura_vencido_mes igual a vencido_atual, usando dados padrão.");
           setDailyReceipts([]); // Não busca se não houver diferença
@@ -217,6 +217,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             date: record.data_recebimento,
             value: record.recebido || 0,
           }));
+          console.log("dailyReceipts após fetch:", receipts); // Depuração
           setDailyReceipts(receipts);
         }
         setIsLoadingData(false);
@@ -268,6 +269,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   }, [recebidoHoje, setRecebidoHoje]);
 
   if (isLoading || isLoadingData || !safeUserData.vencido_atual || !Array.isArray(dailyReceipts)) {
+    console.log("Renderizando skeleton, dailyReceipts:", dailyReceipts); // Depuração
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
