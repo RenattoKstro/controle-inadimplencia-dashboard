@@ -157,11 +157,38 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const isMobile = useIsMobile();
   const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [showPredictionCards, setShowPredictionCards] = useState(false); // Estado para controlar os cards
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [showPredictionCards, setShowPredictionCards] = useState(false); // Mantido para teste futuro
 
   useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsAuthReady(true);
+      } else {
+        console.warn("Sessão não encontrada. Tentando reautenticar...");
+      }
+    };
+
+    checkAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        setIsAuthReady(true);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+
     const fetchData = async () => {
       setIsLoadingData(true);
+      console.log("Iniciando fetch...");
       try {
         const { data: { user } } = await supabase.auth.getUser();
         const authUserId = user?.id;
@@ -184,9 +211,11 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
               date: record.data_recebimento,
               value: record.recebido || 0,
             }));
+            console.log("Dados de dailyReceipts:", receipts);
             setDailyReceipts(receipts);
           }
         } else {
+          console.log("Condições de fetch não atendidas, usando array vazio.");
           setDailyReceipts([]);
         }
       } catch (error) {
@@ -194,18 +223,31 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         setDailyReceipts([]);
       }
       setIsLoadingData(false);
+      console.log("Fetch concluído, dailyReceipts:", dailyReceipts);
     };
 
     fetchData();
-  }, [userData, diasRestantesCalculados]);
+  }, [userData, diasRestantesCalculados, isAuthReady]);
 
-  const aReceber = (userData.abertura_vencido_mes || 0) - (userData.meta_mes || 0);
+  const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
   const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
   const recebidosMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
   const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
 
-  const totalWorkDaysInMonth = 27; // fixado para julho de 2025
+  const calculateWorkedDays = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    let workedDays = 0;
+    for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek !== 0) workedDays++; // Exclui domingos
+    }
+    if (today.getDay() === 0) workedDays--; // Remove 1 dia se for domingo
+    return workedDays;
+  };
+
   const diasUteisRestantes = userData.dias_restantes || 0;
+  const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
@@ -220,17 +262,16 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  // PREVISÃO
   const previsaoData = Previsao({
     abertura_vencido_mes: userData.abertura_vencido_mes || 0,
     meta_mes: userData.meta_mes || 0,
     vencido_atual: userData.vencido_atual || 0,
     dias_trabalhados: diasUteisTrabalhados,
     dias_restantes: diasUteisRestantes,
-    dailyReceipts: Array.isArray(dailyReceipts) ? dailyReceipts : [],
+    dailyReceipts: dailyReceipts || [], // Garantir array válido
   });
 
-  if (isLoading || isLoadingData) {
+  if (isLoading || isLoadingData || !isAuthReady) {
     console.log("Renderizando skeleton, dailyReceipts:", dailyReceipts);
     return (
       <div className="space-y-4">
@@ -262,12 +303,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">Meta Fiado</h2>
-        <button
-          onClick={() => setShowPredictionCards(!showPredictionCards)}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          {showPredictionCards ? "Ocultar Previsões" : "Mostrar Previsões"}
-        </button>
+        {/* Botão removido temporariamente */}
       </div>
       <div
         className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
@@ -344,27 +380,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             </div>
           </CardContent>
         </Card>
-        {showPredictionCards && (
-          <>
-            <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
-              <CardContent className="p-4">
-                <h3 className="text-sm font-medium text-gray-200">Média Diária de Recebimento</h3>
-                <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.mediaDiaria)}</div>
-                <div className="text-gray-300 text-sm mt-1">Baseado em {Array.isArray(dailyReceipts) ? dailyReceipts.length : 0} dias com recebimento</div>
-                <div className="text-gray-300 text-sm mt-1">Total recebido (diário): {previsaoData.formatCurrency(Array.isArray(dailyReceipts) ? dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0) : 0)}</div>
-              </CardContent>
-            </Card>
-            <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
-              <CardContent className="p-4">
-                <h3 className="text-sm font-medium text-gray-200">Previsão de Recebimento (teste)</h3>
-                <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal)}</div>
-                <div className="text-gray-300 text-sm mt-1">Total estimado para o mês</div>
-                <div className="text-gray-300 text-sm mt-1">Já recebido: {previsaoData.formatCurrency(Array.isArray(dailyReceipts) ? dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0) : 0)}</div>
-                <div className="text-gray-300 text-sm mt-1">Previsão restante: {previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal - (Array.isArray(dailyReceipts) ? dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0) : 0))}</div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+        {/* Cards de previsão e média removidos temporariamente */}
       </div>
     </div>
   );
