@@ -72,13 +72,11 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   const isMobile = useIsMobile();
 
   let percentageComplete = 0;
-
   if (userData.vencido_atual > 0) {
     percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
   } else {
     console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
   }
-
   percentageComplete = Math.max(0, percentageComplete);
 
   const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
@@ -87,11 +85,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
     let diferenca = userData.vencido_atual - vencidoNecessario;
     const atingido = percentageComplete >= percentual;
     diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
-    return {
-      percentual,
-      diferenca,
-      atingido,
-    };
+    return { percentual, diferenca, atingido };
   });
 
   const getProgressStyle = (value: number) => {
@@ -127,9 +121,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
         <div className="space-y-2">
           <div
             className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative"
-            style={{
-              boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)",
-            }}
+            style={{ boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)" }}
           >
             <div
               className="h-full rounded-l-full transition-all duration-1000 ease-out"
@@ -165,6 +157,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const isMobile = useIsMobile();
   const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [showPredictionCards, setShowPredictionCards] = useState(false); // Estado para controlar os cards
 
   useEffect(() => {
     const fetchData = async () => {
@@ -186,11 +179,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           if (error) {
             console.error("Erro ao buscar registros diários:", error.message);
             setDailyReceipts([]);
-            setIsLoadingData(false);
-            return;
-          }
-
-          if (data) {
+          } else if (data) {
             const receipts = data.map((record) => ({
               date: record.data_recebimento,
               value: record.recebido || 0,
@@ -200,12 +189,11 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         } else {
           setDailyReceipts([]);
         }
-        setIsLoadingData(false);
       } catch (error) {
         console.error("Erro inesperado no fetch de dados:", error);
         setDailyReceipts([]);
-        setIsLoadingData(false);
       }
+      setIsLoadingData(false);
     };
 
     fetchData();
@@ -231,10 +219,9 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const diasUteisRestantes = userData.dias_restantes || 0;
   const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
-  const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes; // Calcula dinamicamente com base nos dias restantes
+  const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
   const gap = recebidosMes - valorEsperadoAcumulado;
-
   const receberPorDia = diasUteisRestantes > 0 ? faltaReceberMes / diasUteisRestantes : 0;
   const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
   const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje);
@@ -251,7 +238,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     vencido_atual: userData.vencido_atual || 0,
     dias_trabalhados: diasUteisTrabalhados,
     dias_restantes: diasUteisRestantes,
-    dailyReceipts: dailyReceipts || [], // Proteção contra undefined
+    dailyReceipts: dailyReceipts || [],
   });
 
   if (isLoading || isLoadingData) {
@@ -286,6 +273,12 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">Meta Fiado</h2>
+        <button
+          onClick={() => setShowPredictionCards(!showPredictionCards)}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          {showPredictionCards ? "Ocultar Previsões" : "Mostrar Previsões"}
+        </button>
       </div>
       <div
         className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
@@ -362,23 +355,27 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             </div>
           </CardContent>
         </Card>
-        <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-gray-200">Média Diária de Recebimento</h3>
-            <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.mediaDiaria)}</div>
-            <div className="text-gray-300 text-sm mt-1">Baseado em {dailyReceipts.length} dias com recebimento</div>
-            <div className="text-gray-300 text-sm mt-1">Total recebido (diário): {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
-          </CardContent>
-        </Card>
-        <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
-          <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-gray-200">Previsão de Recebimento (teste)</h3>
-            <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal)}</div>
-            <div className="text-gray-300 text-sm mt-1">Total estimado para o mês</div>
-            <div className="text-gray-300 text-sm mt-1">Já recebido: {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
-            <div className="text-gray-300 text-sm mt-1">Previsão restante: {previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal - dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
-          </CardContent>
-        </Card>
+        {showPredictionCards && (
+          <>
+            <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
+              <CardContent className="p-4">
+                <h3 className="text-sm font-medium text-gray-200">Média Diária de Recebimento</h3>
+                <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.mediaDiaria)}</div>
+                <div className="text-gray-300 text-sm mt-1">Baseado em {dailyReceipts.length} dias com recebimento</div>
+                <div className="text-gray-300 text-sm mt-1">Total recebido (diário): {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
+              </CardContent>
+            </Card>
+            <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${previsaoData.metaStatus.text === 'Meta será atingida!' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-orange-500 to-orange-600'} text-white`}>
+              <CardContent className="p-4">
+                <h3 className="text-sm font-medium text-gray-200">Previsão de Recebimento (teste)</h3>
+                <div className="text-2xl font-bold mt-2 text-white">{previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal)}</div>
+                <div className="text-gray-300 text-sm mt-1">Total estimado para o mês</div>
+                <div className="text-gray-300 text-sm mt-1">Já recebido: {previsaoData.formatCurrency(dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
+                <div className="text-gray-300 text-sm mt-1">Previsão restante: {previsaoData.formatCurrency(previsaoData.previsaoRecebimentoTotal - dailyReceipts.reduce((acc, receipt) => acc + receipt.value, 0))}</div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );
