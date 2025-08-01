@@ -72,7 +72,6 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
   let percentageComplete = 0;
 
-  // Validação de valores antes do cálculo
   const safeCurrent = Number(userData.vencido_atual) || 0;
   const safeTarget = Number(userData.meta_mes) || 0;
 
@@ -82,7 +81,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
     console.warn(`[ProgressCard] Valores inválidos: vencido_atual=${safeCurrent}, meta_mes=${safeTarget}`);
   }
 
-  percentageComplete = Math.max(0, Math.min(percentageComplete, 100)); // Limita entre 0 e 100%
+  percentageComplete = Math.max(0, Math.min(percentageComplete, 100));
 
   const percentuaisAlvo = [94, 96, 98, 99, 100];
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
@@ -168,7 +167,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
 
 const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
   const isMobile = useIsMobile();
-  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]); // Sempre inicializado como array
+  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]); // Inicializado como array vazio
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
@@ -216,7 +215,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     fetchData();
   }, [userData, diasRestantesCalculados]);
 
-  // Validação de userData
   const safeUserData = userData || {};
   const aReceber = (safeUserData.abertura_vencido_mes || 0) - (safeUserData.meta_mes || 0);
   const faltaReceberMes = Math.max(0, (safeUserData.vencido_atual || 0) - (safeUserData.meta_mes || 0));
@@ -235,9 +233,8 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     return workedDays;
   };
 
-  const diasUteisRestantes = safeUserData.dias_restantes || 0;
-
-  const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
+  const diasUteisRestantes = safeUserData.dias_restantes || diasRestantesCalculados || 0;
+  const totalWorkDaysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(); // Dias totais do mês
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
@@ -255,7 +252,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  if (isLoading || isLoadingData || !safeUserData.vencido_atual) {
+  if (isLoading || isLoadingData || !safeUserData.vencido_atual || dailyReceipts === undefined) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
