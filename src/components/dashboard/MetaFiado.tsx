@@ -12,7 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
-import Previsao from "./Previsao";
 
 interface CardItemProps {
   title: string;
@@ -158,7 +157,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [showPredictionCards, setShowPredictionCards] = useState(false); // Mantido para teste futuro
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -262,15 +260,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  const previsaoData = Previsao({
-    abertura_vencido_mes: userData.abertura_vencido_mes || 0,
-    meta_mes: userData.meta_mes || 0,
-    vencido_atual: userData.vencido_atual || 0,
-    dias_trabalhados: diasUteisTrabalhados,
-    dias_restantes: diasUteisRestantes,
-    dailyReceipts: dailyReceipts || [], // Garantir array válido
-  });
-
   if (isLoading || isLoadingData || !isAuthReady) {
     console.log("Renderizando skeleton, dailyReceipts:", dailyReceipts);
     return (
@@ -303,7 +292,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl md:text-2xl font-bold text-foreground">Meta Fiado</h2>
-        {/* Botão removido temporariamente */}
       </div>
       <div
         className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
@@ -380,7 +368,6 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             </div>
           </CardContent>
         </Card>
-        {/* Cards de previsão e média removidos temporariamente */}
       </div>
     </div>
   );
