@@ -11,24 +11,6 @@ import { Calculator, Building, Wallet, ArrowDown, Check, Target } from "lucide-r
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { supabase } from "@/integrations/supabase/client";
-
-interface CardItemProps {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  color?: string;
-  showProgress?: boolean;
-  progressValue?: number;
-}
-
-interface ProgressCardProps {
-  title: string;
-  current: number;
-  target: number;
-  icon: React.ReactNode;
-  userData: any;
-}
 
 const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat("pt-BR", {
@@ -46,7 +28,14 @@ const CardItem = ({
   color = "bg-blue-500",
   showProgress = false,
   progressValue = 0,
-}: CardItemProps) => {
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  color?: string;
+  showProgress?: boolean;
+  progressValue?: number;
+}) => {
   return (
     <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${color} bg-opacity-50`}>
       <CardContent className="p-4 md:p-6">
@@ -67,7 +56,13 @@ const CardItem = ({
   );
 };
 
-const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardProps) => {
+const ProgressCard = ({ title, current, target, icon, userData }: {
+  title: string;
+  current: number;
+  target: number;
+  icon: React.ReactNode;
+  userData: any;
+}) => {
   const isMobile = useIsMobile();
 
   let percentageComplete = 0;
@@ -152,80 +147,8 @@ const ProgressCard = ({ title, current, target, icon, userData }: ProgressCardPr
   );
 };
 
-const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps & { setRecebidoHoje?: (value: number) => void }) => {
+const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps) => {
   const isMobile = useIsMobile();
-  const [dailyReceipts, setDailyReceipts] = useState<{ date: string; value: number }[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
-  const [isAuthReady, setIsAuthReady] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsAuthReady(true);
-      } else {
-        console.warn("Sessão não encontrada. Tentando reautenticar...");
-      }
-    };
-
-    checkAuth();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
-        setIsAuthReady(true);
-      }
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isAuthReady) return;
-
-    const fetchData = async () => {
-      setIsLoadingData(true);
-      console.log("Iniciando fetch...");
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        const authUserId = user?.id;
-        if (authUserId && userData && (userData.dias_restantes || diasRestantesCalculados)) {
-          const currentDate = new Date();
-          const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
-          const lastDay = currentDate.toISOString().slice(0, 10);
-          const { data, error } = await supabase
-            .from("historico_diario")
-            .select("recebido, data_recebimento")
-            .eq("user_id", authUserId)
-            .gte("data_recebimento", firstDay)
-            .lte("data_recebimento", lastDay);
-
-          if (error) {
-            console.error("Erro ao buscar registros diários:", error.message);
-            setDailyReceipts([]);
-          } else if (data) {
-            const receipts = data.map((record) => ({
-              date: record.data_recebimento,
-              value: record.recebido || 0,
-            }));
-            console.log("Dados de dailyReceipts:", receipts);
-            setDailyReceipts(receipts);
-          }
-        } else {
-          console.log("Condições de fetch não atendidas, usando array vazio.");
-          setDailyReceipts([]);
-        }
-      } catch (error) {
-        console.error("Erro inesperado no fetch de dados:", error);
-        setDailyReceipts([]);
-      }
-      setIsLoadingData(false);
-      console.log("Fetch concluído, dailyReceipts:", dailyReceipts);
-    };
-
-    fetchData();
-  }, [userData, diasRestantesCalculados, isAuthReady]);
 
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
   const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
@@ -244,7 +167,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     return workedDays;
   };
 
-  const diasUteisRestantes = userData.dias_restantes || 0;
+  const diasUteisRestantes = userData.dias_restantes || diasRestantesCalculados || 0;
   const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes;
@@ -260,8 +183,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
     }
   }, [recebidoHoje, setRecebidoHoje]);
 
-  if (isLoading || isLoadingData || !isAuthReady) {
-    console.log("Renderizando skeleton, dailyReceipts:", dailyReceipts);
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
