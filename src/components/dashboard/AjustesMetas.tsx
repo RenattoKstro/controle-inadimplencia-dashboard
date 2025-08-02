@@ -36,30 +36,31 @@ const AjustesMetas = ({
 }: DashboardProps & { setBonusPerdidoAtivado: (value: boolean) => void }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formState, setFormState] = useState({
-    abertura_vencido_mes: userData.abertura_vencido_mes || 0,
-    abertura_dia: userData.abertura_dia || 0,
-    meta_mes: userData.meta_mes || 0,
-    vencido_atual: userData.vencido_atual || 0,
-    dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
-    meta_desafio: userData.meta_desafio || 0,
-    meta_perdido: userData.meta_perdido || 0,
-    rec_perdido: userData.rec_perdido || 0,
-    carteira_total: userData.carteira_total || 0, // Novo campo para Carteira
-    role: userData.role || "líder",
+    abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
+    abertura_dia: userData?.abertura_dia || 0,
+    meta_mes: userData?.meta_mes || 0,
+    vencido_atual: userData?.vencido_atual || 0,
+    dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+    meta_desafio: userData?.meta_desafio || 0,
+    meta_perdido: userData?.meta_perdido || 0,
+    rec_perdido: userData?.rec_perdido || 0,
+    carteira_total: userData?.carteira_total || 0,
+    role: userData?.role || "líder",
   });
 
   useEffect(() => {
+    console.log("[AjustesMetas] Atualizando formState com userData:", userData);
     setFormState({
-      abertura_vencido_mes: userData.abertura_vencido_mes || 0,
-      abertura_dia: userData.abertura_dia || 0,
-      meta_mes: userData.meta_mes || 0,
-      vencido_atual: userData.vencido_atual || 0,
-      dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
-      meta_desafio: userData.meta_desafio || 0,
-      meta_perdido: userData.meta_perdido || 0,
-      rec_perdido: userData.rec_perdido || 0,
-      carteira_total: userData.carteira_total || 0, // Inicializa com valor de userData ou 0
-      role: userData.role || "líder",
+      abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
+      abertura_dia: userData?.abertura_dia || 0,
+      meta_mes: userData?.meta_mes || 0,
+      vencido_atual: userData?.vencido_atual || 0,
+      dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+      meta_desafio: userData?.meta_desafio || 0,
+      meta_perdido: userData?.meta_perdido || 0,
+      rec_perdido: userData?.rec_perdido || 0,
+      carteira_total: userData?.carteira_total || 0,
+      role: userData?.role || "líder",
     });
   }, [userData, diasRestantesCalculados]);
 
@@ -86,7 +87,7 @@ const AjustesMetas = ({
     };
 
     const handleChange = (value: number) => {
-      onChange && onChange(value);
+      if (onChange) onChange(value);
     };
 
     return (
@@ -115,14 +116,14 @@ const AjustesMetas = ({
             formatAsCurrency ? (
               <CurrencyInput
                 value={value}
-                onValueChange={onChange}
+                onValueChange={handleChange}
                 className="text-lg font-bold mt-1"
               />
             ) : (
               <Input
                 type="number"
                 value={value}
-                onChange={(e) => onChange && onChange(parseInt(e.target.value) || 0)}
+                onChange={(e) => handleChange(parseInt(e.target.value) || 0)}
                 className="text-lg font-bold mt-1"
               />
             )
@@ -135,22 +136,23 @@ const AjustesMetas = ({
   };
 
   const handleSave = () => {
+    console.log("[AjustesMetas] Salvando formState:", formState);
     updateUserData(formState);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setFormState({
-      abertura_vencido_mes: userData.abertura_vencido_mes || 0,
-      abertura_dia: userData.abertura_dia || 0,
-      meta_mes: userData.meta_mes || 0,
-      vencido_atual: userData.vencido_atual || 0,
-      dias_restantes: userData.dias_restantes || diasRestantesCalculados || 0,
-      meta_desafio: userData.meta_desafio || 0,
-      meta_perdido: userData.meta_perdido || 0,
-      rec_perdido: userData.rec_perdido || 0,
-      carteira_total: userData.carteira_total || 0,
-      role: userData.role || "líder",
+      abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
+      abertura_dia: userData?.abertura_dia || 0,
+      meta_mes: userData?.meta_mes || 0,
+      vencido_atual: userData?.vencido_atual || 0,
+      dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+      meta_desafio: userData?.meta_desafio || 0,
+      meta_perdido: userData?.meta_perdido || 0,
+      rec_perdido: userData?.rec_perdido || 0,
+      carteira_total: userData?.carteira_total || 0,
+      role: userData?.role || "líder",
     });
     setIsEditing(false);
   };
