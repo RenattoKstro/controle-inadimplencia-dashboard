@@ -76,29 +76,13 @@ const DashboardLayout = () => {
     const fetchReceivedToday = async () => {
       if (userData && userData.abertura_vencido_mes && userData.vencido_atual) {
         const currentDate = new Date();
-        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
-        const lastDay = currentDate.toISOString().slice(0, 10);
-        const { data, error } = await supabase
-          .from("historico_diario")
-          .select("recebido, data_recebimento")
-          .eq("user_id", userData.id)
-          .gte("data_recebimento", firstDay)
-          .lte("data_recebimento", lastDay);
-
-        if (error) {
-          console.error("Erro ao buscar histórico diário:", error.message);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const todayData = data.find((record) => record.data_recebimento === lastDay);
-          const receivedToday = todayData ? todayData.recebido || 0 : 0;
-          const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
-          const daysPassed = currentDate.getDate();
-          const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
-          const adjustedReceivedToday = Math.max(0, receivedToday || dailyAverage);
-          setRecebidoHoje(adjustedReceivedToday);
-        }
+        const daysPassed = currentDate.getDate();
+        const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
+        const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
+        setRecebidoHoje(dailyAverage); // Usa média diária como fallback
+      } else {
+        console.log("[DashboardLayout] userData ou valores ausentes, usando recebidoHoje = 0");
+        setRecebidoHoje(0);
       }
     };
     fetchReceivedToday();
@@ -233,6 +217,16 @@ const DashboardLayout = () => {
       return newMonth;
     });
   };
+
+  // Validação inicial de userData
+  if (!userData && !isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Skeleton className="h-12 w-12" />
+        <p className="text-foreground ml-2">Carregando dados do usuário...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
