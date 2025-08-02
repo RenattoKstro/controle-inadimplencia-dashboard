@@ -29,7 +29,6 @@ import Scripts from "./dashboard/Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
-import AvisosESugestoes from "./dashboard/AvisosESugestoes";
 import Anexos from "./Anexos";
 import Apps from "./Apps"; // Novo componente importado
 
@@ -499,7 +498,6 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <AvisosESugestoes userData={userData} recebidoHoje={recebidoHoje} />
         <Tabs 
           defaultValue="meta-fiado" 
           value={activeTab} 
