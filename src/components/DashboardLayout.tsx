@@ -340,16 +340,18 @@ const DashboardLayout = () => {
               <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex-shrink-0">
                 <span>Controle de Inadimplência</span>
                 {percentualVencido !== null && (
-                  <span className="ml-2 text-xl">{percentualVencido}%</span>
+                  <span className="ml-2 text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                    {percentualVencido}%
+                  </span>
                 )}
               </h1>
               <div className="flex items-center gap-4">
                 <Button
                   onClick={handlePrintScreen}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
+                  className="px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
                 >
                   <RiScreenshot2Fill className="h-4 w-4" />
-                  Print Tela
+                  Print
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
