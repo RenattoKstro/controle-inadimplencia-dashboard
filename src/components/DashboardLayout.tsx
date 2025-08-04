@@ -230,7 +230,7 @@ const DashboardLayout = () => {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
       <header className="bg-card shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           {isMobile ? (
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
@@ -337,10 +337,12 @@ const DashboardLayout = () => {
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent space-x-2">
                 <span>Controle de Inadimplência</span>
                 {percentualVencido !== null && (
-                  <span className="ml-2">{percentualVencido}%</span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text">
+                    {percentualVencido}%
+                  </span>
                 )}
               </h1>
               <div className="flex items-center gap-4">
