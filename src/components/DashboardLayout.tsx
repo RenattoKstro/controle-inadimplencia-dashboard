@@ -29,7 +29,6 @@ import Scripts from "./dashboard/Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
-import AvisosESugestoes from "./dashboard/AvisosESugestoes";
 import Anexos from "./Anexos";
 import Apps from "./Apps"; // Novo componente importado
 
@@ -76,29 +75,13 @@ const DashboardLayout = () => {
     const fetchReceivedToday = async () => {
       if (userData && userData.abertura_vencido_mes && userData.vencido_atual) {
         const currentDate = new Date();
-        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().slice(0, 10);
-        const lastDay = currentDate.toISOString().slice(0, 10);
-        const { data, error } = await supabase
-          .from("historico_diario")
-          .select("recebido, data_recebimento")
-          .eq("user_id", userData.id)
-          .gte("data_recebimento", firstDay)
-          .lte("data_recebimento", lastDay);
-
-        if (error) {
-          console.error("Erro ao buscar histórico diário:", error.message);
-          return;
-        }
-
-        if (data && data.length > 0) {
-          const todayData = data.find((record) => record.data_recebimento === lastDay);
-          const receivedToday = todayData ? todayData.recebido || 0 : 0;
-          const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
-          const daysPassed = currentDate.getDate();
-          const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
-          const adjustedReceivedToday = Math.max(0, receivedToday || dailyAverage);
-          setRecebidoHoje(adjustedReceivedToday);
-        }
+        const daysPassed = currentDate.getDate();
+        const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
+        const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
+        setRecebidoHoje(dailyAverage); // Usa média diária como fallback
+      } else {
+        console.log("[DashboardLayout] userData ou valores ausentes, usando recebidoHoje = 0");
+        setRecebidoHoje(0);
       }
     };
     fetchReceivedToday();
@@ -234,10 +217,20 @@ const DashboardLayout = () => {
     });
   };
 
+  // Validação inicial de userData
+  if (!userData && !isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Skeleton className="h-12 w-12" />
+        <p className="text-foreground ml-2">Carregando dados do usuário...</p>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
       <header className="bg-card shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-2 py-4 flex items-center justify-between">
           {isMobile ? (
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
@@ -344,19 +337,21 @@ const DashboardLayout = () => {
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex-shrink-0">
                 <span>Controle de Inadimplência</span>
                 {percentualVencido !== null && (
-                  <span className="ml-2">{percentualVencido}%</span>
+                  <span className="ml-2 text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                    {percentualVencido}%
+                  </span>
                 )}
               </h1>
               <div className="flex items-center gap-4">
                 <Button
                   onClick={handlePrintScreen}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
+                  className="px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
                 >
                   <RiScreenshot2Fill className="h-4 w-4" />
-                  Print Tela
+                  Print
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
@@ -505,7 +500,6 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <AvisosESugestoes userData={userData} recebidoHoje={recebidoHoje} />
         <Tabs 
           defaultValue="meta-fiado" 
           value={activeTab} 
