@@ -337,10 +337,10 @@ const DashboardLayout = () => {
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text space-x-2 max-w-full flex-shrink">
+              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text space-x-2">
                 <span>Controle de Inadimplência</span>
                 {percentualVencido !== null && (
-                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text whitespace-nowrap">
+                  <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text whitespace-nowrap">
                     {percentualVencido}%
                   </span>
                 )}
