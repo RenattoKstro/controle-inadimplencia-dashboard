@@ -147,7 +147,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
   );
 };
 
-const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje }: DashboardProps) => {
+const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje, diasSemExpediente }: DashboardProps) => {
   const isMobile = useIsMobile();
 
   const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
@@ -155,22 +155,38 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const recebidosMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
   const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
 
+  const calculateTotalWorkDays = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    let totalDays = 0;
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek !== 0 && !diasSemExpediente?.some(date => date.toDateString() === d.toDateString())) {
+        totalDays++;
+      }
+    }
+    return totalDays;
+  };
+
   const calculateWorkedDays = () => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     let workedDays = 0;
     for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
       const dayOfWeek = d.getDay();
-      if (dayOfWeek !== 0) workedDays++; // Exclui domingos
+      if (dayOfWeek !== 0 && !diasSemExpediente?.some(date => date.toDateString() === d.toDateString())) {
+        workedDays++;
+      }
     }
-    if (today.getDay() === 0) workedDays--; // Remove 1 dia se for domingo
+    if (today.getDay() === 0) workedDays--; // Remove domingo se for o dia atual
     return workedDays;
   };
 
   const diasUteisRestantes = userData.dias_restantes || diasRestantesCalculados || 0;
-  const totalWorkDaysInMonth = 27; // Fixado para julho de 2025
+  const totalWorkDaysInMonth = calculateTotalWorkDays(); // Dinâmico agora
+  const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(); // Usa userData se disponível
   const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
-  const diasUteisTrabalhados = totalWorkDaysInMonth - diasUteisRestantes;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
   const gap = recebidosMes - valorEsperadoAcumulado;
   const receberPorDia = diasUteisRestantes > 0 ? faltaReceberMes / diasUteisRestantes : 0;
