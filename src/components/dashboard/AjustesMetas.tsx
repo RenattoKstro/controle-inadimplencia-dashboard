@@ -326,9 +326,9 @@ const AjustesMetas = ({
         <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-gray-500 bg-opacity-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-foreground">Dias R/T</h3>
+              <h3 className="text-sm font-medium text-foreground">Dias Restantes/Trabalhados</h3>
               <div className="flex items-center gap-2">
-                {isEditing && (
+                {!isEditing && (
                   <Button 
                     size="icon" 
                     variant="ghost" 
