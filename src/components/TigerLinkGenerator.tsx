@@ -33,27 +33,36 @@ const TigerLinkGenerator = () => {
   const handleDownload = () => {
     if (downloadLink) {
       console.log("Tentando iniciar download para:", downloadLink);
-      // Criar um elemento <a> temporário e simular clique
-      const link = document.createElement("a");
-      link.href = downloadLink;
-      link.download = "tiger-release.apk"; // Nome do arquivo
-      link.target = "_blank"; // Abrir em nova aba como fallback
-      document.body.appendChild(link);
-      const clickEvent = new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      });
-      link.dispatchEvent(clickEvent);
-      document.body.removeChild(link);
+      try {
+        // Criar um elemento <a> visível temporariamente
+        const link = document.createElement("a");
+        link.href = downloadLink;
+        link.download = "tiger-release.apk";
+        link.target = "_blank";
+        link.style.display = "none"; // Esconder o elemento
+        document.body.appendChild(link);
 
-      // Fallback adicional: verificar se o download falhou
-      setTimeout(() => {
-        if (!document.querySelector(`a[href="${downloadLink}"][download]`)) {
-          console.log("Download falhou, tentando redirecionamento...");
-          window.location.href = downloadLink;
-        }
-      }, 1000); // Aguarda 1 segundo
+        // Simular clique
+        const clickEvent = new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        });
+        link.dispatchEvent(clickEvent);
+
+        // Remover após tentativa
+        setTimeout(() => {
+          document.body.removeChild(link);
+          console.log("Link removido do DOM");
+          // Fallback se o download não iniciar
+          if (!document.querySelector(`a[href="${downloadLink}"][download]`)) {
+            console.log("Download falhou, tentando redirecionamento...");
+            window.location.href = downloadLink;
+          }
+        }, 1000);
+      } catch (error) {
+        console.error("Erro ao iniciar download:", error);
+      }
     }
   };
 
