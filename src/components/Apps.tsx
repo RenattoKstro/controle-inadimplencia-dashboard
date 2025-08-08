@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Calculator } from "lucide-react";
 import {
   Dialog,
@@ -8,9 +8,32 @@ import {
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90"; // Certifique-se de que o caminho está correto
 
+// Error Boundary para capturar erros
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: string | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div className="p-4 text-red-500">Erro: {this.state.error}</div>;
+    }
+    return this.props.children;
+  }
+}
+
 const TigerLinkGenerator = () => {
   const [ipAddress, setIpAddress] = useState("");
   const [downloadLink, setDownloadLink] = useState("");
+
+  useEffect(() => {
+    console.log("TigerLinkGenerator montado, ipAddress:", ipAddress);
+  }, []);
 
   const generateLink = () => {
     console.log("Gerando link para IP:", ipAddress);
@@ -22,7 +45,7 @@ const TigerLinkGenerator = () => {
     }
   };
 
-  const handleIpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIpChange = (e: React.ChangeErrorEvent<HTMLInputElement>) => {
     const newIp = e.target.value;
     setIpAddress(newIp);
     if (newIp.trim()) {
@@ -40,29 +63,31 @@ const TigerLinkGenerator = () => {
   };
 
   return (
-    <div className="space-y-2 p-4">
-      <Input
-        type="text"
-        placeholder="Insira o IP (ex.: 10.30.59.104)"
-        value={ipAddress}
-        onChange={handleIpChange}
-        className="w-full"
-      />
-      {downloadLink && (
-        <Button
-          onClick={handleDownload}
-          className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white"
-        >
-          Download
-        </Button>
-      )}
-      {downloadLink && (
-        <p className="text-sm text-muted-foreground mt-1">
-          Link gerado: <a href={downloadLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{downloadLink}</a>
-        </p>
-      )}
-      {!downloadLink && <p className="text-sm text-muted-foreground mt-1">Insira um IP válido para gerar o link.</p>}
-    </div>
+    <ErrorBoundary>
+      <div className="space-y-2 p-4">
+        <Input
+          type="text"
+          placeholder="Insira o IP (ex.: 10.30.59.104)"
+          value={ipAddress}
+          onChange={handleIpChange}
+          className="w-full"
+        />
+        {downloadLink && (
+          <Button
+            onClick={handleDownload}
+            className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white"
+          >
+            Download
+          </Button>
+        )}
+        {downloadLink && (
+          <p className="text-sm text-muted-foreground mt-1">
+            Link gerado: <a href={downloadLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{downloadLink}</a>
+          </p>
+        )}
+        {!downloadLink && <p className="text-sm text-muted-foreground mt-1">Insira um IP válido para gerar o link.</p>}
+      </div>
+    </ErrorBoundary>
   );
 };
 
