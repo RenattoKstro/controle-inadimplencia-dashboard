@@ -7,8 +7,8 @@ const TigerLinkGenerator = () => {
   const [downloadLink, setDownloadLink] = useState("");
 
   useEffect(() => {
-    console.log("TigerLinkGenerator montado, ipAddress:", ipAddress);
-  }, []);
+    console.log("TigerLinkGenerator montado ou atualizado, ipAddress:", ipAddress);
+  }, [ipAddress]); // Adicionado ipAddress como dependência para rastrear mudanças
 
   const generateLink = () => {
     console.log("Gerando link para IP bruto:", ipAddress); // Depuração do IP original
@@ -23,7 +23,7 @@ const TigerLinkGenerator = () => {
 
   const handleIpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newIp = e.target.value;
-    console.log("IP inserido:", newIp); // Depuração do valor digitado
+    console.log("Tecla pressionada, IP inserido:", newIp); // Depuração a cada mudança
     setIpAddress(newIp);
     if (newIp.trim()) {
       generateLink();
