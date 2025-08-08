@@ -44,7 +44,7 @@ const TigerLinkGenerator = () => {
         onClick={handleDownload}
         className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white"
       >
-        Abrir em nova guia
+        Gerar Link
       </Button>
 
       <p className="text-sm mt-2">
