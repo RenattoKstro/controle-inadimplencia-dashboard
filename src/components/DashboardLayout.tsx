@@ -71,6 +71,29 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const [isScriptsOpen, setIsScriptsOpen] = useState(false);
 
+  // Intervalo para verificar a sessão
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (!data.session || error) {
+        toast({
+          title: "Sessão expirada",
+          description: "Sua sessão expirou. Você será redirecionado para a autenticação.",
+          variant: "destructive",
+        });
+        await supabase.auth.signOut();
+        navigate("/auth");
+      }
+    };
+
+    // Verifica a sessão a cada 5 minutos
+    const intervalId = setInterval(checkSession, 5 * 60 * 1000); // 5 minutos em milissegundos
+    checkSession(); // Verifica imediatamente ao montar o componente
+
+    // Limpa o intervalo ao desmontar
+    return () => clearInterval(intervalId);
+  }, [navigate, toast]);
+
   useEffect(() => {
     const fetchReceivedToday = async () => {
       if (userData && userData.abertura_vencido_mes && userData.vencido_atual) {
