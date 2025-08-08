@@ -7,29 +7,20 @@ const TigerLinkGenerator = () => {
   const [downloadLink, setDownloadLink] = useState("");
 
   useEffect(() => {
-    console.log("TigerLinkGenerator montado ou atualizado, ipAddress:", ipAddress);
-  }, [ipAddress]); // Adicionado ipAddress como dependência para rastrear mudanças
-
-  const generateLink = () => {
-    console.log("Gerando link para IP bruto:", ipAddress); // Depuração do IP original
+    console.log("TigerLinkGenerator atualizado, ipAddress:", ipAddress);
     if (ipAddress.trim()) {
-      const fullLink = `http://${ipAddress.trim()}:8080/version/tiger-release.apk`; // Usando o IP diretamente
-      console.log("Link gerado:", fullLink); // Depuração do link
+      const fullLink = `http://${ipAddress.trim()}:8080/version/tiger-release.apk`;
+      console.log("Link gerado no useEffect:", fullLink);
       setDownloadLink(fullLink);
     } else {
       setDownloadLink("");
     }
-  };
+  }, [ipAddress]); // Gera o link toda vez que ipAddress muda
 
   const handleIpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newIp = e.target.value;
-    console.log("Tecla pressionada, IP inserido:", newIp); // Depuração a cada mudança
+    console.log("Tecla pressionada, IP inserido:", newIp);
     setIpAddress(newIp);
-    if (newIp.trim()) {
-      generateLink();
-    } else {
-      setDownloadLink("");
-    }
   };
 
   const handleDownload = () => {
