@@ -1,4 +1,3 @@
-// src/components/Apps.tsx
 import React from "react";
 import { Calculator } from "lucide-react";
 import {
@@ -8,12 +7,14 @@ import {
 } from "@/components/ui/dialog";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90"; // Certifique-se de que o caminho está correto
+import TigerLinkGenerator from "./TigerLinkGenerator"; // Importação do novo componente
 
 const apps = [
   { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
   { id: "fechamento-caixa", name: "Fechamento Caixa Geral (em breve)", icon: Calculator, disabled: true }, // Segunda posição
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
   { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
+  { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-4 w-4 mr-2" />, component: TigerLinkGenerator },
 ];
 
 const Apps = () => {
@@ -31,7 +32,7 @@ const Apps = () => {
             <button
               className="w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted"
             >
-              <app.icon className="h-4 w-4 mr-2" />
+              <app.icon />
               {app.name}
             </button>
           </a>
@@ -41,7 +42,7 @@ const Apps = () => {
             className="w-full justify-start text-gray-400 cursor-not-allowed flex items-center gap-2 px-4 py-2 rounded-md bg-muted"
             disabled
           >
-            <app.icon className="h-4 w-4 mr-2" />
+            <app.icon />
             {app.name}
           </button>
         ) : (
@@ -49,8 +50,9 @@ const Apps = () => {
             <DialogTrigger asChild>
               <button
                 className="w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted"
+                onClick={() => console.log(`Abrindo ${app.name} dialog`)}
               >
-                <app.icon className="h-4 w-4 mr-2" />
+                <app.icon />
                 {app.name}
               </button>
             </DialogTrigger>

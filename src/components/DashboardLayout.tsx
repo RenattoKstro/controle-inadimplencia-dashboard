@@ -30,7 +30,7 @@ import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
 import Anexos from "./Anexos";
-import Apps from "./Apps"; // Novo componente importado
+import Apps from "./Apps";
 
 export interface DashboardProps {
   userData: any;
@@ -71,7 +71,7 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const [isScriptsOpen, setIsScriptsOpen] = useState(false);
 
-  // Intervalo para verificar a sessão
+  // Verificação de sessão aprimorada
   useEffect(() => {
     const checkSession = async () => {
       const { data, error } = await supabase.auth.getSession();
@@ -81,18 +81,26 @@ const DashboardLayout = () => {
           description: "Sua sessão expirou. Você será redirecionado para a autenticação.",
           variant: "destructive",
         });
-        await supabase.auth.signOut();
+        await supabase.auth.signOut(); // Limpa sessão local e servidor
         navigate("/auth");
+      } else {
+        // Atualiza o estado da sessão localmente
+        const { user, session } = data;
+        if (user && session) {
+          updateUserData({ ...userData, session });
+        }
       }
     };
 
-    // Verifica a sessão a cada 5 minutos
-    const intervalId = setInterval(checkSession, 5 * 60 * 1000); // 5 minutos em milissegundos
-    checkSession(); // Verifica imediatamente ao montar o componente
+    // Verifica imediatamente ao carregar
+    checkSession();
+
+    // Intervalo de verificação (ajustado para 10 minutos, pode mudar conforme necessário)
+    const intervalId = setInterval(checkSession, 10 * 60 * 1000); // 10 minutos
 
     // Limpa o intervalo ao desmontar
     return () => clearInterval(intervalId);
-  }, [navigate, toast]);
+  }, [navigate, toast, updateUserData, userData]);
 
   useEffect(() => {
     const fetchReceivedToday = async () => {
@@ -101,7 +109,7 @@ const DashboardLayout = () => {
         const daysPassed = currentDate.getDate();
         const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
         const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
-        setRecebidoHoje(dailyAverage); // Usa média diária como fallback
+        setRecebidoHoje(dailyAverage);
       } else {
         console.log("[DashboardLayout] userData ou valores ausentes, usando recebidoHoje = 0");
         setRecebidoHoje(0);
@@ -240,7 +248,6 @@ const DashboardLayout = () => {
     });
   };
 
-  // Validação inicial de userData
   if (!userData && !isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -276,7 +283,7 @@ const DashboardLayout = () => {
                       <div className="py-6 border-b border-border">
                         <h2 className="text-lg font-semibold text-foreground">Apps</h2>
                       </div>
-                      <Apps /> {/* Integração do novo componente Apps */}
+                      <Apps />
                       <div className="py-4 border-t border-border">
                         <Button 
                           variant="destructive" 
@@ -493,7 +500,7 @@ const DashboardLayout = () => {
                       <div className="py-6 border-b border-border">
                         <h2 className="text-lg font-semibold text-foreground">Apps</h2>
                       </div>
-                      <Apps /> {/* Integração do novo componente Apps */}
+                      <Apps />
                       <div className="py-4 border-t border-border">
                         <Button 
                           variant="destructive" 
