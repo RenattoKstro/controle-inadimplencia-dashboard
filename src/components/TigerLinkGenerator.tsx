@@ -25,6 +25,10 @@ const TigerLinkGenerator = () => {
     }
   };
 
+  const handleHelpClick = () => {
+    window.open("/ipsiga.png", "_blank"); // imagem em public/ipsiga.png
+  };
+
   return (
     <div className="space-y-2 p-4">
       <Input
@@ -40,8 +44,18 @@ const TigerLinkGenerator = () => {
         onClick={handleDownload}
         className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white"
       >
-        Gerar Link
+        Abrir em nova guia
       </Button>
+
+      <p className="text-sm mt-2">
+        <button
+          type="button"
+          onClick={handleHelpClick}
+          className="text-blue-500 hover:underline"
+        >
+          Como saber o meu IP?
+        </button>
+      </p>
     </div>
   );
 };
