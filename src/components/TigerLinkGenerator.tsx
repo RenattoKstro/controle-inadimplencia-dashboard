@@ -10,15 +10,19 @@ const TigerLinkGenerator = () => {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const allowedChars = /[0-9.]/; 
+    const allowedChars = /[0-9.]/;
     if (!allowedChars.test(e.key)) {
       e.preventDefault();
     }
   };
 
   const handleDownload = () => {
-    // Abre sempre a URL fixa em nova guia
-    window.open("http://10.30.59.104:8080/v1/app/download", "_blank");
+    if (ipAddress.trim()) {
+      const link = `http://${ipAddress.trim()}:8080/v1/app/download`;
+      window.open(link, "_blank");
+    } else {
+      alert("Por favor, insira um IP válido.");
+    }
   };
 
   return (
@@ -36,7 +40,7 @@ const TigerLinkGenerator = () => {
         onClick={handleDownload}
         className="w-full mt-2 bg-green-500 hover:bg-green-600 text-white"
       >
-        Abrir Link
+        Abrir em nova guia
       </Button>
     </div>
   );
