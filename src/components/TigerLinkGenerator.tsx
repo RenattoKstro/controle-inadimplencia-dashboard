@@ -15,7 +15,7 @@ const TigerLinkGenerator = () => {
     } else {
       setDownloadLink("");
     }
-  }, [ipAddress]); // Gera o link toda vez que ipAddress muda
+  }, [ipAddress]);
 
   const handleIpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newIp = e.target.value;
@@ -23,10 +23,21 @@ const TigerLinkGenerator = () => {
     setIpAddress(newIp);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowedChars = /[0-9.]/; // Permite apenas números e pontos
+    if (!allowedChars.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const handleDownload = () => {
     if (downloadLink) {
-      console.log("Abrindo link para download:", downloadLink);
-      window.open(downloadLink, "_blank");
+      console.log("Tentando abrir link:", downloadLink);
+      const newWindow = window.open(downloadLink, "_blank");
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
+        console.log("Pop-up bloqueado, redirecionando...");
+        window.location.href = downloadLink; // Fallback para redirecionamento
+      }
     }
   };
 
@@ -37,6 +48,7 @@ const TigerLinkGenerator = () => {
         placeholder="Insira o IP (ex.: 10.30.59.104)"
         value={ipAddress}
         onChange={handleIpChange}
+        onKeyPress={handleKeyPress} // Restringe caracteres
         className="w-full"
       />
       {downloadLink && (
