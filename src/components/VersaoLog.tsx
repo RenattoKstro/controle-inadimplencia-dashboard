@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Bell } from "lucide-react"; // Ícone de sino
 import {
   Dialog,
   DialogContent,
@@ -54,9 +55,14 @@ const VersaoLog = () => {
       <DialogTrigger asChild>
         <Button
           onClick={() => setIsOpen(true)}
-          className="bg-black hover:bg-red-600 text-white font-medium rounded-md px-3 py-1 text-sm transition-colors duration-200"
+          className="bg-black hover:bg-red-600 text-white font-medium rounded-md px-3 py-1 text-sm transition-colors duration-200 relative"
         >
-          Logs
+          <span>Logs</span>
+          {showNotification && (
+            <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center -mt-1 -mr-1">
+              <Bell className="h-3 w-3 mr-1" />1
+            </span>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md bg-card border border-gray-300 rounded-md shadow-lg p-6 max-h-[80vh] overflow-y-auto">
