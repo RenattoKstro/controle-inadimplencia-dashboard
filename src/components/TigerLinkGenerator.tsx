@@ -33,13 +33,27 @@ const TigerLinkGenerator = () => {
   const handleDownload = () => {
     if (downloadLink) {
       console.log("Tentando iniciar download para:", downloadLink);
-      // Criar um elemento <a> temporário para forçar o download
+      // Criar um elemento <a> temporário e simular clique
       const link = document.createElement("a");
       link.href = downloadLink;
-      link.download = "tiger-release.apk"; // Nome do arquivo a ser baixado
+      link.download = "tiger-release.apk"; // Nome do arquivo
+      link.target = "_blank"; // Abrir em nova aba como fallback
       document.body.appendChild(link);
-      link.click();
+      const clickEvent = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      });
+      link.dispatchEvent(clickEvent);
       document.body.removeChild(link);
+
+      // Fallback adicional: verificar se o download falhou
+      setTimeout(() => {
+        if (!document.querySelector(`a[href="${downloadLink}"][download]`)) {
+          console.log("Download falhou, tentando redirecionamento...");
+          window.location.href = downloadLink;
+        }
+      }, 1000); // Aguarda 1 segundo
     }
   };
 
