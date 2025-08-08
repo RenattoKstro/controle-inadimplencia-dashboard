@@ -13,6 +13,7 @@ const TigerLinkGenerator = () => {
   const [downloadLink, setDownloadLink] = useState("");
 
   const generateLink = () => {
+    console.log("Gerando link para IP:", ipAddress);
     if (ipAddress.trim()) {
       const fullLink = `http://${ipAddress.trim()}:8080/version/tiger-release.apk`;
       setDownloadLink(fullLink);
@@ -22,8 +23,9 @@ const TigerLinkGenerator = () => {
   };
 
   const handleIpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIpAddress(e.target.value);
-    if (e.target.value.trim()) {
+    const newIp = e.target.value;
+    setIpAddress(newIp);
+    if (newIp.trim()) {
       generateLink();
     } else {
       setDownloadLink("");
@@ -32,12 +34,13 @@ const TigerLinkGenerator = () => {
 
   const handleDownload = () => {
     if (downloadLink) {
+      console.log("Abrindo link para download:", downloadLink);
       window.open(downloadLink, "_blank");
     }
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 p-4">
       <Input
         type="text"
         placeholder="Insira o IP (ex.: 10.30.59.104)"
@@ -58,6 +61,7 @@ const TigerLinkGenerator = () => {
           Link gerado: <a href={downloadLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">{downloadLink}</a>
         </p>
       )}
+      {!downloadLink && <p className="text-sm text-muted-foreground mt-1">Insira um IP válido para gerar o link.</p>}
     </div>
   );
 };
@@ -103,6 +107,7 @@ const Apps = () => {
             <DialogTrigger asChild>
               <button
                 className="w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted"
+                onClick={() => console.log(`Abrindo ${app.name} dialog`)}
               >
                 <app.icon />
                 {app.name}
