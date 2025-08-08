@@ -11,9 +11,10 @@ const TigerLinkGenerator = () => {
   }, []);
 
   const generateLink = () => {
-    console.log("Gerando link para IP:", ipAddress);
+    console.log("Gerando link para IP bruto:", ipAddress); // Depuração do IP original
     if (ipAddress.trim()) {
-      const fullLink = `http://${ipAddress.trim()}:8080/version/tiger-release.apk`;
+      const fullLink = `http://${ipAddress.trim()}:8080/version/tiger-release.apk`; // Usando o IP diretamente
+      console.log("Link gerado:", fullLink); // Depuração do link
       setDownloadLink(fullLink);
     } else {
       setDownloadLink("");
@@ -22,6 +23,7 @@ const TigerLinkGenerator = () => {
 
   const handleIpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newIp = e.target.value;
+    console.log("IP inserido:", newIp); // Depuração do valor digitado
     setIpAddress(newIp);
     if (newIp.trim()) {
       generateLink();
