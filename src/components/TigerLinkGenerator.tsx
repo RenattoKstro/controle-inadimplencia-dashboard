@@ -32,12 +32,14 @@ const TigerLinkGenerator = () => {
 
   const handleDownload = () => {
     if (downloadLink) {
-      console.log("Tentando abrir link:", downloadLink);
-      const newWindow = window.open(downloadLink, "_blank");
-      if (!newWindow || newWindow.closed || typeof newWindow.closed === "undefined") {
-        console.log("Pop-up bloqueado, redirecionando...");
-        window.location.href = downloadLink; // Fallback para redirecionamento
-      }
+      console.log("Tentando iniciar download para:", downloadLink);
+      // Criar um elemento <a> temporário para forçar o download
+      const link = document.createElement("a");
+      link.href = downloadLink;
+      link.download = "tiger-release.apk"; // Nome do arquivo a ser baixado
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
