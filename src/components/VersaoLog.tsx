@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +26,29 @@ const VersaoLog = () => {
     { version: "1.0.0", date: "05-02-2025", changes: "App Lançado em beta" },
   ];
 
+  const latestVersion = versionLog[0].version; // Versão mais recente
+  const [lastViewedVersion, setLastViewedVersion] = useState<string | null>(
+    localStorage.getItem("lastViewedVersion")
+  );
+  const [showNotification, setShowNotification] = useState(false);
+
+  useEffect(() => {
+    if (lastViewedVersion !== latestVersion) {
+      setShowNotification(true);
+    } else {
+      setShowNotification(false);
+    }
+  }, [lastViewedVersion, latestVersion]);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    if (showNotification) {
+      localStorage.setItem("lastViewedVersion", latestVersion);
+      setLastViewedVersion(latestVersion);
+      setShowNotification(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -37,6 +60,11 @@ const VersaoLog = () => {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md bg-card border border-gray-300 rounded-md shadow-lg p-6 max-h-[80vh] overflow-y-auto">
+        {showNotification && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 mb-4 rounded-md">
+            Nova versão detectada: {latestVersion}! Alterações: {versionLog[0].changes}
+          </div>
+        )}
         <h3 className="text-lg font-semibold text-foreground mb-4">Logs de Atualizações</h3>
         <ul className="space-y-2">
           {versionLog.map((log, index) => (
@@ -51,7 +79,7 @@ const VersaoLog = () => {
             variant="outline"
             size="sm"
             className="mt-4 w-full"
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
           >
             Fechar
           </Button>
