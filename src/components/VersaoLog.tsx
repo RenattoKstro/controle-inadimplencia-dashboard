@@ -11,7 +11,7 @@ const VersaoLog = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const versionLog = [
-    { version: "2.2", date: "08-08-2025", changes: "Add Gerador de link Tiger 2.0" },
+    { version: "2.2", date: "08-08-2025", changes: "Add Gerador de link Tiger 2.0; Agora o tempo pra expirar o login foi aumentado" },
     { version: "2.1", date: "07-08-2025", changes: "Bugs corrigidos, Card Dias Restentes alterado para corrigir o GAP" },
     { version: "2.0", date: "29-07-2025", changes: "Add Calculadora Vendedor 90%" },
     { version: "1.9", date: "21-07-2025", changes: "Add Scripts e Percentual de Inadimplência" },
