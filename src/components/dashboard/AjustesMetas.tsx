@@ -41,6 +41,7 @@ const AjustesMetas = ({
     meta_mes: userData?.meta_mes || 0,
     vencido_atual: userData?.vencido_atual || 0,
     dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+    dias_trabalhados: userData?.dias_trabalhados || 0,
     meta_desafio: userData?.meta_desafio || 0,
     meta_perdido: userData?.meta_perdido || 0,
     rec_perdido: userData?.rec_perdido || 0,
@@ -56,6 +57,7 @@ const AjustesMetas = ({
       meta_mes: userData?.meta_mes || 0,
       vencido_atual: userData?.vencido_atual || 0,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+      dias_trabalhados: userData?.dias_trabalhados || 0,
       meta_desafio: userData?.meta_desafio || 0,
       meta_perdido: userData?.meta_perdido || 0,
       rec_perdido: userData?.rec_perdido || 0,
@@ -148,6 +150,7 @@ const AjustesMetas = ({
       meta_mes: userData?.meta_mes || 0,
       vencido_atual: userData?.vencido_atual || 0,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+      dias_trabalhados: userData?.dias_trabalhados || 0,
       meta_desafio: userData?.meta_desafio || 0,
       meta_perdido: userData?.meta_perdido || 0,
       rec_perdido: userData?.rec_perdido || 0,
@@ -320,17 +323,56 @@ const AjustesMetas = ({
             />
           </>
         )}
-        <CardItem 
-          title="Dias Restantes (mês)" 
-          value={formState.dias_restantes} 
-          icon={<Target size={16} />}
-          color="bg-gray-500"
-          formatAsCurrency={false}
-          isEditable={true}
-          onChange={(value) => handleChange('dias_restantes', value)}
-          isEditMode={isEditing}
-          onEdit={handleItemEdit}
-        />
+        <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-gray-500 bg-opacity-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-foreground">Dias Restantes/Trabalhados</h3>
+              <div className="flex items-center gap-2">
+                {!isEditing && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={handleItemEdit} 
+                    className="h-7 w-7 rounded-full hover:bg-blue-50"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-blue-500" />
+                  </Button>
+                )}
+                <span className="p-2 rounded-full bg-gray-500 text-white">
+                  <Target size={16} />
+                </span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground">Dias Trabalhados</h4>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={formState.dias_trabalhados}
+                    onChange={(e) => handleChange('dias_trabalhados', parseInt(e.target.value) || 0)}
+                    className="text-lg font-bold mt-1"
+                  />
+                ) : (
+                  <div className="text-xl font-bold">{formState.dias_trabalhados}</div>
+                )}
+              </div>
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground">Dias Restantes</h4>
+                {isEditing ? (
+                  <Input
+                    type="number"
+                    value={formState.dias_restantes}
+                    onChange={(e) => handleChange('dias_restantes', parseInt(e.target.value) || 0)}
+                    className="text-lg font-bold mt-1"
+                  />
+                ) : (
+                  <div className="text-xl font-bold">{formState.dias_restantes}</div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         <CardItem 
           title="Carteira Total" 
           value={formState.carteira_total} 
