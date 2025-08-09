@@ -5,9 +5,31 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
-import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90"; // Certifique-se de que o caminho está correto
-import TigerLinkGenerator from "./TigerLinkGenerator"; // Importação do novo componente
+
+// Importação dos componentes com tratamento de erro
+let CalculadoraRentabilidade;
+try {
+  CalculadoraRentabilidade = require("./dashboard/CalculadoraRentabilidade").default;
+  console.log("CalculadoraRentabilidade carregada com sucesso");
+} catch (error) {
+  console.error("Erro ao carregar CalculadoraRentabilidade:", error);
+}
+
+let CalculadoraVendedor90;
+try {
+  CalculadoraVendedor90 = require("./dashboard/CalculadoraVendedor90").default;
+  console.log("CalculadoraVendedor90 carregada com sucesso");
+} catch (error) {
+  console.error("Erro ao carregar CalculadoraVendedor90:", error);
+}
+
+let TigerLinkGenerator;
+try {
+  TigerLinkGenerator = require("./TigerLinkGenerator").default;
+  console.log("TigerLinkGenerator carregada com sucesso");
+} catch (error) {
+  console.error("Erro ao carregar TigerLinkGenerator:", error);
+}
 
 const apps = [
   { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
@@ -70,7 +92,11 @@ const Apps = () => {
               </button>
             </DialogTrigger>
             <DialogContent className="max-w-md bg-card">
-              <app.component />
+              {app.component ? (
+                <app.component />
+              ) : (
+                <div className="text-red-500">Erro: Componente não carregado!</div>
+              )}
             </DialogContent>
           </Dialog>
         )
@@ -79,7 +105,7 @@ const Apps = () => {
   );
 };
 
-// CSS inline para depuração (opcional, pode ser movido para um arquivo CSS)
+// CSS inline para depuração
 const styles = `
   .debug-icon {
     display: flex !important;
