@@ -35,7 +35,13 @@ const Apps = () => {
             className="block"
           >
             <button
-              className="w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600 outline-none focus:outline-none focus:ring-0 active:outline-none"
+              className={`w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md outline-none focus:outline-none focus:ring-0 ${
+                app.id === "external-calculator"
+                  ? "bg-orange-500 text-white hover:bg-orange-600"
+                  : app.id === "fechamento-caixa"
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  : ""
+              }`}
             >
               <app.icon />
               {app.name}
@@ -45,7 +51,11 @@ const Apps = () => {
           <Dialog key={app.id}>
             <DialogTrigger asChild>
               <button
-                className="w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted outline-none focus:outline-none focus:ring-0 active:outline-none"
+                className={`w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted outline-none focus:outline-none focus:ring-0 ${
+                  app.id === "vendedor-90"
+                    ? "bg-green-500 text-white hover:bg-green-600"
+                    : ""
+                }`}
                 onClick={() => console.log(`Abrindo ${app.name} dialog`)}
               >
                 <app.icon />
