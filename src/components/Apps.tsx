@@ -1,5 +1,5 @@
 import React from "react";
-import { Calculator } from "lucide-react";
+import { Calculator, DollarSign } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,12 @@ import TigerLinkGenerator from "./TigerLinkGenerator"; // Importação do novo c
 
 const apps = [
   { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
-  { id: "fechamento-caixa", name: "Fechamento Caixa Geral (em breve)", icon: Calculator, disabled: true }, // Segunda posição
+  { id: "fechamento-caixa", name: "Fechamento Caixa Geral", icon: () => (
+    <div className="flex items-center">
+      <Calculator className="h-4 w-4 mr-1 text-blue-500" />
+      <DollarSign className="h-4 w-4 text-blue-500" />
+    </div>
+  ), url: "https://fechamentodecaixa.netlify.app/" },
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
   { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
   { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-4 w-4 mr-2" />, component: TigerLinkGenerator },
@@ -30,21 +35,12 @@ const Apps = () => {
             className="block"
           >
             <button
-              className="w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted"
+              className="w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted bg-blue-500 text-white hover:bg-blue-600"
             >
               <app.icon />
               {app.name}
             </button>
           </a>
-        ) : app.disabled ? (
-          <button
-            key={app.id}
-            className="w-full justify-start text-gray-400 cursor-not-allowed flex items-center gap-2 px-4 py-2 rounded-md bg-muted"
-            disabled
-          >
-            <app.icon />
-            {app.name}
-          </button>
         ) : (
           <Dialog key={app.id}>
             <DialogTrigger asChild>
