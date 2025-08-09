@@ -19,7 +19,7 @@ const apps = [
   ), url: "https://fechamentodecaixa.netlify.app/" },
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
   { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
-  { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-6 w-6 mr-2 text-blue-500" style={{ filter: "brightness(0) invert(1)" }} />, component: TigerLinkGenerator },
+  { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-6 w-6 mr-2" style={{ backgroundColor: "#3b82f6", padding: "2px" }} />, component: TigerLinkGenerator },
 ];
 
 const Apps = () => {
