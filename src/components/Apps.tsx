@@ -14,7 +14,7 @@ const apps = [
   { id: "fechamento-caixa", name: "Fechamento Caixa Geral", icon: () => {
     console.log("Renderizando ícone de Fechamento Caixa Geral");
     return (
-      <div className="flex items-center opacity-100 !important">
+      <div className="flex items-center opacity-100 !important min-h-4 min-w-4 debug-icon">
         <Calculator className="h-4 w-4 mr-1 text-blue-500" />
         <DollarSign className="h-4 w-4 text-blue-500" />
       </div>
@@ -46,7 +46,7 @@ const Apps = () => {
                   : ""
               }`}
             >
-              <div className="flex-shrink-0">{app.icon()}</div> {/* Força renderização do ícone */}
+              <div className="flex-shrink-0 debug-icon-container">{app.icon()}</div>
               {app.name}
             </button>
           </a>
@@ -78,5 +78,22 @@ const Apps = () => {
     </div>
   );
 };
+
+// CSS inline para depuração (opcional, pode ser movido para um arquivo CSS)
+const styles = `
+  .debug-icon {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  .debug-icon-container {
+    display: flex !important;
+    flex-shrink: 0 !important;
+    min-height: 1rem !important;
+    min-width: 2rem !important;
+  }
+`;
+const styleSheet = document.createElement("style");
+styleSheet.textContent = styles;
+document.head.appendChild(styleSheet);
 
 export default Apps;
