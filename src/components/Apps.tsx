@@ -11,14 +11,17 @@ import TigerLinkGenerator from "./TigerLinkGenerator"; // Importação do novo c
 
 const apps = [
   { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
-  { id: "fechamento-caixa", name: "Fechamento Caixa Geral", icon: () => (
-    <div className="flex items-center opacity-100"> {/* Força visibilidade */}
-      <Calculator className="h-4 w-4 mr-1 text-blue-500" />
-      <DollarSign className="h-4 w-4 text-blue-500" />
-    </div>
-  ), url: "https://fechamentodecaixa.netlify.app/" },
+  { id: "fechamento-caixa", name: "Fechamento Caixa Geral", icon: () => {
+    console.log("Renderizando ícone de Fechamento Caixa Geral");
+    return (
+      <div className="flex items-center opacity-100 !important">
+        <Calculator className="h-4 w-4 mr-1 text-blue-500" />
+        <DollarSign className="h-4 w-4 text-blue-500" />
+      </div>
+    );
+  }, url: "https://fechamentodecaixa.netlify.app/" },
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
-  { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
+  { id: "external-calculator", name: "Calc. Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
   { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-6 w-6 mr-2" style={{ backgroundColor: "#3b82f6", padding: "2px" }} />, component: TigerLinkGenerator },
 ];
 
@@ -43,7 +46,7 @@ const Apps = () => {
                   : ""
               }`}
             >
-              <app.icon />
+              <div className="flex-shrink-0">{app.icon()}</div> {/* Força renderização do ícone */}
               {app.name}
             </button>
           </a>
