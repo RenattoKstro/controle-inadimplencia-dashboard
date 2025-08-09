@@ -19,7 +19,7 @@ const apps = [
   ), url: "https://fechamentodecaixa.netlify.app/" },
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
   { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
-  { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-4 w-4 mr-2" />, component: TigerLinkGenerator },
+  { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-6 w-6 mr-2 text-blue-500" style={{ filter: "brightness(0) invert(1)" }} />, component: TigerLinkGenerator },
 ];
 
 const Apps = () => {
@@ -54,6 +54,10 @@ const Apps = () => {
                 className={`w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted outline-none focus:outline-none focus:ring-0 ${
                   app.id === "vendedor-90"
                     ? "bg-green-500 text-white hover:bg-green-600"
+                    : app.id === "calculadora"
+                    ? "bg-red-500 text-white hover:bg-red-600"
+                    : app.id === "tiger-2.0"
+                    ? "bg-blue-500 text-white hover:bg-blue-600"
                     : ""
                 }`}
                 onClick={() => console.log(`Abrindo ${app.name} dialog`)}
