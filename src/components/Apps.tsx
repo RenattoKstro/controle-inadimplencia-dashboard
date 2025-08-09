@@ -5,43 +5,18 @@ import {
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-// Importação dos componentes com tratamento de erro
-let CalculadoraRentabilidade;
-try {
-  CalculadoraRentabilidade = require("./dashboard/CalculadoraRentabilidade").default;
-  console.log("CalculadoraRentabilidade carregada com sucesso");
-} catch (error) {
-  console.error("Erro ao carregar CalculadoraRentabilidade:", error);
-}
-
-let CalculadoraVendedor90;
-try {
-  CalculadoraVendedor90 = require("./dashboard/CalculadoraVendedor90").default;
-  console.log("CalculadoraVendedor90 carregada com sucesso");
-} catch (error) {
-  console.error("Erro ao carregar CalculadoraVendedor90:", error);
-}
-
-let TigerLinkGenerator;
-try {
-  TigerLinkGenerator = require("./TigerLinkGenerator").default;
-  console.log("TigerLinkGenerator carregada com sucesso");
-} catch (error) {
-  console.error("Erro ao carregar TigerLinkGenerator:", error);
-}
+import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
+import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90"; // Certifique-se de que o caminho está correto
+import TigerLinkGenerator from "./TigerLinkGenerator"; // Importação do novo componente
 
 const apps = [
   { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
-  { id: "fechamento-caixa", name: "Fechamento Caixa Geral", icon: () => {
-    console.log("Renderizando ícone de Fechamento Caixa Geral");
-    return (
-      <div className="flex items-center opacity-100 !important min-h-4 min-w-4 debug-icon">
-        <Calculator className="h-4 w-4 mr-1 text-blue-500" />
-        <DollarSign className="h-4 w-4 text-blue-500" />
-      </div>
-    );
-  }, url: "https://fechamentodecaixa.netlify.app/" },
+  { id: "fechamento-caixa", name: "Fechamento Caixa Geral", icon: () => (
+    <div className="flex items-center opacity-100"> {/* Força visibilidade */}
+      <Calculator className="h-4 w-4 mr-1 text-blue-500" />
+      <DollarSign className="h-4 w-4 text-blue-500" />
+    </div>
+  ), url: "https://fechamentodecaixa.netlify.app/" },
   { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
   { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
   { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-6 w-6 mr-2" style={{ backgroundColor: "#3b82f6", padding: "2px" }} />, component: TigerLinkGenerator },
@@ -68,7 +43,7 @@ const Apps = () => {
                   : ""
               }`}
             >
-              <div className="flex-shrink-0 debug-icon-container">{app.icon()}</div>
+              <app.icon />
               {app.name}
             </button>
           </a>
@@ -92,11 +67,7 @@ const Apps = () => {
               </button>
             </DialogTrigger>
             <DialogContent className="max-w-md bg-card">
-              {app.component ? (
-                <app.component />
-              ) : (
-                <div className="text-red-500">Erro: Componente não carregado!</div>
-              )}
+              <app.component />
             </DialogContent>
           </Dialog>
         )
@@ -104,22 +75,5 @@ const Apps = () => {
     </div>
   );
 };
-
-// CSS inline para depuração
-const styles = `
-  .debug-icon {
-    display: flex !important;
-    visibility: visible !important;
-  }
-  .debug-icon-container {
-    display: flex !important;
-    flex-shrink: 0 !important;
-    min-height: 1rem !important;
-    min-width: 2rem !important;
-  }
-`;
-const styleSheet = document.createElement("style");
-styleSheet.textContent = styles;
-document.head.appendChild(styleSheet);
 
 export default Apps;
