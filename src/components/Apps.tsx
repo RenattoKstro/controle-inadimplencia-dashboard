@@ -12,7 +12,7 @@ import TigerLinkGenerator from "./TigerLinkGenerator"; // Importação do novo c
 const apps = [
   { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
   { id: "fechamento-caixa", name: "Fechamento Caixa Geral", icon: () => (
-    <div className="flex items-center">
+    <div className="flex items-center opacity-100"> {/* Força visibilidade */}
       <Calculator className="h-4 w-4 mr-1 text-blue-500" />
       <DollarSign className="h-4 w-4 text-blue-500" />
     </div>
