@@ -5,10 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import MetaFiado from "./dashboard/MetaFiado";
-import MetaDesafio from "./dashboard/MetaDesafio";
-import MetaPerdido from "./dashboard/MetaPerdido";
-import MetaAlimentacao from "./dashboard/MetaAlimentacao";
+import Metas from "./dashboard/Metas"; // Novo componente unificado
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
@@ -546,20 +543,12 @@ const DashboardLayout = () => {
               <span className="text-foreground">Ajustes de Metas</span>
             </TabsTrigger>
             <TabsTrigger 
-              value="meta-fiado" 
+              value="metas" 
               className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-              onClick={() => handleTabChange("meta-fiado")}
+              onClick={() => handleTabChange("metas")}
             >
               <Wallet className="h-4 w-4" />
-              <span className="text-foreground">Meta Fiado</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="meta-desafio" 
-              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-              onClick={() => handleTabChange("meta-desafio")}
-            >
-              <Trophy className="h-4 w-4" />
-              <span className="text-foreground">Meta Desafio</span>
+              <span className="text-foreground">Metas</span>
             </TabsTrigger>
             {bonusPerdidoAtivado && (
               <TabsTrigger 
@@ -571,14 +560,6 @@ const DashboardLayout = () => {
                 <span className="text-foreground">Meta Perdido</span>
               </TabsTrigger>
             )}
-            <TabsTrigger 
-              value="meta-alimentacao" 
-              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-              onClick={() => handleTabChange("meta-alimentacao")}
-            >
-              <Utensils className="h-4 w-4" />
-              <span className="text-foreground">Meta de Ticket</span>
-            </TabsTrigger>
             <TabsTrigger 
               value="meus-premios" 
               className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
@@ -609,8 +590,8 @@ const DashboardLayout = () => {
               setBonusPerdidoAtivado={setBonusPerdidoAtivado}
             />
           </TabsContent>
-          <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            <MetaFiado 
+          <TabsContent value="metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <Metas
               userData={userData}
               updateUserData={updateUserData}
               diasSemExpediente={diasSemExpediente}
@@ -621,40 +602,10 @@ const DashboardLayout = () => {
               setRecebidoHoje={setRecebidoHoje}
             />
           </TabsContent>
-          <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            <MetaDesafio 
-              userData={userData}
-              updateUserData={updateUserData}
-              diasSemExpediente={diasSemExpediente}
-              updateDiasSemExpediente={updateDiasSemExpediente}
-              diasRestantesCalculados={diasRestantesCalculados}
-              isLoading={isLoading}
-              bonusPerdidoAtivado={bonusPerdidoAtivado}
-            />
-          </TabsContent>
           <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
             {bonusPerdidoAtivado && (
-              <MetaPerdido 
-                userData={userData}
-                updateUserData={updateUserData}
-                diasSemExpediente={diasSemExpediente}
-                updateDiasSemExpediente={updateDiasSemExpediente}
-                diasRestantesCalculados={diasRestantesCalculados}
-                isLoading={isLoading}
-                bonusPerdidoAtivado={bonusPerdidoAtivado}
-              />
+              <div className="text-foreground">Meta Perdido (temporariamente desativada)</div>
             )}
-          </TabsContent>
-          <TabsContent value="meta-alimentacao" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            <MetaAlimentacao 
-              userData={userData}
-              updateUserData={updateUserData}
-              diasSemExpediente={diasSemExpediente}
-              updateDiasSemExpediente={updateDiasSemExpediente}
-              diasRestantesCalculados={diasRestantesCalculados}
-              isLoading={isLoading}
-              bonusPerdidoAtivado={bonusPerdidoAtivado}
-            />
           </TabsContent>
           <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
             {userData ? (
