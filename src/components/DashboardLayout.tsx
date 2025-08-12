@@ -40,10 +40,11 @@ export interface DashboardProps {
   setBonusPerdidoAtivado: (value: boolean) => void;
   setTotalGanhos: (value: number) => void;
   totalGanhos: number;
+  setRecebidoHoje?: (value: number) => void; // Adicionado como opcional
 }
 
 const DashboardLayout = () => {
-  const [activeTab, setActiveTab] = useState("meta-fiado");
+  const [activeTab, setActiveTab] = useState("metas"); // Alterado para "metas"
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -108,7 +109,7 @@ const DashboardLayout = () => {
         const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
         setRecebidoHoje(dailyAverage);
       } else {
-        console.log("[DashboardLayout] userData ou valores ausentes, usando recebidoHoje = 0");
+        console.log("[DashboardLayout] userData ou valores ausentes:", userData, "usando recebidoHoje = 0");
         setRecebidoHoje(0);
       }
     };
@@ -135,7 +136,8 @@ const DashboardLayout = () => {
     }
 
     document.body.classList.toggle("dark", isDarkMode);
-  }, [navigate, toast, userData, isDarkMode]);
+    console.log("[DashboardLayout] Dados carregados:", { userData, isLoading, diasRestantesCalculados });
+  }, [navigate, toast, userData, isLoading, isDarkMode]);
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => {
@@ -527,12 +529,7 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <Tabs 
-          defaultValue="meta-fiado" 
-          value={activeTab} 
-          onValueChange={handleTabChange}
-          className="space-y-6"
-        >
+        <Tabs defaultValue="metas" value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl">
             <TabsTrigger 
               value="ajustes-metas" 
@@ -591,16 +588,22 @@ const DashboardLayout = () => {
             />
           </TabsContent>
           <TabsContent value="metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            <Metas
-              userData={userData}
-              updateUserData={updateUserData}
-              diasSemExpediente={diasSemExpediente}
-              updateDiasSemExpediente={updateDiasSemExpediente}
-              diasRestantesCalculados={diasRestantesCalculados}
-              isLoading={isLoading}
-              bonusPerdidoAtivado={bonusPerdidoAtivado}
-              setRecebidoHoje={setRecebidoHoje}
-            />
+            {isLoading ? (
+              <div className="text-foreground">Carregando...</div>
+            ) : !userData ? (
+              <div className="text-foreground">Erro: Dados do usuário não disponíveis.</div>
+            ) : (
+              <Metas
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+                setRecebidoHoje={setRecebidoHoje}
+              />
+            )}
           </TabsContent>
           <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
             {bonusPerdidoAtivado && (
