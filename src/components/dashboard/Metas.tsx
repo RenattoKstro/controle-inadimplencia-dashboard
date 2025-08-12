@@ -157,17 +157,17 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
   const isMobile = useIsMobile();
 
   let percentageComplete = 0;
-  if (userData.vencido_atual > 0) {
+  if (userData?.vencido_atual > 0 && userData?.meta_mes > 0) {
     percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
   } else {
-    console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
+    console.log(`[MetaFiado] Meta Fiado - Vencido Atual (${userData?.vencido_atual}) ou Meta Mensal (${userData?.meta_mes}) inválido`);
   }
-  percentageComplete = Math.max(0, percentageComplete);
+  percentageComplete = Math.max(0, Math.min(percentageComplete, 105)); // Limite a 105% para evitar overflow
 
   const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
-    const vencidoNecessario = userData.meta_mes / (percentual / 100);
-    let diferenca = userData.vencido_atual - vencidoNecessario;
+    const vencidoNecessario = userData?.meta_mes / (percentual / 100) || 0;
+    let diferenca = (userData?.vencido_atual || 0) - vencidoNecessario;
     const atingido = percentageComplete >= percentual;
     diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
     return { percentual, diferenca, atingido };
@@ -257,8 +257,10 @@ const Metas = ({
   const [diasRestantes, setDiasRestantes] = useState(userData?.dias_restantes || diasRestantesCalculados || 1);
 
   useEffect(() => {
-    const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
-    setDiasUteisAte15(dias);
+    if (diasRestantesCalculados !== undefined) {
+      const dias = calcularDiasUteisAte15(diasRestantesCalculados);
+      setDiasUteisAte15(dias);
+    }
   }, [diasRestantesCalculados]);
 
   useEffect(() => {
@@ -271,9 +273,14 @@ const Metas = ({
   const todayDate = new Date();
   const mesAtual = todayDate.getMonth();
 
-  const aReceber = userData?.abertura_vencido_mes - userData?.meta_mes || 0;
-  const recebidoMes = userData?.abertura_vencido_mes - userData?.vencido_atual || 0;
-  const metaTicket = aReceber * 0.8;
+  // Verificações para evitar erros com dados ausentes
+  const aReceber = userData?.abertura_vencido_mes && userData?.meta_mes
+    ? userData.abertura_vencido_mes - userData.meta_mes
+    : 0;
+  const recebidoMes = userData?.abertura_vencido_mes && userData?.vencido_atual
+    ? userData.abertura_vencido_mes - userData.vencido_atual
+    : 0;
+  const metaTicket = aReceber > 0 ? aReceber * 0.8 : 0;
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
 
   useEffect(() => {
@@ -281,12 +288,12 @@ const Metas = ({
       setProgressoCongelado(null);
       setMesCongelado(null);
     }
-    if (passouDia15 && progressoCongelado === null) {
+    if (passouDia15 && progressoCongelado === null && metaTicket > 0) {
       const progressoNoDia15 = Math.min(100, progressoTicketAtual);
       setProgressoCongelado(progressoNoDia15);
       setMesCongelado(mesAtual);
     }
-  }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado]);
+  }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado, metaTicket]);
 
   const progressoExibido = progressoCongelado !== null ? progressoCongelado : Math.min(100, progressoTicketAtual);
   const metaTicketBatida = recebidoMes >= metaTicket;
@@ -321,7 +328,9 @@ const Metas = ({
   });
 
   const handleSaveDesafio = () => {
-    updateUserData({ ...userData, meta_desafio: metaDesafio });
+    if (userData) {
+      updateUserData({ ...userData, meta_desafio: metaDesafio });
+    }
     setIsEditingDesafio(false);
   };
 
@@ -330,11 +339,11 @@ const Metas = ({
     setIsEditingDesafio(false);
   };
 
-  const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
-  const recebidosMesFiado = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
-  const recebidoHojeFiado = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
-  const totalWorkDaysInMonth = calculateTotalWorkDays(diasSemExpediente);
-  const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(diasSemExpediente);
+  const faltaReceberMes = Math.max(0, (userData?.vencido_atual || 0) - (userData?.meta_mes || 0));
+  const recebidosMesFiado = (userData?.abertura_vencido_mes || 0) - (userData?.vencido_atual || 0);
+  const recebidoHojeFiado = Math.max(0, Number(((userData?.abertura_dia || 0) - (userData?.vencido_atual || 0)).toFixed(2)));
+  const totalWorkDaysInMonth = calculateTotalWorkDays(diasSemExpediente || []);
+  const diasUteisTrabalhados = userData?.dias_trabalhados || calculateWorkedDays(diasSemExpediente || []);
   const valorPorDiaFiado = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaFiado * diasUteisTrabalhados : 0;
   const gap = recebidosMesFiado - valorEsperadoAcumulado;
@@ -349,11 +358,13 @@ const Metas = ({
   }, [recebidoHojeFiado, setRecebidoHoje]);
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
-    setMetaTicketConfirmada(confirmed);
-    updateUserData({ ...userData, metaTicketConfirmada: confirmed });
+    if (userData) {
+      setMetaTicketConfirmada(confirmed);
+      updateUserData({ ...userData, metaTicketConfirmada: confirmed });
+    }
   };
 
-  if (isLoading) {
+  if (isLoading || !userData) {
     return (
       <div className="space-y-4 md:space-y-6">
         <Skeleton className="h-8 w-1/4" />
@@ -478,52 +489,54 @@ const Metas = ({
       </div>
 
       {/* Meta Perdido */}
-      <div className="space-y-4">
-        <h2 className="text-xl md:text-2xl font-bold text-red-500 flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-red-500" />
-          Meta Perdido
-        </h2>
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold flex items-center gap-2">
-              <AlertTriangle className="text-red-500" />
-              Meta Perdido
-            </CardTitle>
-            <CardDescription className="text-foreground">
-              Acompanha os valores perdidos
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 md:space-y-6">
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-foreground">Valor Perdido</div>
-              <div className="text-xl md:text-2xl font-bold text-foreground">
-                {formatCurrency(userData?.bonus_perdido || 0)}
+      {userData?.bonus_perdido !== undefined && (
+        <div className="space-y-4">
+          <h2 className="text-xl md:text-2xl font-bold text-red-500 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            Meta Perdido
+          </h2>
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <AlertTriangle className="text-red-500" />
+                Meta Perdido
+              </CardTitle>
+              <CardDescription className="text-foreground">
+                Acompanha os valores perdidos
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 md:space-y-6">
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-foreground">Valor Perdido</div>
+                <div className="text-xl md:text-2xl font-bold text-foreground">
+                  {formatCurrency(userData?.bonus_perdido || 0)}
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-foreground">Progresso</span>
-                <span className="text-sm font-medium text-foreground">
-                  {formatPercentage((userData?.bonus_perdido || 0) / (userData?.meta_mes || 1) * 100)}
-                </span>
-              </div>
-              <div
-                className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
-                style={{ backgroundColor: "#ffffff", boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)" }}
-              >
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-foreground">Progresso</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {formatPercentage((userData?.bonus_perdido || 0) / (userData?.meta_mes || 1) * 100)}
+                  </span>
+                </div>
                 <div
-                  className="h-full rounded-full transition-all duration-500 ease-in-out"
-                  style={{
-                    width: `${Math.min(100, ((userData?.bonus_perdido || 0) / (userData?.meta_mes || 1)) * 100)}%`,
-                    background: "linear-gradient(to right, #ff4d4d, #ff6666)",
-                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                  }}
-                />
+                  className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
+                  style={{ backgroundColor: "#ffffff", boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)" }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-500 ease-in-out"
+                    style={{
+                      width: `${Math.min(100, ((userData?.bonus_perdido || 0) / (userData?.meta_mes || 1)) * 100)}%`,
+                      background: "linear-gradient(to right, #ff4d4d, #ff6666)",
+                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Meta Alimentação */}
       <div className="space-y-4 md:space-y-6">
