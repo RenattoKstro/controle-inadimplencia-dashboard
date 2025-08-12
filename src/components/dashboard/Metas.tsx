@@ -10,7 +10,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import {
-  Utensils,
+  Wallet,
   Check,
   AlertTriangle,
   Calendar,
@@ -19,7 +19,6 @@ import {
   Calculator,
   Building,
   ArrowDown,
-  Wallet,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -395,7 +394,138 @@ const Metas = ({
 
   return (
     <div className="space-y-6 p-4">
-      {/* Meta de Ticket */}
+      {/* Meta Fiado */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground">Meta Fiado</h2>
+        </div>
+        <div
+          className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
+        >
+          <ProgressCard
+            title="Progresso da Meta Mensal"
+            current={userData.vencido_atual || 0}
+            target={userData.meta_mes || 0}
+            icon={<Target className="h-5 w-5 text-blue-500" />}
+            userData={userData}
+          />
+          <CardItem
+            title="A Receber"
+            value={aReceber}
+            icon={<ArrowDown size={16} />}
+            color="bg-cyan-500"
+          />
+          <CardItem
+            title="Falta Receber/Mês"
+            value={faltaReceberMes}
+            icon={<ArrowDown size={16} />}
+            color="bg-red-500"
+          />
+          <CardItem
+            title="Recebido Mês"
+            value={recebidosMesFiado}
+            icon={<Check size={16} />}
+            color="bg-green-500"
+          />
+          <CardItem
+            title="Recebido Hoje"
+            value={recebidoHojeFiado}
+            icon={<Building size={16} />}
+            color="bg-green-500"
+            showProgress={true}
+            progressValue={progressoDiarioFiado}
+          />
+          <CardItem
+            title="Receber por Dia"
+            value={receberPorDiaFiado}
+            icon={<Calculator size={16} />}
+            color="bg-orange-500"
+          />
+          <CardItem
+            title="Falta para Meta Diária"
+            value={faltaParaMetaDiariaFiado}
+            icon={<Target size={16} />}
+            color="bg-yellow-500"
+          />
+          <Card
+            className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
+          >
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
+                <span
+                  className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
+                >
+                  <Wallet size={16} />
+                </span>
+              </div>
+              <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(gap)}</div>
+              <div className="mt-2 text-sm text-foreground">
+                {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
+              </div>
+              <div className="mt-1 text-xs text-foreground">
+                Dias úteis trabalhados: {diasUteisTrabalhados}
+              </div>
+              <div className="mt-1 text-xs text-foreground">
+                Dias úteis restantes: {diasRestantesCalculados}
+              </div>
+              <div className="mt-1 text-xs text-foreground">
+                Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Meta Perdido */}
+      <div className="space-y-4">
+        <h2 className="text-xl md:text-2xl font-bold text-red-500 flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-red-500" />
+          Meta Perdido
+        </h2>
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <AlertTriangle className="text-red-500" />
+              Meta Perdido
+            </CardTitle>
+            <CardDescription className="text-foreground">
+              Acompanha os valores perdidos
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 md:space-y-6">
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-foreground">Valor Perdido</div>
+              <div className="text-xl md:text-2xl font-bold text-foreground">
+                {formatCurrency(userData?.bonus_perdido || 0)}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium text-foreground">Progresso</span>
+                <span className="text-sm font-medium text-foreground">
+                  {formatPercentage((userData?.bonus_perdido || 0) / (userData?.meta_mes || 1) * 100)}
+                </span>
+              </div>
+              <div
+                className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
+                style={{ backgroundColor: "#ffffff", boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-500 ease-in-out"
+                  style={{
+                    width: `${Math.min(100, ((userData?.bonus_perdido || 0) / (userData?.meta_mes || 1)) * 100)}%`,
+                    background: "linear-gradient(to right, #ff4d4d, #ff6666)",
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                  }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Meta Alimentação */}
       <div className="space-y-4 md:space-y-6">
         <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-2">
           <Utensils className="h-5 w-5 text-green-500" />
@@ -573,246 +703,6 @@ const Metas = ({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Meta Desafio */}
-      <div className="space-y-4">
-        <h2 className="text-xl md:text-2xl font-bold text-yellow-500 flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-500" />
-          Meta Desafio
-        </h2>
-        <Card className="shadow-md">
-          <CardHeader>
-            <div className="flex flex-wrap justify-between items-center gap-2">
-              <div>
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <Trophy className="text-yellow-500" />
-                  Meta Desafio
-                </CardTitle>
-                <CardDescription className="text-foreground">
-                  Acompanha seu progresso
-                </CardDescription>
-              </div>
-              {isEditingDesafio ? (
-                <div className="flex gap-2">
-                  <Button
-                    variant="default"
-                    size={isMobile ? "sm" : "default"}
-                    onClick={handleSaveDesafio}
-                  >
-                    Salvar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size={isMobile ? "sm" : "default"}
-                    onClick={handleCancelDesafio}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size={isMobile ? "sm" : "default"}
-                  onClick={() => setIsEditingDesafio(true)}
-                >
-                  Editar Meta
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4 md:space-y-6">
-            <div className="space-y-2">
-              <div className="text-sm font-medium text-foreground">Meta Desafio</div>
-              {isEditingDesafio ? (
-                <Input
-                  value={metaDesafio}
-                  onChange={(e) => setMetaDesafio(parseFloat(e.target.value) || 0)}
-                  className="font-bold text-lg"
-                />
-              ) : (
-                <div className="text-xl md:text-2xl font-bold text-foreground">
-                  {formatCurrency(metaDesafio)}
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-foreground">Progresso</span>
-                <span className="text-sm font-medium text-foreground">
-                  {formatPercentage(progressoDesafio)}
-                </span>
-              </div>
-              <div
-                className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
-                style={{
-                  backgroundColor: "#ffffff",
-                  boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
-                }}
-              >
-                <div
-                  className="h-full rounded-full transition-all duration-500 ease-in-out"
-                  style={{
-                    width: `${progressoDesafioPercentual}%`,
-                    background:
-                      "linear-gradient(to right, #ff4d4d 0%, #ff6666 25%, #ffeb3b 50%, #ffcc00 75%, #4caf50 100%)",
-                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                  }}
-                />
-              </div>
-              <div className="flex flex-wrap gap-4 mt-2 justify-center">
-                {valoresRestantesDesafio.map(({ percentual, diferenca, atingido }, index) => (
-                  <div
-                    key={percentual}
-                    className="flex items-center gap-2"
-                  >
-                    <div
-                      className={cn(
-                        "text-sm md:text-base font-medium",
-                        atingido ? "text-green-600" : "text-red-600"
-                      )}
-                    >
-                      {percentual}%: {formatCurrency(diferenca)}
-                    </div>
-                    {index < valoresRestantesDesafio.length - 1 && (
-                      <span className="text-gray-400">|</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div
-              className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-3 gap-4"}`}
-            >
-              <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-purple-500 bg-opacity-50">
-                <CardContent className="p-3 md:p-4">
-                  <div className="flex items-center justify-between mb-2 md:mb-3">
-                    <h3 className="text-sm font-medium text-foreground">
-                      Valor Restante
-                    </h3>
-                    <span className="p-1.5 md:p-2 rounded-full bg-purple-500 text-white">
-                      <Target size={isMobile ? 14 : 16} />
-                    </span>
-                  </div>
-                  <div className="text-lg md:text-xl font-bold text-foreground">
-                    {formatCurrency(valorRestanteDesafio)}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-orange-500 bg-opacity-50">
-                <CardContent className="p-3 md:p-4">
-                  <div className="flex items-center justify-between mb-2 md:mb-3">
-                    <h3 className="text-sm font-medium text-foreground">
-                      Receber por Dia
-                    </h3>
-                    <span className="p-1.5 md:p-2 rounded-full bg-orange-500 text-white">
-                      <Calculator size={isMobile ? 14 : 16} />
-                    </span>
-                  </div>
-                  <div className="text-lg md:text-xl font-bold text-foreground">
-                    {formatCurrency(valorPorDiaDesafio)}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-gray-500 bg-opacity-50">
-                <CardContent className="p-3 md:p-4">
-                  <div className="flex items-center justify-between mb-2 md:mb-3">
-                    <h3 className="text-sm font-medium text-foreground">
-                      Dias Restantes
-                    </h3>
-                    <span className="p-1.5 md:p-2 rounded-full bg-gray-500 text-white">
-                      <Target size={isMobile ? 14 : 16} />
-                    </span>
-                  </div>
-                  <div className="text-lg md:text-xl font-bold text-foreground">{diasRestantes}</div>
-                </CardContent>
-              </Card>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Meta Fiado */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl md:text-2xl font-bold text-foreground">Meta Fiado</h2>
-        </div>
-        <div
-          className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
-        >
-          <ProgressCard
-            title="Progresso da Meta Mensal"
-            current={userData.vencido_atual || 0}
-            target={userData.meta_mes || 0}
-            icon={<Target className="h-5 w-5 text-blue-500" />}
-            userData={userData}
-          />
-          <CardItem
-            title="A Receber"
-            value={aReceber}
-            icon={<ArrowDown size={16} />}
-            color="bg-cyan-500"
-          />
-          <CardItem
-            title="Falta Receber/Mês"
-            value={faltaReceberMes}
-            icon={<ArrowDown size={16} />}
-            color="bg-red-500"
-          />
-          <CardItem
-            title="Recebido Mês"
-            value={recebidosMesFiado}
-            icon={<Check size={16} />}
-            color="bg-green-500"
-          />
-          <CardItem
-            title="Recebido Hoje"
-            value={recebidoHojeFiado}
-            icon={<Building size={16} />}
-            color="bg-green-500"
-            showProgress={true}
-            progressValue={progressoDiarioFiado}
-          />
-          <CardItem
-            title="Receber por Dia"
-            value={receberPorDiaFiado}
-            icon={<Calculator size={16} />}
-            color="bg-orange-500"
-          />
-          <CardItem
-            title="Falta para Meta Diária"
-            value={faltaParaMetaDiariaFiado}
-            icon={<Target size={16} />}
-            color="bg-yellow-500"
-          />
-          <Card
-            className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
-          >
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
-                <span
-                  className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
-                >
-                  <Wallet size={16} />
-                </span>
-              </div>
-              <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(gap)}</div>
-              <div className="mt-2 text-sm text-foreground">
-                {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
-              </div>
-              <div className="mt-1 text-xs text-foreground">
-                Dias úteis trabalhados: {diasUteisTrabalhados}
-              </div>
-              <div className="mt-1 text-xs text-foreground">
-                Dias úteis restantes: {diasRestantesCalculados}
-              </div>
-              <div className="mt-1 text-xs text-foreground">
-                Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );
