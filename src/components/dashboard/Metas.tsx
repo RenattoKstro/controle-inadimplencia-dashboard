@@ -304,7 +304,7 @@ const Metas = ({
   const metaDesafioValor = Number(metaDesafio) || 0;
   let progressoDesafio = 0;
   if (metaDesafioValor > 0 && vencidoAtual > 0) {
-    progressoDesafio = (metaDesafioValor / vencidoAtual) * 100;
+    progressoDesafio = (metaDesafioValor / vencido_atual) * 100;
   }
   progressoDesafio = Number(progressoDesafio.toFixed(2));
   const progressoDesafioPercentual = Math.max(0, Math.min(100, progressoDesafio));
@@ -336,10 +336,11 @@ const Metas = ({
   const recebidoHojeFiado = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
   const totalWorkDaysInMonth = calculateTotalWorkDays(diasSemExpediente);
   const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(diasSemExpediente);
+  const diasUteisRestantes = Math.max(0, totalWorkDaysInMonth - diasUteisTrabalhados);
   const valorPorDiaFiado = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaFiado * diasUteisTrabalhados : 0;
   const gap = recebidosMesFiado - valorEsperadoAcumulado;
-  const receberPorDiaFiado = faltaReceberMes > 0 && (diasRestantesCalculados || diasRestantes) > 0 ? faltaReceberMes / (diasRestantesCalculados || diasRestantes) : 0;
+  const receberPorDiaFiado = faltaReceberMes > 0 && (diasUteisRestantes || diasRestantes) > 0 ? faltaReceberMes / (diasUteisRestantes || diasRestantes) : 0;
   const progressoDiarioFiado = receberPorDiaFiado > 0 ? (recebidoHojeFiado / receberPorDiaFiado) * 100 : 0;
   const faltaParaMetaDiariaFiado = Math.max(0, receberPorDiaFiado - recebidoHojeFiado);
 
@@ -347,8 +348,8 @@ const Metas = ({
     if (setRecebidoHoje) {
       setRecebidoHoje(recebidoHojeFiado);
     }
-    console.log("[Metas] Debug - Receber por dia:", { faltaReceberMes, diasRestantesCalculados, diasRestantes, receberPorDiaFiado });
-  }, [recebidoHojeFiado, setRecebidoHoje, faltaReceberMes, diasRestantesCalculados, diasRestantes]);
+    console.log("[Metas] Debug - GAP:", { totalWorkDaysInMonth, diasUteisTrabalhados, diasUteisRestantes, diasRestantesCalculados, diasRestantes });
+  }, [recebidoHojeFiado, setRecebidoHoje, totalWorkDaysInMonth, diasUteisTrabalhados, diasUteisRestantes, diasRestantesCalculados, diasRestantes]);
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
     setMetaTicketConfirmada(confirmed);
@@ -469,7 +470,7 @@ const Metas = ({
                 Dias úteis trabalhados: {diasUteisTrabalhados}
               </div>
               <div className="mt-1 text-xs text-foreground">
-                Dias úteis restantes: {diasRestantesCalculados}
+                Dias úteis restantes: {diasUteisRestantes}
               </div>
               <div className="mt-1 text-xs text-foreground">
                 Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
