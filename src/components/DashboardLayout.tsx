@@ -24,7 +24,6 @@ import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
-import ErrorBoundary from "./ErrorBoundary"; // Adicione esta importação
 
 export interface DashboardProps {
   userData: any;
@@ -255,71 +254,177 @@ const DashboardLayout = () => {
   }
 
   return (
-    <ErrorBoundary>
-      <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
-        <header className="bg-card shadow-md">
-          <div className="max-w-7xl mx-auto px-2 py-4 flex items-center justify-between">
-            {isMobile ? (
-              <>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
-                  Controle de Inadimplência
-                  {percentualVencido !== null && (
-                    <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text ml-2">
-                      {percentualVencido}%
-                    </span>
-                  )}
-                </h1>
-                <div className="flex items-center gap-2">
-                  <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                    <SheetTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-9 w-9">
-                        <Menu size={18} />
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-card">
-                      <div className="flex flex-col h-full">
-                        <div className="py-6 border-b border-border">
-                          <h2 className="text-lg font-semibold text-foreground">Apps</h2>
-                        </div>
-                        <Apps />
-                        <div className="py-4 border-t border-border">
-                          <Button 
-                            variant="destructive" 
-                            className="w-full"
-                            onClick={handleLogout}
-                          >
-                            <LogOut size={16} className="mr-2" />
-                            Sair
-                          </Button>
-                        </div>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
+      <header className="bg-card shadow-md">
+        <div className="max-w-7xl mx-auto px-2 py-4 flex items-center justify-between">
+          {isMobile ? (
+            <>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
+                Controle de Inadimplência
+                {percentualVencido !== null && (
+                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text ml-2">
+                    {percentualVencido}%
+                  </span>
+                )}
+              </h1>
+              <div className="flex items-center gap-2">
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9">
+                      <Menu size={18} />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-card">
+                    <div className="flex flex-col h-full">
+                      <div className="py-6 border-b border-border">
+                        <h2 className="text-lg font-semibold text-foreground">Apps</h2>
                       </div>
-                    </SheetContent>
-                  </Sheet>
+                      <Apps />
+                      <div className="py-4 border-t border-border">
+                        <Button 
+                          variant="destructive" 
+                          className="w-full"
+                          onClick={handleLogout}
+                        >
+                          <LogOut size={16} className="mr-2" />
+                          Sair
+                        </Button>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={toggleDarkMode}
+                >
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </Button>
+                <VersaoLog />
+                <div className="relative">
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
-                    onClick={toggleDarkMode}
+                    size="sm"
+                    className="h-9 flex items-center gap-2 text-foreground hover:text-primary"
+                    onClick={() => setShowCalendar(!showCalendar)}
                   >
-                    {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                    <Calendar className="h-5 w-5" />
+                    <span className="text-sm">
+                      {today.toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })}
+                    </span>
                   </Button>
-                  <VersaoLog />
-                  <div className="relative">
+                  {showCalendar && (
+                    <div className="absolute right-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-3 z-50 w-72">
+                      <div className="flex justify-between items-center mb-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-lg font-bold text-foreground"
+                          onClick={() => handleMonthNavigation("prev")}
+                        >
+                          {"<"}
+                        </Button>
+                        <span className="text-base font-semibold text-foreground">
+                          {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-lg font-bold text-foreground"
+                          onClick={() => handleMonthNavigation("next")}
+                        >
+                          {">"}
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-7 gap-2 text-center">
+                        {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
+                          <div key={day} className="text-sm font-medium text-muted-foreground">
+                            {day}
+                          </div>
+                        ))}
+                        {getCalendarDays(calendarMonth).map((day, index) => (
+                          <div
+                            key={index}
+                            className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
+                          >
+                            {day ? day.getDate() : ""}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex-shrink-0">
+                <span>Controle de Inadimplência</span>
+                {percentualVencido !== null && (
+                  <span className="ml-2 text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                    {percentualVencido}%
+                  </span>
+                )}
+              </h1>
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={handlePrintScreen}
+                  className="px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
+                >
+                  <RiScreenshot2Fill className="h-4 w-4" />
+                  Print
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
                     <Button
                       variant="outline"
-                      size="sm"
-                      className="h-9 flex items-center gap-2 text-foreground hover:text-primary"
-                      onClick={() => setShowCalendar(!showCalendar)}
+                      className="flex items-center gap-2 text-foreground hover:text-primary"
                     >
-                      <Calendar className="h-5 w-5" />
-                      <span className="text-sm">
-                        {today.toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </span>
+                      <File className="h-4 w-4" />
+                      Anexos
                     </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md bg-card">
+                    <Anexos />
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={isScriptsOpen} onOpenChange={setIsScriptsOpen}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-foreground hover:text-primary"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Scripts
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl bg-card custom-dialog-no-close">
+                    <Scripts onClose={() => setIsScriptsOpen(false)} />
+                  </DialogContent>
+                </Dialog>
+                <div className="relative">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2 text-foreground hover:text-primary"
+                        onClick={() => setShowCalendar(!showCalendar)}
+                      >
+                        <Calendar className="h-5 w-5" />
+                        <span className="text-sm">
+                          {today.toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </Button>
+                    </DialogTrigger>
                     {showCalendar && (
                       <div className="absolute right-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-3 z-50 w-72">
                         <div className="flex justify-between items-center mb-3">
@@ -360,222 +465,151 @@ const DashboardLayout = () => {
                         </div>
                       </div>
                     )}
-                  </div>
+                  </Dialog>
                 </div>
-              </>
-            ) : (
-              <>
-                <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex-shrink-0">
-                  <span>Controle de Inadimplência</span>
-                  {percentualVencido !== null && (
-                    <span className="ml-2 text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                      {percentualVencido}%
-                    </span>
-                  )}
-                </h1>
-                <div className="flex items-center gap-4">
-                  <Button
-                    onClick={handlePrintScreen}
-                    className="px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
-                  >
-                    <RiScreenshot2Fill className="h-4 w-4" />
-                    Print
-                  </Button>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2 text-foreground hover:text-primary"
-                      >
-                        <File className="h-4 w-4" />
-                        Anexos
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-md bg-card">
-                      <Anexos />
-                    </DialogContent>
-                  </Dialog>
-                  <Dialog open={isScriptsOpen} onOpenChange={setIsScriptsOpen}>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2 text-foreground hover:text-primary"
-                      >
-                        <FileText className="h-4 w-4" />
-                        Scripts
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl bg-card custom-dialog-no-close">
-                      <Scripts onClose={() => setIsScriptsOpen(false)} />
-                    </DialogContent>
-                  </Dialog>
-                  <div className="relative">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="flex items-center gap-2 text-foreground hover:text-primary"
-                          onClick={() => setShowCalendar(!showCalendar)}
-                        >
-                          <Calendar className="h-5 w-5" />
-                          <span className="text-sm">
-                            {today.toLocaleDateString("pt-BR", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </Button>
-                      </DialogTrigger>
-                      {showCalendar && (
-                        <div className="absolute right-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-3 z-50 w-72">
-                          <div className="flex justify-between items-center mb-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-lg font-bold text-foreground"
-                              onClick={() => handleMonthNavigation("prev")}
-                            >
-                              {"<"}
-                            </Button>
-                            <span className="text-base font-semibold text-foreground">
-                              {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-lg font-bold text-foreground"
-                              onClick={() => handleMonthNavigation("next")}
-                            >
-                              {">"}
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-7 gap-2 text-center">
-                            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                              <div key={day} className="text-sm font-medium text-muted-foreground">
-                                {day}
-                              </div>
-                            ))}
-                            {getCalendarDays(calendarMonth).map((day, index) => (
-                              <div
-                                key={index}
-                                className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
-                              >
-                                {day ? day.getDate() : ""}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </Dialog>
-                  </div>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2 text-foreground hover:text-primary"
-                      >
-                        <BiSolidReport className="h-4 w-4" />
-                        Relatórios Sabium
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl bg-card">
-                      <RelatoriosSabium />
-                    </DialogContent>
-                  </Dialog>
-                  <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                    <SheetTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="text-foreground hover:text-primary"
-                      >
-                        <Menu className="h-5 w-5" />
-                      </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-card">
-                      <div className="flex flex-col h-full">
-                        <div className="py-6 border-b border-border">
-                          <h2 className="text-lg font-semibold text-foreground">Apps</h2>
-                        </div>
-                        <Apps />
-                        <div className="py-4 border-t border-border">
-                          <Button 
-                            variant="destructive" 
-                            className="w-full"
-                            onClick={handleLogout}
-                          >
-                            <LogOut size={16} className="mr-2" />
-                            Sair
-                          </Button>
-                        </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-foreground hover:text-primary"
+                    >
+                      <BiSolidReport className="h-4 w-4" />
+                      Relatórios Sabium
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl bg-card">
+                    <RelatoriosSabium />
+                  </DialogContent>
+                </Dialog>
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-foreground hover:text-primary"
+                    >
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-card">
+                    <div className="flex flex-col h-full">
+                      <div className="py-6 border-b border-border">
+                        <h2 className="text-lg font-semibold text-foreground">Apps</h2>
                       </div>
-                    </SheetContent>
-                  </Sheet>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
-                    onClick={toggleDarkMode}
-                  >
-                    {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-                  </Button>
-                  <VersaoLog />
-                </div>
-              </>
-            )}
-          </div>
-        </header>
-
-        <main className="max-w-7xl mx-auto px-4 py-6">
-          <Tabs defaultValue="metas" value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-            <TabsList className="grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl">
-              <TabsTrigger 
-                value="ajustes-metas" 
-                className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                onClick={() => handleTabChange("ajustes-metas")}
-              >
-                <Sliders className="h-4 w-4" />
-                <span className="text-foreground">Ajustes de Metas</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="metas" 
-                className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                onClick={() => handleTabChange("metas")}
-              >
-                <Wallet className="h-4 w-4" />
-                <span className="text-foreground">Metas</span>
-              </TabsTrigger>
-              {bonusPerdidoAtivado && (
-                <TabsTrigger 
-                  value="meta-perdido" 
-                  className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                  onClick={() => handleTabChange("meta-perdido")}
+                      <Apps />
+                      <div className="py-4 border-t border-border">
+                        <Button 
+                          variant="destructive" 
+                          className="w-full"
+                          onClick={handleLogout}
+                        >
+                          <LogOut size={16} className="mr-2" />
+                          Sair
+                        </Button>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={toggleDarkMode}
                 >
-                  <AlertTriangle className="h-4 w-4" />
-                  <span className="text-foreground">Meta Perdido</span>
-                </TabsTrigger>
-              )}
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                </Button>
+                <VersaoLog />
+              </div>
+            </>
+          )}
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        <Tabs defaultValue="metas" value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+          <TabsList className="grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl">
+            <TabsTrigger 
+              value="ajustes-metas" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("ajustes-metas")}
+            >
+              <Sliders className="h-4 w-4" />
+              <span className="text-foreground">Ajustes de Metas</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="metas" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("metas")}
+            >
+              <Wallet className="h-4 w-4" />
+              <span className="text-foreground">Metas</span>
+            </TabsTrigger>
+            {bonusPerdidoAtivado && (
               <TabsTrigger 
-                value="meus-premios" 
+                value="meta-perdido" 
                 className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                onClick={() => handleTabChange("meus-premios")}
+                onClick={() => handleTabChange("meta-perdido")}
               >
-                <Gift className="h-4 w-4" />
-                <span className="text-foreground">Meus Prêmios</span>
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-foreground">Meta Perdido</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="historicos" 
-                className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                onClick={() => handleTabChange("historicos")}
-              >
-                <History className="h-4 w-4" />
-                <span className="text-foreground">Históricos</span>
-                {isNewHistorico && <span className="text-destructive font-bold">N</span>}
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="ajustes-metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              <AjustesMetas
+            )}
+            <TabsTrigger 
+              value="meus-premios" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("meus-premios")}
+            >
+              <Gift className="h-4 w-4" />
+              <span className="text-foreground">Meus Prêmios</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="historicos" 
+              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+              onClick={() => handleTabChange("historicos")}
+            >
+              <History className="h-4 w-4" />
+              <span className="text-foreground">Históricos</span>
+              {isNewHistorico && <span className="text-destructive font-bold">N</span>}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="ajustes-metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <AjustesMetas
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+            />
+          </TabsContent>
+          <TabsContent value="metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            {isLoading ? (
+              <div className="text-foreground">Carregando...</div>
+            ) : !userData ? (
+              <div className="text-foreground">Erro: Dados do usuário não disponíveis.</div>
+            ) : (
+              <Metas
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+                setRecebidoHoje={setRecebidoHoje}
+              />
+            )}
+          </TabsContent>
+          <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            {bonusPerdidoAtivado && (
+              <div className="text-foreground">Meta Perdido (temporariamente desativada)</div>
+            )}
+          </TabsContent>
+          <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            {userData ? (
+              <MeusPremios 
                 userData={userData}
                 updateUserData={updateUserData}
                 diasSemExpediente={diasSemExpediente}
@@ -584,109 +618,72 @@ const DashboardLayout = () => {
                 isLoading={isLoading}
                 bonusPerdidoAtivado={bonusPerdidoAtivado}
                 setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+                setTotalGanhos={setTotalGanhos}
               />
-            </TabsContent>
-            <TabsContent value="metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              {isLoading ? (
-                <div className="text-foreground">Carregando...</div>
-              ) : !userData ? (
-                <div className="text-foreground">Erro: Dados do usuário não disponíveis.</div>
-              ) : (
-                <Metas
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={setRecebidoHoje}
-                />
-              )}
-            </TabsContent>
-            <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              {bonusPerdidoAtivado && (
-                <div className="text-foreground">Meta Perdido (temporariamente desativada)</div>
-              )}
-            </TabsContent>
-            <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              {userData ? (
-                <MeusPremios 
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-                  setTotalGanhos={setTotalGanhos}
-                />
-              ) : (
-                <div className="text-foreground">Carregando dados...</div>
-              )}
-            </TabsContent>
-            <TabsContent value="historicos" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              <Historicos 
-                userData={userData}
-                updateUserData={updateUserData}
-                diasSemExpediente={diasSemExpediente}
-                updateDiasSemExpediente={updateDiasSemExpediente}
-                diasRestantesCalculados={diasRestantesCalculados}
-                isLoading={isLoading}
-                bonusPerdidoAtivado={bonusPerdidoAtivado}
-                recebido={recebidoHoje}
-                totalGanhos={totalGanhos}
-              />
-            </TabsContent>
-          </Tabs>
-        </main>
+            ) : (
+              <div className="text-foreground">Carregando dados...</div>
+            )}
+          </TabsContent>
+          <TabsContent value="historicos" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+            <Historicos 
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              recebido={recebidoHoje}
+              totalGanhos={totalGanhos}
+            />
+          </TabsContent>
+        </Tabs>
+      </main>
 
-        <footer className="bg-card shadow-md mt-6 p-4">
-          <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-3">
-            <div className="flex items-center gap-2 blink-slow" style={{ animation: "blink-slow 2s infinite" }}>
-              <FaWhatsapp className="h-5 w-5 text-success" />
-              <a
-                href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline text-xs"
-              >
-                Ajuda, Dicas e Sugestões entre no grupo e fique atualizado sobre novas funções!
-              </a>
-            </div>
-            <div className="flex items-center gap-2 relative">
-              <Instagram 
-                className="h-5 w-5 text-pink-600 cursor-pointer"
-                onClick={handleInstagramClick}
-              />
-              {showInstagramUsername && (
-                <span className="absolute right-0 top-full mt-1 text-pink-600 text-xs bg-card p-1 rounded shadow-md">
-                  @renato_alme1da
-                </span>
-              )}
-            </div>
+      <footer className="bg-card shadow-md mt-6 p-4">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-3">
+          <div className="flex items-center gap-2 blink-slow" style={{ animation: "blink-slow 2s infinite" }}>
+            <FaWhatsapp className="h-5 w-5 text-success" />
+            <a
+              href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline text-xs"
+            >
+              Ajuda, Dicas e Sugestões entre no grupo e fique atualizado sobre novas funções!
+            </a>
           </div>
-          <style>
-            {`
-              @keyframes blink-slow {
-                0% { opacity: 1; }
-                50% { opacity: 0.3; }
-                100% { opacity: 1; }
-              }
-            `}
-          </style>
-        </footer>
-
+          <div className="flex items-center gap-2 relative">
+            <Instagram 
+              className="h-5 w-5 text-pink-600 cursor-pointer"
+              onClick={handleInstagramClick}
+            />
+            {showInstagramUsername && (
+              <span className="absolute right-0 top-full mt-1 text-pink-600 text-xs bg-card p-1 rounded shadow-md">
+                @renato_alme1da
+              </span>
+            )}
+          </div>
+        </div>
         <style>
           {`
-            .custom-dialog-no-close .radix-dialog-close {
-              display: none;
+            @keyframes blink-slow {
+              0% { opacity: 1; }
+              50% { opacity: 0.3; }
+              100% { opacity: 1; }
             }
           `}
         </style>
-      </div>
-    </ErrorBoundary>
+      </footer>
+
+      <style>
+        {`
+          .custom-dialog-no-close .radix-dialog-close {
+            display: none;
+          }
+        `}
+      </style>
+    </div>
   );
 };
 
