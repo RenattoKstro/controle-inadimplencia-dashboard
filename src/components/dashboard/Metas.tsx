@@ -339,7 +339,7 @@ const Metas = ({
   const valorPorDiaFiado = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaFiado * diasUteisTrabalhados : 0;
   const gap = recebidosMesFiado - valorEsperadoAcumulado;
-  const receberPorDiaFiado = diasRestantesCalculados > 0 ? faltaReceberMes / diasRestantesCalculados : 0;
+  const receberPorDiaFiado = faltaReceberMes > 0 && (diasRestantesCalculados || diasRestantes) > 0 ? faltaReceberMes / (diasRestantesCalculados || diasRestantes) : 0;
   const progressoDiarioFiado = receberPorDiaFiado > 0 ? (recebidoHojeFiado / receberPorDiaFiado) * 100 : 0;
   const faltaParaMetaDiariaFiado = Math.max(0, receberPorDiaFiado - recebidoHojeFiado);
 
@@ -347,7 +347,8 @@ const Metas = ({
     if (setRecebidoHoje) {
       setRecebidoHoje(recebidoHojeFiado);
     }
-  }, [recebidoHojeFiado, setRecebidoHoje]);
+    console.log("[Metas] Debug - Receber por dia:", { faltaReceberMes, diasRestantesCalculados, diasRestantes, receberPorDiaFiado });
+  }, [recebidoHojeFiado, setRecebidoHoje, faltaReceberMes, diasRestantesCalculados, diasRestantes]);
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
     setMetaTicketConfirmada(confirmed);
