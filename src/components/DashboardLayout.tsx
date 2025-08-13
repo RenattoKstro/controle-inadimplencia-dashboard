@@ -5,14 +5,18 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import Metas from "./dashboard/Metas";
+import Metas from "./dashboard/Metas"; // Novo componente unificado
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
@@ -36,11 +40,10 @@ export interface DashboardProps {
   setBonusPerdidoAtivado: (value: boolean) => void;
   setTotalGanhos: (value: number) => void;
   totalGanhos: number;
-  setRecebidoHoje?: (value: number) => void;
 }
 
 const DashboardLayout = () => {
-  const [activeTab, setActiveTab] = useState("metas");
+  const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -65,36 +68,34 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const [isScriptsOpen, setIsScriptsOpen] = useState(false);
 
-  useEffect(() => {
-    console.log("[DashboardLayout] useUserData retornou:", { userData, isLoading, diasRestantesCalculados });
-  }, [userData, isLoading, diasRestantesCalculados]);
-
+  // Verificação de sessão aprimorada
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        console.log("[DashboardLayout] Sessão verificada:", { data, error });
-        if (!data.session || error) {
-          toast({
-            title: "Sessão expirada",
-            description: "Sua sessão expirou. Você será redirecionado para a autenticação.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          navigate("/auth");
-        } else {
-          const { user, session } = data;
-          if (user && session) {
-            updateUserData({ ...userData, session });
-          }
+      const { data, error } = await supabase.auth.getSession();
+      if (!data.session || error) {
+        toast({
+          title: "Sessão expirada",
+          description: "Sua sessão expirou. Você será redirecionado para a autenticação.",
+          variant: "destructive",
+        });
+        await supabase.auth.signOut(); // Limpa sessão local e servidor
+        navigate("/auth");
+      } else {
+        // Atualiza o estado da sessão localmente
+        const { user, session } = data;
+        if (user && session) {
+          updateUserData({ ...userData, session });
         }
-      } catch (err) {
-        console.error("[DashboardLayout] Erro na verificação de sessão:", err);
       }
     };
 
+    // Verifica imediatamente ao carregar
     checkSession();
-    const intervalId = setInterval(checkSession, 10 * 60 * 1000);
+
+    // Intervalo de verificação (ajustado para 10 minutos, pode mudar conforme necessário)
+    const intervalId = setInterval(checkSession, 10 * 60 * 1000); // 10 minutos
+
+    // Limpa o intervalo ao desmontar
     return () => clearInterval(intervalId);
   }, [navigate, toast, updateUserData, userData]);
 
@@ -107,7 +108,7 @@ const DashboardLayout = () => {
         const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
         setRecebidoHoje(dailyAverage);
       } else {
-        console.log("[DashboardLayout] userData ou valores ausentes:", userData, "usando recebidoHoje = 0");
+        console.log("[DashboardLayout] userData ou valores ausentes, usando recebidoHoje = 0");
         setRecebidoHoje(0);
       }
     };
@@ -134,8 +135,7 @@ const DashboardLayout = () => {
     }
 
     document.body.classList.toggle("dark", isDarkMode);
-    console.log("[DashboardLayout] Dados carregados:", { userData, isLoading, diasRestantesCalculados });
-  }, [navigate, toast, userData, isLoading, isDarkMode]);
+  }, [navigate, toast, userData, isDarkMode]);
 
   const toggleDarkMode = () => {
     setIsDarkMode((prev) => {
@@ -248,7 +248,8 @@ const DashboardLayout = () => {
   if (!userData && !isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-foreground">Erro: Dados do usuário não carregados.</p>
+        <Skeleton className="h-12 w-12" />
+        <p className="text-foreground ml-2">Carregando dados do usuário...</p>
       </div>
     );
   }
@@ -526,7 +527,12 @@ const DashboardLayout = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <Tabs defaultValue="metas" value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+        <Tabs 
+          defaultValue="meta-fiado" 
+          value={activeTab} 
+          onValueChange={handleTabChange}
+          className="space-y-6"
+        >
           <TabsList className="grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl">
             <TabsTrigger 
               value="ajustes-metas" 
@@ -585,22 +591,16 @@ const DashboardLayout = () => {
             />
           </TabsContent>
           <TabsContent value="metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            {isLoading ? (
-              <div className="text-foreground">Carregando...</div>
-            ) : !userData ? (
-              <div className="text-foreground">Erro: Dados do usuário não disponíveis.</div>
-            ) : (
-              <Metas
-                userData={userData}
-                updateUserData={updateUserData}
-                diasSemExpediente={diasSemExpediente}
-                updateDiasSemExpediente={updateDiasSemExpediente}
-                diasRestantesCalculados={diasRestantesCalculados}
-                isLoading={isLoading}
-                bonusPerdidoAtivado={bonusPerdidoAtivado}
-                setRecebidoHoje={setRecebidoHoje}
-              />
-            )}
+            <Metas
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setRecebidoHoje={setRecebidoHoje}
+            />
           </TabsContent>
           <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
             {bonusPerdidoAtivado && (
