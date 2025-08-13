@@ -304,7 +304,7 @@ const Metas = ({
   const metaDesafioValor = Number(metaDesafio) || 0;
   let progressoDesafio = 0;
   if (metaDesafioValor > 0 && vencidoAtual > 0) {
-    progressoDesafio = (metaDesafioValor / vencidoAtual) * 100;
+    progressoDesafio = (metaDesafioValor / vencido_atual) * 100;
   }
   progressoDesafio = Number(progressoDesafio.toFixed(2));
   const progressoDesafioPercentual = Math.max(0, Math.min(100, progressoDesafio));
@@ -347,7 +347,12 @@ const Metas = ({
     if (setRecebidoHoje) {
       setRecebidoHoje(recebidoHojeFiado);
     }
-  }, [recebidoHojeFiado, setRecebidoHoje]);
+    console.log("[Metas] Debug - Receber por dia:", {
+      faltaReceberMes,
+      diasRestantesCalculados,
+      receberPorDiaFiado,
+    });
+  }, [recebidoHojeFiado, setRecebidoHoje, faltaReceberMes, diasRestantesCalculados]);
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
     setMetaTicketConfirmada(confirmed);
