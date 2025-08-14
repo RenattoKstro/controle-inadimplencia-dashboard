@@ -85,27 +85,27 @@ const calcularProgressoDiario = (recebidoHoje: number, valorPorDia: number): num
   return (recebidoHoje / valorPorDia) * 100;
 };
 
-const calculateTotalWorkDays = (diasSemExpediente: Date[]) => {
+const calculateTotalWorkDays = (diasSemExpediente: Date[] = []): number => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   let totalDays = 0;
   for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
     const dayOfWeek = d.getDay();
-    if (dayOfWeek !== 0 && !diasSemExpediente?.some(date => date.toDateString() === d.toDateString())) {
+    if (dayOfWeek !== 0 && !diasSemExpediente.some(date => date.toDateString() === d.toDateString())) {
       totalDays++;
     }
   }
   return totalDays;
 };
 
-const calculateWorkedDays = (diasSemExpediente: Date[]) => {
+const calculateWorkedDays = (diasSemExpediente: Date[] = []): number => {
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   let workedDays = 0;
   for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
     const dayOfWeek = d.getDay();
-    if (dayOfWeek !== 0 && !diasSemExpediente?.some(date => date.toDateString() === d.toDateString())) {
+    if (dayOfWeek !== 0 && !diasSemExpediente.some(date => date.toDateString() === d.toDateString())) {
       workedDays++;
     }
   }
@@ -158,17 +158,17 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
   const isMobile = useIsMobile();
 
   let percentageComplete = 0;
-  if (userData.vencido_atual > 0) {
+  if (userData?.vencido_atual > 0) {
     percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
   } else {
-    console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
+    console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData?.vencido_atual}`);
   }
   percentageComplete = Math.max(0, percentageComplete);
 
   const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
   const valoresRestantes = percentuaisAlvo.map((percentual) => {
-    const vencidoNecessario = userData.meta_mes / (percentual / 100);
-    let diferenca = userData.vencido_atual - vencidoNecessario;
+    const vencidoNecessario = userData?.meta_mes / (percentual / 100) || 0;
+    let diferenca = (userData?.vencido_atual || 0) - vencidoNecessario;
     const atingido = percentageComplete >= percentual;
     diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
     return { percentual, diferenca, atingido };
@@ -258,6 +258,7 @@ const Metas = ({
   const [diasRestantes, setDiasRestantes] = useState(userData?.dias_restantes || diasRestantesCalculados || 1);
 
   useEffect(() => {
+    console.log("[Metas] Initial props:", { userData, diasRestantesCalculados, diasSemExpediente });
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
     setDiasUteisAte15(dias);
   }, [diasRestantesCalculados]);
@@ -272,8 +273,13 @@ const Metas = ({
   const todayDate = new Date();
   const mesAtual = todayDate.getMonth();
 
-  const aReceber = userData?.abertura_vencido_mes - userData?.meta_mes || 0;
-  const recebidoMes = userData?.abertura_vencido_mes - userData?.vencido_atual || 0;
+  if (!userData || isLoading) {
+    console.log("[Metas] Data or loading state invalid:", { userData, isLoading });
+    return <div>Carregando...</div>; // Placeholder para evitar tela branca
+  }
+
+  const aReceber = (userData.abertura_vencido_mes || 0) - (userData.meta_mes || 0);
+  const recebidoMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
   const metaTicket = aReceber * 0.8;
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
 
@@ -300,11 +306,11 @@ const Metas = ({
   const valorRestanteTicket = Math.max(0, metaTicket - recebidoMes);
   const valorPorDiaTicket = diasUteisAte15 > 0 ? valorRestanteTicket / diasUteisAte15 : 0;
 
-  const vencidoAtual = Number(userData?.vencido_atual) || 0;
+  const vencidoAtual = Number(userData.vencido_atual) || 0;
   const metaDesafioValor = Number(metaDesafio) || 0;
   let progressoDesafio = 0;
   if (metaDesafioValor > 0 && vencidoAtual > 0) {
-    progressoDesafio = (metaDesafioValor / vencido_atual) * 100;
+    progressoDesafio = (metaDesafioValor / vencidoAtual) * 100;
   }
   progressoDesafio = Number(progressoDesafio.toFixed(2));
   const progressoDesafioPercentual = Math.max(0, Math.min(100, progressoDesafio));
@@ -334,13 +340,13 @@ const Metas = ({
   const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
   const recebidosMesFiado = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
   const recebidoHojeFiado = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
-  const totalWorkDaysInMonth = calculateTotalWorkDays(diasSemExpediente);
-  const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(diasSemExpediente);
+  const totalWorkDaysInMonth = calculateTotalWorkDays(diasSemExpediente || []);
+  const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(diasSemExpediente || []);
   const diasUteisRestantes = Math.max(0, totalWorkDaysInMonth - diasUteisTrabalhados);
   const valorPorDiaFiado = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaFiado * diasUteisTrabalhados : 0;
   const gap = recebidosMesFiado - valorEsperadoAcumulado;
-  const receberPorDiaFiado = faltaReceberMes > 0 && (diasUteisRestantes || diasRestantes) > 0 ? faltaReceberMes / (diasUteisRestantes || diasRestantes) : 0;
+  const receberPorDiaFiado = faltaReceberMes > 0 && diasUteisRestantes > 0 ? faltaReceberMes / diasUteisRestantes : 0;
   const progressoDiarioFiado = receberPorDiaFiado > 0 ? (recebidoHojeFiado / receberPorDiaFiado) * 100 : 0;
   const faltaParaMetaDiariaFiado = Math.max(0, receberPorDiaFiado - recebidoHojeFiado);
 
@@ -348,15 +354,15 @@ const Metas = ({
     if (setRecebidoHoje) {
       setRecebidoHoje(recebidoHojeFiado);
     }
-    console.log("[Metas] Debug - GAP:", { totalWorkDaysInMonth, diasUteisTrabalhados, diasUteisRestantes, diasRestantesCalculados, diasRestantes });
-  }, [recebidoHojeFiado, setRecebidoHoje, totalWorkDaysInMonth, diasUteisTrabalhados, diasUteisRestantes, diasRestantesCalculados, diasRestantes]);
+    console.log("[Metas] Debug - GAP:", { totalWorkDaysInMonth, diasUteisTrabalhados, diasUteisRestantes, gap, aReceber, valorEsperadoAcumulado, recebidoHojeFiado });
+  }, [recebidoHojeFiado, setRecebidoHoje, totalWorkDaysInMonth, diasUteisTrabalhados, diasUteisRestantes, gap, aReceber, valorEsperadoAcumulado]);
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
     setMetaTicketConfirmada(confirmed);
     updateUserData({ ...userData, metaTicketConfirmada: confirmed });
   };
 
-  if (isLoading) {
+  if (isLoading || !userData) {
     return (
       <div className="space-y-4 md:space-y-6">
         <Skeleton className="h-8 w-1/4" />
