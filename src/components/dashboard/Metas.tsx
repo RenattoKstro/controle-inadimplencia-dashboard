@@ -255,19 +255,17 @@ const Metas = ({
   const [metaTicketConfirmada, setMetaTicketConfirmada] = useState(userData?.metaTicketConfirmada || false);
   const [isEditingDesafio, setIsEditingDesafio] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
-  const [diasRestantes, setDiasRestantes] = useState(userData?.dias_restantes || diasRestantesCalculados || 1);
+  const [diasRestantes, setDiasRestantes] = useState(userData?.dias_restantes || 1); // Prioriza o valor manual de userData
 
   useEffect(() => {
     console.log("[Metas] Initial props:", { userData, diasRestantesCalculados, diasSemExpediente });
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
     setDiasUteisAte15(dias);
-  }, [diasRestantesCalculados]);
-
-  useEffect(() => {
+    // Sincroniza diasRestantes com o valor manual ajustado
     if (userData?.dias_restantes !== undefined) {
       setDiasRestantes(userData.dias_restantes);
     }
-  }, [userData?.dias_restantes]);
+  }, [userData?.dias_restantes, diasRestantesCalculados]);
 
   const passouDia15 = isPastDay15();
   const todayDate = new Date();
@@ -275,7 +273,7 @@ const Metas = ({
 
   if (!userData || isLoading) {
     console.log("[Metas] Data or loading state invalid:", { userData, isLoading });
-    return <div>Carregando...</div>; // Placeholder para evitar tela branca
+    return <div>Carregando...</div>;
   }
 
   const aReceber = (userData.abertura_vencido_mes || 0) - (userData.meta_mes || 0);
@@ -342,11 +340,10 @@ const Metas = ({
   const recebidoHojeFiado = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
   const totalWorkDaysInMonth = calculateTotalWorkDays(diasSemExpediente || []);
   const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(diasSemExpediente || []);
-  const diasUteisRestantes = Math.max(0, totalWorkDaysInMonth - diasUteisTrabalhados);
   const valorPorDiaFiado = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
   const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaFiado * diasUteisTrabalhados : 0;
   const gap = recebidosMesFiado - valorEsperadoAcumulado;
-  const receberPorDiaFiado = faltaReceberMes > 0 && diasUteisRestantes > 0 ? faltaReceberMes / diasUteisRestantes : 0;
+  const receberPorDiaFiado = faltaReceberMes > 0 && diasRestantes > 0 ? faltaReceberMes / diasRestantes : 0; // Usa diasRestantes manual
   const progressoDiarioFiado = receberPorDiaFiado > 0 ? (recebidoHojeFiado / receberPorDiaFiado) * 100 : 0;
   const faltaParaMetaDiariaFiado = Math.max(0, receberPorDiaFiado - recebidoHojeFiado);
 
@@ -354,8 +351,8 @@ const Metas = ({
     if (setRecebidoHoje) {
       setRecebidoHoje(recebidoHojeFiado);
     }
-    console.log("[Metas] Debug - GAP:", { totalWorkDaysInMonth, diasUteisTrabalhados, diasUteisRestantes, gap, aReceber, valorEsperadoAcumulado, recebidoHojeFiado });
-  }, [recebidoHojeFiado, setRecebidoHoje, totalWorkDaysInMonth, diasUteisTrabalhados, diasUteisRestantes, gap, aReceber, valorEsperadoAcumulado]);
+    console.log("[Metas] Debug - GAP:", { totalWorkDaysInMonth, diasUteisTrabalhados, diasRestantes, gap, aReceber, valorEsperadoAcumulado, recebidoHojeFiado });
+  }, [recebidoHojeFiado, setRecebidoHoje, totalWorkDaysInMonth, diasUteisTrabalhados, diasRestantes, gap, aReceber, valorEsperadoAcumulado]);
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
     setMetaTicketConfirmada(confirmed);
@@ -476,7 +473,7 @@ const Metas = ({
                 Dias úteis trabalhados: {diasUteisTrabalhados}
               </div>
               <div className="mt-1 text-xs text-foreground">
-                Dias úteis restantes: {diasUteisRestantes}
+                Dias restantes ajustados: {diasRestantes} {/* Exibe o valor manual */}
               </div>
               <div className="mt-1 text-xs text-foreground">
                 Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
