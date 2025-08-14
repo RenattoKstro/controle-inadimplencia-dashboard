@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import Metas from "./dashboard/Metas"; // Componente unificado para V2
+import MetaFiado from "./dashboard/MetaFiado"; // Componente separado para V1
+import MetaDesafio from "./dashboard/MetaDesafio"; // Componente separado para V1
+import MetaAlimentacao from "./dashboard/MetaAlimentacao"; // Componente separado para V1
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
@@ -545,6 +549,34 @@ const DashboardLayout = () => {
               <span className="text-foreground">Ajustes de Metas</span>
             </TabsTrigger>
             {layoutVersion === "V1" && (
+              <>
+                <TabsTrigger 
+                  value="meta-fiado" 
+                  className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+                  onClick={() => handleTabChange("meta-fiado")}
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span className="text-foreground">Meta Fiado</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="meta-desafio" 
+                  className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+                  onClick={() => handleTabChange("meta-desafio")}
+                >
+                  <Trophy className="h-4 w-4" />
+                  <span className="text-foreground">Meta Desafio</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="meta-alimentacao" 
+                  className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
+                  onClick={() => handleTabChange("meta-alimentacao")}
+                >
+                  <Utensils className="h-4 w-4" />
+                  <span className="text-foreground">Meta Alimentação</span>
+                </TabsTrigger>
+              </>
+            )}
+            {layoutVersion === "V2" && (
               <TabsTrigger 
                 value="metas" 
                 className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
@@ -595,22 +627,48 @@ const DashboardLayout = () => {
             />
           </TabsContent>
           {layoutVersion === "V1" && (
-            <TabsContent value="metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              <MetasLayoutOld
-                userData={userData}
-                updateUserData={updateUserData}
-                diasSemExpediente={diasSemExpediente}
-                updateDiasSemExpediente={updateDiasSemExpediente}
-                diasRestantesCalculados={diasRestantesCalculados}
-                isLoading={isLoading}
-                bonusPerdidoAtivado={bonusPerdidoAtivado}
-                setRecebidoHoje={setRecebidoHoje}
-              />
-            </TabsContent>
+            <>
+              <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+                <MetaFiado
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={setRecebidoHoje}
+                />
+              </TabsContent>
+              <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+                <MetaDesafio
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={setRecebidoHoje}
+                />
+              </TabsContent>
+              <TabsContent value="meta-alimentacao" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
+                <MetaAlimentacao
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={setRecebidoHoje}
+                />
+              </TabsContent>
+            </>
           )}
           {layoutVersion === "V2" && (
             <TabsContent value="metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              <MetasLayoutNew
+              <Metas
                 userData={userData}
                 updateUserData={updateUserData}
                 diasSemExpediente={diasSemExpediente}
