@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import MetasLayoutOld from "./dashboard/MetasLayoutOld"; // Layout antigo
-import MetasLayoutNew from "./dashboard/MetasLayoutNew"; // Layout novo
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
