@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import Metas from "./dashboard/Metas"; // Componente unificado para V2
+import Metas from "./dashboard/Metas"; // Componente unificado para V2, agora com Meta Perdido
 import MetaFiado from "./dashboard/MetaFiado"; // Componente separado para V1
 import MetaDesafio from "./dashboard/MetaDesafio"; // Componente separado para V1
 import MetaAlimentacao from "./dashboard/MetaAlimentacao"; // Componente separado para V1
@@ -586,7 +586,7 @@ const DashboardLayout = () => {
                 <span className="text-foreground">Metas</span>
               </TabsTrigger>
             )}
-            {bonusPerdidoAtivado && (
+            {layoutVersion === "V1" && bonusPerdidoAtivado && (
               <TabsTrigger 
                 value="meta-perdido" 
                 className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
@@ -680,11 +680,11 @@ const DashboardLayout = () => {
               />
             </TabsContent>
           )}
-          <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            {bonusPerdidoAtivado && (
+          {layoutVersion === "V1" && bonusPerdidoAtivado && (
+            <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
               <div className="text-foreground">Meta Perdido (temporariamente desativada)</div>
-            )}
-          </TabsContent>
+            </TabsContent>
+          )}
           <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
             {userData ? (
               <MeusPremios 
