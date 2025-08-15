@@ -682,7 +682,16 @@ const DashboardLayout = () => {
           )}
           {layoutVersion === "V1" && bonusPerdidoAtivado && (
             <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              <div className="text-foreground">Meta Perdido (temporariamente desativada)</div>
+              <Metas
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+                setRecebidoHoje={setRecebidoHoje}
+              />
             </TabsContent>
           )}
           <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
