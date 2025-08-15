@@ -247,6 +247,7 @@ const Metas = ({
   recebidoHoje = 0,
   diasSemExpediente,
   setRecebidoHoje,
+  bonusPerdidoAtivado,
 }: DashboardProps & { recebidoHoje?: number }) => {
   const isMobile = useIsMobile();
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
@@ -276,8 +277,28 @@ const Metas = ({
     return <div>Carregando...</div>;
   }
 
+  // Meta Fiado
   const aReceber = (userData.abertura_vencido_mes || 0) - (userData.meta_mes || 0);
   const recebidoMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
+  const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
+  const recebidoHojeFiado = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
+  const totalWorkDaysInMonth = calculateTotalWorkDays(diasSemExpediente || []);
+  const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(diasSemExpediente || []);
+  const valorPorDiaFiado = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
+  const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaFiado * diasUteisTrabalhados : 0;
+  const gap = recebidoMes - valorEsperadoAcumulado;
+  const receberPorDiaFiado = faltaReceberMes > 0 && diasRestantes > 0 ? faltaReceberMes / diasRestantes : 0;
+  const progressoDiarioFiado = receberPorDiaFiado > 0 ? (recebidoHojeFiado / receberPorDiaFiado) * 100 : 0;
+  const faltaParaMetaDiariaFiado = Math.max(0, receberPorDiaFiado - recebidoHojeFiado);
+
+  useEffect(() => {
+    if (setRecebidoHoje) {
+      setRecebidoHoje(recebidoHojeFiado);
+    }
+    console.log("[Metas] Debug - GAP:", { totalWorkDaysInMonth, diasUteisTrabalhados, diasRestantes, gap, aReceber, valorEsperadoAcumulado, recebidoHojeFiado });
+  }, [recebidoHojeFiado, setRecebidoHoje, totalWorkDaysInMonth, diasUteisTrabalhados, diasRestantes, gap, aReceber, valorEsperadoAcumulado]);
+
+  // Meta de Ticket
   const metaTicket = aReceber * 0.8;
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
 
@@ -304,6 +325,7 @@ const Metas = ({
   const valorRestanteTicket = Math.max(0, metaTicket - recebidoMes);
   const valorPorDiaTicket = diasUteisAte15 > 0 ? valorRestanteTicket / diasUteisAte15 : 0;
 
+  // Meta Desafio
   const vencidoAtual = Number(userData.vencido_atual) || 0;
   const metaDesafioValor = Number(metaDesafio) || 0;
   let progressoDesafio = 0;
@@ -335,68 +357,28 @@ const Metas = ({
     setIsEditingDesafio(false);
   };
 
-  const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
-  const recebidosMesFiado = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
-  const recebidoHojeFiado = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
-  const totalWorkDaysInMonth = calculateTotalWorkDays(diasSemExpediente || []);
-  const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(diasSemExpediente || []);
-  const valorPorDiaFiado = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
-  const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDiaFiado * diasUteisTrabalhados : 0;
-  const gap = recebidosMesFiado - valorEsperadoAcumulado;
-  const receberPorDiaFiado = faltaReceberMes > 0 && diasRestantes > 0 ? faltaReceberMes / diasRestantes : 0; // Usa diasRestantes manual
-  const progressoDiarioFiado = receberPorDiaFiado > 0 ? (recebidoHojeFiado / receberPorDiaFiado) * 100 : 0;
-  const faltaParaMetaDiariaFiado = Math.max(0, receberPorDiaFiado - recebidoHojeFiado);
-
-  useEffect(() => {
-    if (setRecebidoHoje) {
-      setRecebidoHoje(recebidoHojeFiado);
-    }
-    console.log("[Metas] Debug - GAP:", { totalWorkDaysInMonth, diasUteisTrabalhados, diasRestantes, gap, aReceber, valorEsperadoAcumulado, recebidoHojeFiado });
-  }, [recebidoHojeFiado, setRecebidoHoje, totalWorkDaysInMonth, diasUteisTrabalhados, diasRestantes, gap, aReceber, valorEsperadoAcumulado]);
-
   const handleConfirmacaoChange = (confirmed: boolean) => {
     setMetaTicketConfirmada(confirmed);
     updateUserData({ ...userData, metaTicketConfirmada: confirmed });
   };
 
-  if (isLoading || !userData) {
+  // Meta Perdido (condicional)
+  const renderMetaPerdido = () => {
+    if (!bonusPerdidoAtivado) return null;
     return (
-      <div className="space-y-4 md:space-y-6">
-        <Skeleton className="h-8 w-1/4" />
-        <div className="grid md:grid-cols-2 gap-4">
-          <Skeleton className="h-60" />
-          <Skeleton className="h-60" />
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl md:text-2xl font-bold text-red-500 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-500" />
+            Meta Perdido
+          </h2>
         </div>
-        <Skeleton className="h-8 w-1/4" />
-        <div className="grid md:grid-cols-2 gap-4">
-          <Skeleton className="h-60" />
-          <Skeleton className="h-60" />
-        </div>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-8 w-1/4" />
-          </div>
-          <div
-            className={`grid grid-cols-1 ${
-              isMobile ? "" : "md:grid-cols-2 lg:grid-cols-3"
-            } gap-4`}
-          >
-            {[...Array(isMobile ? 4 : 8)].map((_, i) => (
-              <Card key={i} className="shadow-sm">
-                <CardContent className="p-4 md:p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                  </div>
-                  <Skeleton className="h-8 w-32" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <div className="bg-red-100 p-4 rounded-lg">
+          <p className="text-foreground">Meta Perdido (temporariamente desativada)</p>
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="space-y-6 p-4">
@@ -429,7 +411,7 @@ const Metas = ({
           />
           <CardItem
             title="Recebido Mês"
-            value={recebidosMesFiado}
+            value={recebidoMes}
             icon={<Check size={16} />}
             color="bg-green-500"
           />
@@ -473,7 +455,7 @@ const Metas = ({
                 Dias úteis trabalhados: {diasUteisTrabalhados}
               </div>
               <div className="mt-1 text-xs text-foreground">
-                Dias restantes ajustados: {diasRestantes} {/* Exibe o valor manual */}
+                Dias restantes ajustados: {diasRestantes}
               </div>
               <div className="mt-1 text-xs text-foreground">
                 Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
@@ -819,6 +801,9 @@ const Metas = ({
           </div>
         )}
       </div>
+
+      {/* Meta Perdido */}
+      {renderMetaPerdido()}
     </div>
   );
 };
