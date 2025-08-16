@@ -328,7 +328,7 @@ const Metas = ({
   const metaDesafioValor = Number(metaDesafio) || 0;
   let progressoDesafio = 0;
   if (metaDesafioValor > 0 && vencidoAtual > 0) {
-    progressoDesafio = (metaDesafioValor / vencidoAtual) * 100;
+    progressoDesafio = (metaDesafioValor / vencido_atual) * 100;
   }
   progressoDesafio = Number(progressoDesafio.toFixed(2));
   const progressoDesafioPercentual = Math.max(0, Math.min(100, progressoDesafio));
