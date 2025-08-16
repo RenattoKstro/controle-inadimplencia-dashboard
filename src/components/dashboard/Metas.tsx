@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import MetaPerdido from "./MetaPerdido"; // Importando o componente MetaPerdido
+import MetaPerdido from "./MetaPerdido";
 
 const formatCurrency = (value: number | null): string => {
   if (value === null || isNaN(value)) return "R$ 0,00";
@@ -249,6 +249,7 @@ const Metas = ({
   diasSemExpediente,
   setRecebidoHoje,
   bonusPerdidoAtivado,
+  updateDiasSemExpediente,
 }: DashboardProps & { recebidoHoje?: number }) => {
   const isMobile = useIsMobile();
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
@@ -257,13 +258,12 @@ const Metas = ({
   const [metaTicketConfirmada, setMetaTicketConfirmada] = useState(userData?.metaTicketConfirmada || false);
   const [isEditingDesafio, setIsEditingDesafio] = useState(false);
   const [metaDesafio, setMetaDesafio] = useState(userData?.meta_desafio || 0);
-  const [diasRestantes, setDiasRestantes] = useState(userData?.dias_restantes || 1); // Prioriza o valor manual de userData
+  const [diasRestantes, setDiasRestantes] = useState(userData?.dias_restantes || 1);
 
   useEffect(() => {
-    console.log("[Metas] Initial props:", { userData, diasRestantesCalculados, diasSemExpediente });
+    console.log("[Metas] Initial props:", { userData, diasRestantesCalculados, diasSemExpediente, bonusPerdidoAtivado });
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
     setDiasUteisAte15(dias);
-    // Sincroniza diasRestantes com o valor manual ajustado
     if (userData?.dias_restantes !== undefined) {
       setDiasRestantes(userData.dias_restantes);
     }
@@ -278,7 +278,6 @@ const Metas = ({
     return <div>Carregando...</div>;
   }
 
-  // Meta Fiado
   const aReceber = (userData.abertura_vencido_mes || 0) - (userData.meta_mes || 0);
   const recebidoMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
   const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
@@ -299,7 +298,6 @@ const Metas = ({
     console.log("[Metas] Debug - GAP:", { totalWorkDaysInMonth, diasUteisTrabalhados, diasRestantes, gap, aReceber, valorEsperadoAcumulado, recebidoHojeFiado });
   }, [recebidoHojeFiado, setRecebidoHoje, totalWorkDaysInMonth, diasUteisTrabalhados, diasRestantes, gap, aReceber, valorEsperadoAcumulado]);
 
-  // Meta de Ticket
   const metaTicket = aReceber * 0.8;
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
 
@@ -326,7 +324,6 @@ const Metas = ({
   const valorRestanteTicket = Math.max(0, metaTicket - recebidoMes);
   const valorPorDiaTicket = diasUteisAte15 > 0 ? valorRestanteTicket / diasUteisAte15 : 0;
 
-  // Meta Desafio
   const vencidoAtual = Number(userData.vencido_atual) || 0;
   const metaDesafioValor = Number(metaDesafio) || 0;
   let progressoDesafio = 0;
@@ -365,7 +362,6 @@ const Metas = ({
 
   return (
     <div className="space-y-6 p-4">
-      {/* Meta Fiado */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl md:text-2xl font-bold text-foreground">Meta Fiado</h2>
@@ -425,7 +421,7 @@ const Metas = ({
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
                 <span
-                  className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
+                  className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white"}
                 >
                   <Wallet size={16} />
                 </span>
@@ -448,7 +444,6 @@ const Metas = ({
         </div>
       </div>
 
-      {/* Meta Desafio */}
       <div className="space-y-4">
         <h2 className="text-xl md:text-2xl font-bold text-yellow-500 flex items-center gap-2">
           <Trophy className="h-5 w-5 text-yellow-500" />
@@ -605,7 +600,6 @@ const Metas = ({
         </Card>
       </div>
 
-      {/* Meta de Ticket */}
       <div className="space-y-4 md:space-y-6">
         <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-2">
           <Utensils className="h-5 w-5 text-green-500" />
@@ -785,7 +779,6 @@ const Metas = ({
         )}
       </div>
 
-      {/* Meta Perdido */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-xl md:text-2xl font-bold text-red-500 flex items-center gap-2">
@@ -793,13 +786,13 @@ const Metas = ({
             Meta Perdido
           </h2>
         </div>
-        {bonusPerdidoAtivado && (
+        {bonusPerdidoAtivado && userData && !isLoading && (
           <MetaPerdido
             userData={userData}
             updateUserData={updateUserData}
-            diasSemExpediente={diasSemExpediente}
+            diasSemExpediente={diasSemExpediente || []}
             updateDiasSemExpediente={updateDiasSemExpediente}
-            diasRestantesCalculados={diasRestantesCalculados}
+            diasRestantesCalculados={diasRestantesCalculados || 0}
             isLoading={isLoading}
             bonusPerdidoAtivado={bonusPerdidoAtivado}
             setRecebidoHoje={setRecebidoHoje}
