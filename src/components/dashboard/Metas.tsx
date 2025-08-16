@@ -779,26 +779,28 @@ const Metas = ({
         )}
       </div>
 
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl md:text-2xl font-bold text-red-500 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
-            Meta Perdido
-          </h2>
+      {bonusPerdidoAtivado && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl md:text-2xl font-bold text-red-500 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Meta Perdido
+            </h2>
+          </div>
+          {userData && !isLoading && (
+            <MetaPerdido
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente || []}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados || 0}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setRecebidoHoje={setRecebidoHoje}
+            />
+          )}
         </div>
-        {bonusPerdidoAtivado && userData && !isLoading && (
-          <MetaPerdido
-            userData={userData}
-            updateUserData={updateUserData}
-            diasSemExpediente={diasSemExpediente || []}
-            updateDiasSemExpediente={updateDiasSemExpediente}
-            diasRestantesCalculados={diasRestantesCalculados || 0}
-            isLoading={isLoading}
-            bonusPerdidoAtivado={bonusPerdidoAtivado}
-            setRecebidoHoje={setRecebidoHoje}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 };
