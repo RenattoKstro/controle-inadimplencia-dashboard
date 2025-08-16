@@ -261,7 +261,7 @@ const Metas = ({
   const [diasRestantes, setDiasRestantes] = useState(userData?.dias_restantes || 1);
 
   useEffect(() => {
-    console.log("[Metas] Initial props:", { userData, diasRestantesCalculados, diasSemExpediente, bonusPerdidoAtivado });
+    console.log("[Metas] Initial props:", { userData, diasRestantesCalculados, diasSemExpediente, bonusPerdidoAtivado, isLoading });
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
     setDiasUteisAte15(dias);
     if (userData?.dias_restantes !== undefined) {
@@ -274,9 +274,11 @@ const Metas = ({
   const mesAtual = todayDate.getMonth();
 
   if (!userData || isLoading) {
-    console.log("[Metas] Data or loading state invalid:", { userData, isLoading });
+    console.log("[Metas] Loading or no user data, rendering skeleton");
     return <div>Carregando...</div>;
   }
+
+  console.log("[Metas] Rendering with userData:", userData);
 
   const aReceber = (userData.abertura_vencido_mes || 0) - (userData.meta_mes || 0);
   const recebidoMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
@@ -328,7 +330,7 @@ const Metas = ({
   const metaDesafioValor = Number(metaDesafio) || 0;
   let progressoDesafio = 0;
   if (metaDesafioValor > 0 && vencidoAtual > 0) {
-    progressoDesafio = (metaDesafioValor / vencido_atual) * 100;
+    progressoDesafio = (metaDesafioValor / vencidoAtual) * 100;
   }
   progressoDesafio = Number(progressoDesafio.toFixed(2));
   const progressoDesafioPercentual = Math.max(0, Math.min(100, progressoDesafio));
