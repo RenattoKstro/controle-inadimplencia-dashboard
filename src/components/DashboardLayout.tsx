@@ -31,6 +31,7 @@ import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
+import MetaPerdido from "./dashboard/MetaPerdido"; // Importando o componente existente
 
 export interface DashboardProps {
   userData: any;
@@ -682,7 +683,7 @@ const DashboardLayout = () => {
           )}
           {layoutVersion === "V1" && bonusPerdidoAtivado && (
             <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              <Metas
+              <MetaPerdido
                 userData={userData}
                 updateUserData={updateUserData}
                 diasSemExpediente={diasSemExpediente}
