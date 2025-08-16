@@ -421,7 +421,7 @@ const Metas = ({
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
                 <span
-                  className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white"}
+                  className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
                 >
                   <Wallet size={16} />
                 </span>
