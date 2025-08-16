@@ -30,7 +30,12 @@ const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) =>
   return (
     <div className="space-y-4">
       <Card>
-       </CardHeader>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+            Meta Perdido
+          </CardTitle>
+        </CardHeader>
         <CardContent>
           <div className="space-y-2">
             <p className="text-foreground">Meta: {metaPerdido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
