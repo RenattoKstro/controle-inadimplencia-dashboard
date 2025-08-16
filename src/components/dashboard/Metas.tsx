@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import MetaPerdido from "./MetaPerdido"; // Importando o componente MetaPerdido
 
 const formatCurrency = (value: number | null): string => {
   if (value === null || isNaN(value)) return "R$ 0,00";
@@ -361,12 +362,6 @@ const Metas = ({
     setMetaTicketConfirmada(confirmed);
     updateUserData({ ...userData, metaTicketConfirmada: confirmed });
   };
-
-  // Meta Perdido
-  const metaPerdidoValor = (userData.vencido_atual || 0) * 0.1; // Exemplo: 10% do vencido atual como meta inicial
-  const progressoPerdido = metaPerdidoValor > 0 ? Math.min(100, ((userData.abertura_vencido_mes || 0) / metaPerdidoValor) * 100) : 0;
-  const valorRestantePerdido = Math.max(0, metaPerdidoValor - (userData.abertura_vencido_mes || 0));
-  const valorPorDiaPerdido = diasRestantes > 0 ? valorRestantePerdido / diasRestantes : 0;
 
   return (
     <div className="space-y-6 p-4">
@@ -798,43 +793,18 @@ const Metas = ({
             Meta Perdido
           </h2>
         </div>
-        <div
-          className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
-        >
-          <ProgressCard
-            title="Progresso da Meta Perdido"
-            current={userData.abertura_vencido_mes || 0}
-            target={metaPerdidoValor}
-            icon={<AlertTriangle className="h-5 w-5 text-red-500" />}
+        {bonusPerdidoAtivado && (
+          <MetaPerdido
             userData={userData}
+            updateUserData={updateUserData}
+            diasSemExpediente={diasSemExpediente}
+            updateDiasSemExpediente={updateDiasSemExpediente}
+            diasRestantesCalculados={diasRestantesCalculados}
+            isLoading={isLoading}
+            bonusPerdidoAtivado={bonusPerdidoAtivado}
+            setRecebidoHoje={setRecebidoHoje}
           />
-          <CardItem
-            title="Valor da Meta"
-            value={metaPerdidoValor}
-            icon={<Target size={16} />}
-            color="bg-red-500"
-          />
-          <CardItem
-            title="Valor Restante"
-            value={valorRestantePerdido}
-            icon={<ArrowDown size={16} />}
-            color="bg-red-500"
-          />
-          <CardItem
-            title="Receber por Dia"
-            value={valorPorDiaPerdido}
-            icon={<Calculator size={16} />}
-            color="bg-orange-500"
-          />
-          <CardItem
-            title="Progresso"
-            value={progressoPerdido}
-            icon={<Check size={16} />}
-            color="bg-green-500"
-            showProgress={true}
-            progressValue={progressoPerdido}
-          />
-        </div>
+        )}
       </div>
     </div>
   );
