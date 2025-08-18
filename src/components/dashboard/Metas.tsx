@@ -3,7 +3,7 @@ import { DashboardProps } from "../DashboardLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MetaFiado from "./MetaFiado";
 import MetaDesafio from "./MetaDesafio";
-import MetaAlimentação from "./MetaAlimentação";
+import MetaAlimentação from "./MetaAlimentacao";
 import MetaPerdido from "./MetaPerdido";
 
 const formatCurrency = (value: number | null): string => {
