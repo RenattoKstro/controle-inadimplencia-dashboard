@@ -12,7 +12,7 @@ const VersaoLog = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const versionLog = [
-    { version: "2.4", date: "15-08-2025", changes: "Add dois layouts de personalização V1 e V2" },
+    { version: "2.4", date: "18-08-2025", changes: "Add layouts de tela V1 e V2; Alteração no GAP" },
     { version: "2.3", date: "09-08-2025", changes: "Add Fechamento de Caixa Geral" },
     { version: "2.2", date: "08-08-2025", changes: "Add Gerador de link Tiger 2.0; Agora o tempo pra expirar o login foi aumentado" },
     { version: "2.1", date: "07-08-2025", changes: "Bugs corrigidos, Card Dias Restentes alterado para corrigir o GAP" },
