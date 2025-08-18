@@ -217,7 +217,7 @@ const MetaAlimentacao = ({
                     <span className="text-xs md:text-sm font-medium text-foreground">
                       {metaTicketBatida
                         ? "Meta atingida! Vale alimentação garantido"
-                        : "Meta ainda não atingida"}
+                        : "Meta não atingida"}
                     </span>
                   </div>
                 </div>
