@@ -193,6 +193,15 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
   const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje);
 
+  // Nova função para calcular os dias acima da meta
+  const calcularDiasAcimaDaMeta = (): number => {
+    if (valorPorDia <= 0) return 0;
+    const diasAcima = gap > 0 ? Math.floor(gap / valorPorDia) : 0;
+    return diasAcima;
+  };
+
+  const diasAcimaDaMeta = calcularDiasAcimaDaMeta();
+
   useEffect(() => {
     if (setRecebidoHoje) {
       setRecebidoHoje(recebidoHoje);
@@ -304,6 +313,11 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             <div className="mt-1 text-xs text-foreground">
               Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
             </div>
+            {gap > 0 && (
+              <div className="mt-1 text-xs text-foreground">
+                Dias acima da meta: {diasAcimaDaMeta}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
