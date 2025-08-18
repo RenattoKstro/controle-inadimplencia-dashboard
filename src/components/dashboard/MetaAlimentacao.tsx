@@ -3,7 +3,7 @@ import { DashboardProps } from "../DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Utensils, Check, AlertTriangle, Calendar, Target } from "lucide-react";
+import { Utensils, Check, AlertTriangle, Calendar, Target, Snowflake } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -92,14 +92,15 @@ const MetaAlimentacao = ({
   };
 
   const progressoExibido = progressoCongelado !== null ? progressoCongelado : Math.min(100, progressoTicketAtual);
-  const metaTicketBatida = progressoExibido >= 100; // Usar progressoExibido para verificar se a meta foi batida
+  const metaTicketBatida = progressoExibido >= 100;
 
   const getProgressColor = (isComplete: boolean, isPastDeadline: boolean) => {
     if (isComplete) return "bg-green-500";
     return isPastDeadline ? "bg-red-500" : "bg-yellow-500";
   };
 
-  const valorRestante = Math.max(0, metaTicket - (progressoCongelado !== null ? (progressoCongelado / 100) * metaTicket : recebidoMes));
+  const valorRecebidoCongelado = progressoCongelado !== null ? (progressoCongelado / 100) * metaTicket : recebidoMes;
+  const valorRestante = Math.max(0, metaTicket - valorRecebidoCongelado);
   const valorPorDia = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
@@ -148,7 +149,7 @@ const MetaAlimentacao = ({
                 <div className="space-y-1 md:space-y-2">
                   <p className="text-xs md:text-sm font-medium text-foreground">Recebido até agora</p>
                   <p className="text-base md:text-2xl font-bold text-foreground">
-                    {formataDinheiro(progressoCongelado !== null ? (progressoCongelado / 100) * metaTicket : recebidoMes)}
+                    {formataDinheiro(valorRecebidoCongelado)}
                   </p>
                 </div>
               </div>
@@ -262,18 +263,6 @@ const MetaAlimentacao = ({
                 </div>
                 <p className="text-xs text-foreground text-right">Dias até 15 do mês</p>
               </div>
-              {passouDia15 && (
-                <div className="pt-2 md:pt-3 border-t">
-                  <Button
-                    variant={isManualFreeze ? "secondary" : "outline"}
-                    onClick={handleFreezeProgress}
-                    disabled={isManualFreeze}
-                    className="w-full px-4 py-2 rounded-md"
-                  >
-                    {isManualFreeze ? "Progresso Congelado" : "Congelar Progresso"}
-                  </Button>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
@@ -281,20 +270,28 @@ const MetaAlimentacao = ({
       {passouDia15 && (
         <div className="pt-4 border-t">
           <p className="text-sm md:text-base font-medium text-foreground">Meta de ticket foi batida?</p>
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-2 mt-2">
             <Button
               variant={metaTicketConfirmada ? "default" : "outline"}
               onClick={() => handleConfirmacaoChange(true)}
-              className="px-4 py-2 rounded-md"
+              className="px-2 py-1 rounded-md text-sm"
             >
               Sim
             </Button>
             <Button
               variant={!metaTicketConfirmada ? "default" : "outline"}
               onClick={() => handleConfirmacaoChange(false)}
-              className="px-4 py-2 rounded-md"
+              className="px-2 py-1 rounded-md text-sm"
             >
               Não
+            </Button>
+            <Button
+              variant={isManualFreeze ? "secondary" : "outline"}
+              onClick={handleFreezeProgress}
+              disabled={isManualFreeze}
+              className="px-2 py-1 rounded-md text-sm flex items-center gap-1"
+            >
+              {isManualFreeze ? <><Snowflake className="h-3 w-3" /> Congelado</> : <><Snowflake className="h-3 w-3" /> Congelar</>}
             </Button>
           </div>
         </div>
