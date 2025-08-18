@@ -79,6 +79,7 @@ const MetaAlimentacao = ({
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
 
   useEffect(() => {
+    // Reinicia o ciclo de metas quando o mês muda, limpando o estado congelado
     if (mesCongelado !== null && mesCongelado !== mesAtual) {
       setProgressoCongelado(null);
       setMesCongelado(null);
