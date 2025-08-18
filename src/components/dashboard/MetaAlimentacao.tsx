@@ -52,6 +52,7 @@ const MetaAlimentacao = ({
   const [mesCongelado, setMesCongelado] = useState<number | null>(null);
   const [metaTicketConfirmada, setMetaTicketConfirmada] = useState(userData?.metaTicketConfirmada || false);
   const isMobile = useIsMobile();
+  const [isManualFreeze, setIsManualFreeze] = useState(false);
 
   useEffect(() => {
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
@@ -72,23 +73,33 @@ const MetaAlimentacao = ({
     if (mesCongelado !== null && mesCongelado !== mesAtual) {
       setProgressoCongelado(null);
       setMesCongelado(null);
+      setIsManualFreeze(false);
     }
-    if (passouDia15 && progressoCongelado === null) {
+    if (passouDia15 && !isManualFreeze && progressoCongelado === null) {
       const progressoNoDia15 = Math.min(100, progressoTicketAtual);
       setProgressoCongelado(progressoNoDia15);
       setMesCongelado(mesAtual);
     }
-  }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado]);
+  }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado, isManualFreeze]);
+
+  const handleFreezeProgress = () => {
+    if (!isManualFreeze) {
+      const progressoNoDiaAtual = Math.min(100, progressoTicketAtual);
+      setProgressoCongelado(progressoNoDiaAtual);
+      setMesCongelado(mesAtual);
+      setIsManualFreeze(true);
+    }
+  };
 
   const progressoExibido = progressoCongelado !== null ? progressoCongelado : Math.min(100, progressoTicketAtual);
-  const metaTicketBatida = recebidoMes >= metaTicket;
+  const metaTicketBatida = progressoExibido >= 100; // Usar progressoExibido para verificar se a meta foi batida
 
   const getProgressColor = (isComplete: boolean, isPastDeadline: boolean) => {
     if (isComplete) return "bg-green-500";
     return isPastDeadline ? "bg-red-500" : "bg-yellow-500";
   };
 
-  const valorRestante = Math.max(0, metaTicket - recebidoMes);
+  const valorRestante = Math.max(0, metaTicket - (progressoCongelado !== null ? (progressoCongelado / 100) * metaTicket : recebidoMes));
   const valorPorDia = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
@@ -137,7 +148,7 @@ const MetaAlimentacao = ({
                 <div className="space-y-1 md:space-y-2">
                   <p className="text-xs md:text-sm font-medium text-foreground">Recebido até agora</p>
                   <p className="text-base md:text-2xl font-bold text-foreground">
-                    {formataDinheiro(recebidoMes)}
+                    {formataDinheiro(progressoCongelado !== null ? (progressoCongelado / 100) * metaTicket : recebidoMes)}
                   </p>
                 </div>
               </div>
@@ -251,14 +262,17 @@ const MetaAlimentacao = ({
                 </div>
                 <p className="text-xs text-foreground text-right">Dias até 15 do mês</p>
               </div>
-              <div className="pt-2 md:pt-3 border-t">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <span className="text-xs md:text-sm font-medium text-blue-600">
-                    </span>
-                  </div>
+              {passouDia15 && !isManualFreeze && (
+                <div className="pt-2 md:pt-3 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={handleFreezeProgress}
+                    className="w-full px-4 py-2 rounded-md"
+                  >
+                    Congelar Progresso
+                  </Button>
                 </div>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
