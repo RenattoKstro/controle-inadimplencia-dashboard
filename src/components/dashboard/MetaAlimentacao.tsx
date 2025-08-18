@@ -262,14 +262,15 @@ const MetaAlimentacao = ({
                 </div>
                 <p className="text-xs text-foreground text-right">Dias até 15 do mês</p>
               </div>
-              {passouDia15 && !isManualFreeze && (
+              {passouDia15 && (
                 <div className="pt-2 md:pt-3 border-t">
                   <Button
-                    variant="outline"
+                    variant={isManualFreeze ? "secondary" : "outline"}
                     onClick={handleFreezeProgress}
+                    disabled={isManualFreeze}
                     className="w-full px-4 py-2 rounded-md"
                   >
-                    Congelar Progresso
+                    {isManualFreeze ? "Progresso Congelado" : "Congelar Progresso"}
                   </Button>
                 </div>
               )}
