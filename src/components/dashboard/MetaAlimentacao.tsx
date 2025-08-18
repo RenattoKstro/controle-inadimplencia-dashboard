@@ -48,11 +48,20 @@ const MetaAlimentacao = ({
   isLoading,
 }: DashboardProps) => {
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
-  const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
-  const [mesCongelado, setMesCongelado] = useState<number | null>(null);
+  const [progressoCongelado, setProgressoCongelado] = useState<number | null>(() => {
+    const saved = localStorage.getItem("progressoCongelado");
+    return saved ? parseFloat(saved) : null;
+  });
+  const [mesCongelado, setMesCongelado] = useState<number | null>(() => {
+    const saved = localStorage.getItem("mesCongelado");
+    return saved ? parseInt(saved, 10) : null;
+  });
   const [metaTicketConfirmada, setMetaTicketConfirmada] = useState(userData?.metaTicketConfirmada || false);
   const isMobile = useIsMobile();
-  const [isManualFreeze, setIsManualFreeze] = useState(false);
+  const [isManualFreeze, setIsManualFreeze] = useState(() => {
+    const saved = localStorage.getItem("isManualFreeze");
+    return saved ? JSON.parse(saved) : false;
+  });
 
   useEffect(() => {
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
@@ -74,11 +83,16 @@ const MetaAlimentacao = ({
       setProgressoCongelado(null);
       setMesCongelado(null);
       setIsManualFreeze(false);
-    }
-    if (passouDia15 && !isManualFreeze && progressoCongelado === null) {
+      localStorage.removeItem("progressoCongelado");
+      localStorage.removeItem("mesCongelado");
+      localStorage.removeItem("isManualFreeze");
+    } else if (passouDia15 && !isManualFreeze && progressoCongelado === null) {
       const progressoNoDia15 = Math.min(100, progressoTicketAtual);
       setProgressoCongelado(progressoNoDia15);
       setMesCongelado(mesAtual);
+      localStorage.setItem("progressoCongelado", progressoNoDia15.toString());
+      localStorage.setItem("mesCongelado", mesAtual.toString());
+      localStorage.setItem("isManualFreeze", JSON.stringify(false)); // Marca como automático
     }
   }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado, isManualFreeze]);
 
@@ -88,6 +102,9 @@ const MetaAlimentacao = ({
       setProgressoCongelado(progressoNoDiaAtual);
       setMesCongelado(mesAtual);
       setIsManualFreeze(true);
+      localStorage.setItem("progressoCongelado", progressoNoDiaAtual.toString());
+      localStorage.setItem("mesCongelado", mesAtual.toString());
+      localStorage.setItem("isManualFreeze", JSON.stringify(true));
     }
   };
 
