@@ -123,7 +123,6 @@ const MetaAlimentacao = ({
               Meta de Ticket
             </CardTitle>
             <CardDescription className="text-xs md:text-sm text-foreground">
-              80% de "A Receber" até o dia 15 do mês
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -256,7 +255,6 @@ const MetaAlimentacao = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 md:gap-2">
                     <span className="text-xs md:text-sm font-medium text-blue-600">
-                      Meta: 80% de "A Receber" ({formataDinheiro(aReceber)}) = {formataDinheiro(metaTicket)}
                     </span>
                   </div>
                 </div>
