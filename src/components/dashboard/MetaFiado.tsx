@@ -310,16 +310,16 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
             <div className="mt-1 text-xs text-foreground">
               Dias úteis restantes: {diasUteisRestantes}
             </div>
-               {gap > 0 && (
+            {gap > 0 && (
               <div className="mt-1 text-xs text-foreground">
                 Dias acima da meta: {diasAcimaDaMeta}
-                   )}
-             </div>
+              </div>
+            )}
             <div className="mt-1 text-xs text-foreground">
               Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
             </div>
             <div className="mt-1 text-xs text-foreground">
-            Valor Recebido Total: {recebidosMes}
+              Recebido no mês: {formatCurrency(recebidosMes)}
             </div>
           </CardContent>
         </Card>
