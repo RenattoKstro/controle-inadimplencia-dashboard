@@ -314,6 +314,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
               <div className="mt-1 text-xs text-foreground">
                 Dias acima da meta: {diasAcimaDaMeta}
                    )}
+             </div>
             <div className="mt-1 text-xs text-foreground">
               Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
             </div>
