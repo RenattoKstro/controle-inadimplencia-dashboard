@@ -3,7 +3,7 @@ import { DashboardProps } from "../DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Utensils, Check, AlertTriangle, Calendar, Target } from "lucide-react";
+import { Utensils, Check, AlertTriangle, Calendar, Target, Snowflake } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -48,10 +48,20 @@ const MetaAlimentacao = ({
   isLoading,
 }: DashboardProps) => {
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
-  const [progressoCongelado, setProgressoCongelado] = useState<number | null>(null);
-  const [mesCongelado, setMesCongelado] = useState<number | null>(null);
+  const [progressoCongelado, setProgressoCongelado] = useState<number | null>(() => {
+    const saved = localStorage.getItem("progressoCongelado");
+    return saved ? parseFloat(saved) : null;
+  });
+  const [mesCongelado, setMesCongelado] = useState<number | null>(() => {
+    const saved = localStorage.getItem("mesCongelado");
+    return saved ? parseInt(saved, 10) : null;
+  });
   const [metaTicketConfirmada, setMetaTicketConfirmada] = useState(userData?.metaTicketConfirmada || false);
   const isMobile = useIsMobile();
+  const [isManualFreeze, setIsManualFreeze] = useState(() => {
+    const saved = localStorage.getItem("isManualFreeze");
+    return saved ? JSON.parse(saved) : false;
+  });
 
   useEffect(() => {
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
@@ -69,26 +79,46 @@ const MetaAlimentacao = ({
   const progressoTicketAtual = metaTicket > 0 ? (recebidoMes / metaTicket) * 100 : 0;
 
   useEffect(() => {
+    // Reinicia o ciclo de metas quando o mês muda, limpando o estado congelado
     if (mesCongelado !== null && mesCongelado !== mesAtual) {
       setProgressoCongelado(null);
       setMesCongelado(null);
-    }
-    if (passouDia15 && progressoCongelado === null) {
+      setIsManualFreeze(false);
+      localStorage.removeItem("progressoCongelado");
+      localStorage.removeItem("mesCongelado");
+      localStorage.removeItem("isManualFreeze");
+    } else if (passouDia15 && !isManualFreeze && progressoCongelado === null) {
       const progressoNoDia15 = Math.min(100, progressoTicketAtual);
       setProgressoCongelado(progressoNoDia15);
       setMesCongelado(mesAtual);
+      localStorage.setItem("progressoCongelado", progressoNoDia15.toString());
+      localStorage.setItem("mesCongelado", mesAtual.toString());
+      localStorage.setItem("isManualFreeze", JSON.stringify(false)); // Marca como automático
     }
-  }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado]);
+  }, [passouDia15, progressoTicketAtual, mesAtual, mesCongelado, isManualFreeze]);
+
+  const handleFreezeProgress = () => {
+    if (!isManualFreeze) {
+      const progressoNoDiaAtual = Math.min(100, progressoTicketAtual);
+      setProgressoCongelado(progressoNoDiaAtual);
+      setMesCongelado(mesAtual);
+      setIsManualFreeze(true);
+      localStorage.setItem("progressoCongelado", progressoNoDiaAtual.toString());
+      localStorage.setItem("mesCongelado", mesAtual.toString());
+      localStorage.setItem("isManualFreeze", JSON.stringify(true));
+    }
+  };
 
   const progressoExibido = progressoCongelado !== null ? progressoCongelado : Math.min(100, progressoTicketAtual);
-  const metaTicketBatida = recebidoMes >= metaTicket;
+  const metaTicketBatida = progressoExibido >= 100;
 
   const getProgressColor = (isComplete: boolean, isPastDeadline: boolean) => {
     if (isComplete) return "bg-green-500";
     return isPastDeadline ? "bg-red-500" : "bg-yellow-500";
   };
 
-  const valorRestante = Math.max(0, metaTicket - recebidoMes);
+  const valorRecebidoCongelado = progressoCongelado !== null ? (progressoCongelado / 100) * metaTicket : recebidoMes;
+  const valorRestante = Math.max(0, metaTicket - valorRecebidoCongelado);
   const valorPorDia = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
@@ -123,7 +153,6 @@ const MetaAlimentacao = ({
               Meta de Ticket
             </CardTitle>
             <CardDescription className="text-xs md:text-sm text-foreground">
-              80% de "A Receber" até o dia 15 do mês
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -138,7 +167,7 @@ const MetaAlimentacao = ({
                 <div className="space-y-1 md:space-y-2">
                   <p className="text-xs md:text-sm font-medium text-foreground">Recebido até agora</p>
                   <p className="text-base md:text-2xl font-bold text-foreground">
-                    {formataDinheiro(recebidoMes)}
+                    {formataDinheiro(valorRecebidoCongelado)}
                   </p>
                 </div>
               </div>
@@ -188,7 +217,7 @@ const MetaAlimentacao = ({
                     <span className="text-xs md:text-sm font-medium text-foreground">
                       {metaTicketBatida
                         ? "Meta atingida! Vale alimentação garantido"
-                        : "Meta ainda não atingida"}
+                        : "Meta não atingida"}
                     </span>
                   </div>
                 </div>
@@ -252,15 +281,6 @@ const MetaAlimentacao = ({
                 </div>
                 <p className="text-xs text-foreground text-right">Dias até 15 do mês</p>
               </div>
-              <div className="pt-2 md:pt-3 border-t">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <span className="text-xs md:text-sm font-medium text-blue-600">
-                      Meta: 80% de "A Receber" ({formataDinheiro(aReceber)}) = {formataDinheiro(metaTicket)}
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -268,20 +288,28 @@ const MetaAlimentacao = ({
       {passouDia15 && (
         <div className="pt-4 border-t">
           <p className="text-sm md:text-base font-medium text-foreground">Meta de ticket foi batida?</p>
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-2 mt-2">
             <Button
               variant={metaTicketConfirmada ? "default" : "outline"}
               onClick={() => handleConfirmacaoChange(true)}
-              className="px-4 py-2 rounded-md"
+              className="px-2 py-1 rounded-md text-sm"
             >
               Sim
             </Button>
             <Button
               variant={!metaTicketConfirmada ? "default" : "outline"}
               onClick={() => handleConfirmacaoChange(false)}
-              className="px-4 py-2 rounded-md"
+              className="px-2 py-1 rounded-md text-sm"
             >
               Não
+            </Button>
+            <Button
+              variant={isManualFreeze ? "secondary" : "outline"}
+              onClick={handleFreezeProgress}
+              disabled={isManualFreeze}
+              className="px-2 py-1 rounded-md text-sm flex items-center gap-1"
+            >
+              {isManualFreeze ? <><Snowflake className="h-3 w-3" /> Congelado</> : <><Snowflake className="h-3 w-3" /> Congelar</>}
             </Button>
           </div>
         </div>
