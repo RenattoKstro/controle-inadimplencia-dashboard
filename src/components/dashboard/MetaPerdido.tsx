@@ -2,7 +2,7 @@ import React from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { AlertTriangle } from "lucide-react";
+import { HandCoins } from "lucide-react";
 
 const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) => {
   const [metaPerdido, setMetaPerdido] = React.useState(userData.meta_perdido || 0);
@@ -32,7 +32,7 @@ const MetaPerdido = ({ userData, updateUserData, isLoading }: DashboardProps) =>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-foreground">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <HandCoins className="h-5 w-5 text-red-600" />
             Meta Perdido
           </CardTitle>
         </CardHeader>
