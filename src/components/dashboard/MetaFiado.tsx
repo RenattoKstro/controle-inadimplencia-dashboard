@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calculator, Building, Wallet, ArrowDown, Check, Target } from "lucide-react";
+import { Calculator, Building, Wallet, ArrowDown, Check, Target, Handshake } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -238,7 +238,10 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl md:text-2xl font-bold text-foreground">Meta Fiado</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-red-600 flex items-center gap-2">
+          <Handshake className="h-5 w-5 text-red-600" />
+          Meta Fiado
+        </h2>
       </div>
       <div
         className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
