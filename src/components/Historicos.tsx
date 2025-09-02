@@ -134,12 +134,12 @@ const Historicos = ({
         return fiadoGanhos + desafioGanhos + alimentacaoGanhos + bonusPerdidoGanhos;
       };
 
-      const currentMonth = new Date().toISOString().slice(0, 7);
+      const selectedMonth = formData.month || new Date().toISOString().slice(0, 7);
       const { data: existingRecords, error: fetchError } = await supabase
         .from("historico")
         .select("*")
         .eq("user_id", authUserId)
-        .eq("month", currentMonth);
+        .eq("month", selectedMonth);
       if (fetchError) {
         console.error("Error fetching existing record:", fetchError.message);
         return;
@@ -150,7 +150,7 @@ const Historicos = ({
       console.log("Existing record found:", existingRecord);
       setFormData({
         id: existingRecord?.id || "",
-        month: currentMonth,
+        month: selectedMonth,
         aberturavencidomes: userData.abertura_vencido_mes || 0,
         metames: userData.meta_mes || 0,
         vencidoatual: safeVencidoatual,
@@ -178,8 +178,7 @@ const Historicos = ({
       console.log("User not authenticated during submit");
       return;
     }
-    console.log("Auth UID:", authUserId);
-    console.log("Submitting form data - ID:", formData.id, "Editing Daily ID:", editingDailyId);
+    console.log("Submitting form data - ID:", formData.id, "Editing Daily ID:", editingDailyId, "Month:", formData.month, "Data Recebimento:", formData.data_recebimento, "Recebido Diario:", formData.recebidoDiario);
 
     try {
       if (editingDailyId) {
@@ -201,7 +200,7 @@ const Historicos = ({
         console.log("Daily record updated successfully");
         setEditingDailyId(null);
       } else {
-        // Edição ou inserção de registro mensal
+        // Edição ou inserção de registro mensal e diário
         const historicoPayload = {
           id: formData.id || crypto.randomUUID(),
           user_id: authUserId,
@@ -219,20 +218,19 @@ const Historicos = ({
         console.log("Historico payload to insert/update:", historicoPayload);
 
         let historicoResult;
-        const currentMonth = new Date().toISOString().slice(0, 7);
         const { data: existingRecords, error: fetchError } = await supabase
           .from("historico")
           .select("*")
           .eq("user_id", authUserId)
-          .eq("month", currentMonth);
+          .eq("month", formData.month);
         if (fetchError) {
           console.error("Error fetching existing record:", fetchError.message);
           throw fetchError;
         }
         const existingRecord = existingRecords?.[0];
 
-        if (existingRecord && formData.month === currentMonth) {
-          console.log("Updating existing record for month:", currentMonth, "with id:", existingRecord.id);
+        if (existingRecord) {
+          console.log("Updating existing record for month:", formData.month, "with id:", existingRecord.id);
           historicoResult = await supabase
             .from("historico")
             .update(historicoPayload)
@@ -250,30 +248,50 @@ const Historicos = ({
         }
         if (!historicoData || historicoData.length === 0) {
           console.warn("No data returned from Supabase after historico save");
-        } else {
-          console.log("Historico saved successfully, response:", historicoData);
+          return;
+        }
+        console.log("Historico saved successfully, response:", historicoData);
 
-          // Salvar registro diário associado ao novo historico
-          const diarioPayload = {
-            user_id: authUserId,
-            data_recebimento: formData.data_recebimento,
-            recebido: formData.recebidoDiario,
-            historico_id: historicoData[0].id,
-          };
-          console.log("Inserting new daily record with payload:", diarioPayload);
-          const { data: diarioData, error: diarioError } = await supabase
+        // Salvar ou atualizar registro diário
+        const diarioPayload = {
+          user_id: authUserId,
+          data_recebimento: formData.data_recebimento,
+          recebido: formData.recebidoDiario,
+          historico_id: historicoData[0].id,
+        };
+        console.log("Attempting to save daily record with payload:", diarioPayload);
+        const { data: existingDailyRecords, error: dailyFetchError } = await supabase
+          .from("historico_diario")
+          .select("*")
+          .eq("historico_id", historicoData[0].id)
+          .eq("data_recebimento", formData.data_recebimento)
+          .eq("user_id", authUserId);
+        if (dailyFetchError) {
+          console.error("Error fetching existing daily record:", dailyFetchError.message);
+          throw dailyFetchError;
+        }
+        let diarioResult;
+        if (existingDailyRecords && existingDailyRecords.length > 0) {
+          console.log("Updating existing daily record with id:", existingDailyRecords[0].id);
+          diarioResult = await supabase
             .from("historico_diario")
-            .insert(diarioPayload)
+            .update(diarioPayload)
+            .eq("id", existingDailyRecords[0].id)
+            .eq("user_id", authUserId)
             .select();
-          if (diarioError) {
-            console.error("Error saving historico_diario:", diarioError.message, "Details:", diarioError.details, "Code:", diarioError.code);
-            throw diarioError;
-          }
-          if (!diarioData || diarioData.length === 0) {
-            console.warn("No data returned from Supabase after historico_diario save");
-          } else {
-            console.log("Historico_diario saved successfully, response:", diarioData);
-          }
+        } else {
+          console.log("Inserting new daily record for historico_id:", historicoData[0].id);
+          diarioResult = await supabase.from("historico_diario").insert(diarioPayload).select();
+        }
+        const { data: diarioData, error: diarioError } = diarioResult;
+        if (diarioError) {
+          console.error("Error saving historico_diario:", diarioError.message, "Details:", diarioError.details, "Code:", diarioError.code);
+          throw diarioError;
+        }
+        if (!diarioData || diarioData.length === 0) {
+          console.warn("No data returned from Supabase after historico_diario save");
+        } else {
+          console.log("Historico_diario saved successfully, response:", diarioData);
         }
 
         // Atualiza userData apenas com campos relevantes
