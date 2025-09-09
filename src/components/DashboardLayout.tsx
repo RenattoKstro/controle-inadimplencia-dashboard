@@ -32,6 +32,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido"; // Importando o componente existente
+import { TbEar } from "react-icons/tb";
 
 export interface DashboardProps {
   userData: any;
@@ -72,6 +73,7 @@ const DashboardLayout = () => {
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const [isScriptsOpen, setIsScriptsOpen] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
 
   // Verificação de sessão aprimorada
   useEffect(() => {
@@ -519,14 +521,24 @@ const DashboardLayout = () => {
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </Button>
                 <VersaoLog />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 flex items-center gap-2 text-foreground hover:text-primary"
-                  onClick={() => setLayoutVersion(layoutVersion === "V1" ? "V2" : "V1")}
-                >
-                  {layoutVersion === "V1" ? "V2" : "V1"}
-                </Button>
+                <div className="relative flex items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 flex items-center gap-2 text-foreground hover:text-primary mr-2"
+                    onClick={() => setLayoutVersion(layoutVersion === "V1" ? "V2" : "V1")}
+                  >
+                    {layoutVersion === "V1" ? "V2" : "V1"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => setShowImageDialog(true)}
+                  >
+                    <TbEar className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             </>
           )}
@@ -763,6 +775,12 @@ const DashboardLayout = () => {
           `}
         </style>
       </footer>
+
+      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <DialogContent className="max-w-2xl bg-card">
+          <img src="https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/image.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL2ltYWdlLnBuZyIsImlhdCI6MTc1NzM0NzMyNSwiZXhwIjoxNzU5OTM5MzI1fQ.96_7U1AqJpi_1B0bEvegjjAakDbB4C9bAGmAmPlByAM" alt="Imagem Adicional" className="w-full h-auto" />
+        </DialogContent>
+      </Dialog>
 
       <style>
         {`
