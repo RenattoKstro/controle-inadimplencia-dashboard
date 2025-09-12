@@ -46,6 +46,7 @@ const MetaAlimentacao = ({
   updateUserData,
   diasRestantesCalculados,
   isLoading,
+  setRecebidoHoje,
 }: DashboardProps) => {
   const [diasUteisAte15, setDiasUteisAte15] = useState(0);
   const [progressoCongelado, setProgressoCongelado] = useState<number | null>(() => {
@@ -62,6 +63,17 @@ const MetaAlimentacao = ({
     const saved = localStorage.getItem("isManualFreeze");
     return saved ? JSON.parse(saved) : false;
   });
+
+  // Recebido Hoje vindo de MetaFiado
+  const recebidoHoje = userData?.abertura_dia && userData?.vencido_atual !== undefined
+    ? Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)))
+    : 0;
+
+  useEffect(() => {
+    if (setRecebidoHoje) {
+      setRecebidoHoje(recebidoHoje);
+    }
+  }, [recebidoHoje, setRecebidoHoje]);
 
   useEffect(() => {
     const dias = calcularDiasUteisAte15(diasRestantesCalculados || 0);
@@ -119,7 +131,11 @@ const MetaAlimentacao = ({
 
   const valorRecebidoCongelado = progressoCongelado !== null ? (progressoCongelado / 100) * metaTicket : recebidoMes;
   const valorRestante = Math.max(0, metaTicket - valorRecebidoCongelado);
-  const valorPorDia = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
+  const receberPorDiaAte15 = diasUteisAte15 > 0 ? valorRestante / diasUteisAte15 : 0;
+
+  const getColorClass = (value: number, target: number) => {
+    return value >= target ? "text-green-600" : "text-red-600";
+  };
 
   const handleConfirmacaoChange = (confirmed: boolean) => {
     setMetaTicketConfirmada(confirmed);
@@ -186,20 +202,24 @@ const MetaAlimentacao = ({
                   )}
                 />
               </div>
-              <div className="space-y-2 md:space-y-3">
-                <div className="grid grid-cols-2 gap-3 md:gap-4">
-                  <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-foreground">Valor Restante</p>
-                    <p className="text-sm md:text-lg font-semibold text-foreground">
-                      {formataDinheiro(valorRestante)}
-                    </p>
-                  </div>
-                  <div className="space-y-1 md:space-y-2">
-                    <p className="text-xs md:text-sm font-medium text-foreground">Receber por dia até o dia 15</p>
-                    <p className="text-sm md:text-lg font-semibold text-foreground">
-                      {formataDinheiro(valorPorDia)}
-                    </p>
-                  </div>
+              <div className="grid grid-cols-3 gap-3 md:gap-4 items-end">
+                <div className="space-y-1 md:space-y-2">
+                  <p className="text-xs md:text-sm font-medium text-foreground">Valor Restante</p>
+                  <p className="text-sm md:text-lg font-semibold text-foreground">
+                    {formataDinheiro(valorRestante)}
+                  </p>
+                </div>
+                <div className="space-y-1 md:space-y-2">
+                  <p className="text-xs md:text-sm font-medium text-foreground whitespace-nowrap">Receber por dia até o dia 15</p>
+                  <p className="text-sm md:text-lg font-semibold text-foreground">
+                    {formataDinheiro(receberPorDiaAte15)}
+                  </p>
+                </div>
+                <div className="space-y-1 md:space-y-2">
+                  <p className="text-xs md:text-sm font-medium text-foreground">Recebido Hoje</p>
+                  <p className={cn("text-sm md:text-lg font-semibold", getColorClass(recebidoHoje, receberPorDiaAte15))}>
+                    {formataDinheiro(recebidoHoje)}
+                  </p>
                 </div>
               </div>
               <div className="pt-2 md:pt-3 border-t">
