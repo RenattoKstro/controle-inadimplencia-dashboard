@@ -778,7 +778,7 @@ const DashboardLayout = () => {
 
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
         <DialogContent className="max-w-2xl bg-card">
-          <img src="https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/image.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL2ltYWdlLnBuZyIsImlhdCI6MTc1NzM0NzMyNSwiZXhwIjoxNzU5OTM5MzI1fQ.96_7U1AqJpi_1B0bEvegjjAakDbB4C9bAGmAmPlByAM" alt="Imagem Adicional" className="w-full h-auto" />
+          <img src="https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/qlick.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL3FsaWNrLmpwZWciLCJpYXQiOjE3NjAwNDMxMTIsImV4cCI6MTc2MjYzNTExMn0.qGyktssM84jEByd8WRk6tAyR8xCXO5-ncsLWA3zdLfw" alt="Imagem Adicional" className="w-full h-auto" />
         </DialogContent>
       </Dialog>
 
