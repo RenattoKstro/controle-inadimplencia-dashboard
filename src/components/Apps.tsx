@@ -1,25 +1,69 @@
 import React from "react";
-import { Calculator, DollarSign } from "lucide-react";
+import { Calculator, DollarSign, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
-import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90"; // Certifique-se de que o caminho está correto
-import TigerLinkGenerator from "./TigerLinkGenerator"; // Importação do novo componente
+import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90";
+import TigerLinkGenerator from "./TigerLinkGenerator";
+import RenegociacaoCard from "./dashboard/RenegociacaoCard"; // Novo componente
 
 const apps = [
-  { id: "vendedor-90", name: "Calculadora Vendedor 90%", icon: Calculator, component: CalculadoraVendedor90 },
-  { id: "fechamento-caixa", name: "Fechamento Caixa Geral", icon: () => (
-    <div className="flex items-center opacity-100">
-      <Calculator className="h-4 w-4 mr-1 text-white" />
-      <DollarSign className="h-4 w-4 text-white" />
-    </div>
-  ), url: "https://fechamentodecaixa.netlify.app/" },
-  { id: "calculadora", name: "Calculadora de Rentabilidade", icon: Calculator, component: CalculadoraRentabilidade },
-  { id: "external-calculator", name: "Calculadora Rentabilidade (Externa)", icon: Calculator, url: "https://abre.ai/calrent" },
-  { id: "tiger-2.0", name: "Tiger 2.0", icon: () => <img src="/tiger2.ico" alt="Tiger 2.0 Icon" className="h-6 w-6 mr-2" style={{ backgroundColor: "#3b82f6", padding: "2px" }} />, component: TigerLinkGenerator },
+  {
+    id: "vendedor-90",
+    name: "Calculadora Vendedor 90%",
+    icon: Calculator,
+    component: CalculadoraVendedor90,
+  },
+  {
+    id: "fechamento-caixa",
+    name: "Fechamento Caixa Geral",
+    icon: () => (
+      <div className="flex items-center opacity-100">
+        <Calculator className="h-4 w-4 mr-1 text-white" />
+        <DollarSign className="h-4 w-4 text-white" />
+      </div>
+    ),
+    url: "https://fechamentodecaixa.netlify.app/",
+  },
+  {
+    id: "calculadora",
+    name: "Calculadora de Rentabilidade",
+    icon: Calculator,
+    component: CalculadoraRentabilidade,
+  },
+  {
+    id: "external-calculator",
+    name: "Calculadora Rentabilidade (Externa)",
+    icon: Calculator,
+    url: "https://abre.ai/calrent",
+  },
+  {
+    id: "tiger-2.0",
+    name: "Tiger 2.0",
+    icon: () => (
+      <img
+        src="/tiger2.ico"
+        alt="Tiger 2.0 Icon"
+        className="h-6 w-6 mr-2"
+        style={{ backgroundColor: "#3b82f6", padding: "2px" }}
+      />
+    ),
+    component: TigerLinkGenerator,
+  },
+  {
+    id: "renegociacao",
+    name: "Renegociação",
+    icon: () => (
+      <div className="flex items-center">
+        <DollarSign className="h-4 w-4 mr-1 text-white" />
+        <RefreshCw className="h-3 w-3 text-white" />
+      </div>
+    ),
+    component: RenegociacaoCard,
+  },
 ];
 
 const Apps = () => {
@@ -43,7 +87,7 @@ const Apps = () => {
                   : ""
               }`}
             >
-              <app.icon />
+              {typeof app.icon === "function" ? <app.icon /> : <app.icon className="h-4 w-4" />}
               {app.name}
             </button>
           </a>
@@ -58,11 +102,13 @@ const Apps = () => {
                     ? "bg-red-500 text-white hover:bg-red-600"
                     : app.id === "tiger-2.0"
                     ? "bg-blue-500 text-white hover:bg-blue-600"
+                    : app.id === "renegociacao"
+                    ? "bg-purple-500 text-white hover:bg-purple-600"
                     : ""
                 }`}
                 onClick={() => console.log(`Abrindo ${app.name} dialog`)}
               >
-                <app.icon />
+                {typeof app.icon === "function" ? <app.icon /> : <app.icon className="h-4 w-4" />}
                 {app.name}
               </button>
             </DialogTrigger>
