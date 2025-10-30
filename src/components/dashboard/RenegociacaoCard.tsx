@@ -99,7 +99,7 @@ export default function RenegociacaoCard() {
   }, [entrada, entradaMinima]);
 
   return (
-    <Card className="$1">
+    <Card className="w-[1100px] max-h-[85vh] overflow-y-auto p-6 rounded-2xl shadow-xl mx-auto">
       <CardHeader>
         <CardTitle>Renegociação — Gerador de Mensagem (dark)</CardTitle>
       </CardHeader>
