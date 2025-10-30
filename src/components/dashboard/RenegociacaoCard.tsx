@@ -210,3 +210,4 @@ export default function RenegociacaoCard() {
     </Card>
   );
 }
+export default RenegociacaoCard;
