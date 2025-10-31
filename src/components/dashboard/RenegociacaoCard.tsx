@@ -1,100 +1,66 @@
-// src/components/dashboard/RenegociacaoPage.tsx
-
-import { useState } from "react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-
 export default function RenegociacaoPage() {
-  const [valorOriginal, setValorOriginal] = useState(0)
-  const [jurosMensal, setJurosMensal] = useState(0)
-  const [parcelas, setParcelas] = useState(1)
-
-  // Fórmulas
-  const totalSemJuros = valorOriginal
-  const totalCorrigido = valorOriginal * Math.pow(1 + jurosMensal / 100, parcelas)
-  const jurosTotal = totalCorrigido - totalSemJuros
-  const totalPagar = totalCorrigido
-
   return (
-    <div className="w-full min-h-screen bg-gray-100 flex justify-center items-start py-10 px-4">
-      <Card className="w-full max-w-4xl shadow-xl rounded-2xl bg-white">
-        
-        <CardHeader className="pb-4">
-          <CardTitle className="text-2xl font-bold text-center">
-            Renegociação — Gerador de Mensagem
-          </CardTitle>
-        </CardHeader>
+    <div className="min-h-screen w-full bg-gray-100 flex justify-center p-6">
 
-        <CardContent className="space-y-8">
+      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8 overflow-y-auto">
 
-          {/* ----------------------------- */}
-          {/* 🔹 CAMPOS DE ENTRADA */}
-          {/* ----------------------------- */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <h1 className="text-2xl font-bold text-center mb-1">
+          Renegociação — Gerador de Mensagem
+        </h1>
+        <p className="text-center text-gray-600 mb-8">
+          Preencha os dados abaixo
+        </p>
 
-            <div className="space-y-2">
-              <Label>Valor Original</Label>
-              <Input
-                type="number"
-                value={valorOriginal}
-                onChange={(e) => setValorOriginal(Number(e.target.value))}
-              />
-            </div>
+        {/* Inputs principais */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
-            <div className="space-y-2">
-              <Label>Juros Mensal (%)</Label>
-              <Input
-                type="number"
-                value={jurosMensal}
-                onChange={(e) => setJurosMensal(Number(e.target.value))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Parcelas</Label>
-              <Input
-                type="number"
-                min={1}
-                value={parcelas}
-                onChange={(e) => setParcelas(Number(e.target.value))}
-              />
-            </div>
+          <div className="flex flex-col">
+            <label className="font-medium mb-1">Valor Original</label>
+            <input
+              type="number"
+              className="border rounded-lg p-3"
+              placeholder="0,00"
+            />
           </div>
 
-          {/* ----------------------------- */}
-          {/* 🔹 RESULTADOS DO CÁLCULO */}
-          {/* ----------------------------- */}
-          <div className="rounded-xl border p-6 bg-gray-50 space-y-3">
-            <p><strong>Total sem Juros:</strong> R$ {totalSemJuros.toFixed(2)}</p>
-            <p><strong>Total Corrigido:</strong> R$ {totalCorrigido.toFixed(2)}</p>
-            <p><strong>Juros Total:</strong> R$ {jurosTotal.toFixed(2)}</p>
-            <p><strong>Total a Pagar:</strong> R$ {totalPagar.toFixed(2)}</p>
+          <div className="flex flex-col">
+            <label className="font-medium mb-1">Juros Mensal (%)</label>
+            <input
+              type="number"
+              className="border rounded-lg p-3"
+              placeholder="0"
+            />
           </div>
 
-          {/* ----------------------------- */}
-          {/* 🔹 SIMULAÇÃO DE PARCELAS (1x a 20x) */}
-          {/* ----------------------------- */}
-          <div className="rounded-xl border p-6 bg-gray-50">
-            <h3 className="font-semibold text-lg mb-3">Simulação Automática</h3>
-
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-              {[...Array(20)].map((_, idx) => {
-                const p = idx + 1
-                const total = valorOriginal * Math.pow(1 + jurosMensal / 100, p)
-                const valorParcela = total / p
-                return (
-                  <div key={p} className="text-sm border-b pb-1">
-                    <strong>{p}x</strong> de R$ {valorParcela.toFixed(2)}
-                  </div>
-                )
-              })}
-            </div>
-
+          <div className="flex flex-col">
+            <label className="font-medium mb-1">Parcelas</label>
+            <input
+              type="number"
+              className="border rounded-lg p-3"
+              placeholder="1"
+            />
           </div>
+        </div>
 
-        </CardContent>
-      </Card>
+        {/* Resultados */}
+        <div className="bg-gray-50 border rounded-xl p-6 mb-10">
+          <p className="text-lg mb-2">✅ <strong>Total sem Juros:</strong> R$ 0,00</p>
+          <p className="text-lg mb-2">✅ <strong>Total Corrigido:</strong> R$ 0,00</p>
+          <p className="text-lg mb-2">✅ <strong>Juros Total:</strong> R$ 0,00</p>
+          <p className="text-lg"><strong>Total a Pagar:</strong> R$ 0,00</p>
+        </div>
+
+        {/* Mensagem gerada */}
+        <div className="border rounded-xl p-6 bg-gray-50">
+          <h2 className="text-xl font-semibold mb-3">Simulação de Mensagem</h2>
+          <textarea
+            rows={5}
+            className="w-full border rounded-lg p-3 resize-none"
+            placeholder="A mensagem gerada aparecerá aqui..."
+          ></textarea>
+        </div>
+      </div>
+
     </div>
-  )
+  );
 }
