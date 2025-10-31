@@ -8,7 +8,7 @@ import {
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90";
 import TigerLinkGenerator from "./TigerLinkGenerator";
-import RenegociacaoCard from "./dashboard/RenegociacaoCard"; // Novo componente
+import RenegociacaoCard from "./dashboard/RenegociacaoCard";
 
 const apps = [
   {
@@ -106,14 +106,28 @@ const Apps = () => {
                     ? "bg-purple-500 text-white hover:bg-purple-600"
                     : ""
                 }`}
-                onClick={() => console.log(`Abrindo ${app.name} dialog`)}
               >
                 {typeof app.icon === "function" ? <app.icon /> : <app.icon className="h-4 w-4" />}
                 {app.name}
               </button>
             </DialogTrigger>
-            <DialogContent className="max-w-md bg-card">
-              <app.component />
+
+            {/* ✅ DIALOG FULL SCREEN */}
+            <DialogContent
+              className="
+                max-w-screen-xl 
+                w-full 
+                h-[95vh] 
+                bg-white 
+                p-8 
+                rounded-xl 
+                overflow-hidden
+              "
+            >
+              {/* ✅ Scroll interno sem quebrar o layout */}
+              <div className="w-full h-full overflow-auto">
+                <app.component />
+              </div>
             </DialogContent>
           </Dialog>
         )
