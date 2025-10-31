@@ -228,7 +228,7 @@ const MeusPremios = ({
     metaAtingidaPercentualCadastro = Math.max(0, metaAtingidaPercentualCadastro);
 
     const premiosFiadoCadastro = [
-      { nome: "94%", percentual: 94, valor: 105.00, atingido: metaAtingidaPercentualCadastro >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "96%", percentual: 96, valor: 105.00, atingido: metaAtingidaPercentualCadastro >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
       { nome: "98%", percentual: 98, valor: 52.50, atingido: metaAtingidaPercentualCadastro >= 98, icon: <Wallet size={16} />, color: "text-blue-500" },
       { nome: "100%", percentual: 100, valor: 157.50, atingido: metaAtingidaPercentualCadastro >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
