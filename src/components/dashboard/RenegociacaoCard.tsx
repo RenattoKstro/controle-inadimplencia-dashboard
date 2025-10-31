@@ -1,91 +1,152 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Clipboard } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
 
-export default function RenegociacaoMensagem() {
-  const [totalCorrigido, setTotalCorrigido] = useState("");
-  const [jurosParcelamento, setJurosParcelamento] = useState("");
-  const [maxParcelas, setMaxParcelas] = useState("20");
+export default function RenegociacaoNova() {
+  const [totalSemJuros, setTotalSemJuros] = useState("");
+  const [percentualIsencao, setPercentualIsencao] = useState("");
+  const [entrada, setEntrada] = useState("");
+  const [jurosTotal, setJurosTotal] = useState(""); // juros total antes do desconto
+  const [descontoJuros, setDescontoJuros] = useState(""); // %
+  const [qtdParcelas, setQtdParcelas] = useState("20");
 
-  const totalPagar =
-    totalCorrigido && jurosParcelamento
-      ? (parseFloat(totalCorrigido) + parseFloat(jurosParcelamento))
-      : 0;
+  // ✅ Calcula entrada mínima baseada no percentual
+  const entradaMinima =
+    totalSemJuros && percentualIsencao
+      ? (parseFloat(totalSemJuros) * (parseFloat(percentualIsencao) / 100)).toFixed(2)
+      : "0.00";
 
-  // Geração da tabela de parcelamento
-  const gerarParcelas = () => {
-    const parcelas = [];
-    const max = parseInt(maxParcelas);
+  // ✅ Carteira própria: total - entrada
+  const carteiraPropria =
+    totalSemJuros && entrada
+      ? (parseFloat(totalSemJuros) - parseFloat(entrada)).toFixed(2)
+      : "0.00";
 
-    for (let i = max; i >= 1; i--) {
-      const valor = (totalPagar / i).toFixed(2);
-      parcelas.push({ qtd: i, valor });
-    }
+  // ✅ Aplica desconto nos juros
+  const jurosAplicado =
+    jurosTotal && descontoJuros
+      ? (parseFloat(jurosTotal) * (1 - parseFloat(descontoJuros) / 100)).toFixed(2)
+      : jurosTotal
+      ? parseFloat(jurosTotal).toFixed(2)
+      : "0.00";
 
-    return parcelas;
-  };
+  // ✅ Total a pagar
+  const totalPagar = (parseFloat(carteiraPropria) + parseFloat(jurosAplicado)).toFixed(2);
 
-  const listaParcelas = gerarParcelas();
+  // ✅ Valor das parcelas
+  const valorParcela =
+    qtdParcelas && totalPagar
+      ? (parseFloat(totalPagar) / parseInt(qtdParcelas)).toFixed(2)
+      : "0.00";
 
+  // ✅ Mensagem final
   const mensagem = `
-Olá! Temos várias opções de renegociação para você:
+Olá, temos uma proposta de renegociação para você.
 
-Total Corrigido: R$ ${totalCorrigido}
-Juros Parc.: R$ ${jurosParcelamento}
-Total a Pagar: R$ ${totalPagar.toFixed(2)}
+Total sem Juros: R$ ${totalSemJuros}
+Valor de Entrada: R$ ${entrada}
+Desconto sobre Juros: ${descontoJuros}%  
+Carteira Própria: R$ ${carteiraPropria}
+Valor Total a Pagar: R$ ${totalPagar}
 
-Opções de Parcelamento:
-${listaParcelas.map(p => `${p.qtd}x de R$ ${p.valor}`).join("\n")}
+Qtd de Parcelas: ${qtdParcelas}
+Valor da Parcela: R$ ${valorParcela}
   `.trim();
 
   const copiar = () => {
-    Clipboard.setString(mensagem);
-    alert("Mensagem copiada!");
+    Alert.alert("Mensagem copiada!");
   };
 
   return (
     <ScrollView style={{ padding: 20 }}>
-      <Text>Total Corrigido:</Text>
+      {/* TOTAL SEM JUROS */}
+      <Text>Total Sem Juros:</Text>
       <TextInput
         style={estilo.input}
         keyboardType="numeric"
-        value={totalCorrigido}
-        onChangeText={setTotalCorrigido}
+        value={totalSemJuros}
+        onChangeText={setTotalSemJuros}
       />
 
-      <Text>Juros Parcelamento:</Text>
+      {/* PERCENTUAL ISENÇÃO */}
+      <Text>% Entrada mínima (isenção juros):</Text>
       <TextInput
         style={estilo.input}
         keyboardType="numeric"
-        value={jurosParcelamento}
-        onChangeText={setJurosParcelamento}
+        value={percentualIsencao}
+        onChangeText={setPercentualIsencao}
       />
 
-      <Text>Máximo de Parcelas (ex: 20):</Text>
+      {/* MOSTRAR ENTRADA MÍNIMA */}
+      {totalSemJuros && percentualIsencao ? (
+        <Text style={estilo.boxInfo}>
+          Entrada mínima → R$ {entradaMinima}
+        </Text>
+      ) : null}
+
+      {/* ENTRADA DIGITADA */}
+      <Text>Entrada escolhida:</Text>
       <TextInput
         style={estilo.input}
         keyboardType="numeric"
-        value={maxParcelas}
-        onChangeText={setMaxParcelas}
+        value={entrada}
+        onChangeText={setEntrada}
       />
 
-      {totalPagar > 0 ? (
+      {/* JUROS TOTAL */}
+      <Text>Juros Total (antes do desconto):</Text>
+      <TextInput
+        style={estilo.input}
+        keyboardType="numeric"
+        value={jurosTotal}
+        onChangeText={setJurosTotal}
+      />
+
+      {/* DESCONTO SOBRE JUROS (APARECE APÓS ENTRADA) */}
+      {entrada ? (
         <>
-          <Text style={{ marginTop: 20, fontWeight: "bold" }}>Opções:</Text>
-
-          {listaParcelas.map((p, index) => (
-            <Text key={index} style={estilo.itemParcela}>
-              {p.qtd}x de R$ {p.valor}
-            </Text>
-          ))}
-
-          <Text style={{ fontWeight: "bold", marginTop: 20 }}>Mensagem Gerada:</Text>
-          <Text style={estilo.msg}>{mensagem}</Text>
-
-          <TouchableOpacity onPress={copiar} style={estilo.botao}>
-            <Text style={{ color: "#FFF", textAlign: "center" }}>Copiar Mensagem</Text>
-          </TouchableOpacity>
+          <Text>Desconto sobre Juros (%):</Text>
+          <TextInput
+            style={estilo.input}
+            keyboardType="numeric"
+            value={descontoJuros}
+            onChangeText={setDescontoJuros}
+          />
         </>
       ) : null}
+
+      {/* PARCELAMENTO */}
+      <Text>Quantidade de Parcelas:</Text>
+      <TextInput
+        style={estilo.input}
+        keyboardType="numeric"
+        value={qtdParcelas}
+        onChangeText={setQtdParcelas}
+      />
+
+      {/* RESULTADOS */}
+      <Text style={estilo.boxInfo}>
+        Carteira Própria: R$ {carteiraPropria}
+      </Text>
+
+      <Text style={estilo.boxInfo}>
+        Juros após desconto: R$ {jurosAplicado}
+      </Text>
+
+      <Text style={estilo.boxInfo}>
+        Total a Pagar: R$ {totalPagar}
+      </Text>
+
+      <Text style={estilo.boxInfo}>
+        Parcela: R$ {valorParcela}
+      </Text>
+
+      {/* MENSAGEM FINAL */}
+      <Text style={{ fontWeight: "bold", marginTop: 20 }}>Mensagem:</Text>
+      <Text style={estilo.msg}>{mensagem}</Text>
+
+      <TouchableOpacity onPress={copiar} style={estilo.botao}>
+        <Text style={{ color: "#FFF", textAlign: "center" }}>Copiar Mensagem</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -93,27 +154,30 @@ ${listaParcelas.map(p => `${p.qtd}x de R$ ${p.valor}`).join("\n")}
 const estilo = {
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#aaa",
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
+    fontSize: 16,
   },
-  itemParcela: {
-    backgroundColor: "#f8f8f8",
-    padding: 8,
-    borderRadius: 5,
-    marginVertical: 4,
+  boxInfo: {
+    backgroundColor: "#f3f3f3",
+    padding: 10,
+    borderRadius: 6,
+    marginVertical: 6,
+    fontSize: 16,
   },
   msg: {
-    backgroundColor: "#eee",
+    backgroundColor: "#e5e5e5",
     padding: 12,
-    borderRadius: 5,
+    borderRadius: 6,
     marginVertical: 10,
+    fontSize: 15,
   },
   botao: {
     backgroundColor: "#007bff",
     padding: 12,
-    borderRadius: 5,
-    marginTop: 10,
+    borderRadius: 6,
+    marginTop: 15,
   },
 };
