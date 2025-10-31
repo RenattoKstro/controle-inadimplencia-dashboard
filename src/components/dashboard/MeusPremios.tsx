@@ -228,7 +228,7 @@ const MeusPremios = ({
     metaAtingidaPercentualCadastro = Math.max(0, metaAtingidaPercentualCadastro);
 
     const premiosFiadoCadastro = [
-      { nome: "94%", percentual: 94, valor: 105.00, atingido: metaAtingidaPercentualCadastro >= 94, icon: <Wallet size={16} />, color: "text-blue-500" },
+      { nome: "96%", percentual: 96, valor: 105.00, atingido: metaAtingidaPercentualCadastro >= 96, icon: <Wallet size={16} />, color: "text-blue-500" },
       { nome: "98%", percentual: 98, valor: 52.50, atingido: metaAtingidaPercentualCadastro >= 98, icon: <Wallet size={16} />, color: "text-blue-500" },
       { nome: "100%", percentual: 100, valor: 157.50, atingido: metaAtingidaPercentualCadastro >= 100, icon: <Wallet size={16} />, color: "text-blue-500" },
     ];
@@ -237,7 +237,7 @@ const MeusPremios = ({
     metaDesafioPercentualCadastro = Math.max(0, Math.min(100, metaDesafioPercentualCadastro));
 
     const premiosDesafioCadastro = [
-      { nome: "94%", percentual: 94, valor: 100.00, atingido: metaDesafioPercentualCadastro >= 94, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "96%", percentual: 96, valor: 100.00, atingido: metaDesafioPercentualCadastro >= 96, icon: <Trophy size={16} />, color: "text-yellow-500" },
       { nome: "98%", percentual: 98, valor: 100.00, atingido: metaDesafioPercentualCadastro >= 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
       { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentualCadastro >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
