@@ -1,49 +1,119 @@
-// utils/parcelas.ts
-export type ResultadoParcelamento = {
-  jurosTotal: number;        // juros total (precisão)
-  totalPagar: number;       // total a pagar
-  parcela: number;          // valor por parcela (precisão)
-  parcelas: { qtd:number; valor:number }[]; // lista N..1
-};
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Clipboard } from "react-native";
 
-// arredonda para 2 casas
-function round2(v:number){ return Math.round((v + Number.EPSILON)*100)/100; }
+export default function RenegociacaoMensagem() {
+  const [totalCorrigido, setTotalCorrigido] = useState("");
+  const [jurosParcelamento, setJurosParcelamento] = useState("");
+  const [maxParcelas, setMaxParcelas] = useState("20");
 
-/**
- * Calcula parcelamento com juros fixos por parcela (taxa mensal * totalCorrigido).
- * @param totalCorrigido valor base
- * @param taxaMensalPercent ex: 2  (para 2%)
- * @param n parcelas (ex: 20)
- * @param mode 'precise' | 'perParcelRounded'
- *    - 'precise': calcula juros total em alta precisão e só depois arredonda
- *    - 'perParcelRounded': arredonda juros mensal para 2 casas e soma (pode gerar centavos extras)
- */
-export function calcParcelamento(
-  totalCorrigido:number,
-  taxaMensalPercent:number,
-  n:number,
-  mode:'precise'|'perParcelRounded' = 'precise'
-): ResultadoParcelamento {
-  const r = taxaMensalPercent / 100;
-  if (mode === 'perParcelRounded') {
-    const jMensal = round2(totalCorrigido * r);          // arredonda cada parcela de juros
-    const jurosTotal = round2(jMensal * n);
-    const totalPagar = round2(totalCorrigido + jurosTotal);
-    const parcela = round2(totalPagar / n);
-    const parcelas = Array.from({length:n}, (_,i) => ({qtd: n - i, valor: round2(totalPagar / (n - i))}));
-    return { jurosTotal, totalPagar, parcela, parcelas };
-  } else {
-    // modo precise
-    const jurosTotalRaw = totalCorrigido * r * n;        // alta precisão
-    const jurosTotal = round2(jurosTotalRaw);
-    const totalPagarRaw = totalCorrigido + jurosTotalRaw;
-    const totalPagar = round2(totalPagarRaw);
-    const parcela = round2(totalPagarRaw / n);
-    const parcelas = Array.from({length:n}, (_,i) => {
-      const qtd = n - i;
-      const valor = round2(totalPagarRaw / qtd);
-      return {qtd, valor};
-    });
-    return { jurosTotal, totalPagar, parcela, parcelas };
-  }
+  const totalPagar =
+    totalCorrigido && jurosParcelamento
+      ? (parseFloat(totalCorrigido) + parseFloat(jurosParcelamento))
+      : 0;
+
+  // Geração da tabela de parcelamento
+  const gerarParcelas = () => {
+    const parcelas = [];
+    const max = parseInt(maxParcelas);
+
+    for (let i = max; i >= 1; i--) {
+      const valor = (totalPagar / i).toFixed(2);
+      parcelas.push({ qtd: i, valor });
+    }
+
+    return parcelas;
+  };
+
+  const listaParcelas = gerarParcelas();
+
+  const mensagem = `
+Olá! Temos várias opções de renegociação para você:
+
+Total Corrigido: R$ ${totalCorrigido}
+Juros Parc.: R$ ${jurosParcelamento}
+Total a Pagar: R$ ${totalPagar.toFixed(2)}
+
+Opções de Parcelamento:
+${listaParcelas.map(p => `${p.qtd}x de R$ ${p.valor}`).join("\n")}
+  `.trim();
+
+  const copiar = () => {
+    Clipboard.setString(mensagem);
+    alert("Mensagem copiada!");
+  };
+
+  return (
+    <ScrollView style={{ padding: 20 }}>
+      <Text>Total Corrigido:</Text>
+      <TextInput
+        style={estilo.input}
+        keyboardType="numeric"
+        value={totalCorrigido}
+        onChangeText={setTotalCorrigido}
+      />
+
+      <Text>Juros Parcelamento:</Text>
+      <TextInput
+        style={estilo.input}
+        keyboardType="numeric"
+        value={jurosParcelamento}
+        onChangeText={setJurosParcelamento}
+      />
+
+      <Text>Máximo de Parcelas (ex: 20):</Text>
+      <TextInput
+        style={estilo.input}
+        keyboardType="numeric"
+        value={maxParcelas}
+        onChangeText={setMaxParcelas}
+      />
+
+      {totalPagar > 0 ? (
+        <>
+          <Text style={{ marginTop: 20, fontWeight: "bold" }}>Opções:</Text>
+
+          {listaParcelas.map((p, index) => (
+            <Text key={index} style={estilo.itemParcela}>
+              {p.qtd}x de R$ {p.valor}
+            </Text>
+          ))}
+
+          <Text style={{ fontWeight: "bold", marginTop: 20 }}>Mensagem Gerada:</Text>
+          <Text style={estilo.msg}>{mensagem}</Text>
+
+          <TouchableOpacity onPress={copiar} style={estilo.botao}>
+            <Text style={{ color: "#FFF", textAlign: "center" }}>Copiar Mensagem</Text>
+          </TouchableOpacity>
+        </>
+      ) : null}
+    </ScrollView>
+  );
 }
+
+const estilo = {
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  itemParcela: {
+    backgroundColor: "#f8f8f8",
+    padding: 8,
+    borderRadius: 5,
+    marginVertical: 4,
+  },
+  msg: {
+    backgroundColor: "#eee",
+    padding: 12,
+    borderRadius: 5,
+    marginVertical: 10,
+  },
+  botao: {
+    backgroundColor: "#007bff",
+    padding: 12,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+};
