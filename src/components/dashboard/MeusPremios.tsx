@@ -237,7 +237,7 @@ const MeusPremios = ({
     metaDesafioPercentualCadastro = Math.max(0, Math.min(100, metaDesafioPercentualCadastro));
 
     const premiosDesafioCadastro = [
-      { nome: "94%", percentual: 94, valor: 100.00, atingido: metaDesafioPercentualCadastro >= 94, icon: <Trophy size={16} />, color: "text-yellow-500" },
+      { nome: "96%", percentual: 96, valor: 100.00, atingido: metaDesafioPercentualCadastro >= 96, icon: <Trophy size={16} />, color: "text-yellow-500" },
       { nome: "98%", percentual: 98, valor: 100.00, atingido: metaDesafioPercentualCadastro >= 98, icon: <Trophy size={16} />, color: "text-yellow-500" },
       { nome: "100%", percentual: 100, valor: 150.00, atingido: metaDesafioPercentualCadastro >= 100, icon: <Trophy size={16} />, color: "text-yellow-500" },
     ];
