@@ -1,88 +1,119 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Clipboard } from "react-native";
 
-export default function RenegociacaoCard() {
-  const [valorOriginal, setValorOriginal] = useState<number>(0);
-  const [jurosMensal, setJurosMensal] = useState<number>(0);
-  const [parcelas, setParcelas] = useState<number>(1);
+export default function RenegociacaoMensagem() {
+  const [totalCorrigido, setTotalCorrigido] = useState("");
+  const [jurosParcelamento, setJurosParcelamento] = useState("");
+  const [maxParcelas, setMaxParcelas] = useState("20");
 
-  // --- Cálculos ---
-  const totalSemJuros = valorOriginal;
+  const totalPagar =
+    totalCorrigido && jurosParcelamento
+      ? (parseFloat(totalCorrigido) + parseFloat(jurosParcelamento))
+      : 0;
 
-  // JUROS COMPOSTOS = valor * ((1+taxa)^parcelas - 1)
-  const jurosTotal = valorOriginal * (Math.pow(1 + jurosMensal / 100, parcelas) - 1);
+  // Geração da tabela de parcelamento
+  const gerarParcelas = () => {
+    const parcelas = [];
+    const max = parseInt(maxParcelas);
 
-  const totalCorrigido = valorOriginal + jurosTotal;
-  const valorParcela = parcelas > 0 ? totalCorrigido / parcelas : 0;
+    for (let i = max; i >= 1; i--) {
+      const valor = (totalPagar / i).toFixed(2);
+      parcelas.push({ qtd: i, valor });
+    }
+
+    return parcelas;
+  };
+
+  const listaParcelas = gerarParcelas();
+
+  const mensagem = `
+Olá! Temos várias opções de renegociação para você:
+
+Total Corrigido: R$ ${totalCorrigido}
+Juros Parc.: R$ ${jurosParcelamento}
+Total a Pagar: R$ ${totalPagar.toFixed(2)}
+
+Opções de Parcelamento:
+${listaParcelas.map(p => `${p.qtd}x de R$ ${p.valor}`).join("\n")}
+  `.trim();
+
+  const copiar = () => {
+    Clipboard.setString(mensagem);
+    alert("Mensagem copiada!");
+  };
 
   return (
-    <Card
-      className="
-        w-full 
-        max-w-[750px] 
-        max-h-[85vh] 
-        overflow-y-auto 
-        rounded-2xl 
-        shadow-lg 
-        mx-auto 
-        p-6
-      "
-    >
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-semibold">
-          Renegociação — Gerador de Mensagem
-        </CardTitle>
-      </CardHeader>
+    <ScrollView style={{ padding: 20 }}>
+      <Text>Total Corrigido:</Text>
+      <TextInput
+        style={estilo.input}
+        keyboardType="numeric"
+        value={totalCorrigido}
+        onChangeText={setTotalCorrigido}
+      />
 
-      <CardContent className="space-y-8">
+      <Text>Juros Parcelamento:</Text>
+      <TextInput
+        style={estilo.input}
+        keyboardType="numeric"
+        value={jurosParcelamento}
+        onChangeText={setJurosParcelamento}
+      />
 
-        {/* GRID DOS INPUTS */}
-        <div className="grid grid-cols-3 gap-6">
-          <div>
-            <Label>Valor Original</Label>
-            <Input
-              type="number"
-              value={valorOriginal}
-              onChange={(e) => setValorOriginal(Number(e.target.value))}
-            />
-          </div>
+      <Text>Máximo de Parcelas (ex: 20):</Text>
+      <TextInput
+        style={estilo.input}
+        keyboardType="numeric"
+        value={maxParcelas}
+        onChangeText={setMaxParcelas}
+      />
 
-          <div>
-            <Label>Juros Mensal (%)</Label>
-            <Input
-              type="number"
-              value={jurosMensal}
-              onChange={(e) => setJurosMensal(Number(e.target.value))}
-            />
-          </div>
+      {totalPagar > 0 ? (
+        <>
+          <Text style={{ marginTop: 20, fontWeight: "bold" }}>Opções:</Text>
 
-          <div>
-            <Label>Parcelas</Label>
-            <Input
-              type="number"
-              min={1}
-              value={parcelas}
-              onChange={(e) => setParcelas(Number(e.target.value))}
-            />
-          </div>
-        </div>
+          {listaParcelas.map((p, index) => (
+            <Text key={index} style={estilo.itemParcela}>
+              {p.qtd}x de R$ {p.valor}
+            </Text>
+          ))}
 
-        {/* RESULTADOS */}
-        <div className="bg-gray-50 rounded-xl p-6 shadow-inner space-y-2">
-          <p><strong>Total sem Juros:</strong> R$ {totalSemJuros.toFixed(2)}</p>
-          <p><strong>Total Corrigido:</strong> R$ {totalCorrigido.toFixed(2)}</p>
-          <p><strong>Juros Total:</strong> R$ {jurosTotal.toFixed(2)}</p>
-          <p><strong>Total a Pagar:</strong> R$ {totalCorrigido.toFixed(2)}</p>
-        </div>
+          <Text style={{ fontWeight: "bold", marginTop: 20 }}>Mensagem Gerada:</Text>
+          <Text style={estilo.msg}>{mensagem}</Text>
 
-        {/* SIMULAÇÃO DE PARCELAMENTO */}
-        <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
-          <h3 className="font-semibold text-lg mb-3">Simulação</h3>
-          <p><strong>{parcelas}x</strong> de <strong>R$ {valorParcela.toFixed(2)}</strong></p>
-        </div>
-      </CardContent>
-    </Card>
+          <TouchableOpacity onPress={copiar} style={estilo.botao}>
+            <Text style={{ color: "#FFF", textAlign: "center" }}>Copiar Mensagem</Text>
+          </TouchableOpacity>
+        </>
+      ) : null}
+    </ScrollView>
   );
 }
+
+const estilo = {
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  itemParcela: {
+    backgroundColor: "#f8f8f8",
+    padding: 8,
+    borderRadius: 5,
+    marginVertical: 4,
+  },
+  msg: {
+    backgroundColor: "#eee",
+    padding: 12,
+    borderRadius: 5,
+    marginVertical: 10,
+  },
+  botao: {
+    backgroundColor: "#007bff",
+    padding: 12,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+};
