@@ -1,201 +1,218 @@
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
-// arredondamento padrão (2 casas decimais)
-function round2(v: number) {
-  return Math.round((v + Number.EPSILON) * 100) / 100;
-}
-
-// Função principal de cálculo
-function calcParcelamento(totalCorrigido: number, taxaMensalPercent: number, n: number) {
-  const r = taxaMensalPercent / 100;
-  const jurosTotal = round2(totalCorrigido * r * n);
-  const totalPagar = round2(totalCorrigido + jurosTotal);
-  const parcela = round2(totalPagar / n);
-
-  return {
-    jurosTotal,
-    totalPagar,
-    parcela,
-  };
+function formatBRL(value: number | string) {
+  const n = typeof value === "string" ? parseFloat(value || "0") : value || 0;
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 }
 
 export default function RenegociacaoCard() {
-  const [totalSemJuros, setTotalSemJuros] = useState(5375.46);
-  const [totalCorrigido, setTotalCorrigido] = useState(5519.5);
-  const [taxaMensal, setTaxaMensal] = useState(2); // 2% padrão
-  const [parcelas, setParcelas] = useState(20);
+  const [totalSemJuros, setTotalSemJuros] = useState<string>("5375.46");
+  const [percentualIsencao, setPercentualIsencao] = useState<string>("15");
+  const [entrada, setEntrada] = useState<string>("806.32");
+  const [jurosTotal, setJurosTotal] = useState<string>("220.78");
+  const [descontoJuros, setDescontoJuros] = useState<string>("100");
+  const [maxParcelas, setMaxParcelas] = useState<string>("20");
 
-  const { jurosTotal, totalPagar, parcela } = calcParcelamento(totalCorrigido, taxaMensal, parcelas);
+  // entrada mínima
+  const entradaMinima = useMemo(() => {
+    const t = parseFloat(totalSemJuros || "0");
+    const p = parseFloat(percentualIsencao || "0");
+    return Number.isFinite(t) && Number.isFinite(p) ? +(t * (p / 100)) : 0;
+  }, [totalSemJuros, percentualIsencao]);
 
-  const scrollStyle = "w-full overflow-y-auto max-h-[70vh]";
+  // carteira própria
+  const carteiraPropria = useMemo(() => {
+    const t = parseFloat(totalSemJuros || "0");
+    const e = parseFloat(entrada || "0");
+    return Number.isFinite(t) && Number.isFinite(e) ? Math.max(0, t - e) : 0;
+  }, [totalSemJuros, entrada]);
+
+  // juros após desconto
+  const jurosAplicado = useMemo(() => {
+    const j = parseFloat(jurosTotal || "0");
+    const d = parseFloat(descontoJuros || "0");
+    if (!Number.isFinite(j)) return 0;
+    const desconto = Math.max(0, Math.min(100, d)) / 100;
+    return +(j * (1 - desconto));
+  }, [jurosTotal, descontoJuros]);
+
+  // total a pagar
+  const totalPagar = useMemo(() => +(carteiraPropria + jurosAplicado), [carteiraPropria, jurosAplicado]);
+
+  // lista de parcelas
+  const parcelasList = useMemo(() => {
+    const max = Math.max(1, parseInt(maxParcelas || "20", 10));
+    const list: { qtd: number; valor: number }[] = [];
+    for (let i = max; i >= 1; i--) {
+      const valor = totalPagar / i;
+      list.push({ qtd: i, valor: +valor.toFixed(2) });
+    }
+    return list;
+  }, [totalPagar, maxParcelas]);
+
+  // mensagem formatada
+  const mensagem = useMemo(() => {
+    return (
+      `Olá, temos uma proposta de renegociação para você.\n\n` +
+      `Total sem Juros: ${formatBRL(totalSemJuros)}\n` +
+      `Valor Entrada: ${formatBRL(entrada)}\n` +
+      `Desconto sobre Juros: ${descontoJuros || "0"}%\n` +
+      `Carteira própria: ${formatBRL(carteiraPropria)}\n` +
+      `Valor Total Pagar: ${formatBRL(totalPagar)}\n` +
+      `Qtd parcelas: ${maxParcelas}\n` +
+      `Valor Parcela (ex: ${maxParcelas}x): ${formatBRL(parcelasList[0]?.valor || 0)}\n\n` +
+      `Opções de parcelamento:\n` +
+      parcelasList.map(p => `${p.qtd}x de ${formatBRL(p.valor)}`).join("\n")
+    );
+  }, [totalSemJuros, entrada, descontoJuros, carteiraPropria, totalPagar, maxParcelas, parcelasList]);
+
+  const copiarMensagem = async () => {
+    try {
+      await navigator.clipboard.writeText(mensagem);
+      alert("Mensagem copiada para a área de transferência");
+    } catch {
+      alert("Erro ao copiar. Verifique as permissões do navegador.");
+    }
+  };
+
+  const podeMostrarDesconto = useMemo(() => {
+    const e = parseFloat(entrada || "0");
+    return e >= entradaMinima && entradaMinima > 0;
+  }, [entrada, entradaMinima]);
 
   return (
-    <Card className="w-[1100px] max-h-[85vh] overflow-y-auto p-6 rounded-2xl shadow-xl mx-auto">
-      <CardHeader>
-        <CardTitle>Renegociação — Gerador de Mensagem</CardTitle>
-      </CardHeader>
+    <Card className="max-w-5xl mx-auto w-full overflow-x-auto bg-surface-50 dark:bg-surface-800">
+      <div className="min-w-[800px] p-6 space-y-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-2xl">Renegociação — Gerador de Mensagem</CardTitle>
+        </CardHeader>
 
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-3 gap-6">
-          {/* Total sem juros */}
+        <CardContent className="space-y-6">
           <div>
             <Label>Total sem Juros</Label>
-            <Input
-              type="number"
-              value={totalSemJuros}
-              onChange={(e) => setTotalSemJuros(parseFloat(e.target.value))}
-            />
+            <Input value={totalSemJuros} onChange={e => setTotalSemJuros(e.target.value)} type="number" />
           </div>
 
-          {/* Total corrigido */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>% Isenção (entrada mínima)</Label>
+              <Input value={percentualIsencao} onChange={e => setPercentualIsencao(e.target.value)} type="number" />
+            </div>
+            <div>
+              <Label>Entrada mínima calculada</Label>
+              <div className="px-3 py-2 rounded-md bg-muted-foreground/5 dark:bg-muted-foreground/10">
+                {formatBRL(entradaMinima)}
+              </div>
+            </div>
+          </div>
+
           <div>
-            <Label>Total Corrigido</Label>
-            <Input
-              type="number"
-              value={totalCorrigido}
-              onChange={(e) => setTotalCorrigido(parseFloat(e.target.value))}
-            />
+            <Label>Entrada escolhida</Label>
+            <Input value={entrada} onChange={e => setEntrada(e.target.value)} type="number" />
+            {entrada && +entrada < entradaMinima && (
+              <p className="text-sm text-red-500 mt-1">Entrada abaixo do mínimo exigido.</p>
+            )}
           </div>
 
-          {/* Taxa mensal */}
           <div>
-            <Label>Taxa Mensal (%)</Label>
-            <Input
-              type="number"
-              value={taxaMensal}
-              onChange={(e) => setTaxaMensal(parseFloat(e.target.value))}
-            />
+            <Label>Juros Total (antes do desconto)</Label>
+            <Input value={jurosTotal} onChange={e => setJurosTotal(e.target.value)} type="number" />
           </div>
 
-          {/* Parcelas */}
-          <div>
-            <Label>Quantidade de Parcelas</Label>
-            <Input
-              type="number"
-              value={parcelas}
-              onChange={(e) => setParcelas(parseInt(e.target.value))}
-            />
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* RESULTADOS */}
-        <div className="text-lg font-medium">
-          <p>Total sem Juros: {totalSemJuros.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          <p>Total Corrigido: {totalCorrigido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          <p>Qtd Parcelas: {parcelas}</p>
-          <p>Juros Parcelamento: {jurosTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          <p>Total Pagar: {totalPagar.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          <p>
-            Valor da Parcela: {parcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ({parcelas}x)
-          </p>
-        </div>
-
-        <Separator />
-
-        {/* LISTA DE PARCELAS (20x, 19x, 18x...) */}
-        <div className={scrollStyle}>
-          <div className="space-y-2">
-            {Array.from({ length: parcelas }).map((_, i) => {
-              const qtd = parcelas - i;
-              const valor = round2(totalPagar / qtd);
-              return (
-                <p key={i} className="text-base">
-                  {qtd}x de {valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </p>
-              );
-            })}
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* MENSAGEM FORMATADA PARA COPIAR */}
-        <div>
-          <Label>Mensagem pronta</Label>
-          <textarea
-            className="w-full h-40 bg-white border rounded p-3 text-black"
-            value={`Olá! Segue sua proposta de renegociação:
-
-Total sem Juros: ${totalSemJuros.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-Total Corrigido: ${totalCorrigido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-Qtd Parcelas: ${parcelas}
-Juros Parcelamento: ${jurosTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-Total Pagar: ${totalPagar.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-Parcela: ${parcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${parcelas}x)`}
-            readOnly
-          />
-        </div>
-
-        <Button
-          onClick={() => navigator.clipboard.writeText(
-            `Olá! Segue sua proposta de renegociação:
-
-Total sem Juros: ${totalSemJuros.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-Total Corrigido: ${totalCorrigido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-Qtd Parcelas: ${parcelas}
-Juros Parcelamento: ${jurosTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-Total Pagar: ${totalPagar.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-Parcela: ${parcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${parcelas}x)`
+          {podeMostrarDesconto && (
+            <div>
+              <Label>Desconto sobre Juros (%)</Label>
+              <Input value={descontoJuros} onChange={e => setDescontoJuros(e.target.value)} type="number" />
+            </div>
           )}
-        >
-          Copiar Mensagem
-        </Button>
-      </CardContent>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Máximo de parcelas</Label>
+              <Input value={maxParcelas} onChange={e => setMaxParcelas(e.target.value)} type="number" />
+            </div>
+            <div>
+              <Label>Juros aplicados (após desconto)</Label>
+              <div className="px-3 py-2 rounded-md bg-muted-foreground/5 dark:bg-muted-foreground/10">
+                {formatBRL(jurosAplicado)}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Label>Carteira própria</Label>
+              <div className="text-2xl font-bold text-primary">{formatBRL(carteiraPropria)}</div>
+            </div>
+            <div>
+              <Label>Total a pagar</Label>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatBRL(totalPagar)}</div>
+            </div>
+          </div>
+
+          <div>
+            <Label>Opções de Parcelamento</Label>
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-muted-foreground/20">
+              {parcelasList.map((p) => (
+                <div
+                  key={p.qtd}
+                  className="p-3 rounded-lg border border-border/20 bg-card hover:bg-accent transition-colors text-center"
+                >
+                  <div className="font-bold text-sm">{p.qtd}x</div>
+                  <div className="text-xs text-muted-foreground">{formatBRL(p.valor)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <Label>Mensagem pronta</Label>
+            <textarea
+              readOnly
+              value={mensagem}
+              className="w-full mt-2 min-h-[160px] p-4 rounded-md bg-muted/5 dark:bg-muted/10 text-sm font-mono resize-none border border-border/20 focus:outline-none scrollbar-thin"
+            />
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex flex-col sm:flex-row gap-3 justify-between">
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setTotalSemJuros("");
+                setPercentualIsencao("15");
+                setEntrada("");
+                setJurosTotal("");
+                setDescontoJuros("100");
+                setMaxParcelas("20");
+              }}
+              className="flex-1 sm:flex-initial"
+            >
+              Limpar
+            </Button>
+            <Button onClick={copiarMensagem} className="flex-1 sm:flex-initial">
+              Copiar Mensagem
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={() => alert("Enviar para WhatsApp - implemente a lógica")}
+            className="w-full sm:w-auto"
+          >
+            Enviar (WhatsApp)
+          </Button>
+        </CardFooter>
+      </div>
     </Card>
   );
-}
-export type ResultadoParcelamento = {
-  jurosTotal: number;        // juros total (precisão)
-  totalPagar: number;       // total a pagar
-  parcela: number;          // valor por parcela (precisão)
-  parcelas: { qtd:number; valor:number }[]; // lista N..1
-};
-
-// arredonda para 2 casas
-function round2(v:number){ return Math.round((v + Number.EPSILON)*100)/100; }
-
-/**
- * Calcula parcelamento com juros fixos por parcela (taxa mensal * totalCorrigido).
- * @param totalCorrigido valor base
- * @param taxaMensalPercent ex: 2  (para 2%)
- * @param n parcelas (ex: 20)
- * @param mode 'precise' | 'perParcelRounded'
- *    - 'precise': calcula juros total em alta precisão e só depois arredonda
- *    - 'perParcelRounded': arredonda juros mensal para 2 casas e soma (pode gerar centavos extras)
- */
-export function calcParcelamento(
-  totalCorrigido:number,
-  taxaMensalPercent:number,
-  n:number,
-  mode:'precise'|'perParcelRounded' = 'precise'
-): ResultadoParcelamento {
-  const r = taxaMensalPercent / 100;
-  if (mode === 'perParcelRounded') {
-    const jMensal = round2(totalCorrigido * r);          // arredonda cada parcela de juros
-    const jurosTotal = round2(jMensal * n);
-    const totalPagar = round2(totalCorrigido + jurosTotal);
-    const parcela = round2(totalPagar / n);
-    const parcelas = Array.from({length:n}, (_,i) => ({qtd: n - i, valor: round2(totalPagar / (n - i))}));
-    return { jurosTotal, totalPagar, parcela, parcelas };
-  } else {
-    // modo precise
-    const jurosTotalRaw = totalCorrigido * r * n;        // alta precisão
-    const jurosTotal = round2(jurosTotalRaw);
-    const totalPagarRaw = totalCorrigido + jurosTotalRaw;
-    const totalPagar = round2(totalPagarRaw);
-    const parcela = round2(totalPagarRaw / n);
-    const parcelas = Array.from({length:n}, (_,i) => {
-      const qtd = n - i;
-      const valor = round2(totalPagarRaw / qtd);
-      return {qtd, valor};
-    });
-    return { jurosTotal, totalPagar, parcela, parcelas };
-  }
 }
