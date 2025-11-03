@@ -85,8 +85,8 @@ export default function RenegociacaoCard() {
   const numParcelas = useMemo(() => parseInt(parcelas || "20", 10), [parcelas]);
   const regra = useMemo(() => REGRAS[grupo][classificacao], [grupo, classificacao]);
 
-  // JUROS POR PARCELA (ex: 0.1% por parcela)
-  const taxaPorParcela = 0.001; // 0.1% por parcela
+  // JUROS: 0,1% por parcela
+  const taxaPorParcela = 0.001;
   const jurosTotal = useMemo(() => {
     return capital > 0 ? +(capital * taxaPorParcela * numParcelas) : 0;
   }, [capital, numParcelas]);
@@ -121,9 +121,8 @@ export default function RenegociacaoCard() {
   const carteiraPropria = Math.max(0, capital - entradaAtual);
   const jurosAplicado = semJuros ? 0 : +(jurosTotal * (1 - parseFloat(descontoJuros || "0") / 100));
   const totalPagar = +(carteiraPropria + jurosAplicado);
-  const valorParcela = totalPagar / numParcelas;
+  const valorParcela = totalPagar > 0 ? +(totalPagar / numParcelas).toFixed(2) : 0;
 
-  // LISTA DE PARCELAS
   const parcelasList = useMemo(() => {
     if (totalPagar <= 0) return [];
     return Array.from({ length: Math.min(numParcelas, 12) }, (_, i) => {
@@ -140,7 +139,7 @@ export default function RenegociacaoCard() {
       `Grupo: ${grupo} | Classificação: ${classificacao}\n` +
       `Status: ${status}\n` +
       `Valor Capital: ${formatBRL(capital)}\n` +
-      `Juros (${(taxaPorParcela * 100).toFixed(1)}% por parcela × ${numParcelas}x): ${formatBRL(jurosTotal)}\n` +
+      `Juros (0,1% × ${numParcelas}x): ${formatBRL(jurosTotal)}\n` +
       `Entrada: ${formatBRL(entrada || "0")}\n` +
       `Juros Aplicados: ${semJuros ? "ISENTOS" : formatBRL(jurosAplicado)}\n` +
       `Carteira Própria: ${formatBRL(carteiraPropria)}\n` +
@@ -156,24 +155,25 @@ export default function RenegociacaoCard() {
 
   const copiarMensagem = async () => {
     await navigator.clipboard.writeText(mensagem);
-    alert("Mensagem copiada com sucesso!");
+    alert("Mensagem copiada!");
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-4 space-y-8">
 
       {/* TÍTULO */}
-      <CardHeader className="text-center">
-        <CardTitle className="text-3xl font-bold text-primary">
-          Renegociação — Juros por Parcela
-        </CardTitle>
-      </CardHeader>
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-primary">
+          Renegociação Inteligente
+        </h1>
+        <p className="text-muted-foreground mt-2">Juros por parcela • 20x padrão</p>
+      </div>
 
       {/* GRUPO + CLASSIFICAÇÃO */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30">
+        <Card className="border-2 border-blue-200 bg-blue-50/50">
           <CardHeader>
-            <CardTitle className="text-lg">Grupo</CardTitle>
+            <CardTitle className="text-lg text-blue-700">Grupo</CardTitle>
           </CardHeader>
           <CardContent>
             <Select value={grupo} onValueChange={(v) => setGrupo(v as Grupo)}>
@@ -187,9 +187,9 @@ export default function RenegociacaoCard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30">
+        <Card className="border-2 border-purple-200 bg-purple-50/50">
           <CardHeader>
-            <CardTitle className="text-lg">Classificação</CardTitle>
+            <CardTitle className="text-lg text-purple-700">Classificação</CardTitle>
           </CardHeader>
           <CardContent>
             <Select value={classificacao} onValueChange={(v) => setClassificacao(v as Classificacao)}>
@@ -207,63 +207,66 @@ export default function RenegociacaoCard() {
         </Card>
       </div>
 
-      {/* VALOR CAPITAL */}
-      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            Valor Capital
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            value={valorCapital}
-            onChange={(e) => setValorCapital(e.target.value)}
-            type="number"
-            placeholder="0,00"
-            className="text-4xl font-bold text-green-700"
-          />
-          {capital > 0 && (
-            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-green-300">
-              <div className="flex justify-between text-lg">
-                <span>Juros ({numParcelas}x × 0,1%):</span>
-                <span className="font-bold text-red-600">{formatBRL(jurosTotal)}</span>
+      {/* 2 CARDS LADO A LADO */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* CARD: VALOR CAPITAL */}
+        <Card className="border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2 text-green-700">
+              Valor Capital
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Input
+              value={valorCapital}
+              onChange={(e) => setValorCapital(e.target.value)}
+              type="number"
+              placeholder="0,00"
+              className="text-4xl font-bold text-green-700 placeholder:text-green-300"
+            />
+            {capital > 0 && (
+              <div className="mt-4 p-3 bg-white/80 rounded-lg border border-green-200">
+                <div className="flex justify-between text-sm">
+                  <span>Juros totais:</span>
+                  <span className="font-bold text-red-600">{formatBRL(jurosTotal)}</span>
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* PARCELAMENTO */}
-      <Card className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/30">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            Parcelamento
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={parcelas} onValueChange={setParcelas}>
-            <SelectTrigger className="text-2xl font-bold">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[6, 8, 10, 12, 15, 18, 20, 24].map(n => (
-                <SelectItem key={n} value={n.toString()}>
-                  {n}x parcelas
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-sm text-muted-foreground mt-2">
-            Padrão: 20x | Juros: 0,1% por parcela
-          </p>
-        </CardContent>
-      </Card>
+        {/* CARD: PARCELAMENTO */}
+        <Card className="border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2 text-orange-700">
+              Parcelamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={parcelas} onValueChange={setParcelas}>
+              <SelectTrigger className="text-3xl font-bold text-orange-700">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[6, 8, 10, 12, 15, 18, 20, 24].map(n => (
+                  <SelectItem key={n} value={n.toString()}>
+                    {n}x parcelas
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-orange-600 mt-3 text-center">
+              0,1% de juros por parcela • Padrão: 20x
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* ENTRADA + REGRAS */}
+      {/* ENTRADA */}
       {capital > 0 && (
         <Card className="border-2">
           <CardHeader>
-            <CardTitle className="text-xl">Entrada</CardTitle>
+            <CardTitle className="text-2xl">Entrada</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <Input
@@ -275,31 +278,33 @@ export default function RenegociacaoCard() {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className={`p-5 rounded-xl border-4 ${semJuros ? 'border-green-500 bg-green-50' : 'border-amber-400 bg-amber-50'}`}>
+              <div className={`p-6 rounded-2xl border-4 ${semJuros ? 'border-green-500 bg-green-50' : 'border-amber-400 bg-amber-50'}`}>
                 <div className="flex items-center justify-between">
-                  <span className="font-bold flex items-center gap-2">
-                    {semJuros ? <CheckCircle2 className="h-7 w-7 text-green-600" /> : <AlertCircle className="h-7 w-7 text-amber-600" />}
+                  <span className="text-2xl font-bold flex items-center gap-3">
+                    {semJuros ? <CheckCircle2 className="h-8 w-8 text-green-600" /> : <AlertCircle className="h-8 w-8 text-amber-600" />}
                     SEM JUROS
                   </span>
-                  <span className="text-3xl font-bold text-green-700">
+                  <span className="text-4xl font-bold text-green-700">
                     {formatBRL(entradaMinimaSemJuros)}
                   </span>
                 </div>
-                <p className="text-sm mt-2">{classificacao}: {ENTRADA_SEM_JUROS[classificacao]}%</p>
+                <p className="text-sm mt-2 opacity-80">
+                  {classificacao}: {ENTRADA_SEM_JUROS[classificacao]}% do capital
+                </p>
               </div>
 
-              <div className={`p-5 rounded-xl ${atendeRegraGrupo ? 'bg-blue-50' : 'bg-red-50'}`}>
-                <strong className="text-lg block mb-2">Regra do Grupo {grupo}</strong>
-                <p className="text-sm">
+              <div className={`p-6 rounded-2xl ${atendeRegraGrupo ? 'bg-blue-50' : 'bg-red-50'}`}>
+                <strong className="text-xl block mb-3">Regra do Grupo {grupo}</strong>
+                <p className="text-sm leading-relaxed">
                   {regra.permiteSemEntrada && "Entrada opcional"}
-                  {regra.entradaIgualParcela && `Entrada = 1 parcela (${formatBRL(valorParcela)})`}
+                  {regra.entradaIgualParcela && `Entrada deve ser ≈ 1 parcela (${formatBRL(valorParcela)})`}
                   {regra.entradaMinimaPercentual && `Mínimo: ${regra.entradaMinimaPercentual}% (${formatBRL(entradaMinimaGrupo)})`}
                 </p>
               </div>
             </div>
 
             {!atendeRegraGrupo && entrada && (
-              <p className="text-red-600 flex items-center gap-2">
+              <p className="text-red-600 font-medium flex items-center gap-2">
                 <AlertCircle className="h-5 w-5" />
                 Entrada não atende à regra do grupo.
               </p>
@@ -312,65 +317,67 @@ export default function RenegociacaoCard() {
       {capital > 0 && semJuros && (
         <Card className="bg-green-50 border-4 border-green-500">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-3">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            <CardTitle className="text-3xl flex items-center gap-3 text-green-700">
+              <CheckCircle2 className="h-10 w-10" />
               SEM JUROS ATIVADO!
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Label>Desconto sobre Juros (%)</Label>
-            <Input value={descontoJuros} onChange={(e) => setDescontoJuros(e.target.value)} type="number" />
+            <Label className="text-lg">Desconto sobre Juros (%)</Label>
+            <Input value={descontoJuros} onChange={(e) => setDescontoJuros(e.target.value)} type="number" className="text-2xl" />
           </CardContent>
         </Card>
       )}
 
       <Separator />
 
-      {/* RESUMO */}
+      {/* RESUMO FINANCEIRO */}
       {capital > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="text-center">
-            <CardHeader><CardTitle>Carteira Própria</CardTitle></CardHeader>
+          <Card className="text-center bg-gradient-to-b from-blue-50 to-white">
+            <CardHeader><CardTitle className="text-xl">Carteira Própria</CardTitle></CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-primary">{formatBRL(carteiraPropria)}</div>
+              <div className="text-5xl font-bold text-blue-600">{formatBRL(carteiraPropria)}</div>
             </CardContent>
           </Card>
-          <Card className="text-center">
-            <CardHeader><CardTitle>Juros</CardTitle></CardHeader>
+          <Card className="text-center bg-gradient-to-b from-red-50 to-white">
+            <CardHeader><CardTitle className="text-xl">Juros</CardTitle></CardHeader>
             <CardContent>
-              <div className={`text-4xl font-bold ${semJuros ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-5xl font-bold ${semJuros ? 'text-green-600' : 'text-red-600'}`}>
                 {semJuros ? "R$ 0,00" : formatBRL(jurosAplicado)}
               </div>
             </CardContent>
           </Card>
-          <Card className="text-center">
-            <CardHeader><CardTitle>Total a Pagar</CardTitle></CardHeader>
+          <Card className="text-center bg-gradient-to-b from-emerald-50 to-white">
+            <CardHeader><CardTitle className="text-xl">Total a Pagar</CardTitle></CardHeader>
             <CardContent>
-              <div className={`text-5xl font-bold ${semJuros ? 'text-green-600' : 'text-blue-600'}`}>
+              <div className="text-6xl font-bold text-emerald-600">
                 {formatBRL(totalPagar)}
               </div>
-              <p className="text-sm mt-2">{numParcelas}x de {formatBRL(valorParcela)}</p>
+              <p className="text-lg mt-2 text-emerald-700">
+                {numParcelas}x de {formatBRL(valorParcela)}
+              </p>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* MENSAGEM */}
+      {/* MENSAGEM PRONTA */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Mensagem Pronta</CardTitle>
+          <CardTitle className="text-2xl">Mensagem para WhatsApp</CardTitle>
         </CardHeader>
         <CardContent>
           <textarea
             readOnly
             value={mensagem}
-            className="w-full min-h-[280px] p-5 rounded-xl bg-muted/5 dark:bg-muted/10 text-sm font-mono resize-none border-2"
+            className="w-full min-h-64 p-6 rounded-2xl bg-gray-50 dark:bg-gray-800 text-sm font-mono resize-none border-2 border-gray-200"
           />
         </CardContent>
       </Card>
 
       {/* BOTÕES */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="flex flex-wrap gap-4 justify-center">
         <Button size="lg" variant="outline" onClick={() => {
           setValorCapital("");
           setEntrada("");
@@ -379,7 +386,7 @@ export default function RenegociacaoCard() {
         }}>
           Limpar Tudo
         </Button>
-        <Button size="lg" onClick={copiarMensagem} className="font-bold text-lg">
+        <Button size="lg" onClick={copiarMensagem} className="text-lg font-bold">
           Copiar Mensagem
         </Button>
         <Button
@@ -394,30 +401,35 @@ export default function RenegociacaoCard() {
 
       {/* REGRAS */}
       {showRegras && (
-        <Card className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-800">
+        <Card className="border-2 border-indigo-300 bg-indigo-50/30">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Regras Oficiais</CardTitle>
+            <CardTitle className="text-2xl text-center text-indigo-700">
+              Regras Oficiais
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h3 className="font-bold text-green-600 mb-4">SEM JUROS</h3>
+                <h3 className="font-bold text-green-600 text-xl mb-4">SEM JUROS</h3>
                 {Object.entries(ENTRADA_SEM_JUROS).map(([cls, pct]) => (
-                  <div key={cls} className="flex justify-between py-2 border-b">
-                    <span>{cls}</span>
-                    <span className="font-bold">{pct}%</span>
+                  <div key={cls} className="flex justify-between py-2 border-b border-green-200">
+                    <span className="font-medium">{cls}</span>
+                    <span className="font-bold text-green-600">{pct}%</span>
                   </div>
                 ))}
               </div>
               <div>
-                <h3 className="font-bold text-blue-600 mb-4">COM JUROS</h3>
+                <h3 className="font-bold text-blue-600 text-xl mb-4">COM JUROS</h3>
                 {(["1", "2", "3"] as Grupo[]).map(g => (
-                  <div key={g} className="mb-6">
-                    <strong className="block mb-2">Grupo {g}</strong>
+                  <div key={g} className="mb-6 bg-white p-4 rounded-lg shadow">
+                    <strong className="block text-lg mb-2">Grupo {g}</strong>
                     <ul className="text-sm space-y-1">
                       {Object.entries(REGRAS[g]).map(([cls, r]) => (
                         <li key={cls}>
-                          <strong>{cls}:</strong> {r.permiteSemEntrada ? "Sem entrada" : r.entradaIgualParcela ? "Entrada = parcela" : `${r.entradaMinimaPercentual}%`}
+                          <strong>{cls}:</strong>{" "}
+                          {r.permiteSemEntrada ? "Sem entrada" :
+                           r.entradaIgualParcela ? "Entrada = 1 parcela" :
+                           `${r.entradaMinimaPercentual}% do capital`}
                         </li>
                       ))}
                     </ul>
