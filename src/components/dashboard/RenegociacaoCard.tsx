@@ -28,7 +28,6 @@ const ENTRADA_SEM_JUROS: Record<Classificacao, number> = {
   "Premium": 8,
 };
 
-// REGRAS COM JUROS (POR GRUPO)
 type Classificacao =
   | "Bronze com atraso"
   | "Bronze"
@@ -39,13 +38,14 @@ type Classificacao =
 
 type Grupo = "1" | "2" | "3";
 
-interface RegraJuros {
-  entradaMinimaPercentual?: number;
-  entradaIgualParcela?: boolean;
+interface Regra {
   permiteSemEntrada?: boolean;
+  entradaIgualParcela?: boolean;
+  entradaMinimaPercentual?: number;
 }
 
-const REGRAS_JUROS: Record<Grupo, Record<Classificacao, RegraJuros>> = {
+// REGRAS EXATAS DO SEU PEDIDO
+const REGRAS: Record<Grupo, Record<Classificacao, Regra>> = {
   "1": {
     "Bronze com atraso": { entradaIgualParcela: true },
     "Bronze": { entradaIgualParcela: true },
@@ -83,39 +83,38 @@ export default function RenegociacaoCard() {
   const [showRegras, setShowRegras] = useState(false);
 
   const total = useMemo(() => parseFloat(totalSemJuros || "0"), [totalSemJuros]);
-  const regraJuros = useMemo(() => REGRAS_JUROS[grupo][classificacao], [grupo, classificacao]);
+  const entradaAtual = useMemo(() => parseFloat(entrada || "0"), [entrada]);
+  const regra = useMemo(() => REGRAS[grupo][classificacao], [grupo, classificacao]);
 
   // MÍNIMO PARA SEM JUROS
   const entradaMinimaSemJuros = useMemo(() => {
     return +(total * (ENTRADA_SEM_JUROS[classificacao] / 100));
   }, [total, classificacao]);
 
-  // MÍNIMO PARA REGRA COM JUROS
-  const entradaMinimaJuros = useMemo(() => {
-    if (regraJuros.permiteSemEntrada) return 0;
-    if (regraJuros.entradaMinimaPercentual) return +(total * (regraJuros.entradaMinimaPercentual / 100));
+  // MÍNIMO PARA REGRA DO GRUPO
+  const entradaMinimaGrupo = useMemo(() => {
+    if (regra.permiteSemEntrada) return 0;
+    if (regra.entradaMinimaPercentual) return +(total * (regra.entradaMinimaPercentual / 100));
     return 0;
-  }, [total, regraJuros]);
+  }, [total, regra]);
 
-  const entradaAtual = useMemo(() => parseFloat(entrada || "0"), [entrada]);
-
-  // VALIDAÇÕES
-  const atendeSemJuros = entradaAtual >= entradaMinimaSemJuros;
-  const atendeRegraJuros = useMemo(() => {
-    if (regraJuros.permiteSemEntrada) return true;
-    if (regraJuros.entradaMinimaPercentual) return entradaAtual >= entradaMinimaJuros;
-    if (regraJuros.entradaIgualParcela) {
+  // VALIDAÇÃO DA REGRA DO GRUPO
+  const atendeRegraGrupo = useMemo(() => {
+    if (regra.permiteSemEntrada) return true;
+    if (regra.entradaMinimaPercentual) return entradaAtual >= entradaMinimaGrupo;
+    if (regra.entradaIgualParcela) {
       const parcela = (total - entradaAtual + parseFloat(jurosTotal || "0")) / parseInt(maxParcelas || "1");
       return Math.abs(entradaAtual - parcela) < 1;
     }
     return true;
-  }, [entradaAtual, regraJuros, entradaMinimaJuros, total, jurosTotal, maxParcelas]);
+  }, [entradaAtual, regra, entradaMinimaGrupo, total, jurosTotal, maxParcelas]);
+
+  // SEM JUROS?
+  const semJuros = entradaAtual >= entradaMinimaSemJuros;
 
   // CÁLCULOS
   const carteiraPropria = Math.max(0, total - entradaAtual);
-  const jurosAplicado = atendeSemJuros
-    ? 0
-    : +(parseFloat(jurosTotal || "0") * (1 - Math.max(0, Math.min(100, parseFloat(descontoJuros || "0"))) / 100));
+  const jurosAplicado = semJuros ? 0 : +(parseFloat(jurosTotal || "0") * (1 - parseFloat(descontoJuros || "0") / 100));
   const totalPagar = +(carteiraPropria + jurosAplicado);
 
   const parcelasList = useMemo(() => {
@@ -127,25 +126,25 @@ export default function RenegociacaoCard() {
   }, [totalPagar, maxParcelas]);
 
   const mensagem = useMemo(() => {
-    const status = atendeSemJuros ? "SEM JUROS!" : "com juros";
+    const status = semJuros ? "SEM JUROS!" : "com juros";
     return (
       `Olá! Proposta de renegociação:\n\n` +
       `Grupo: ${grupo} | Classificação: ${classificacao}\n` +
       `Status: ${status}\n` +
       `Total sem Juros: ${formatBRL(totalSemJuros)}\n` +
       `Entrada: ${formatBRL(entrada || "0")}\n` +
-      `Juros: ${atendeSemJuros ? "ISENTOS" : formatBRL(jurosAplicado)}\n` +
+      `Juros: ${semJuros ? "ISENTOS" : formatBRL(jurosAplicado)}\n` +
       `Carteira Própria: ${formatBRL(carteiraPropria)}\n` +
       `Total a Pagar: ${formatBRL(totalPagar)}\n` +
       `Parcela (ex: ${maxParcelas}x): ${formatBRL(parcelasList[0]?.valor || 0)}\n\n` +
       `Opções:\n` +
       parcelasList.map(p => `${p.qtd}x de ${formatBRL(p.valor)}`).join("\n")
     );
-  }, [grupo, classificacao, totalSemJuros, entrada, atendeSemJuros, jurosAplicado, carteiraPropria, totalPagar, maxParcelas, parcelasList]);
+  }, [grupo, classificacao, totalSemJuros, entrada, semJuros, jurosAplicado, carteiraPropria, totalPagar, maxParcelas, parcelasList]);
 
   const copiarMensagem = async () => {
     await navigator.clipboard.writeText(mensagem);
-    alert("Mensagem copiada!");
+    alert("Mensagem copiada com sucesso!");
   };
 
   return (
@@ -153,17 +152,17 @@ export default function RenegociacaoCard() {
       <div className="p-6 space-y-6">
 
         <CardHeader className="pb-4">
-          <CardTitle className="text-2xl">Renegociação — 2 Regras Simultâneas</CardTitle>
+          <CardTitle className="text-2xl">Renegociação — Regras Oficiais</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
 
           {/* GRUPO + CLASSIFICAÇÃO */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-5 rounded-xl">
             <div>
-              <Label className="font-semibold">Grupo</Label>
+              <Label className="font-bold text-blue-700 dark:text-blue-300">Grupo</Label>
               <Select value={grupo} onValueChange={(v) => setGrupo(v as Grupo)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">Grupo 1</SelectItem>
                   <SelectItem value="2">Grupo 2</SelectItem>
@@ -172,9 +171,9 @@ export default function RenegociacaoCard() {
               </Select>
             </div>
             <div>
-              <Label className="font-semibold">Classificação</Label>
+              <Label className="font-bold text-purple-700 dark:text-purple-300">Classificação</Label>
               <Select value={classificacao} onValueChange={(v) => setClassificacao(v as Classificacao)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Bronze com atraso">Bronze com atraso</SelectItem>
                   <SelectItem value="Bronze">Bronze</SelectItem>
@@ -194,57 +193,69 @@ export default function RenegociacaoCard() {
               <Input value={totalSemJuros} onChange={e => setTotalSemJuros(e.target.value)} type="number" />
             </div>
             <div>
-              <Label>Juros Total (antes desconto)</Label>
+              <Label>Juros Total</Label>
               <Input value={jurosTotal} onChange={e => setJurosTotal(e.target.value)} type="number" />
             </div>
           </div>
 
-          {/* ENTRADA + 2 REGRAS VISUAIS */}
-          <div className="space-y-3 p-4 bg-muted/5 dark:bg-muted/10 rounded-lg">
-            <Label>Entrada</Label>
+          {/* ENTRADA + REGRAS VISUAIS */}
+          <div className="p-5 bg-gray-50 dark:bg-gray-900/30 rounded-xl border">
+            <Label className="text-lg font-semibold">Entrada</Label>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-5">
               <Input
                 value={entrada}
                 onChange={e => setEntrada(e.target.value)}
                 type="number"
-                placeholder="Digite o valor da entrada"
-                className="text-lg font-medium"
+                placeholder="Digite a entrada"
+                className="text-xl font-bold"
               />
 
-              <div className="space-y-2">
-                <div className={`flex items-center justify-between p-3 rounded-lg border-2 ${atendeSemJuros ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-orange-400 bg-orange-50 dark:bg-orange-900/20'}`}>
-                  <span className="text-sm font-semibold flex items-center gap-2">
-                    {atendeSemJuros ? <CheckCircle2 className="h-5 w-5 text-green-600" /> : <AlertCircle className="h-5 w-5 text-orange-600" />}
-                    Entrada mínima sem juros
-                  </span>
-                  <span className="font-bold text-lg">
-                    {formatBRL(entradaMinimaSemJuros)}
-                  </span>
+              <div className="space-y-3">
+                {/* SEM JUROS */}
+                <div className={`p-4 rounded-lg border-2 ${semJuros ? 'border-green-500 bg-green-50 dark:bg-green-900/30' : 'border-amber-400 bg-amber-50 dark:bg-amber-900/20'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold flex items-center gap-2">
+                      {semJuros ? <CheckCircle2 className="h-6 w-6 text-green-600" /> : <AlertCircle className="h-6 w-6 text-amber-600" />}
+                      Mínimo para SEM JUROS
+                    </span>
+                    <span className="text-2xl font-bold text-green-700 dark:text-green-400">
+                      {formatBRL(entradaMinimaSemJuros)}
+                    </span>
+                  </div>
+                  <p className="text-xs mt-1 text-muted-foreground">
+                    {classificacao}: {ENTRADA_SEM_JUROS[classificacao]}% do capital
+                  </p>
                 </div>
 
-                <div className={`text-xs p-2 rounded ${atendeRegraJuros ? 'text-green-700 dark:text-green-400' : 'text-red-600'}`}>
-                  {regraJuros.permiteSemEntrada && "Entrada opcional"}
-                  {regraJuros.entradaIgualParcela && `Entrada deve ser ≈ 1 parcela`}
-                  {regraJuros.entradaMinimaPercentual && `Mínimo: ${regraJuros.entradaMinimaPercentual}% (${formatBRL(entradaMinimaJuros)})`}
+                {/* REGRA DO GRUPO */}
+                <div className={`text-sm p-3 rounded ${atendeRegraGrupo ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                  <strong>Regra do Grupo {grupo}:</strong>
+                  <span className="block mt-1">
+                    {regra.permiteSemEntrada && "Sem entrada"}
+                    {regra.entradaIgualParcela && "Entrada = 1 parcela"}
+                    {regra.entradaMinimaPercentual && `Mínimo: ${regra.entradaMinimaPercentual}% (${formatBRL(entradaMinimaGrupo)})`}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {!atendeRegraJuros && entrada && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
+            {!atendeRegraGrupo && entrada && (
+              <p className="text-sm text-red-600 mt-3 flex items-center gap-1">
                 <AlertCircle className="h-4 w-4" />
-                Entrada abaixo do mínimo exigido pela regra do grupo.
+                Entrada não atende à regra do grupo.
               </p>
             )}
           </div>
 
-          {/* DESCONTO (SÓ SE ATINGIR SEM JUROS) */}
-          {atendeSemJuros && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-500 rounded-lg">
-              <div className="flex items-center gap-2 mb-3">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
-                <span className="font-bold text-green-700 dark:text-green-400">SEM JUROS ATIVADO!</span>
+          {/* DESCONTO (SÓ SE SEM JUROS) */}
+          {semJuros && (
+            <div className="p-5 bg-green-50 dark:bg-green-900/30 border-4 border-green-500 rounded-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
+                <h3 className="text-2xl font-bold text-green-700 dark:text-green-400">
+                  SEM JUROS ATIVADO!
+                </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -261,21 +272,21 @@ export default function RenegociacaoCard() {
 
           <Separator />
 
-          {/* RESUMO */}
+          {/* RESUMO FINANCEIRO */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-card rounded-lg">
-              <Label>Carteira Própria</Label>
-              <div className="text-2xl font-bold text-primary mt-1">{formatBRL(carteiraPropria)}</div>
+            <div className="text-center p-5 bg-card rounded-xl shadow">
+              <Label className="text-lg">Carteira Própria</Label>
+              <div className="text-3xl font-bold text-primary mt-2">{formatBRL(carteiraPropria)}</div>
             </div>
-            <div className="text-center p-4 bg-card rounded-lg">
-              <Label>Juros Aplicados</Label>
-              <div className={`text-2xl font-bold mt-1 ${atendeSemJuros ? 'text-green-600' : 'text-orange-600'}`}>
-                {atendeSemJuros ? "R$ 0,00" : formatBRL(jurosAplicado)}
+            <div className="text-center p-5 bg-card rounded-xl shadow">
+              <Label className="text-lg">Juros</Label>
+              <div className={`text-3xl font-bold mt-2 ${semJuros ? 'text-green-600' : 'text-red-600'}`}>
+                {semJuros ? "R$ 0,00" : formatBRL(jurosAplicado)}
               </div>
             </div>
-            <div className="text-center p-4 bg-card rounded-lg">
-              <Label>Total a Pagar</Label>
-              <div className={`text-3xl font-bold mt-1 ${atendeSemJuros ? 'text-green-600' : 'text-blue-600'}`}>
+            <div className="text-center p-5 bg-card rounded-xl shadow">
+              <Label className="text-lg">Total a Pagar</Label>
+              <div className={`text-4xl font-bold mt-2 ${semJuros ? 'text-green-600' : 'text-blue-600'}`}>
                 {formatBRL(totalPagar)}
               </div>
             </div>
@@ -283,12 +294,12 @@ export default function RenegociacaoCard() {
 
           {/* PARCELAS */}
           <div>
-            <Label>Opções de Parcelamento</Label>
-            <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+            <Label className="text-lg">Opções de Parcelamento</Label>
+            <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
               {parcelasList.map(p => (
-                <div key={p.qtd} className="p-3 rounded-lg border bg-card text-center hover:bg-accent transition">
-                  <div className="font-bold text-sm">{p.qtd}x</div>
-                  <div className="text-xs">{formatBRL(p.valor)}</div>
+                <div key={p.qtd} className="p-4 rounded-xl border bg-card text-center hover:scale-105 transition">
+                  <div className="font-bold text-lg">{p.qtd}x</div>
+                  <div className="text-sm text-muted-foreground">{formatBRL(p.valor)}</div>
                 </div>
               ))}
             </div>
@@ -296,42 +307,43 @@ export default function RenegociacaoCard() {
 
           <Separator />
 
-          {/* MENSAGEM */}
+          {/* MENSAGEM PRONTA */}
           <div>
-            <Label>Mensagem Pronta</Label>
+            <Label className="text-lg">Mensagem para o Cliente</Label>
             <textarea
               readOnly
               value={mensagem}
-              className="w-full mt-2 min-h-[180px] p-4 rounded-md bg-muted/5 dark:bg-muted/10 text-sm font-mono resize-none border"
+              className="w-full mt-3 min-h-[200px] p-5 rounded-xl bg-muted/5 dark:bg-muted/10 text-sm font-mono resize-none border-2"
             />
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col sm:flex-row gap-3 justify-between">
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button variant="outline" onClick={() => {
+        <CardFooter className="flex flex-col sm:flex-row gap-4 justify-between">
+          <div className="flex gap-3 w-full sm:w-auto">
+            <Button variant="outline" size="lg" onClick={() => {
               setTotalSemJuros("");
               setEntrada("");
               setJurosTotal("");
               setDescontoJuros("100");
               setMaxParcelas("20");
             }}>
-              Limpar
+              Limpar Tudo
             </Button>
-            <Button onClick={copiarMensagem}>
+            <Button size="lg" onClick={copiarMensagem} className="font-bold">
               Copiar Mensagem
             </Button>
           </div>
 
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex gap-3 w-full sm:w-auto">
             <Button
               variant="secondary"
+              size="lg"
               onClick={() => setShowRegras(!showRegras)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-2"
             >
-              Regras <ChevronDown className={`h-4 w-4 transition-transform ${showRegras ? "rotate-180" : ""}`} />
+              Regras Oficiais <ChevronDown className={`h-5 w-5 transition ${showRegras ? "rotate-180" : ""}`} />
             </Button>
-            <Button variant="ghost">
+            <Button variant="ghost" size="lg">
               WhatsApp
             </Button>
           </div>
@@ -339,37 +351,43 @@ export default function RenegociacaoCard() {
 
         {/* PAINEL DE REGRAS */}
         {showRegras && (
-          <div className="border-t pt-6 space-y-6 text-sm bg-muted/5 dark:bg-muted/10 rounded-b-lg -m-6 p-6">
-            <h3 className="font-bold text-xl">2 Regras Simultâneas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="border-t-4 border-blue-500 pt-6 space-y-6 bg-gradient-to-b from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/20 -m-6 p-8 rounded-b-3xl">
+            <h3 className="text-2xl font-bold text-center text-blue-700 dark:text-blue-300">
+              Regras Oficiais de Renegociação
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h4 className="font-bold text-green-600 mb-3">SEM JUROS (Classificação)</h4>
-                <ul className="space-y-2">
+                <h4 className="text-xl font-bold text-green-600 mb-4">SEM JUROS (Entrada Mínima)</h4>
+                <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow">
                   {Object.entries(ENTRADA_SEM_JUROS).map(([cls, pct]) => (
-                    <li key={cls} className="flex justify-between">
-                      <span>{cls}</span>
-                      <span className="font-bold">{pct}% → {formatBRL(total * pct / 100)}</span>
-                    </li>
+                    <div key={cls} className="flex justify-between py-2 border-b last:border-0">
+                      <span className="font-medium">{cls}</span>
+                      <span className="font-bold text-green-600">{pct}% → {formatBRL(total * pct / 100)}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
               <div>
-                <h4 className="font-bold text-blue-600 mb-3">COM JUROS (Grupo)</h4>
-                {(["1", "2", "3"] as Grupo[]).map(g => (
-                  <div key={g} className="mb-4">
-                    <strong>Grupo {g}:</strong>
-                    <ul className="text-xs ml-4 mt-1 space-y-1">
-                      {Object.entries(REGRAS_JUROS[g]).map(([cls, r]) => (
-                        <li key={cls}>
-                          {cls}:{" "}
-                          {r.permiteSemEntrada ? "Sem entrada" :
-                           r.entradaIgualParcela ? "Entrada = 1 parcela" :
-                           r.entradaMinimaPercentual ? `${r.entradaMinimaPercentual}%` : "—"}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                <h4 className="text-xl font-bold text-blue-600 mb-4">COM JUROS (Por Grupo)</h4>
+                <div className="space-y-4">
+                  {(["1", "2", "3"] as Grupo[]).map(g => (
+                    <div key={g} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow">
+                      <h5 className="font-bold text-lg mb-3">Grupo {g}</h5>
+                      <ul className="text-sm space-y-2">
+                        {Object.entries(REGRAS[g]).map(([cls, r]) => (
+                          <li key={cls} className="flex justify-between">
+                            <span>{cls}:</span>
+                            <span className="font-medium text-blue-600">
+                              {r.permiteSemEntrada ? "Sem entrada" :
+                               r.entradaIgualParcela ? "Entrada = 1 parcela" :
+                               r.entradaMinimaPercentual ? `${r.entradaMinimaPercentual}% do capital` : "—"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
