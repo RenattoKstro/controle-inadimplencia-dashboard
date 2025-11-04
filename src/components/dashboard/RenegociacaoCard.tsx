@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -18,36 +17,61 @@ function formatBRL(value: number) {
 }
 
 const ENTRADA_SEM_JUROS: Record<string, number> = {
-  "Bronze com atraso": 25, "Bronze": 25, "Prata": 20,
-  "Ouro": 15, "Diamante": 10, "Premium": 8,
+  "Bronze com atraso": 25,
+  "Bronze": 25,
+  "Prata": 20,
+  "Ouro": 15,
+  "Diamante": 10,
+  "Premium": 8,
 };
 
 type Grupo = "1" | "2" | "3";
 
 const REGRAS: Record<Grupo, Record<string, any>> = {
-  "1": { "Bronze com atraso": { entradaIgualParcela: true }, "Bronze": { entradaIgualParcela: true }, "Prata": { permiteSemEntrada: true }, "Ouro": { permiteSemEntrada: true }, "Diamante": { permiteSemEntrada: true }, "Premium": { permiteSemEntrada: true } },
-  "2": { "Bronze com atraso": { entradaIgualParcela: true }, "Bronze": { entradaIgualParcela: true }, "Prata": { permiteSemEntrada: true }, "Ouro": { permiteSemEntrada: true }, "Diamante": { permiteSemEntrada: true }, "Premium": { permiteSemEntrada: true } },
-  "3": { "Bronze com atraso": { entradaMinimaPercentual: 10 }, "Bronze": { entradaMinimaPercentual: 10 }, "Prata": { entradaIgualParcela: true }, "Ouro": { permiteSemEntrada: true }, "Diamante": { permiteSemEntrada: true }, "Premium": { permiteSemEntrada: true } },
+  "1": {
+    "Bronze com atraso": { entradaIgualParcela: true },
+    "Bronze": { entradaIgualParcela: true },
+    "Prata": { permiteSemEntrada: true },
+    "Ouro": { permiteSemEntrada: true },
+    "Diamante": { permiteSemEntrada: true },
+    "Premium": { permiteSemEntrada: true },
+  },
+  "2": {
+    "Bronze com atraso": { entradaIgualParcela: true },
+    "Bronze": { entradaIgualParcela: true },
+    "Prata": { permiteSemEntrada: true },
+    "Ouro": { permiteSemEntrada: true },
+    "Diamante": { permiteSemEntrada: true },
+    "Premium": { permiteSemEntrada: true },
+  },
+  "3": {
+    "Bronze com atraso": { entradaMinimaPercentual: 10 },
+    "Bronze": { entradaMinimaPercentual: 10 },
+    "Prata": { entradaIgualParcela: true },
+    "Ouro": { permiteSemEntrada: true },
+    "Diamante": { permiteSemEntrada: true },
+    "Premium": { permiteSemEntrada: true },
+  },
 };
 
-const TAXA_CORRECAO = 0.01;     // 1%
 const TAXA_PARCELAMENTO = 0.02; // 2% a.m.
 
 export default function RenegociacaoCard() {
   const [grupo, setGrupo] = useState<Grupo>("1");
   const [classificacao, setClassificacao] = useState<string>("Prata");
   const [capital, setCapital] = useState<string>("3409.37");
+  const [valorCorrigido, setValorCorrigido] = useState<string>("0");
   const [entrada, setEntrada] = useState<string>("");
   const [parcelas, setParcelas] = useState<string>("20");
   const [desconto, setDesconto] = useState<string>("100");
-  const [showRegras, setShowRegras] = useState(false);
 
   const cap = useMemo(() => parseFloat(capital || "0"), [capital]);
+  const valorCorrigidoNum = useMemo(() => parseFloat(valorCorrigido || "0"), [valorCorrigido]);
   const n = useMemo(() => Math.max(1, parseInt(parcelas || "1")), [parcelas]);
   const regra = REGRAS[grupo][classificacao] || {};
 
-  const capitalCorrigido = cap * (1 + TAXA_CORRECAO);
-  const totalComJuros = capitalCorrigido * Math.pow(1 + TAXA_PARCELAMENTO, n);
+  // CÁLCULO: juros sobre o valor corrigido digitado
+  const totalComJuros = valorCorrigidoNum * Math.pow(1 + TAXA_PARCELAMENTO, n);
   const jurosTotal = totalComJuros - cap;
 
   const entradaMinSemJuros = cap * (ENTRADA_SEM_JUROS[classificacao] / 100);
@@ -74,7 +98,7 @@ export default function RenegociacaoCard() {
 
 Grupo: ${grupo} | ${classificacao}
 Capital: ${formatBRL(cap)}
-+ Correção 1%: ${formatBRL(cap * TAXA_CORRECAO)}
+Valor Corrigido: ${formatBRL(valorCorrigidoNum)}
 Juros 2% a.m. × ${n}x: ${formatBRL(jurosTotal)}
 Entrada: ${formatBRL(entradaNum)}
 Juros Aplicados: ${semJuros ? "ISENTOS" : formatBRL(jurosAplicado)}
@@ -83,11 +107,11 @@ TOTAL: ${formatBRL(totalPagar)}
 ${n}x de ${formatBRL(parcela)}
 
 Aprova?`;
-  }, [cap, grupo, classificacao, entradaNum, semJuros, jurosTotal, jurosAplicado, carteira, totalPagar, n, parcela]);
+  }, [cap, grupo, classificacao, valorCorrigidoNum, entradaNum, semJuros, jurosTotal, jurosAplicado, carteira, totalPagar, n, parcela]);
 
   const copiar = () => {
     navigator.clipboard.writeText(mensagem);
-    alert("Copiado!");
+    alert("Mensagem copiada!");
   };
 
   return (
@@ -99,17 +123,11 @@ Aprova?`;
           <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
             Renegociação Pro
           </h1>
-          <p className="text-xl text-gray-700 mt-2">Correção 1% + Parcelamento 2% a.m.</p>
+          <p className="text-xl text-gray-700 mt-2">Correção manual + Parcelamento 2% a.m.</p>
         </div>
 
         {/* JUROS FIXOS */}
         <div className="flex justify-center gap-6 mb-8">
-          <div className="bg-amber-100 border-2 border-amber-500 rounded-full px-5 py-2 shadow-md">
-            <div className="flex items-center gap-2">
-              <Percent className="h-5 w-5 text-amber-700" />
-              <span className="font-bold text-amber-800">Correção: 1%</span>
-            </div>
-          </div>
           <div className="bg-red-100 border-2 border-red-500 rounded-full px-5 py-2 shadow-md">
             <div className="flex items-center gap-2">
               <Percent className="h-5 w-5 text-red-700" />
@@ -161,9 +179,9 @@ Aprova?`;
           </Card>
         </div>
 
-        {/* CAPITAL + ENTRADA */}
+        {/* CAPITAL + VALOR CORRIGIDO */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* CAPITAL */}
+          {/* VALOR CAPITAL */}
           <Card className="bg-gradient-to-br from-emerald-50 to-teal-100 border-4 border-emerald-500 shadow-2xl">
             <CardHeader>
               <CardTitle className="text-2xl text-emerald-800">Valor Capital</CardTitle>
@@ -173,24 +191,50 @@ Aprova?`;
                 value={capital}
                 onChange={e => setCapital(e.target.value)}
                 type="number"
+                placeholder="0,00"
                 className="text-6xl font-black text-center text-emerald-700 mb-4"
               />
               <div className="bg-white/90 rounded-2xl p-5 border-2 border-emerald-300">
-                <div className="grid grid-cols-2 gap-3 text-lg">
-                  <span className="font-medium">Correção (1%):</span>
-                  <span className="text-right font-bold text-amber-700">
-                    {formatBRL(cap * TAXA_CORRECAO)}
-                  </span>
-                  <span className="font-medium">Juros Total:</span>
-                  <span className="text-right font-bold text-red-700">
-                    {formatBRL(jurosTotal)}
-                  </span>
-                </div>
+                <p className="text-center text-lg font-medium text-gray-700">Valor original</p>
+                <p className="text-center text-4xl font-black text-emerald-700">
+                  {formatBRL(cap)}
+                </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* ENTRADA */}
+          {/* VALOR CORRIGIDO (EDITÁVEL) */}
+          <Card className="bg-gradient-to-br from-amber-50 to-orange-100 border-4 border-amber-500 shadow-2xl">
+            <CardHeader>
+              <CardTitle className="text-2xl text-amber-800 flex items-center gap-3">
+                Valor Corrigido
+                <span className="text-xs font-normal bg-amber-200 text-amber-900 px-3 py-1 rounded-full">
+                  Digite manualmente
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Input
+                value={valorCorrigido}
+                onChange={e => setValorCorrigido(e.target.value)}
+                type="number"
+                placeholder="0,00"
+                className="text-6xl font-black text-center text-amber-700 mb-4"
+              />
+              <div className="bg-white/90 rounded-2xl p-5 border-2 border-amber-400">
+                <p className="text-center text-lg font-medium text-gray-700">
+                  Base para cálculo de juros
+                </p>
+                <p className="text-center text-4xl font-black text-amber-700">
+                  {formatBRL(valorCorrigidoNum)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ENTRADA */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-4 border-blue-500 shadow-2xl">
             <CardHeader>
               <CardTitle className="text-2xl text-blue-800">Entrada</CardTitle>
@@ -213,7 +257,6 @@ Aprova?`;
                 </Button>
               </div>
 
-              {/* SEM JUROS */}
               <div className={`p-5 rounded-2xl border-4 ${semJuros ? 'border-green-600 bg-green-100' : 'border-amber-500 bg-amber-100'}`}>
                 <div className="flex items-center justify-between">
                   <span className="text-xl font-bold flex items-center gap-2">
@@ -226,7 +269,6 @@ Aprova?`;
                 </div>
               </div>
 
-              {/* REGRA DO GRUPO */}
               <div className="p-5 rounded-2xl bg-blue-100 border-4 border-blue-400">
                 <p className="text-lg font-bold">Regra do Grupo {grupo}</p>
                 <p className="text-2xl font-black mt-2 text-blue-700">
@@ -298,14 +340,16 @@ Aprova?`;
 
         {/* BOTÕES */}
         <div className="flex flex-wrap gap-5 justify-center mt-10">
-          <Button size="lg" variant="outline" onClick={() => { setCapital(""); setEntrada(""); setParcelas("20"); }}>
+          <Button size="lg" variant="outline" onClick={() => {
+            setCapital("");
+            setValorCorrigido("0");
+            setEntrada("");
+            setParcelas("20");
+          }}>
             Limpar
           </Button>
           <Button size="lg" onClick={copiar} className="text-xl font-bold px-12 bg-gradient-to-r from-green-600 to-emerald-600">
             Copiar Mensagem
-          </Button>
-          <Button size="lg" variant="secondary" onClick={() => setShowRegras(!showRegras)}>
-            Regras <ChevronDown className="h-5 w-5 ml-2" />
           </Button>
         </div>
       </div>
