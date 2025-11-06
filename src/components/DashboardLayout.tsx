@@ -5,33 +5,27 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import Metas from "./dashboard/Metas"; // Componente unificado para V2, agora com Meta Perdido
-import MetaFiado from "./dashboard/MetaFiado"; // Componente separado para V1
-import MetaDesafio from "./dashboard/MetaDesafio"; // Componente separado para V1
-import MetaAlimentacao from "./dashboard/MetaAlimentacao"; // Componente separado para V1
+import Metas from "./dashboard/Metas";
+import MetaFiado from "./dashboard/MetaFiado";
+import MetaDesafio from "./dashboard/MetaDesafio";
+import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
 import { Calculator, Moon, Sun } from "lucide-react";
-import VersaoLog from "./VersaoLog";
-import Scripts from "./dashboard/Scripts";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import { Card, CardContent } from "@/components/ui/card";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
-import MetaPerdido from "./dashboard/MetaPerdido"; // Importando o componente existente
+import MetaPerdido from "./dashboard/MetaPerdido";
 import { TbEar } from "react-icons/tb";
 
 export interface DashboardProps {
@@ -55,111 +49,71 @@ const DashboardLayout = () => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
-  const { 
-    userData, 
-    updateUserData, 
-    diasSemExpediente, 
+  const {
+    userData,
+    updateUserData,
+    diasSemExpediente,
     updateDiasSemExpediente,
     isLoading,
     diasRestantesCalculados
   } = useUserData();
   const [recebidoHoje, setRecebidoHoje] = useState(0);
   const [totalGanhos, setTotalGanhos] = useState(0);
-  const [layoutVersion, setLayoutVersion] = useState<"V1" | "V2">("V1"); // Estado para alternar entre V1 e V2
+  const [layoutVersion, setLayoutVersion] = useState<"V1" | "V2">("V1");
   const today = new Date();
   const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
-  const [isScriptsOpen, setIsScriptsOpen] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
 
-  // Verificação de sessão aprimorada
+  // Sessão
   useEffect(() => {
     const checkSession = async () => {
       const { data, error } = await supabase.auth.getSession();
       if (!data.session || error) {
-        toast({
-          title: "Sessão expirada",
-          description: "Sua sessão expirou. Você será redirecionado para a autenticação.",
-          variant: "destructive",
-        });
+        toast({ title: "Sessão expirada", description: "Redirecionando...", variant: "destructive" });
         await supabase.auth.signOut();
         navigate("/auth");
-      } else {
-        const { user, session } = data;
-        if (user && session) {
-          updateUserData({ ...userData, session });
-        }
       }
     };
-
     checkSession();
     const intervalId = setInterval(checkSession, 10 * 60 * 1000);
     return () => clearInterval(intervalId);
-  }, [navigate, toast, updateUserData, userData]);
+  }, [navigate, toast]);
 
+  // Dados do dia
   useEffect(() => {
     const fetchReceivedToday = async () => {
-      if (userData && userData.abertura_vencido_mes && userData.vencido_atual) {
-        const currentDate = new Date();
-        const daysPassed = currentDate.getDate();
+      if (userData?.abertura_vencido_mes && userData?.vencido_atual) {
+        const daysPassed = new Date().getDate();
         const receivedSoFar = userData.abertura_vencido_mes - userData.vencido_atual;
-        const dailyAverage = receivedSoFar > 0 ? receivedSoFar / daysPassed : 0;
-        setRecebidoHoje(dailyAverage);
-      } else {
-        console.log("[DashboardLayout] userData ou valores ausentes, usando recebidoHoje = 0");
-        setRecebidoHoje(0);
+        setRecebidoHoje(receivedSoFar > 0 ? receivedSoFar / daysPassed : 0);
       }
     };
     fetchReceivedToday();
 
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        toast({
-          title: "Autenticação não verificada",
-          description: "Você não está autenticado. Deve sair do app e entrar novamente.",
-          variant: "destructive",
-        });
-        navigate("/auth");
-      }
-    };
-    checkAuth();
-
-    const hasVisitedHistorico = localStorage.getItem("hasVisitedHistorico");
-    if (!hasVisitedHistorico) {
-      setIsNewHistorico(true);
-    } else {
-      setIsNewHistorico(false);
-    }
-
+    const hasVisited = localStorage.getItem("hasVisitedHistorico");
+    setIsNewHistorico(!hasVisited);
     document.body.classList.toggle("dark", isDarkMode);
-  }, [navigate, toast, userData, isDarkMode]);
+  }, [userData, isDarkMode]);
 
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => {
-      const newMode = !prev;
-      document.body.classList.toggle("dark", newMode);
-      return newMode;
-    });
-  };
+  const toggleDarkMode = () => setIsDarkMode(prev => {
+    const newMode = !prev;
+    document.body.classList.toggle("dark", newMode);
+    return newMode;
+  });
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    toast({
-      title: "Saiu com sucesso",
-      description: "Você saiu da sua conta.",
-    });
+    toast({ title: "Tchau!", description: "Volte sempre." });
     navigate("/auth");
   };
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    if (isMobile) {
-      setSheetOpen(false);
-    }
+    if (isMobile) setSheetOpen(false);
     if (value === "historicos" && isNewHistorico) {
       setIsNewHistorico(false);
       localStorage.setItem("hasVisitedHistorico", "true");
@@ -167,19 +121,13 @@ const DashboardLayout = () => {
   };
 
   const handlePrintScreen = () => {
-    if (contentRef.current) {
-      html2canvas(document.body, {
-        scale: 2,
-        useCORS: true,
-        windowWidth: document.documentElement.scrollWidth,
-        windowHeight: document.documentElement.scrollHeight,
-      }).then((canvas) => {
-        const link = document.createElement("a");
-        link.download = `dashboard_${new Date().toISOString().slice(0, 10)}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-    }
+    if (!contentRef.current) return;
+    html2canvas(document.body, { scale: 2, useCORS: true }).then(canvas => {
+      const a = document.createElement("a");
+      a.download = `dashboard_${new Date().toISOString().slice(0, 10)}.png`;
+      a.href = canvas.toDataURL();
+      a.click();
+    });
   };
 
   const handleInstagramClick = () => {
@@ -191,604 +139,201 @@ const DashboardLayout = () => {
   const vencidoAtual = userData?.vencido_atual || 0;
   const percentualVencido = carteiraTotal > 0 ? ((vencidoAtual / carteiraTotal) * 100).toFixed(2) : null;
 
-  const getDaysInMonth = (date: Date) => {
-    if (!(date instanceof Date) || isNaN(date.getTime())) return 0;
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date: Date) => {
-    if (!(date instanceof Date) || isNaN(date.getTime())) return 0;
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    return new Date(year, month, 1).getDay();
-  };
-
+  const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
   const getCalendarDays = (date: Date) => {
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
-      console.error("Invalid date provided to getCalendarDays:", date);
-      return [];
-    }
-    const daysInMonth = getDaysInMonth(date);
-    const firstDay = getFirstDayOfMonth(date);
     const days = [];
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-    for (let i = 1; i <= daysInMonth; i++) {
-      const d = new Date(date.getFullYear(), date.getMonth(), i);
-      days.push(d);
-    }
+    for (let i = 0; i < getFirstDayOfMonth(date); i++) days.push(null);
+    for (let i = 1; i <= getDaysInMonth(date); i++) days.push(new Date(date.getFullYear(), date.getMonth(), i));
     return days;
   };
-
   const getDayColor = (date: Date | null) => {
     if (!date) return "text-gray-400";
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 0) return "text-red-500";
-    if (dayOfWeek === 6) return "text-yellow-500";
-    return "text-green-500";
+    const d = date.getDay();
+    return d === 0 ? "text-red-500" : d === 6 ? "text-yellow-500" : "text-green-500";
   };
-
-  const handleMonthNavigation = (direction: "prev" | "next") => {
-    setCalendarMonth((prev) => {
-      if (!(prev instanceof Date) || isNaN(prev.getTime())) {
-        console.error("Invalid calendarMonth state:", prev);
-        return new Date(today.getFullYear(), today.getMonth(), 1);
-      }
-      const newMonth = new Date(prev.getFullYear(), prev.getMonth() + (direction === "next" ? 1 : -1), 1);
-      if (isNaN(newMonth.getTime())) {
-        console.error("Invalid new month calculated:", newMonth);
-        return prev;
-      }
-      return newMonth;
-    });
+  const handleMonthNavigation = (dir: "prev" | "next") => {
+    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + (dir === "next" ? 1 : -1), 1));
   };
 
   if (!userData && !isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Skeleton className="h-12 w-12" />
-        <p className="text-foreground ml-2">Carregando dados do usuário...</p>
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center">
+      <p className="text-foreground">Carregando...</p>
+    </div>;
   }
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
+      {/* HEADER */}
       <header className="bg-card shadow-md">
         <div className="max-w-7xl mx-auto px-2 py-4 flex items-center justify-between">
           {isMobile ? (
             <>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex items-center">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 Controle de Inadimplência
-                {percentualVencido !== null && (
-                  <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text ml-2">
-                    {percentualVencido}%
-                  </span>
-                )}
+                {percentualVencido && <span className="ml-2">{percentualVencido}%</span>}
               </h1>
               <div className="flex items-center gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-9 w-9">
-                      <Menu size={18} />
-                    </Button>
+                    <Button variant="outline" size="icon" className="h-9 w-9"><Menu size={18} /></Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-card">
-                    <div className="flex flex-col h-full">
-                      <div className="py-6 border-b border-border">
-                        <h2 className="text-lg font-semibold text-foreground">Apps</h2>
-                      </div>
-                      <Apps />
-                      <div className="py-4 border-t border-border">
-                        <Button 
-                          variant="destructive" 
-                          className="w-full"
-                          onClick={handleLogout}
-                        >
-                          <LogOut size={16} className="mr-2" />
-                          Sair
-                        </Button>
-                      </div>
+                    <div className="py-6 border-b"><h2 className="text-lg font-semibold">Apps</h2></div>
+                    <Apps />
+                    <div className="py-4 border-t">
+                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                        <LogOut size={16} className="mr-2" /> Sair
+                      </Button>
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={toggleDarkMode}
-                >
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </Button>
-                <VersaoLog />
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 flex items-center gap-2 text-foreground hover:text-primary"
-                    onClick={() => setShowCalendar(!showCalendar)}
-                  >
-                    <Calendar className="h-5 w-5" />
-                    <span className="text-sm">
-                      {today.toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </Button>
-                  {showCalendar && (
-                    <div className="absolute right-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-3 z-50 w-72">
-                      <div className="flex justify-between items-center mb-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-lg font-bold text-foreground"
-                          onClick={() => handleMonthNavigation("prev")}
-                        >
-                          {"<"}
-                        </Button>
-                        <span className="text-base font-semibold text-foreground">
-                          {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-lg font-bold text-foreground"
-                          onClick={() => handleMonthNavigation("next")}
-                        >
-                          {">"}
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-7 gap-2 text-center">
-                        {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                          <div key={day} className="text-sm font-medium text-muted-foreground">
-                            {day}
-                          </div>
-                        ))}
-                        {getCalendarDays(calendarMonth).map((day, index) => (
-                          <div
-                            key={index}
-                            className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
-                          >
-                            {day ? day.getDate() : ""}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)}>
+                  <Calendar className="h-5 w-5" />
+                  {today.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                </Button>
               </div>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold flex items-center bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent flex-shrink-0">
-                <span>Controle de Inadimplência</span>
-                {percentualVencido !== null && (
-                  <span className="ml-2 text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                    {percentualVencido}%
-                  </span>
-                )}
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Controle de Inadimplência {percentualVencido && `${percentualVencido}%`}
               </h1>
               <div className="flex items-center gap-4">
-                <Button
-                  onClick={handlePrintScreen}
-                  className="px-3 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 flex items-center gap-2"
-                >
-                  <RiScreenshot2Fill className="h-4 w-4" />
-                  Print
+                <Button onClick={handlePrintScreen} className="gap-2">
+                  <RiScreenshot2Fill className="h-4 w-4" /> Print
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2 text-foreground hover:text-primary"
-                    >
-                      <File className="h-4 w-4" />
-                      Anexos
-                    </Button>
+                    <Button variant="outline" className="gap-2"><File className="h-4 w-4" /> Anexos</Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md bg-card">
-                    <Anexos />
-                  </DialogContent>
+                  <DialogContent className="max-w-md"><Anexos /></DialogContent>
                 </Dialog>
-                <Dialog open={isScriptsOpen} onOpenChange={setIsScriptsOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2 text-foreground hover:text-primary"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Scripts
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl bg-card custom-dialog-no-close">
-                    <Scripts onClose={() => setIsScriptsOpen(false)} />
-                  </DialogContent>
-                </Dialog>
-                <div className="relative">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2 text-foreground hover:text-primary"
-                        onClick={() => setShowCalendar(!showCalendar)}
-                      >
-                        <Calendar className="h-5 w-5" />
-                        <span className="text-sm">
-                          {today.toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </Button>
-                    </DialogTrigger>
-                    {showCalendar && (
-                      <div className="absolute right-0 mt-2 bg-card border border-border rounded-lg shadow-lg p-3 z-50 w-72">
-                        <div className="flex justify-between items-center mb-3">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-lg font-bold text-foreground"
-                            onClick={() => handleMonthNavigation("prev")}
-                          >
-                            {"<"}
-                          </Button>
-                          <span className="text-base font-semibold text-foreground">
-                            {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-lg font-bold text-foreground"
-                            onClick={() => handleMonthNavigation("next")}
-                          >
-                            {">"}
-                          </Button>
-                        </div>
-                        <div className="grid grid-cols-7 gap-2 text-center">
-                          {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-                            <div key={day} className="text-sm font-medium text-muted-foreground">
-                              {day}
-                            </div>
-                          ))}
-                          {getCalendarDays(calendarMonth).map((day, index) => (
-                            <div
-                              key={index}
-                              className={`text-lg w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}
-                            >
-                              {day ? day.getDate() : ""}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </Dialog>
-                </div>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2 text-foreground hover:text-primary"
-                    >
-                      <BiSolidReport className="h-4 w-4" />
-                      Relatórios Sabium
-                    </Button>
+                    <Button variant="outline" className="gap-2"><BiSolidReport className="h-4 w-4" /> Relatórios</Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl bg-card">
-                    <RelatoriosSabium />
-                  </DialogContent>
+                  <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
                 </Dialog>
+                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
+                  <Calendar className="h-5 w-5" />
+                  {today.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                </Button>
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="text-foreground hover:text-primary"
-                    >
-                      <Menu className="h-5 w-5" />
-                    </Button>
+                    <Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="w-[80vw] sm:w-[350px] bg-card">
-                    <div className="flex flex-col h-full">
-                      <div className="py-6 border-b border-border">
-                        <h2 className="text-lg font-semibold text-foreground">Apps</h2>
-                      </div>
-                      <Apps />
-                      <div className="py-4 border-t border-border">
-                        <Button 
-                          variant="destructive" 
-                          className="w-full"
-                          onClick={handleLogout}
-                        >
-                          <LogOut size={16} className="mr-2" />
-                          Sair
-                        </Button>
-                      </div>
+                  <SheetContent side="right" className="w-[350px] bg-card">
+                    <div className="py-6 border-b"><h2 className="text-lg font-semibold">Apps</h2></div>
+                    <Apps />
+                    <div className="py-4 border-t">
+                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                        <LogOut size={16} className="mr-2" /> Sair
+                      </Button>
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={toggleDarkMode}
-                >
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                 </Button>
-                <VersaoLog />
-                <div className="relative flex items-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 flex items-center gap-2 text-foreground hover:text-primary mr-2"
-                    onClick={() => setLayoutVersion(layoutVersion === "V1" ? "V2" : "V1")}
-                  >
-                    {layoutVersion === "V1" ? "V2" : "V1"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9"
-                    onClick={() => setShowImageDialog(true)}
-                  >
-                    <TbEar className="h-5 w-5" />
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" onClick={() => setLayoutVersion(prev => prev === "V1" ? "V2" : "V1")}>
+                  {layoutVersion === "V1" ? "V2" : "V1"}
+                </Button>
+                <Button variant="outline" size="icon" onClick={() => setShowImageDialog(true)}>
+                  <TbEar className="h-5 w-5" />
+                </Button>
               </div>
             </>
           )}
         </div>
       </header>
 
+      {/* CALENDÁRIO FLUTUANTE */}
+      {showCalendar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCalendar(false)}>
+          <div className="bg-card p-6 rounded-xl shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between mb-4">
+              <Button variant="ghost" onClick={() => handleMonthNavigation("prev")}>{"<"}</Button>
+              <span className="font-bold">{calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</span>
+              <Button variant="ghost" onClick={() => handleMonthNavigation("next")}>{">"}</Button>
+            </div>
+            <div className="grid grid-cols-7 gap-2 text-center">
+              {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map(d => <div key={d} className="text-sm text-muted-foreground">{d}</div>)}
+              {getCalendarDays(calendarMonth).map((day, i) => (
+                <div key={i} className={`w-10 h-10 flex items-center justify-center rounded-full ${getDayColor(day)}`}>
+                  {day?.getDate()}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONTEÚDO */}
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <Tabs 
-          defaultValue="meta-fiado" 
-          value={activeTab} 
-          onValueChange={handleTabChange}
-          className="space-y-6"
-        >
-          <TabsList className="grid grid-cols-7 w-full p-1 bg-card shadow-sm rounded-xl">
-            <TabsTrigger 
-              value="ajustes-metas" 
-              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-              onClick={() => handleTabChange("ajustes-metas")}
-            >
-              <Sliders className="h-4 w-4" />
-              <span className="text-foreground">Ajustes de Metas</span>
-            </TabsTrigger>
-            {layoutVersion === "V1" && (
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+          <TabsList className="grid grid-cols-7 w-full p-1 bg-card rounded-xl">
+            <TabsTrigger value="ajustes-metas" className="gap-2"><Sliders className="h-4 w-4" /> Ajustes</TabsTrigger>
+            {layoutVersion === "V1" ? (
               <>
-                <TabsTrigger 
-                  value="meta-fiado" 
-                  className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                  onClick={() => handleTabChange("meta-fiado")}
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span className="text-foreground">Meta Fiado</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="meta-desafio" 
-                  className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                  onClick={() => handleTabChange("meta-desafio")}
-                >
-                  <Trophy className="h-4 w-4" />
-                  <span className="text-foreground">Meta Desafio</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="meta-alimentacao" 
-                  className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                  onClick={() => handleTabChange("meta-alimentacao")}
-                >
-                  <Utensils className="h-4 w-4" />
-                  <span className="text-foreground">Meta Alimentação</span>
-                </TabsTrigger>
+                <TabsTrigger value="meta-fiado" className="gap-2"><Wallet className="h-4 w-4" /> Fiado</TabsTrigger>
+                <TabsTrigger value="meta-desafio" className="gap-2"><Trophy className="h-4 w-4" /> Desafio</TabsTrigger>
+                <TabsTrigger value="meta-alimentacao" className="gap-2"><Utensils className="h-4 w-4" /> Alimentação</TabsTrigger>
               </>
-            )}
-            {layoutVersion === "V2" && (
-              <TabsTrigger 
-                value="metas" 
-                className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                onClick={() => handleTabChange("metas")}
-              >
-                <Wallet className="h-4 w-4" />
-                <span className="text-foreground">Metas</span>
-              </TabsTrigger>
+            ) : (
+              <TabsTrigger value="metas" className="gap-2"><Wallet className="h-4 w-4" /> Metas</TabsTrigger>
             )}
             {layoutVersion === "V1" && bonusPerdidoAtivado && (
-              <TabsTrigger 
-                value="meta-perdido" 
-                className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-                onClick={() => handleTabChange("meta-perdido")}
-              >
-                <AlertTriangle className="h-4 w-4" />
-                <span className="text-foreground">Meta Perdido</span>
-              </TabsTrigger>
+              <TabsTrigger value="meta-perdido" className="gap-2"><AlertTriangle className="h-4 w-4" /> Perdido</TabsTrigger>
             )}
-            <TabsTrigger 
-              value="meus-premios" 
-              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-              onClick={() => handleTabChange("meus-premios")}
-            >
-              <Gift className="h-4 w-4" />
-              <span className="text-foreground">Meus Prêmios</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="historicos" 
-              className="flex items-center gap-2 data-[state=active]:bg-muted data-[state=active]:text-primary-foreground"
-              onClick={() => handleTabChange("historicos")}
-            >
-              <History className="h-4 w-4" />
-              <span className="text-foreground">Históricos</span>
-              {isNewHistorico && <span className="text-destructive font-bold">N</span>}
+            <TabsTrigger value="meus-premios" className="gap-2"><Gift className="h-4 w-4" /> Prêmios</TabsTrigger>
+            <TabsTrigger value="historicos" className="gap-2">
+              <History className="h-4 w-4" /> Histórico
+              {isNewHistorico && <span className="text-destructive font-bold ml-1">N</span>}
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="ajustes-metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            <AjustesMetas
-              userData={userData}
-              updateUserData={updateUserData}
-              diasSemExpediente={diasSemExpediente}
-              updateDiasSemExpediente={updateDiasSemExpediente}
-              diasRestantesCalculados={diasRestantesCalculados}
-              isLoading={isLoading}
-              bonusPerdidoAtivado={bonusPerdidoAtivado}
-              setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-            />
-          </TabsContent>
+
+          <TabsContent value="ajustes-metas" className="bg-card p-6 rounded-xl"><AjustesMetas {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setBonusPerdidoAtivado }} /></TabsContent>
           {layoutVersion === "V1" && (
             <>
-              <TabsContent value="meta-fiado" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-                <MetaFiado
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={setRecebidoHoje}
-                />
-              </TabsContent>
-              <TabsContent value="meta-desafio" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-                <MetaDesafio
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={setRecebidoHoje}
-                />
-              </TabsContent>
-              <TabsContent value="meta-alimentacao" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-                <MetaAlimentacao
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={setRecebidoHoje}
-                />
-              </TabsContent>
+              <TabsContent value="meta-fiado" className="bg-card p-6 rounded-xl"><MetaFiado {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>
+              <TabsContent value="meta-desafio" className="bg-card p-6 rounded-xl"><MetaDesafio {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>
+              <TabsContent value="meta-alimentacao" className="bg-card p-6 rounded-xl"><MetaAlimentacao {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>
             </>
           )}
           {layoutVersion === "V2" && (
-            <TabsContent value="metas" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              <Metas
-                userData={userData}
-                updateUserData={updateUserData}
-                diasSemExpediente={diasSemExpediente}
-                updateDiasSemExpediente={updateDiasSemExpediente}
-                diasRestantesCalculados={diasRestantesCalculados}
-                isLoading={isLoading}
-                bonusPerdidoAtivado={bonusPerdidoAtivado}
-                setRecebidoHoje={setRecebidoHoje}
-              />
-            </TabsContent>
+            <TabsContent value="metas" className="bg-card p-6 rounded-xl"><Metas {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>
           )}
           {layoutVersion === "V1" && bonusPerdidoAtivado && (
-            <TabsContent value="meta-perdido" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-              <MetaPerdido
-                userData={userData}
-                updateUserData={updateUserData}
-                diasSemExpediente={diasSemExpediente}
-                updateDiasSemExpediente={updateDiasSemExpediente}
-                diasRestantesCalculados={diasRestantesCalculados}
-                isLoading={isLoading}
-                bonusPerdidoAtivado={bonusPerdidoAtivado}
-                setRecebidoHoje={setRecebidoHoje}
-              />
-            </TabsContent>
+            <TabsContent value="meta-perdido" className="bg-card p-6 rounded-xl"><MetaPerdido {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>
           )}
-          <TabsContent value="meus-premios" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            {userData ? (
-              <MeusPremios 
-                userData={userData}
-                updateUserData={updateUserData}
-                diasSemExpediente={diasSemExpediente}
-                updateDiasSemExpediente={updateDiasSemExpediente}
-                diasRestantesCalculados={diasRestantesCalculados}
-                isLoading={isLoading}
-                bonusPerdidoAtivado={bonusPerdidoAtivado}
-                setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-                setTotalGanhos={setTotalGanhos}
-              />
-            ) : (
-              <div className="text-foreground">Carregando dados...</div>
-            )}
-          </TabsContent>
-          <TabsContent value="historicos" className="bg-card p-4 md:p-6 rounded-xl shadow-sm">
-            <Historicos 
-              userData={userData}
-              updateUserData={updateUserData}
-              diasSemExpediente={diasSemExpediente}
-              updateDiasSemExpediente={updateDiasSemExpediente}
-              diasRestantesCalculados={diasRestantesCalculados}
-              isLoading={isLoading}
-              bonusPerdidoAtivado={bonusPerdidoAtivado}
-              recebido={recebidoHoje}
-              totalGanhos={totalGanhos}
-            />
-          </TabsContent>
+          <TabsContent value="meus-premios" className="bg-card p-6 rounded-xl"><MeusPremios {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setBonusPerdidoAtivado, setTotalGanhos }} /></TabsContent>
+          <TabsContent value="historicos" className="bg-card p-6 rounded-xl"><Historicos {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, recebido: recebidoHoje, totalGanhos }} /></TabsContent>
         </Tabs>
       </main>
 
+      {/* FOOTER */}
       <footer className="bg-card shadow-md mt-6 p-4">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-3">
-          <div className="flex items-center gap-2 blink-slow" style={{ animation: "blink-slow 2s infinite" }}>
+          <div className="flex items-center gap-2">
             <FaWhatsapp className="h-5 w-5 text-success" />
-            <a
-              href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline text-xs"
-            >
-              Ajuda, Dicas e Sugestões entre no grupo e fique atualizado sobre novas funções!
+            <a href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
+              Grupo de Ajuda no WhatsApp
             </a>
           </div>
-          <div className="flex items-center gap-2 relative">
-            <Instagram 
-              className="h-5 w-5 text-pink-600 cursor-pointer"
-              onClick={handleInstagramClick}
-            />
-            {showInstagramUsername && (
-              <span className="absolute right-0 top-full mt-1 text-pink-600 text-xs bg-card p-1 rounded shadow-md">
-                @renato_alme1da
-              </span>
-            )}
-          </div>
+          <Instagram className="h-5 w-5 text-pink-600 cursor-pointer" onClick={handleInstagramClick} />
+          {showInstagramUsername && <span className="absolute mt-8 text-pink-600 text-xs bg-card p-1 rounded shadow"> @renato_alme1da </span>}
         </div>
-        <style>
-          {`
-            @keyframes blink-slow {
-              0% { opacity: 1; }
-              50% { opacity: 0.3; }
-              100% { opacity: 1; }
-            }
-          `}
-        </style>
       </footer>
 
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="max-w-2xl bg-card">
-          <img src="https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/qlick.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL3FsaWNrLmpwZWciLCJpYXQiOjE3NjAwNDMxMTIsImV4cCI6MTc2MjYzNTExMn0.qGyktssM84jEByd8WRk6tAyR8xCXO5-ncsLWA3zdLfw" alt="Imagem Adicional" className="w-full h-auto" />
+        <DialogContent className="max-w-2xl">
+          <img src="https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/qlick.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL3FsaWNrLmpwZWciLCJpYXQiOjE3NjAwNDMxMTIsImV4cCI6MTc2MjYzNTExMn0.qGyktssM84jEByd8WRk6tAyR8xCXO5-ncsLWA3zdLfw" alt="Qlick" className="w-full" />
         </DialogContent>
       </Dialog>
-
-      <style>
-        {`
-          .custom-dialog-no-close .radix-dialog-close {
-            display: none;
-          }
-        `}
-      </style>
     </div>
   );
 };
