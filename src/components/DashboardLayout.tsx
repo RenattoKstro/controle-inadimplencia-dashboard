@@ -327,14 +327,7 @@ const DashboardLayout = () => {
           <Instagram className="h-5 w-5 text-pink-600 cursor-pointer" onClick={handleInstagramClick} />
           {showInstagramUsername && <span className="absolute mt-8 text-pink-600 text-xs bg-card p-1 rounded shadow"> @renato_alme1da </span>}
         </div>
-      </footer>
-
-      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="max-w-2xl">
-          <img src="https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/sign/pdfs/qlick.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9jYmFjZTM2ZS03ZDk1LTRhZjUtYTJlZC01YTE2NzJkOGM3MjkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwZGZzL3FsaWNrLmpwZWciLCJpYXQiOjE3NjAwNDMxMTIsImV4cCI6MTc2MjYzNTExMn0.qGyktssM84jEByd8WRk6tAyR8xCXO5-ncsLWA3zdLfw" alt="Qlick" className="w-full" />
-        </DialogContent>
-      </Dialog>
-    </div>
+</div>
   );
 };
 
