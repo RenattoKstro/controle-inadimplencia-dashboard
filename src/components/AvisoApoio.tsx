@@ -15,7 +15,6 @@ export default function AvisoApoio() {
   const recebedor = "RENATO CASTRO DE ALMEIDA";
   const cidade = "SAOPAULO";
 
-  // CRC16 Padrão PIX
   function crc16(str: string): string {
     let crc = 0xffff;
     for (let i = 0; i < str.length; i++) {
@@ -39,11 +38,10 @@ export default function AvisoApoio() {
     }
 
     const valorFormatado = Number(valor).toFixed(2).replace(".", "");
-
     const base =
       "000201" +
       "010211" +
-      `26${(43).toString().padStart(2, "0")}0014BR.GOV.BCB.PIX01${pixKey.length
+      `26${"43".padStart(2, "0")}0014BR.GOV.BCB.PIX01${pixKey.length
         .toString()
         .padStart(2, "0")}${pixKey}` +
       "52040000" +
@@ -84,28 +82,27 @@ export default function AvisoApoio() {
               <Sparkles className="inline w-4 h-4 text-yellow-500 ml-1" />
             </p>
 
-            {/* Formulário */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <input
                 type="text"
                 placeholder="Seu nome"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
               <input
                 type="text"
                 placeholder="Filial"
                 value={filial}
                 onChange={(e) => setFilial(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
               <input
                 type="number"
                 placeholder="R$ 10,00"
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
               />
             </div>
 
@@ -116,7 +113,6 @@ export default function AvisoApoio() {
               Gerar QR Code PIX
             </button>
 
-            {/* QR Code + Chave */}
             {mostrarQR && (
               <div className="mt-8 bg-white p-8 rounded-3xl shadow-2xl border-2 border-gray-100">
                 <div className="text-center">
@@ -131,9 +127,7 @@ export default function AvisoApoio() {
                     <button
                       onClick={copiarPix}
                       className={`w-full py-3 px-6 rounded-xl font-medium transition-all flex items-center justify-center gap-3 ${
-                        copied
-                          ? "bg-green-500 text-white"
-                          : "bg-blue-700 hover:bg-blue-800 text-white"
+                        copied ? "bg-green-500 text-white" : "bg-blue-700 hover:bg-blue-800 text-white"
                       }`}
                     >
                       <Copy className="w-5 h-5" />
@@ -142,7 +136,8 @@ export default function AvisoApoio() {
 
                     <div className="text-sm text-gray-600">
                       <p>
-                        <strong>Chave:</strong> <code className="font-mono bg-gray-100 px-2 py-1 rounded">{pixKey}</code>
+                        <strong>Chave:</strong>{" "}
+                        <code className="font-mono bg-gray-100 px-2 py-1 rounded">{pixKey}</code>
                       </p>
                       <p className="mt-2 text-green-600 font-medium">
                         Obrigado por apoiar!
