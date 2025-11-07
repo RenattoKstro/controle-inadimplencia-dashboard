@@ -21,7 +21,7 @@ export default function AvisoApoio() {
           </h2>
           <p className="text-gray-700 text-lg leading-relaxed">
             Este app é <strong>100% gratuito</strong> e sempre será.  
-            Sua contribuição ajuda a manter o servidor, o café e o sonho vivo!
+            Sua contribuição ajuda a manter o servidor, o site e o banco de dados!
             <Sparkles className="inline w-5 h-5 text-yellow-500 ml-1" />
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function AvisoApoio() {
         </div>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Desenvolvido com carinho por <span className="font-bold text-pink-600">@renato_alme1da</span></p>
+          <p>Desenvolvido por <span className="font-bold text-pink-600">@renato_alme1da</span></p>
         </div>
       </div>
     </div>
