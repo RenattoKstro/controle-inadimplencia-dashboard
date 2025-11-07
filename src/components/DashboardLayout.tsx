@@ -1,6 +1,11 @@
+// src/app/dashboard/page.tsx
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu, Calendar, AlertTriangle, History, Instagram, File, FileText } from "lucide-react";
+import {
+  Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu,
+  Calendar, AlertTriangle, History, Instagram, File, FileText,
+  Heart
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +20,11 @@ import Historicos from "./Historicos";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger
+} from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
@@ -25,6 +34,7 @@ import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
+import AvisoApoio from "@/components/AvisoApoio";
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
@@ -34,7 +44,14 @@ const DashboardLayout = () => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
-  const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
+  const {
+    userData,
+    updateUserData,
+    diasSemExpediente,
+    updateDiasSemExpediente,
+    isLoading,
+    diasRestantesCalculados
+  } = useUserData();
   const [recebidoHoje, setRecebidoHoje] = useState(0);
   const [totalGanhos, setTotalGanhos] = useState(0);
   const [layoutVersion, setLayoutVersion] = useState<"V1" | "V2">("V1");
@@ -45,7 +62,7 @@ const DashboardLayout = () => {
   const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
 
-  // Sessão
+  // Verifica sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -131,7 +148,11 @@ const DashboardLayout = () => {
     setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + (dir === "next" ? 1 : -1), 1));
   };
 
-  if (!userData && !isLoading) return <div className="min-h-screen flex items-center justify-center"><p>Carregando...</p></div>;
+  if (!userData && !isLoading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p>Carregando...</p>
+    </div>
+  );
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
@@ -145,14 +166,20 @@ const DashboardLayout = () => {
               </h1>
               <div className="flex gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                  <SheetTrigger asChild><Button variant="outline" size="icon"><Menu /></Button></SheetTrigger>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon"><Menu /></Button>
+                  </SheetTrigger>
                   <SheetContent side="right" className="w-80">
                     <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
                     <Apps />
-                    <div className="py-4 border-t"><Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button></div>
+                    <div className="py-4 border-t">
+                      <Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button>
+                    </div>
                   </SheetContent>
                 </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun /> : <Moon />}</Button>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+                  {isDarkMode ? <Sun /> : <Moon />}
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)}>
                   <Calendar className="mr-1" />
                   {today.toLocaleDateString("pt-BR")}
@@ -165,17 +192,61 @@ const DashboardLayout = () => {
                 Controle de Inadimplência {percentual && `${percentual}%`}
               </h1>
               <div className="flex gap-3">
-                <Button onClick={print} className="gap-2"><RiScreenshot2Fill /> Print</Button>
-                <Dialog><DialogTrigger asChild><Button variant="outline" className="gap-2"><File /> Anexos</Button></DialogTrigger><DialogContent><Anexos /></DialogContent></Dialog>
-                <Dialog><DialogTrigger asChild><Button variant="outline" className="gap-2"><BiSolidReport /> Relatórios</Button></DialogTrigger><DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent></Dialog>
-                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
+                {/* PRINT + APOIAR */}
+                <div className="flex gap-3">
+                  <Button onClick={print} variant="outline" className="gap-2">
+                    <RiScreenshot2Fill className="w-5 h-5" /> Print
+                  </Button>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white shadow-lg">
+                        <Heart className="w-5 h-5 fill-white" />
+                        Apoiar
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl p-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+                      <div className="max-h-[80vh] overflow-y-auto">
+                        <AvisoApoio />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2"><File /> Anexos</Button>
+                  </DialogTrigger>
+                  <DialogContent><Anexos /></DialogContent>
+                </Dialog>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2"><BiSolidReport /> Relatórios</Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
+                </Dialog>
+
+                <Button variant="outline" size="sm" onClick={() => set  setShowCalendar(!showCalendar)} className="gap-2">
                   <Calendar /> {today.toLocaleDateString("pt-BR")}
                 </Button>
+
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                  <SheetTrigger asChild><Button variant="outline" size="icon"><Menu /></Button></SheetTrigger>
-                  <SheetContent side="right" className="w-80"><Apps /><div className="mt-8"><Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button></div></SheetContent>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon"><Menu /></Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-80">
+                    <Apps />
+                    <div className="mt-8">
+                      <Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button>
+                    </div>
+                  </SheetContent>
                 </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun /> : <Moon />}</Button>
+
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+                  {isDarkMode ? <Sun /> : <Moon />}
+                </Button>
+
                 <Button variant="outline" size="sm" onClick={() => setLayoutVersion(p => p === "V1" ? "V2" : "V1")}>
                   {layoutVersion === "V1" ? "V2" : "V1"}
                 </Button>
@@ -191,11 +262,15 @@ const DashboardLayout = () => {
           <div className="bg-card p-6 rounded-xl shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between mb-4">
               <Button variant="ghost" onClick={() => navMonth("prev")}>{"<"}</Button>
-              <span className="font-bold">{calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</span>
+              <span className="font-bold">
+                {calendarMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+              </span>
               <Button variant="ghost" onClick={() => navMonth("next")}>{">"}</Button>
             </div>
             <div className="grid grid-cols-7 gap-2 text-center">
-              {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map(d => <div key={d} className="text-xs text-muted-foreground">{d}</div>)}
+              {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map(d => (
+                <div key={d} className="text-xs text-muted-foreground">{d}</div>
+              ))}
               {calendar.cells(calendarMonth).map((day, i) => (
                 <div key={i} className={`w-9 h-9 flex items-center justify-center rounded-full text-sm ${calendar.color(day)}`}>
                   {day?.getDate()}
@@ -230,18 +305,117 @@ const DashboardLayout = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="ajustes-metas" className="mt-4"><AjustesMetas {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setBonusPerdidoAtivado }} /></TabsContent>
+          <TabsContent value="ajustes-metas" className="mt-4">
+            <AjustesMetas
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+            />
+          </TabsContent>
+
           {layoutVersion === "V1" && (
             <>
-              <TabsContent value="meta-fiado"><MetaFiado {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>
-              <TabsContent value="meta-desafio"><MetaDesafio {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>
-              <TabsContent value="meta-alimentacao"><MetaAlimentacao {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>
+              <TabsContent value="meta-fiado">
+                <MetaFiado
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={setRecebidoHoje}
+                />
+              </TabsContent>
+              <TabsContent value="meta-desafio">
+                <MetaDesafio
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={setRecebidoHoje}
+                />
+              </TabsContent>
+              <TabsContent value="meta-alimentacao">
+                <MetaAlimentacao
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={setRecebidoHoje}
+                />
+              </TabsContent>
             </>
           )}
-          {layoutVersion === "V2" && <TabsContent value="metas"><Metas {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>}
-          {layoutVersion === "V1" && bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setRecebidoHoje }} /></TabsContent>}
-          <TabsContent value="meus-premios"><MeusPremios {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, setBonusPerdidoAtivado, setTotalGanhos }} /></TabsContent>
-          <TabsContent value="historicos"><Historicos {...{ userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, diasRestantesCalculados, isLoading, bonusPerdidoAtivado, recebido: recebidoHoje, totalGanhos }} /></TabsContent>
+
+          {layoutVersion === "V2" && (
+            <TabsContent value="metas">
+              <Metas
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+                setRecebidoHoje={setRecebidoHoje}
+              />
+            </TabsContent>
+          )}
+
+          {layoutVersion === "V1" && bonusPerdidoAtivado && (
+            <TabsContent value="meta-perdido">
+              <MetaPerdido
+                userData={userData}
+                updateUserData={updateUserData}
+                diasSemExpediente={diasSemExpediente}
+                updateDiasSemExpediente={updateDiasSemExpediente}
+                diasRestantesCalculados={diasRestantesCalculados}
+                isLoading={isLoading}
+                bonusPerdidoAtivado={bonusPerdidoAtivado}
+                setRecebidoHoje={setRecebidoHoje}
+              />
+            </TabsContent>
+          )}
+
+          <TabsContent value="meus-premios">
+            <MeusPremios
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+              setTotalGanhos={setTotalGanhos}
+            />
+          </TabsContent>
+
+          <TabsContent value="historicos">
+            <Historicos
+              userData={userData}
+              updateUserData={updateUserData}
+              diasSemExpediente={diasSemExpediente}
+              updateDiasSemExpediente={updateDiasSemExpediente}
+              diasRestantesCalculados={diasRestantesCalculados}
+              isLoading={isLoading}
+              bonusPerdidoAtivado={bonusPerdidoAtivado}
+              recebido={recebidoHoje}
+              totalGanhos={totalGanhos}
+            />
+          </TabsContent>
         </Tabs>
       </main>
 
@@ -255,7 +429,9 @@ const DashboardLayout = () => {
             </a>
           </div>
           <Instagram className="text-pink-600 cursor-pointer" onClick={instagram} />
-          {showInstagramUsername && <span className="text-pink-600 text-xs bg-card px-2 py-1 rounded shadow">@renato_alme1da</span>}
+          {showInstagramUsername && (
+            <span className="text-pink-600 text-xs bg-card px-2 py-1 rounded shadow">@renato_alme1da</span>
+          )}
         </div>
       </footer>
     </div>
