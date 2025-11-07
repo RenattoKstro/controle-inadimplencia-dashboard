@@ -52,17 +52,6 @@ const apps = [
     ),
     component: TigerLinkGenerator,
   },
-  {
-    id: "renegociacao",
-    name: "Renegociação",
-    icon: () => (
-      <div className="flex items-center">
-        <DollarSign className="h-4 w-4 mr-1 text-white" />
-        <RefreshCw className="h-3 w-3 text-white" />
-      </div>
-    ),
-    component: RenegociacaoCard,
-  },
 ];
 
 const Apps = () => {
