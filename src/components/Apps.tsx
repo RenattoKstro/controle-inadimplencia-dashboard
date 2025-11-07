@@ -8,7 +8,6 @@ import {
 import CalculadoraRentabilidade from "./dashboard/CalculadoraRentabilidade";
 import CalculadoraVendedor90 from "./dashboard/CalculadoraVendedor90";
 import TigerLinkGenerator from "./TigerLinkGenerator";
-import RenegociacaoCard from "./dashboard/RenegociacaoCard";
 
 const apps = [
   {
