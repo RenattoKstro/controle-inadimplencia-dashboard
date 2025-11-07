@@ -41,14 +41,10 @@ const DashboardLayout = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
-  const [recebidoHoje, setRecebidoHoje] = useState(0);
-  const [totalGanhos, setTotalGanhos] = useState(0);
-  const [layoutVersion, setLayoutVersion] = useState<"V1" | "V2">("V1");
-  const today = new Date();
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [isNewHistorico, setIsNewHistorico] = useState(true);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
+  const today = new Date();
 
   useEffect(() => {
     const check = async () => {
@@ -65,14 +61,8 @@ const DashboardLayout = () => {
   }, [navigate, toast]);
 
   useEffect(() => {
-    if (userData?.abertura_vencido_mes && userData?.vencido_atual) {
-      const days = new Date().getDate();
-      const received = userData.abertura_vencido_mes - userData.vencido_atual;
-      setRecebidoHoje(received > 0 ? received / days : 0);
-    }
-    setIsNewHistorico(!localStorage.getItem("hasVisitedHistorico"));
     document.body.classList.toggle("dark", isDarkMode);
-  }, [userData, isDarkMode]);
+  }, [isDarkMode]);
 
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
   const handleLogout = async () => {
@@ -84,10 +74,6 @@ const DashboardLayout = () => {
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     if (isMobile) setSheetOpen(false);
-    if (v === "historicos" && isNewHistorico) {
-      setIsNewHistorico(false);
-      localStorage.setItem("hasVisitedHistorico", "true");
-    }
   };
 
   const print = () => {
@@ -113,37 +99,108 @@ const DashboardLayout = () => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
-      {/* HEADER (igual antes) */}
-      <header className="bg-card shadow-md">
+      {/* HEADER */}
+      <header className="bg-card shadow-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          {/* ... (mesmo código do header anterior) */}
-          {/* COLOQUE AQUI O HEADER QUE JÁ TINHA */}
+          {isMobile ? (
+            <>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Inadimplência {percentual && `${percentual}%`}
+              </h1>
+              <div className="flex gap-2">
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild><Button variant="outline" size="icon"><Menu /></Button></SheetTrigger>
+                  <SheetContent side="right" className="w-80">
+                    <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
+                    <Apps />
+                    <div className="py-4 border-t"><Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button></div>
+                  </SheetContent>
+                </Sheet>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun /> : <Moon />}</Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Controle de Inadimplência {percentual && `${percentual}%`}
+              </h1>
+              <div className="flex gap-3">
+                <Button onClick={print} variant="outline" className="gap-2">
+                  <RiScreenshot2Fill className="w-5 h-5" /> Print
+                </Button>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button className="gap-2 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-lg">
+                      <Heart className="w-5 h-5 fill-white" /> Apoiar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
+                    <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
+                      <AvisoApoio />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog><DialogTrigger asChild><Button variant="outline" className="gap-2"><File className="w-4 h-4" /> Anexos</Button></DialogTrigger><DialogContent><Anexos /></DialogContent></Dialog>
+                <Dialog><DialogTrigger asChild><Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button></DialogTrigger><DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent></Dialog>
+                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
+                  <Calendar className="h-4 w-4" /> {today.toLocaleDateString("pt-BR")}
+                </Button>
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild><Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button></SheetTrigger>
+                  <SheetContent side="right" className="w-80"><Apps /><div className="mt-8"><Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button></div></SheetContent>
+                </Sheet>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}</Button>
+              </div>
+            </>
+          )}
         </div>
       </header>
 
-      {/* CALENDÁRIO (igual antes) */}
-      {showCalendar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setShowCalendar(false)}>
-          <div className="bg-card p-6 rounded-xl shadow-2xl" onClick={e => e.stopPropagation()}>
-            {/* ... (mesmo calendário) */}
+      {/* LAYOUT PRINCIPAL: RANKING FIXO + CONTEÚDO */}
+      <div className="flex flex-col lg:flex-row min-h-screen">
+        {/* RANKING FIXO (ESQUERDA) */}
+        <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
+          <div className="p-6">
+            <RankingApoiadores />
           </div>
-        </div>
-      )}
+        </aside>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* ABAS (igual antes) */}
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          {/* ... (todas as TabsList e TabsContent do código anterior) */}
-        </Tabs>
+        {/* CONTEÚDO PRINCIPAL (DIREITA) */}
+        <main className="flex-1 lg:ml-80 pt-6 pb-20">
+          <div className="max-w-5xl mx-auto px-4">
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <TabsList className="grid grid-cols-7 w-full p-1 bg-card rounded-xl mb-6">
+                <TabsTrigger value="ajustes-metas" className="gap-1"><Sliders className="h-4 w-4" /> Ajustes</TabsTrigger>
+                <TabsTrigger value="meta-fiado" className="gap-1"><Wallet className="h-4 w-4" /> Fiado</TabsTrigger>
+                <TabsTrigger value="meta-desafio" className="gap-1"><Trophy className="h-4 w-4" /> Desafio</TabsTrigger>
+                <TabsTrigger value="meta-alimentacao" className="gap-1"><Utensils className="h-4 w-4" /> Alimentação</TabsTrigger>
+                {bonusPerdidoAtivado && <TabsTrigger value="meta-perdido" className="gap-1"><AlertTriangle className="h-4 w-4" /> Perdido</TabsTrigger>}
+                <TabsTrigger value="meus-premios" className="gap-1"><Gift className="h-4 w-4" /> Prêmios</TabsTrigger>
+                <TabsTrigger value="historicos" className="gap-1"><History className="h-4 w-4" /> Histórico</TabsTrigger>
+              </TabsList>
 
-        {/* RANKING DOS HERÓIS */}
-        <div className="mt-16">
-          <RankingApoiadores />
-        </div>
-      </main>
+              <TabsContent value="ajustes-metas"><AjustesMetas userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} /></TabsContent>
+              <TabsContent value="meta-fiado"><MetaFiado userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
+              <TabsContent value="meta-desafio"><MetaDesafio userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
+              <TabsContent value="meta-alimentacao"><MetaAlimentacao userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
+              {bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>}
+              <TabsContent value="meus-premios"><MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} /></TabsContent>
+              <TabsContent value="historicos"><Historicos userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} recebido={0} totalGanhos={0} /></TabsContent>
+            </Tabs>
+          </div>
+        </main>
+      </div>
 
-      <footer className="bg-card shadow-md mt-8 p-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
+      {/* RANKING NO CELULAR (embaixo) */}
+      <div className="lg:hidden mt-8 px-4">
+        <RankingApoiadores />
+      </div>
+
+      {/* FOOTER */}
+      <footer className="bg-card shadow-md p-4 mt-8">
+        <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />
             <a href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
