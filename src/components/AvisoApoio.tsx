@@ -28,22 +28,14 @@ export default function AvisoApoio() {
   }
 
   const gerarPayload = () => {
-    if (!nome.trim() || !filial.trim()) {
-      alert("Preencha Nome e Filial.");
-      return;
-    }
-    if (!valor || Number(valor) <= 0) {
-      alert("Digite um valor válido para contribuir.");
-      return;
-    }
+    if (!nome.trim() || !filial.trim()) return alert("Preencha Nome e Filial.");
+    if (!valor || Number(valor) <= 0) return alert("Digite um valor válido.");
 
     const valorFormatado = Number(valor).toFixed(2).replace(".", "");
     const base =
       "000201" +
       "010211" +
-      `26${"43".padStart(2, "0")}0014BR.GOV.BCB.PIX01${pixKey.length
-        .toString()
-        .padStart(2, "0")}${pixKey}` +
+      `26430014BR.GOV.BCB.PIX01${pixKey.length.toString().padStart(2, "0")}${pixKey}` +
       "52040000" +
       "5303986" +
       `54${valorFormatado.length.toString().padStart(2, "0")}${valorFormatado}` +
@@ -53,8 +45,7 @@ export default function AvisoApoio() {
       "62070503***" +
       "6304";
 
-    const crc = crc16(base);
-    setPayload(base + crc);
+    setPayload(base + crc16(base));
     setMostrarQR(true);
   };
 
@@ -73,77 +64,37 @@ export default function AvisoApoio() {
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-blue-800 mb-3 flex items-center gap-3">
-              Apoie o Projeto
-              <Heart className="w-7 h-7 text-red-500 fill-red-500" />
+              Apoie o Projeto <Heart className="w-7 h-7 text-red-500 fill-red-500" />
             </h2>
             <p className="text-gray-700 mb-6 leading-relaxed">
-              Este app é <strong>100% gratuito</strong> e sempre será.  
-              Sua contribuição ajuda a pagar servidor, hospedagem e café
-              <Sparkles className="inline w-4 h-4 text-yellow-500 ml-1" />
+              App 100% gratuito. Sua doação paga servidor e café <Sparkles className="inline w-4 h-4 text-yellow-500 ml-1" />
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <input
-                type="text"
-                placeholder="Seu nome"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-              <input
-                type="text"
-                placeholder="Filial"
-                value={filial}
-                onChange={(e) => setFilial(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
-              <input
-                type="number"
-                placeholder="R$ 10,00"
-                value={valor}
-                onChange={(e) => setValor(e.target.value)}
-                className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-              />
+              <input type="text" placeholder="Seu nome" value={nome} onChange={e => setNome(e.target.value)} className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+              <input type="text" placeholder="Filial" value={filial} onChange={e => setFilial(e.target.value)} className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+              <input type="number" placeholder="R$ 10,00" value={valor} onChange={e => setValor(e.target.value)} className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
 
-            <button
-              onClick={gerarPayload}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
-            >
+            <button onClick={gerarPayload} className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-3">
               Gerar QR Code PIX
             </button>
 
             {mostrarQR && (
-              <div className="mt-8 bg-white p-8 rounded-3xl shadow-2xl border-2 border-gray-100">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">
-                    Escaneie e contribua!
-                  </h3>
-                  <div className="inline-block p-6 bg-white rounded-3xl shadow-inner">
-                    <QRCodeSVG value={payload} size={220} level="H" />
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    <button
-                      onClick={copiarPix}
-                      className={`w-full py-3 px-6 rounded-xl font-medium transition-all flex items-center justify-center gap-3 ${
-                        copied ? "bg-green-500 text-white" : "bg-blue-700 hover:bg-blue-800 text-white"
-                      }`}
-                    >
-                      <Copy className="w-5 h-5" />
-                      {copied ? "Chave copiada!" : "Copiar chave PIX"}
-                    </button>
-
-                    <div className="text-sm text-gray-600">
-                      <p>
-                        <strong>Chave:</strong>{" "}
-                        <code className="font-mono bg-gray-100 px-2 py-1 rounded">{pixKey}</code>
-                      </p>
-                      <p className="mt-2 text-green-600 font-medium">
-                        Obrigado por apoiar!
-                      </p>
-                    </div>
-                  </div>
+              <div className="mt-8 bg-white p-8 rounded-3xl shadow-2xl border-2 border-gray-100 text-center">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Escaneie e contribua!</h3>
+                <div className="inline-block p-6 bg-white rounded-3xl shadow-inner">
+                  <QRCodeSVG value={payload} size={220} level="H" />
+                </div>
+                <div className="mt-6 space-y-3">
+                  <button onClick={copiarPix} className={`w-full py-3 px-6 rounded-xl font-medium flex items-center justify-center gap-3 ${copied ? "bg-green-500" : "bg-blue-700 hover:bg-blue-800"} text-white`}>
+                    <Copy className="w-5 h-5" />
+                    {copied ? "Copiado!" : "Copiar chave PIX"}
+                  </button>
+                  <p className="text-sm text-gray-600">
+                    <strong>Chave:</strong> <code className="font-mono bg-gray-100 px-2 py-1 rounded">{pixKey}</code>
+                  </p>
+                  <p className="text-green-600 font-medium">Obrigado por apoiar!</p>
                 </div>
               </div>
             )}
