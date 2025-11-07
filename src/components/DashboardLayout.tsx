@@ -3,8 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet, Trophy, Utensils, Gift, Sliders, LogOut, Menu,
-  Calendar, AlertTriangle, History, Instagram, File, FileText,
-  Heart
+  Calendar, AlertTriangle, History, Instagram, File, Heart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -181,7 +180,7 @@ const DashboardLayout = () => {
                   {isDarkMode ? <Sun /> : <Moon />}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)}>
-                  <Calendar className="mr-1" />
+                  <Calendar className="h-4 w-4 mr-1" />
                   {today.toLocaleDateString("pt-BR")}
                 </Button>
               </div>
@@ -200,13 +199,13 @@ const DashboardLayout = () => {
 
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button className="gap-2 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white shadow-lg">
+                      <Button className="gap-2 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-lg">
                         <Heart className="w-5 h-5 fill-white" />
                         Apoiar
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl p-8 bg-gradient-to-br from-blue-50 to-indigo-50">
-                      <div className="max-h-[80vh] overflow-y-auto">
+                    <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
+                      <div className="max-h-[85vh] overflow-y-auto rounded-3xl">
                         <AvisoApoio />
                       </div>
                     </DialogContent>
@@ -215,40 +214,52 @@ const DashboardLayout = () => {
 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2"><File /> Anexos</Button>
+                    <Button variant="outline" className="gap-2"><File className="w-4 h-4" /> Anexos</Button>
                   </DialogTrigger>
                   <DialogContent><Anexos /></DialogContent>
                 </Dialog>
 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2"><BiSolidReport /> Relatórios</Button>
+                    <Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
                 </Dialog>
 
-                <Button variant="outline" size="sm" onClick={() => set  setShowCalendar(!showCalendar)} className="gap-2">
-                  <Calendar /> {today.toLocaleDateString("pt-BR")}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCalendar(!showCalendar)}
+                  className="gap-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  {today.toLocaleDateString("pt-BR")}
                 </Button>
 
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon"><Menu /></Button>
+                    <Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-80">
                     <Apps />
                     <div className="mt-8">
-                      <Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button>
+                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                        Sair
+                      </Button>
                     </div>
                   </SheetContent>
                 </Sheet>
 
                 <Button variant="outline" size="icon" onClick={toggleDarkMode}>
-                  {isDarkMode ? <Sun /> : <Moon />}
+                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
 
-                <Button variant="outline" size="sm" onClick={() => setLayoutVersion(p => p === "V1" ? "V2" : "V1")}>
-                  {layoutVersion === "V1" ? "V2" : "V1"}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLayoutVersion(p => p === "V1" ? "V2" : "V1")}
+                >
+                  {layoutVersion}
                 </Button>
               </div>
             </>
@@ -424,7 +435,7 @@ const DashboardLayout = () => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />
-            <a href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl" target="_blank" className="text-primary hover:underline">
+            <a href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               Grupo de Ajuda
             </a>
           </div>
