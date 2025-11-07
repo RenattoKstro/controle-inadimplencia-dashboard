@@ -1,104 +1,73 @@
 // src/components/AvisoApoio.tsx
-import { useState } from "react";
-import { MessageCircle, Copy, Heart, Sparkles } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { Heart, Copy, Sparkles, QrCode } from "lucide-react";
 
 export default function AvisoApoio() {
-  const [nome, setNome] = useState("");
-  const [filial, setFilial] = useState("");
-  const [valor, setValor] = useState("");
-  const [payload, setPayload] = useState("");
-  const [mostrarQR, setMostrarQR] = useState(false);
-  const [copied, setCopied] = useState(false);
-
   const pixKey = "rena7oalmeida@jim.com";
-  const recebedor = "RENATO CASTRO DE ALMEIDA";
-  const cidade = "SAOPAULO";
-
-  function crc16(str: string): string {
-    let crc = 0xffff;
-    for (let i = 0; i < str.length; i++) {
-      crc ^= str.charCodeAt(i) << 8;
-      for (let j = 0; j < 8; j++) {
-        crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
-        crc &= 0xffff;
-      }
-    }
-    return crc.toString(16).toUpperCase().padStart(4, "0");
-  }
-
-  const gerarPayload = () => {
-    if (!nome.trim() || !filial.trim()) return alert("Preencha Nome e Filial.");
-    if (!valor || Number(valor) <= 0) return alert("Digite um valor válido.");
-
-    const valorFormatado = Number(valor).toFixed(2).replace(".", "");
-    const base =
-      "000201" +
-      "010211" +
-      `26430014BR.GOV.BCB.PIX01${pixKey.length.toString().padStart(2, "0")}${pixKey}` +
-      "52040000" +
-      "5303986" +
-      `54${valorFormatado.length.toString().padStart(2, "0")}${valorFormatado}` +
-      "5802BR" +
-      `59${recebedor.length.toString().padStart(2, "0")}${recebedor}` +
-      `60${cidade.length.toString().padStart(2, "0")}${cidade}` +
-      "62070503***" +
-      "6304";
-
-    setPayload(base + crc16(base));
-    setMostrarQR(true);
-  };
 
   const copiarPix = () => {
     navigator.clipboard.writeText(pixKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    alert("Chave PIX copiada com sucesso!");
   };
 
   return (
     <div className="w-full max-w-2xl mx-auto p-6">
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-8 shadow-xl">
-        <div className="flex items-start gap-5">
-          <div className="flex-shrink-0 bg-blue-100 p-4 rounded-2xl">
-            <MessageCircle className="w-10 h-10 text-blue-700" />
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-8 shadow-2xl">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+            <QrCode className="w-10 h-10 text-blue-700" />
           </div>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold text-blue-800 mb-3 flex items-center gap-3">
-              Apoie o Projeto <Heart className="w-7 h-7 text-red-500 fill-red-500" />
-            </h2>
-            <p className="text-gray-700 mb-6 leading-relaxed">
-              App 100% gratuito. Sua doação paga servidor e café <Sparkles className="inline w-4 h-4 text-yellow-500 ml-1" />
-            </p>
+          <h2 className="text-3xl font-bold text-blue-800 mb-3">
+            Apoie o Projeto <Heart className="inline w-8 h-8 text-red-500 fill-red-500 ml-2" />
+          </h2>
+          <p className="text-gray-700 text-lg leading-relaxed">
+            Este app é <strong>100% gratuito</strong> e sempre será.  
+            Sua contribuição ajuda a manter o servidor, o café e o sonho vivo!
+            <Sparkles className="inline w-5 h-5 text-yellow-500 ml-1" />
+          </p>
+        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <input type="text" placeholder="Seu nome" value={nome} onChange={e => setNome(e.target.value)} className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
-              <input type="text" placeholder="Filial" value={filial} onChange={e => setFilial(e.target.value)} className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
-              <input type="number" placeholder="R$ 10,00" value={valor} onChange={e => setValor(e.target.value)} className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" />
+        <div className="bg-white p-8 rounded-3xl shadow-inner border-2 border-gray-100">
+          <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
+            Escaneie ou copie a chave PIX
+          </h3>
+
+          <div className="flex justify-center mb-6">
+            <img 
+              src="/PIX.png" 
+              alt="QR Code PIX" 
+              className="w-64 h-64 rounded-2xl shadow-lg border-4 border-gray-200"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+              <p className="text-sm text-gray-600 mb-2">Chave PIX (e-mail):</p>
+              <code className="block font-mono text-lg bg-white px-4 py-3 rounded-lg border border-gray-300 text-center">
+                {pixKey}
+              </code>
             </div>
 
-            <button onClick={gerarPayload} className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-bold py-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-3">
-              Gerar QR Code PIX
+            <button
+              onClick={copiarPix}
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center gap-3"
+            >
+              <Copy className="w-6 h-6" />
+              Copiar Chave PIX
             </button>
-
-            {mostrarQR && (
-              <div className="mt-8 bg-white p-8 rounded-3xl shadow-2xl border-2 border-gray-100 text-center">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Escaneie e contribua!</h3>
-                <div className="inline-block p-6 bg-white rounded-3xl shadow-inner">
-                  <QRCodeSVG value={payload} size={220} level="H" />
-                </div>
-                <div className="mt-6 space-y-3">
-                  <button onClick={copiarPix} className={`w-full py-3 px-6 rounded-xl font-medium flex items-center justify-center gap-3 ${copied ? "bg-green-500" : "bg-blue-700 hover:bg-blue-800"} text-white`}>
-                    <Copy className="w-5 h-5" />
-                    {copied ? "Copiado!" : "Copiar chave PIX"}
-                  </button>
-                  <p className="text-sm text-gray-600">
-                    <strong>Chave:</strong> <code className="font-mono bg-gray-100 px-2 py-1 rounded">{pixKey}</code>
-                  </p>
-                  <p className="text-green-600 font-medium">Obrigado por apoiar!</p>
-                </div>
-              </div>
-            )}
           </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-green-600 font-bold text-lg">
+              Qualquer valor faz diferença!
+            </p>
+            <p className="text-gray-600 mt-2">
+              Você escolhe quanto doar direto no app do seu banco.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center text-sm text-gray-500">
+          <p>Desenvolvido com carinho por <span className="font-bold text-pink-600">@renato_alme1da</span></p>
         </div>
       </div>
     </div>
