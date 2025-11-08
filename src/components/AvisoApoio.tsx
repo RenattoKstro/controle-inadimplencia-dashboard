@@ -9,6 +9,7 @@ export default function AvisoApoio() {
   const [valor, setValor] = useState("");
   const [copied, setCopied] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [erro, setErro] = useState("");
 
   const pixKey = "rena7oalmeida@jim.com";
 
@@ -18,20 +19,30 @@ export default function AvisoApoio() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const salvarApoio = async () => {
-    if (!nome.trim() || !filial.trim() || !valor || Number(valor) <= 0) {
-      alert("Preencha todos os campos!");
-      return;
-    }
+  const validarENviar = async () => {
+    setErro("");
 
+    // 1. Nome: até 14 caracteres
+    if (!nome.trim()) return setErro("Digite seu nome");
+    if (nome.trim().length > 14) return setErro("Nome: máximo 14 caracteres");
+
+    // 2. Filial obrigatória
+    if (!filial.trim()) return setErro("Digite sua filial");
+
+    // 3. Valor: apenas número inteiro positivo
+    const valorNum = Number(valor);
+    if (!valor || isNaN(valorNum) || valorNum <= 0) return setErro("Digite um valor válido");
+    if (!Number.isInteger(valorNum)) return setErro("Apenas valores inteiros (ex: 10, 15, 20)");
+
+    // 4. Salvar no Supabase
     const { error } = await supabase.from("apoiadores").insert({
-      nome: nome.trim(),
+      nome: nome.trim().substring(0, 14),
       filial: filial.trim(),
-      valor: Number(valor),
+      valor: valorNum,
     });
 
     if (error) {
-      alert("Erro ao salvar. Tente novamente.");
+      setErro("Erro ao salvar. Tente novamente.");
       console.error(error);
     } else {
       setEnviado(true);
@@ -55,20 +66,27 @@ export default function AvisoApoio() {
             Apoie o Projeto <Heart className="inline w-8 h-8 text-red-500 fill-red-500 ml-2" />
           </h2>
           <p className="text-gray-700 text-lg leading-relaxed">
-            Este app é <strong>100% gratuito</strong>. Sua doação mantém tudo vivo!
+            App 100% gratuito. Sua doação mantém tudo vivo!
             <Sparkles className="inline w-5 h-5 text-yellow-500 ml-1" />
           </p>
         </div>
 
         <div className="bg-white p-8 rounded-3xl shadow-inner border-2 border-gray-100 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="Seu nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-            />
+            <div>
+              <input
+                type="text"
+                placeholder="Seu nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value.slice(0, 14))}
+                maxLength={14}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-center font-medium"
+              />
+              <p className="text-xs text-gray-500 text-center mt-1">
+                {nome.length}/14
+              </p>
+            </div>
+
             <input
               type="text"
               placeholder="Filial"
@@ -76,14 +94,27 @@ export default function AvisoApoio() {
               onChange={(e) => setFilial(e.target.value)}
               className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
             />
+
             <input
               type="number"
-              placeholder="R$ 10,00"
+              placeholder="R$ 20"
               value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "" || /^\d+$/.test(v)) setValor(v);
+              }}
+              className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-center font-bold text-lg"
+              min="1"
+              step="1"
             />
           </div>
+
+          {/* MENSAGEM DE ERRO */}
+          {erro && (
+            <p className="text-red-600 font-bold text-center bg-red-50 p-3 rounded-xl border border-red-300">
+              {erro}
+            </p>
+          )}
 
           <div className="flex justify-center">
             <img
@@ -112,7 +143,7 @@ export default function AvisoApoio() {
             </button>
 
             <button
-              onClick={salvarApoio}
+              onClick={validarENviar}
               disabled={enviado}
               className={`flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all ${
                 enviado
@@ -125,7 +156,7 @@ export default function AvisoApoio() {
           </div>
 
           <p className="text-center text-green-600 font-bold text-lg">
-            Qualquer valor faz diferença!
+            Valores inteiros: 10, 15, 20, 50...
           </p>
         </div>
 
