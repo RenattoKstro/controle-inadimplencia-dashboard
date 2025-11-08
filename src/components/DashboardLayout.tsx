@@ -129,19 +129,6 @@ const DashboardLayout = () => {
                   <RiScreenshot2Fill className="w-5 h-5" /> Print
                 </Button>
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-lg">
-                      <Heart className="w-5 h-5 fill-white" /> Apoiar
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
-                    <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
-                      <AvisoApoio />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-
                 <Dialog><DialogTrigger asChild><Button variant="outline" className="gap-2"><File className="w-4 h-4" /> Anexos</Button></DialogTrigger><DialogContent><Anexos /></DialogContent></Dialog>
                 <Dialog><DialogTrigger asChild><Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button></DialogTrigger><DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent></Dialog>
                 <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
