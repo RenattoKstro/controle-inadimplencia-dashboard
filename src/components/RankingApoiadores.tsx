@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Medal, Award, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import AvisoApoio from "./AvisoApoio";
 
 interface Apoiador {
@@ -41,17 +41,24 @@ export default function RankingApoiadores() {
 
   return (
     <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border-4 border-purple-300">
-      {/* BOTÃO APOIAR ACIMA DO RANKING */}
+      {/* BOTÃO PEQUENO E BONITO */}
       <Dialog>
         <DialogTrigger asChild>
-          <Button className="w-full mb-6 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-lg">
+          <Button
+            size="lg"
+            className="w-full mb-6 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+          >
             <Heart className="w-5 h-5 fill-white mr-2" />
             Apoiar o Projeto
           </Button>
         </DialogTrigger>
-        <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
-          <AvisoApoio />
-        </div>
+
+        {/* EXPANDE SÓ AO CLICAR */}
+        <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
+          <div className="max-h-[90vh] overflow-y-auto rounded-3xl bg-white">
+            <AvisoApoio />
+          </div>
+        </DialogContent>
       </Dialog>
 
       {/* TÍTULO */}
