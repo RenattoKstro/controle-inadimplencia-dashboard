@@ -1,7 +1,10 @@
 // src/components/RankingApoiadores.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Medal, Award } from "lucide-react";
+import { Trophy, Medal, Award, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import AvisoApoio from "./AvisoApoio";
 
 interface Apoiador {
   id: string;
@@ -29,8 +32,6 @@ export default function RankingApoiadores() {
     return () => clearInterval(interval);
   }, []);
 
-  const total = apoiadores.reduce((s, a) => s + a.valor, 0);
-
   const medal = (i: number) => {
     if (i === 0) return <Trophy className="w-6 h-6 text-yellow-500" />;
     if (i === 1) return <Medal className="w-6 h-6 text-gray-400" />;
@@ -40,18 +41,32 @@ export default function RankingApoiadores() {
 
   return (
     <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border-4 border-purple-300">
+      {/* BOTÃO APOIAR ACIMA DO RANKING */}
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button className="w-full mb-6 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-lg">
+            <Heart className="w-5 h-5 fill-white mr-2" />
+            Apoiar o Projeto
+          </Button>
+        </DialogTrigger>
+        <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
+          <AvisoApoio />
+        </div>
+      </Dialog>
+
+      {/* TÍTULO */}
       <h2 className="text-2xl font-black text-purple-800 text-center mb-4">
-        Ranking dos Heróis
+        Ranking de Apoiadores
       </h2>
 
       {loading ? (
-        <p className="text-center py-4 text-gray-500">Carregando heróis...</p>
+        <p className="text-center py-4 text-gray-500">Carregando...</p>
       ) : (
         <>
           <div className="space-y-3">
             {apoiadores.length === 0 ? (
-              <p className="text-center text-purple-600 font-medium">
-                Seja o primeiro a doar!
+              <p className="text-center text-purple-600 font-medium py-8">
+                Seja o primeiro a apoiar!
               </p>
             ) : (
               apoiadores.map((a, i) => (
@@ -74,11 +89,6 @@ export default function RankingApoiadores() {
                 </div>
               ))
             )}
-          </div>
-
-          <div className="mt-6 text-center bg-purple-100 rounded-2xl p-4 border-2 border-purple-300">
-            <p className="text-2xl font-black text-purple-800">R$ {total.toFixed(0)}</p>
-            <p className="text-xs text-purple-600 font-medium">Total doado</p>
           </div>
         </>
       )}
