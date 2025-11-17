@@ -1,4 +1,4 @@
-// src/pages/admin/aprovacoes.tsx
+// src/pages/aprovacoes.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Check, X, RefreshCw, Trophy, Heart } from "lucide-react";
