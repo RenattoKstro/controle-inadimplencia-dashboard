@@ -35,67 +35,71 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-500" />;
-    if (i === 1) return <Medal className="w-7 h-7 text-gray-400" />;
-    if (i === 2) return <Award className="w-7 h-7 text-orange-600" />;
-    return <span className="w-7 text-center font-bold text-purple-600">{i + 1}</span>;
+    if (i === 0) return <Trophy className="w-6 h-6 text-yellow-500" />;
+    if (i === 1) return <Medal className="w-6 h-6 text-gray-400" />;
+    if (i === 2) return <Award className="w-6 h-6 text-orange-600" />;
+    return <span className="w-6 text-center font-bold text-purple-600 text-sm">{i + 1}</span>;
   };
 
   return (
     <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border-4 border-purple-300">
-      {/* BOTÃO APOIAR */}
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className="w-full mb-6 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-xl">
-            <Heart className="w-5 h-5 fill-white mr-2" />
-            Apoiar o Projeto
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
-          <div className="max-h-[90vh] overflow-y-auto rounded-3xl bg-white">
-            <AvisoApoio />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* TÍTULO + BOTÃO ATUALIZAR */}
+      {/* LINHA SUPERIOR: APOIAR + ATUALIZAR (ÍCONE) */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-black text-purple-800">
-          Ranking de Apoiadores
-        </h2>
-        <Button onClick={fetchRanking} size="sm" variant="outline" className="gap-2">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-xl">
+              <Heart className="w-5 h-5 fill-white mr-2" />
+              Apoiar o Projeto
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
+            <div className="max-h-[90vh] overflow-y-auto rounded-3xl bg-white">
+              <AvisoApoio />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* BOTÃO ATUALIZAR — SÓ ÍCONE */}
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={fetchRanking}
+          className="rounded-full shadow-md hover:shadow-xl transition-all"
+        >
           <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
-          Atualizar
         </Button>
       </div>
 
+      {/* TÍTULO */}
+      <h2 className="text-2xl font-black text-purple-800 text-center mb-4">
+        Ranking de Apoiadores
+      </h2>
+
       {loading ? (
-        <p className="text-center py-8 text-gray-500">Carregando...</p>
+        <p className="text-center py-4 text-gray-500">Carregando...</p>
       ) : apoiadores.length === 0 ? (
-        <p className="text-center py-8 text-purple-600 font-medium">
+        <p className="text-center text-purple-600 font-medium py-8">
           Seja o primeiro a apoiar!
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {apoiadores.map((a, i) => (
             <div
               key={a.id}
-              className={`flex items-center justify-between p-4 rounded-xl border ${
+              className={`flex items-center justify-between p-3 rounded-xl border ${
                 i < 3
                   ? "bg-gradient-to-r from-yellow-50 to-pink-50 border-purple-400"
                   : "bg-gray-50 border-gray-200"
               }`}
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 {medal(i)}
                 <div>
-                  <p className="font-bold text-lg text-gray-800">{a.nome}</p>
-                  <p className="text-sm text-purple-600">{a.filial}</p>
+                  <p className="font-bold text-sm text-gray-800">{a.nome}</p>
+                  <p className="text-xs text-purple-600">{a.filial}</p>
                 </div>
               </div>
-              <p className="font-black text-green-600 text-xl">
-                R$ {a.valor.toFixed(0)}
-              </p>
+              <p className="font-black text-green-600">R$ {a.valor.toFixed(0)}</p>
             </div>
           ))}
         </div>
