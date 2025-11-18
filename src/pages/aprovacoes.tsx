@@ -17,7 +17,7 @@ export default function AprovacoesAdmin() {
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
   const [carregando, setCarregando] = useState(true);
 
-  // VERIFICA SE É O RENATO
+  // Verifica se é você
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email === "rks7ro@gmail.com") {
@@ -43,7 +43,6 @@ export default function AprovacoesAdmin() {
   }, [user]);
 
   const aprovar = async (item: Pendente) => {
-    {
     await supabase.from("apoiadores").insert({
       nome: item.nome,
       filial: item.filial,
@@ -61,7 +60,7 @@ export default function AprovacoesAdmin() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-pink-900 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-pink-900">
         <div className="text-center text-white">
           <h1 className="text-5xl font-black mb-6">Acesso Restrito</h1>
           <p className="text-2xl">Apenas rks7ro@gmail.com</p>
