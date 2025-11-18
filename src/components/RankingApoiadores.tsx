@@ -43,6 +43,7 @@ export default function RankingApoiadores() {
 
   return (
     <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border-4 border-purple-300">
+      {/* BOTÃO APOIAR + ATUALIZAR */}
       <div className="flex justify-between items-center mb-6">
         <Dialog>
           <DialogTrigger asChild>
@@ -92,8 +93,10 @@ export default function RankingApoiadores() {
               <div className="flex items-center gap-4">
                 {medal(i)}
                 <div className="text-left">
-                  <p className="font-bold text-lg text-gray-800">{a.nome}</p>
-                  <p className="text-sm font-black text-purple-600">FILIAL {a.filial}</p>
+                  <p className="font-black text-lg text-gray-800">{a.nome}</p>
+                  <p className="font-black text-purple-600 text-sm">
+                    FILIAL {a.filial}
+                  </p>
                 </div>
               </div>
               <p className="font-black text-green-600 text-xl">
