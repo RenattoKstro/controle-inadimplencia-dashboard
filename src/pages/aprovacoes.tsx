@@ -19,15 +19,13 @@ export default function AprovacoesAdmin() {
 
   // Verifica se é você
   useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
+    supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email === "rks7ro@gmail.com") {
         setUser(data.user);
       } else {
         window.location.href = "/";
       }
-    };
-    checkUser();
+    });
   }, []);
 
   const fetchPendentes = async () => {
@@ -60,32 +58,17 @@ export default function AprovacoesAdmin() {
     fetchPendentes();
   };
 
- 8000};
-
-  // Enquanto carrega o usuário
-  if (user === null) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-pink-900 flex items-center justify-center">
-        <div className="text-white text-center">
-          <p className="text-3xl font-bold">Verificando acesso...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Se não for você
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 to-pink-900 flex items-center justify-center">
-        <div className="text-white text-center">
-          <h1 className="text-5xl font-black mb-6">Acesso Negado</h1>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-pink-900">
+        <div className="text-center text-white">
+          <h1 className="text-5xl font-black mb-6">Acesso Restrito</h1>
           <p className="text-2xl">Apenas rks7ro@gmail.com</p>
         </div>
       </div>
     );
   }
 
-  // PAINEL DO RENATO
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-6">
       <div className="max-w-5xl mx-auto">
@@ -114,7 +97,7 @@ export default function AprovacoesAdmin() {
           ) : (
             <div className="space-y-8">
               {pendentes.map((p) => (
-                <div key={p.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-50 rounded-3xl p-10 border-4 border-purple-300 shadow-xl">
+                <div key={p.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-3xl p-10 border-4 border-purple-300 shadow-xl">
                   <div className="flex flex-col md:flex-row justify-between items-center gap-8">
                     <div>
                       <p className="text-5xl font-black text-purple-800">{p.nome}</p>
