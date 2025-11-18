@@ -15,59 +15,44 @@ interface Pendente {
 export default function AprovacoesAdmin() {
   const [user, setUser] = useState<any>(null);
   const [pendentes, setPendentes] = useState<Pendente[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [carregando, setCarregando] = useState(true);
 
-  // Verifica se é o Renato
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email === "rks7ro@gmail.com") {
-        setUser(data.user);
-      } else {
-        window.location.href = "/";
-      }
+    // Verifica se é você
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email === "rks7ro@gmail.com") {
+        setUser(user);
+      else window.location.href = "/";
     });
   }, []);
 
-  const fetchPendentes = async () => {
-    setLoading(true);
+  const buscar = async () => {
+    setCarregando(true);
     const { data } = await supabase
       .from("apoiadores_pendentes")
       .select("*")
       .order("created_at", { ascending: false });
     setPendentes(data || []);
-    setLoading(false);
+    setCarregando(false);
   };
 
   useEffect(() => {
-    if (user) fetchPendentes();
+    if (user) buscar();
   }, [user]);
 
   const aprovar = async (item: Pendente) => {
-    await supabase.from("apoiadores").insert({
-      nome: item.nome,
-      filial: item.filial,
-      valor: item.valor,
-    });
+    await supabase.from("apoiadores").insert(item);
     await supabase.from("apoiadores_pendentes").delete().eq("id", item.id);
-    fetchPendentes();
-    alert("Aprovado!");
+    buscar();
+    alert(`${item.nome} entrou no ranking!`);
   };
 
   const rejeitar = async (id: string) => {
     await supabase.from("apoiadores_pendentes").delete().eq("id", id);
-    fetchPendentes();
+    buscar();
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-pink-900">
-        <div className="text-center text-white">
-          <h1 className="text-4xl font-black mb-4">Acesso Restrito</h1>
-          <p className="text-xl">Faça login com rks7ro@gmail.com</p>
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null; // tela branca até carregar
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-6">
@@ -79,13 +64,15 @@ export default function AprovacoesAdmin() {
         <div className="bg-white rounded-3xl shadow-2xl p-10 border-4 border-purple-300">
           <div className="flex justify-between mb-8">
             <h2 className="text-3xl font-bold">Pendentes: {pendentes.length}</h2>
-            <Button onClick={fetchPendentes}>
-              <RefreshCw className={`w-6 h-6 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <Button onClick={buscar}>
+              <RefreshCw className={`w-6 h-6 mr-2 ${carregando ? "animate-spin" : ""} />
               Atualizar
             </Button>
           </div>
 
-          {pendentes.length === 0 ? (
+          {carregando ? (
+            <p className="text-center py-20 text-2xl text-gray-500">Carregando...</p>
+          ) : pendentes.length === 0 ? (
             <div className="text-center py-20">
               <Trophy className="w-32 h-32 text-yellow-500 mx-auto mb-6" />
               <p className="text-4xl font-black text-gray-700">Tudo aprovado!</p>
