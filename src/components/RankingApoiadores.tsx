@@ -38,10 +38,13 @@ export default function RankingApoiadores() {
 
   const medal = (i: number) => {
     const base = "w-7 h-7 drop-shadow-lg";
-    if (i === 0) return <Trophy className={`${base} text-yellow-300`} />;
-    if (i === 1) return <Medal className={`${base} text-gray-300`} />;
-    if (i === 2) return <Award className={`${base} text-amber-500`} />;
-    return <span className="text-white font-black text-xl">{i + 1}</span>;
+    if (i === 0) return <Trophy className={`${base} text-yellow-400`} />; // Amarelo mais forte
+    if (i === 1) return <Medal className={`${base} text-gray-400`} />; // Cinza mais forte
+    if (i === 2) return <Award className={`${base} text-amber-600`} />; // Laranja mais forte
+    // Número do ranking totalmente opaco
+    return <span className="text-white opacity-100 font-black text-xl drop-shadow-md">
+      {i + 1}
+    </span>;
   };
 
   return (
@@ -82,7 +85,7 @@ export default function RankingApoiadores() {
                   hover:bg-white/30
                   backdrop-blur-lg
                   border border-white/30
-                  text-white font-bold
+                  text-white opacity-100 font-bold /* Texto 100% opaco */
                   shadow-xl shadow-blue-500/30
                   transition duration-300 transform hover:scale-105
                 "
@@ -114,21 +117,21 @@ export default function RankingApoiadores() {
             "
           >
             <RefreshCw
-              className={`w-5 h-5 text-white ${loading ? "animate-spin" : ""}`}
+              className={`w-5 h-5 text-white opacity-100 ${loading ? "animate-spin" : ""}`}
             />
           </Button>
         </div>
 
         {/* TÍTULO */}
-        <h2 className="text-3xl font-black text-white text-center drop-shadow-xl mb-8">
+        <h2 className="text-3xl font-black text-white opacity-100 text-center drop-shadow-lg shadow-black mb-8">
           Ranking de Apoiadores
         </h2>
 
         {/* LISTA */}
         {loading ? (
-          <p className="text-center text-white/90 text-lg">Carregando...</p>
+          <p className="text-center text-white opacity-100 text-lg drop-shadow-md">Carregando...</p>
         ) : apoiadores.length === 0 ? (
-          <p className="text-center text-white/90 text-lg">
+          <p className="text-center text-white opacity-100 text-lg drop-shadow-md">
             Seja o primeiro a apoiar!
           </p>
         ) : (
@@ -150,19 +153,19 @@ export default function RankingApoiadores() {
                   {medal(i)}
 
                   <div>
-                    {/* NOME: Cor azul para melhor visibilidade */}
-                    <p className="text-lg font-bold text-sky-200 drop-shadow-lg">
+                    {/* NOME: 100% Opaco com sombra forte */}
+                    <p className="text-lg font-bold text-white opacity-100 drop-shadow-lg shadow-black">
                       {a.nome}
                     </p>
-                    {/* FILIAL: Cor cinza claro */}
-                    <p className="text-sm font-semibold text-gray-300 drop-shadow">
+                    {/* FILIAL: 100% Opaco com sombra forte */}
+                    <p className="text-sm font-semibold text-white opacity-100 drop-shadow-md shadow-black">
                       Filial {a.filial}
                     </p>
                   </div>
                 </div>
 
-                {/* VALOR: Cor verde para destaque */}
-                <p className="text-3xl font-black text-green-300 drop-shadow-xl">
+                {/* VALOR: 100% Opaco com sombra forte */}
+                <p className="text-3xl font-black text-white opacity-100 drop-shadow-xl shadow-black">
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
               </div>
