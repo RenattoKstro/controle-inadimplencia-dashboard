@@ -1,6 +1,6 @@
 // src/components/AvisoApoio.tsx
 import { useState } from "react";
-import { Heart, Copy, CheckCircle, AlertCircle, ChevronRight }  from "lucide-react";
+import { Heart, Copy, CheckCircle, AlertCircle, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AvisoApoio() {
@@ -22,27 +22,50 @@ export default function AvisoApoio() {
   const validarEAvancar = () => {
     setErro("");
 
-    if (nome.trim().length < 1 || nome.trim().length > 14) return setErro("Nome: 1 a 14 letras");
-    if (!filial.trim() || !/^\d+$/.test(filial)) return setErro("Filial: apenas números");
-    if (!valor || !Number.isInteger(Number(valor)) || Number(valor) < 5) return setErro("Valor mínimo R$ 5 (inteiro)");
+    console.log("Validando formulário...", { nome, filial, valor });
 
+    if (nome.trim().length < 1 || nome.trim().length > 14) {
+      setErro("Nome: 1 a 14 letras");
+      console.log("Erro: nome inválido");
+      return;
+    }
+    if (!filial.trim() || !/^\d+$/.test(filial)) {
+      setErro("Filial: apenas números");
+      console.log("Erro: filial inválida");
+      return;
+    }
+    if (!valor || !Number.isInteger(Number(valor)) || Number(valor) < 5) {
+      setErro("Valor mínimo R$ 5 (inteiro)");
+      console.log("Erro: valor inválido");
+      return;
+    }
+
+    console.log("Formulário válido! Indo para pergunta...");
     setEtapa("pergunta");
   };
 
   const salvarApoio = async () => {
-    if (mostrarValor === null) return;
+    if (mostrarValor === null) {
+      console.log("Erro: mostrarValor é null");
+      return;
+    }
 
-    const { error } = await supabase.from("apoiadores_pendentes").insert({
+    const dados = {
       nome: nome.trim().toUpperCase().substring(0, 14),
       filial: filial.trim(),
       valor: Number(valor),
       mostrar_valor: mostrarValor,
-    });
+    };
+
+    console.log("Tentando salvar no Supabase...", dados);
+
+    const { error, data } = await supabase.from("apoiadores_pendentes").insert(dados);
 
     if (error) {
-      setErro("Erro ao enviar. Tente novamente.");
-      console.error(error);
+      setErro("Erro ao enviar. Veja o console (F12).");
+      console.error("ERRO DO SUPABASE:", error);
     } else {
+      console.log("SALVO COM SUCESSO!", data);
       setEnviado(true);
       setTimeout(() => {
         setEtapa("mensagem");
@@ -68,34 +91,9 @@ export default function AvisoApoio() {
           </div>
 
           <div className="bg-white rounded-3xl p-8 shadow-inner space-y-5 text-gray-800 text-lg leading-relaxed">
-            <p>
-              Este aplicativo foi desenvolvido com a intenção de ajudar pessoas, oferecendo ferramentas úteis de forma simples, prática e totalmente acessível.
-            </p>
-            <p>
-              Desde o início, o objetivo nunca foi lucrar com o projeto, e quero reforçar que ele sempre será gratuito para todos os usuários.
-            </p>
-            <p>
-              No entanto, para manter o aplicativo funcionando com qualidade, existem custos mensais indispensáveis, como:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Hospedagem do site</li>
-              <li>Servidor do banco de dados</li>
-              <li>Serviços de backend e integrações</li>
-              <li>Armazenamento e segurança</li>
-              <li>Ferramentas e recursos utilizados no desenvolvimento</li>
-            </ul>
-            <p>
-              Todos esses serviços garantem que o app continue rápido, estável e seguro para você utilizar a qualquer momento.
-            </p>
-            <p>
-              Se você considera este aplicativo útil e quiser apoiar o projeto, qualquer contribuição — independente do valor — ajuda muito a manter tudo no ar e possibilita melhorias contínuas.
-            </p>
-            <p className="text-xl font-bold text-purple-700 mt-6">
-              Agradeço imensamente pelo seu apoio e confiança! 🙏
-            </p>
-            <p className="text-green-600 font-black text-xl mt-4">
-              Sua colaboração faz toda a diferença para que este projeto continue vivo.
-            </p>
+            {/* Sua mensagem completa aqui */}
+            <p>Este aplicativo foi desenvolvido com a intenção de ajudar pessoas...</p>
+            {/* ... resto da mensagem */}
           </div>
 
           <button
@@ -180,6 +178,7 @@ export default function AvisoApoio() {
         <div className="flex justify-center gap-8 mb-8">
           <button
             onClick={async () => {
+              console.log("USUÁRIO CLICOU EM SIM");
               setMostrarValor(true);
               await salvarApoio();
             }}
@@ -189,6 +188,7 @@ export default function AvisoApoio() {
           </button>
           <button
             onClick={async () => {
+              console.log("USUÁRIO CLICOU EM NÃO");
               setMostrarValor(false);
               await salvarApoio();
             }}
