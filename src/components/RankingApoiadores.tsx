@@ -37,34 +37,25 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    const base = "w-7 h-7 drop-shadow-lg";
-    if (i === 0) return <Trophy className={`${base} text-yellow-400`} />; // Amarelo mais forte
-    if (i === 1) return <Medal className={`${base} text-gray-400`} />; // Cinza mais forte
-    if (i === 2) return <Award className={`${base} text-amber-600`} />; // Laranja mais forte
-    // Número do ranking totalmente opaco
-    return <span className="text-white opacity-100 font-black text-xl drop-shadow-md">
-      {i + 1}
-    </span>;
+    const base = "w-7 h-7 drop-shadow-md";
+    if (i === 0) return <Trophy className={`${base} text-yellow-400`} />;
+    if (i === 1) return <Medal className={`${base} text-gray-400`} />;
+    if (i === 2) return <Award className={`${base} text-amber-600`} />;
+    return <span className="text-white font-black text-xl">{i + 1}</span>;
   };
 
   return (
     <div className="relative p-6">
       
-      {/* CONTÊINER PRINCIPAL (ESTILO LIQUID GLASS) */}
+      {/* CONTÊINER PRINCIPAL (AGORA COM FUNDO PRETO SÓLIDO) */}
       <div
         className="
           absolute inset-0
           rounded-3xl
-          backdrop-blur-3xl
-          bg-white/10
-          border border-white/20
-          shadow-2xl shadow-white/10
-          shadow-inner
-          before:absolute before:inset-0
-          before:bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.3),rgba(255,255,255,0)_60%)]
-          before:opacity-100
-          before:rounded-3xl
-          overflow-hidden
+          bg-black/90                  /* Fundo preto sólido */
+          backdrop-blur-none          /* Desfoque não é mais necessário */
+          border border-white/10
+          shadow-2xl
         "
       />
 
@@ -74,20 +65,18 @@ export default function RankingApoiadores() {
         {/* TOPO */}
         <div className="flex justify-between items-center mb-8">
 
-          {/* Botão Apoiar (Estilo Glassy) */}
+          {/* Botão Apoiar (Estilo Escuro) */}
           <Dialog>
             <DialogTrigger asChild>
               <Button
                 className="
                   px-6 py-3
                   rounded-full
-                  bg-white/20
-                  hover:bg-white/30
-                  backdrop-blur-lg
-                  border border-white/30
-                  text-white opacity-100 font-bold /* Texto 100% opaco */
-                  shadow-xl shadow-blue-500/30
-                  transition duration-300 transform hover:scale-105
+                  bg-gray-700                 /* Fundo cinza escuro */
+                  hover:bg-gray-600
+                  text-white font-bold
+                  shadow-lg
+                  transition duration-300
                 "
               >
                 <Heart className="w-5 h-5 fill-white mr-2" />
@@ -102,36 +91,34 @@ export default function RankingApoiadores() {
             </DialogContent>
           </Dialog>
 
-          {/* Botão Atualizar (Estilo Glassy) */}
+          {/* Botão Atualizar (Estilo Escuro) */}
           <Button
             size="icon"
             onClick={fetchRanking}
             className="
-              bg-white/20 
-              hover:bg-white/30 
-              backdrop-blur-lg
-              border border-white/30
+              bg-gray-700 
+              hover:bg-gray-600 
               rounded-full
               shadow-lg
               transition duration-300
             "
           >
             <RefreshCw
-              className={`w-5 h-5 text-white opacity-100 ${loading ? "animate-spin" : ""}`}
+              className={`w-5 h-5 text-white ${loading ? "animate-spin" : ""}`}
             />
           </Button>
         </div>
 
         {/* TÍTULO */}
-        <h2 className="text-3xl font-black text-white opacity-100 text-center drop-shadow-lg shadow-black mb-8">
+        <h2 className="text-3xl font-black text-white text-center drop-shadow-md mb-8">
           Ranking de Apoiadores
         </h2>
 
         {/* LISTA */}
         {loading ? (
-          <p className="text-center text-white opacity-100 text-lg drop-shadow-md">Carregando...</p>
+          <p className="text-center text-white text-lg">Carregando...</p>
         ) : apoiadores.length === 0 ? (
-          <p className="text-center text-white opacity-100 text-lg drop-shadow-md">
+          <p className="text-center text-white text-lg">
             Seja o primeiro a apoiar!
           </p>
         ) : (
@@ -143,29 +130,28 @@ export default function RankingApoiadores() {
                   flex items-center justify-between
                   p-4
                   rounded-2xl
-                  bg-white/5
-                  backdrop-blur-xl
-                  border border-white/10
-                  shadow-xl
+                  bg-gray-800/70             /* Fundo escuro para os itens da lista */
+                  border border-white/5
+                  shadow-md
                 "
               >
                 <div className="flex items-center gap-4">
                   {medal(i)}
 
                   <div>
-                    {/* NOME: 100% Opaco com sombra forte */}
-                    <p className="text-lg font-bold text-white opacity-100 drop-shadow-lg shadow-black">
+                    {/* NOME: Visibilidade máxima garantida pelo fundo escuro */}
+                    <p className="text-lg font-bold text-white">
                       {a.nome}
                     </p>
-                    {/* FILIAL: 100% Opaco com sombra forte */}
-                    <p className="text-sm font-semibold text-white opacity-100 drop-shadow-md shadow-black">
+                    {/* FILIAL: Visibilidade máxima */}
+                    <p className="text-sm font-semibold text-white/80">
                       Filial {a.filial}
                     </p>
                   </div>
                 </div>
 
-                {/* VALOR: 100% Opaco com sombra forte */}
-                <p className="text-3xl font-black text-white opacity-100 drop-shadow-xl shadow-black">
+                {/* VALOR: Visibilidade máxima */}
+                <p className="text-3xl font-black text-white">
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
               </div>
