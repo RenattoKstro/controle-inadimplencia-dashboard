@@ -155,7 +155,7 @@ export default function AvisoApoio() {
 
             <input
               type="number"
-              placeholder="R$ 20"
+              placeholder="R$ 0"
               value={valor}
               onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))}
               className="w-full px-4 py-4 border-2 border-green-400 rounded-xl text-center font-black text-4xl text-green-600"
