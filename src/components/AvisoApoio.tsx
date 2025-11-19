@@ -1,6 +1,6 @@
 // src/components/AvisoApoio.tsx
 import { useState } from "react";
-import { Heart, Copy, CheckCircle, AlertCircle, ChevronRight } from "lucide-react";
+import { Heart, Copy, CheckCircle, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AvisoApoio() {
@@ -29,14 +29,14 @@ export default function AvisoApoio() {
     setEtapa("pergunta");
   };
 
-  const salvarApoio = async () => {
-    if (mostrarValor === null) return;
+  const salvarApoio = async (mostrar: boolean) => {
+    setMostrarValor(mostrar);
 
     const { error } = await supabase.from("apoiadores_pendentes").insert({
-      nome: nome.trim(). toUpperCase().substring(0, 14),
+      nome: nome.trim().toUpperCase().substring(0, 14),
       filial: filial.trim(),
       valor: Number(valor),
-      mostrar_valor: mostrarValor,
+      mostrar_valor: mostrar,
     });
 
     if (error) {
@@ -68,6 +68,7 @@ export default function AvisoApoio() {
           </div>
 
           <div className="bg-white rounded-3xl p-8 shadow-inner space-y-5 text-gray-800 text-lg leading-relaxed max-h-[60vh] overflow-y-auto">
+            {/* SUA MENSAGEM COMPLETA AQUI */}
             <p>
               Este aplicativo foi desenvolvido com a intenção de ajudar pessoas, oferecendo ferramentas úteis de forma simples, prática e totalmente acessível.
             </p>
@@ -109,7 +110,7 @@ export default function AvisoApoio() {
     );
   }
 
-  // ETAPA 2: FORMULÁRIO
+  // ETAPA 2: FORMULÁRIO + QR CODE + CHAVE PIX
   if (etapa === "formulario") {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
@@ -169,6 +170,10 @@ export default function AvisoApoio() {
               Copiar Chave PIX
             </button>
 
+            <p className="text-center text-gray-600 mt-4 font-bold">
+              Chave PIX: {pixKey}
+            </p>
+
             <button
               onClick={() => setEtapa("mensagem")}
               className="w-full text-purple-600 font-bold mt-4"
@@ -192,19 +197,13 @@ export default function AvisoApoio() {
 
           <div className="flex justify-center gap-8 mb-8">
             <button
-              onClick={async () => {
-                setMostrarValor(true);
-                await salvarApoio();
-              }}
+              onClick={() => salvarApoio()}
               className="px-12 py-8 bg-green-500 hover:bg-green-600 text-white font-black text-2xl rounded-2xl shadow-2xl"
             >
               SIM
             </button>
             <button
-              onClick={async () => {
-                setMostrarValor(false);
-                await salvarApoio();
-              }}
+              onClick={() => salvarApoio()}
               className="px-12 py-8 bg-red-500 hover:bg-red-600 text-white font-black text-2xl rounded-2xl shadow-2xl"
             >
               NÃO
