@@ -37,23 +37,24 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    const base = "w-7 h-7 drop-shadow-md";
+    const base = "w-6 h-6"; // Tamanho ligeiramente menor para economizar espaço
     if (i === 0) return <Trophy className={`${base} text-yellow-400`} />;
     if (i === 1) return <Medal className={`${base} text-gray-400`} />;
     if (i === 2) return <Award className={`${base} text-amber-600`} />;
-    return <span className="text-white font-black text-xl">{i + 1}</span>;
+    // Ajuste de tamanho e alinhamento para o número
+    return <span className="text-white font-black text-lg text-center w-6">{i + 1}</span>;
   };
 
   return (
-    <div className="relative p-6">
+    // Padding responsivo para garantir que caiba em telas menores
+    <div className="relative p-4 sm:p-6"> 
       
-      {/* CONTÊINER PRINCIPAL (AGORA COM FUNDO PRETO SÓLIDO) */}
+      {/* CONTÊINER PRINCIPAL (Fundo Preto) */}
       <div
         className="
           absolute inset-0
-          rounded-3xl
-          bg-black/90                  /* Fundo preto sólido */
-          backdrop-blur-none          /* Desfoque não é mais necessário */
+          rounded-2xl sm:rounded-3xl /* Bordas ajustadas para responsividade */
+          bg-black/90
           border border-white/10
           shadow-2xl
         "
@@ -62,55 +63,54 @@ export default function RankingApoiadores() {
       {/* CONTEÚDO */}
       <div className="relative z-10">
 
-        {/* TOPO */}
-        <div className="flex justify-between items-center mb-8">
+        {/* TOPO: Usa flexbox para manter alinhamento entre os botões */}
+        <div className="flex justify-between items-center mb-6"> 
 
-          {/* Botão Apoiar (Estilo Escuro) */}
+          {/* Botão Apoiar */}
           <Dialog>
             <DialogTrigger asChild>
               <Button
                 className="
-                  px-6 py-3
+                  px-4 py-2 sm:px-6 sm:py-3 /* Padding ajustado */
                   rounded-full
-                  bg-gray-700                 /* Fundo cinza escuro */
+                  bg-gray-700
                   hover:bg-gray-600
-                  text-white font-bold
+                  text-white text-sm sm:text-base font-bold /* Tamanho de fonte responsivo */
                   shadow-lg
-                  transition duration-300
                 "
               >
-                <Heart className="w-5 h-5 fill-white mr-2" />
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 fill-white mr-2" />
                 Apoiar
               </Button>
             </DialogTrigger>
 
-            <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
+            <DialogContent className="max-w-md sm:max-w-2xl p-0 bg-transparent border-0">
               <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
                 <AvisoApoio />
               </div>
             </DialogContent>
           </Dialog>
 
-          {/* Botão Atualizar (Estilo Escuro) */}
+          {/* Botão Atualizar */}
           <Button
             size="icon"
             onClick={fetchRanking}
             className="
+              w-10 h-10 sm:w-11 sm:h-11 /* Tamanho fixo para ícone */
               bg-gray-700 
               hover:bg-gray-600 
               rounded-full
               shadow-lg
-              transition duration-300
             "
           >
             <RefreshCw
-              className={`w-5 h-5 text-white ${loading ? "animate-spin" : ""}`}
+              className={`w-4 h-4 sm:w-5 sm:h-5 text-white ${loading ? "animate-spin" : ""}`}
             />
           </Button>
         </div>
 
         {/* TÍTULO */}
-        <h2 className="text-3xl font-black text-white text-center drop-shadow-md mb-8">
+        <h2 className="text-2xl sm:text-3xl font-black text-white text-center mb-6">
           Ranking de Apoiadores
         </h2>
 
@@ -122,36 +122,35 @@ export default function RankingApoiadores() {
             Seja o primeiro a apoiar!
           </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3"> {/* Espaçamento compacto */}
             {apoiadores.map((a, i) => (
               <div
                 key={a.id}
                 className="
-                  flex items-center justify-between
-                  p-4
-                  rounded-2xl
-                  bg-gray-800/70             /* Fundo escuro para os itens da lista */
+                  flex items-center justify-between /* Garante alinhamento horizontal */
+                  p-3 sm:p-4
+                  rounded-xl sm:rounded-2xl
+                  bg-gray-800/70
                   border border-white/5
                   shadow-md
                 "
               >
-                <div className="flex items-center gap-4">
-                  {medal(i)}
-
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="flex-shrink-0">{medal(i)}</div> {/* Garante que a medalha não encolha */}
                   <div>
-                    {/* NOME: Visibilidade máxima garantida pelo fundo escuro */}
-                    <p className="text-lg font-bold text-white">
+                    {/* NOME */}
+                    <p className="text-base sm:text-lg font-bold text-white truncate max-w-[150px] sm:max-w-none"> {/* Adiciona truncate para nomes longos */}
                       {a.nome}
                     </p>
-                    {/* FILIAL: Visibilidade máxima */}
-                    <p className="text-sm font-semibold text-white/80">
+                    {/* FILIAL */}
+                    <p className="text-xs sm:text-sm font-semibold text-white/80">
                       Filial {a.filial}
                     </p>
                   </div>
                 </div>
 
-                {/* VALOR: Visibilidade máxima */}
-                <p className="text-3xl font-black text-white">
+                {/* VALOR: Tamanho ajustado para caber melhor */}
+                <p className="text-xl sm:text-2xl font-black text-white flex-shrink-0 ml-2"> 
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
               </div>
