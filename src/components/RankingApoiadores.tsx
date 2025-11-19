@@ -37,42 +37,45 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    const base = "w-7 h-7 drop-shadow-md";
+    const base = "w-7 h-7 drop-shadow-lg"; // Sombra maior para profundidade
     if (i === 0) return <Trophy className={`${base} text-yellow-300`} />;
-    if (i === 1) return <Medal className={`${base} text-gray-200`} />;
-    if (i === 2) return <Award className={`${base} text-orange-300`} />;
+    if (i === 1) return <Medal className={`${base} text-gray-300`} />; // Cor mais clara
+    if (i === 2) return <Award className={`${base} text-amber-500`} />; // Laranja mais vibrante
     return <span className="text-white font-black text-xl">{i + 1}</span>;
   };
 
   return (
     <div className="relative p-6">
-
-      {/* 🧊 LIQUID GLASS (iOS 18 – FROSTED) */}
+      
+      {/* 🧊 CONTÊINER PRINCIPAL (ESTILO LIQUID GLASS) */}
       <div
         className="
           absolute inset-0
-          rounded-[32px]
-          backdrop-blur-[28px]
-          bg-white/18
-          border border-white/35
-          shadow-[0_0_60px_-10px_rgba(255,255,255,0.25)]
+          rounded-3xl
+          backdrop-blur-3xl           /* Blur mais intenso */
+          bg-white/10                 /* Fundo mais transparente */
+          border border-white/20      /* Borda sutil */
+          shadow-2xl shadow-white/10  /* Sombra externa para profundidade */
+          shadow-inner                /* Sombra interna para o brilho sutil */
+          /* Brilho Especular (como luz refletida no vidro) */
           before:absolute before:inset-0
-          before:bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.7),rgba(255,255,255,0)_70%)]
-          before:opacity-60
-          before:rounded-[32px]
+          before:bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.3),rgba(255,255,255,0)_60%)]
+          before:opacity-100
+          before:rounded-3xl
           overflow-hidden
         "
       />
 
-      {/* 🔳 RUÍDO SUAVE (iOS) */}
-      <div
+      {/* 🔳 RUÍDO SUAVE (iOS) - Adicione uma imagem de ruído sutil no seu projeto */}
+      {/* Certifique-se de ter um arquivo de ruído, se quiser usar esta parte */}
+      {/* <div
         className="
-          absolute inset-0 rounded-[32px] pointer-events-none opacity-[0.08]
+          absolute inset-0 rounded-3xl pointer-events-none opacity-[0.08]
           mix-blend-overlay
           bg-[url('/textures/noise.png')]
           bg-cover bg-repeat
         "
-      />
+      /> */}
 
       {/* CONTEÚDO */}
       <div className="relative z-10">
@@ -80,23 +83,24 @@ export default function RankingApoiadores() {
         {/* TOPO */}
         <div className="flex justify-between items-center mb-8">
 
-          {/* Botão Apoiar */}
+          {/* Botão Apoiar (Estilo Glassy) */}
           <Dialog>
             <DialogTrigger asChild>
               <Button
                 className="
                   px-6 py-3
-                  rounded-full
-                  bg-white/25
-                  hover:bg-white/35
-                  backdrop-blur-xl
-                  border border-white/40
+                  rounded-full             /* Completamente arredondado */
+                  bg-white/20
+                  hover:bg-white/30
+                  backdrop-blur-lg
+                  border border-white/30
                   text-white font-bold
-                  shadow-lg
+                  shadow-xl shadow-blue-500/30 /* Sombra colorida sutil */
+                  transition duration-300 transform hover:scale-105
                 "
               >
                 <Heart className="w-5 h-5 fill-white mr-2" />
-                Apoiar o Projeto
+                Apoiar
               </Button>
             </DialogTrigger>
 
@@ -107,17 +111,18 @@ export default function RankingApoiadores() {
             </DialogContent>
           </Dialog>
 
-          {/* Botão Atualizar */}
+          {/* Botão Atualizar (Estilo Glassy) */}
           <Button
             size="icon"
             onClick={fetchRanking}
             className="
-              bg-white/25 
-              hover:bg-white/35 
-              backdrop-blur-xl
-              border border-white/40
+              bg-white/20 
+              hover:bg-white/30 
+              backdrop-blur-lg
+              border border-white/30
               rounded-full
               shadow-lg
+              transition duration-300
             "
           >
             <RefreshCw
@@ -139,18 +144,18 @@ export default function RankingApoiadores() {
             Seja o primeiro a apoiar!
           </p>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-4"> {/* Espaçamento um pouco menor */}
             {apoiadores.map((a, i) => (
               <div
                 key={a.id}
                 className="
                   flex items-center justify-between
-                  p-5
-                  rounded-3xl
-                  bg-white/20
+                  p-4                        /* Padding menor */
+                  rounded-2xl                /* Bordas mais suaves */
+                  bg-white/5                 /* Mais transparente ainda */
                   backdrop-blur-xl
-                  border border-white/30
-                  shadow-[0_8px_30px_rgba(255,255,255,0.18)]
+                  border border-white/10
+                  shadow-xl                  /* Sombra para flutuar */
                 "
               >
                 <div className="flex items-center gap-4">
@@ -160,7 +165,7 @@ export default function RankingApoiadores() {
                     <p className="text-lg font-bold text-white drop-shadow-lg">
                       {a.nome}
                     </p>
-                    <p className="text-sm font-semibold text-white/80 drop-shadow">
+                    <p className="text-sm font-semibold text-white/70 drop-shadow">
                       Filial {a.filial}
                     </p>
                   </div>
