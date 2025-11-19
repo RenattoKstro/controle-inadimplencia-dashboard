@@ -36,14 +36,14 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    if (i === 0) return <Trophy className="w-6 h-6 text-yellow-500" />;
-    if (i === 1) return <Medal className="w-6 h-6 text-gray-400" />;
-    if (i === 2) return <Award className="w-6 h-6 text-orange-600" />;
-    return <span className="w-6 text-center font-bold text-purple-600 text-sm">{i + 1}</span>;
+    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-400 drop-shadow-lg" />;
+    if (i === 1) return <Medal className="w-7 h-7 text-gray-300 drop-shadow-lg" />;
+    if (i === 2) return <Award className="w-7 h-7 text-orange-400 drop-shadow-lg" />;
+    return <span className="w-7 text-center font-black text-white drop-shadow-lg">{i + 1}</span>;
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-6 border border-white/20">
+    <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-6 border border-white/30">
       <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-3xl pointer-events-none" />
 
       <div className="relative z-10">
@@ -51,7 +51,7 @@ export default function RankingApoiadores() {
         <div className="flex justify-between items-center mb-6">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white font-bold shadow-xl border border-white/30">
+              <Button className="bg-white/30 hover:bg-white/40 backdrop-blur-md text-white font-black shadow-xl border border-white/40 text-lg px-6 py-3">
                 <Heart className="w-5 h-5 fill-white mr-2" />
                 Apoiar o Projeto
               </Button>
@@ -67,20 +67,20 @@ export default function RankingApoiadores() {
             size="icon"
             variant="ghost"
             onClick={fetchRanking}
-            className="bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full shadow-md"
+            className="bg-white/30 hover:bg-white/50 backdrop-blur-md rounded-full shadow-xl"
           >
-            <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-5 h-5 text-white ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
 
-        <h2 className="text-2xl font-black text-white drop-shadow-lg text-center mb-5">
+        <h2 className="text-2xl font-black text-white drop-shadow-2xl text-center mb-5">
           Ranking de Apoiadores
         </h2>
 
         {loading ? (
-          <p className="text-center py-6 text-white/80">Carregando...</p>
+          <p className="text-center py-6 text-white text-lg font-medium drop-shadow-lg">Carregando...</p>
         ) : apoiadores.length === 0 ? (
-          <p className="text-center py-8 text-white/90 font-medium">
+          <p className="text-center py-8 text-white text-lg font-medium drop-shadow-lg">
             Seja o primeiro a apoiar!
           </p>
         ) : (
@@ -88,18 +88,20 @@ export default function RankingApoiadores() {
             {apoiadores.map((a, i) => (
               <div
                 key={a.id}
-                className={`flex items-center justify-between p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg ${
-                  i < 3 ? "ring-2 ring-white/50" : ""
+                className={`flex items-center justify-between p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/40 shadow-xl ${
+                  i < 3 ? "ring-4 ring-white/60" : ""
                 }`}
               >
                 <div className="flex items-center gap-4">
                   {medal(i)}
                   <div>
-                    <p className="font-black text-lg text-white drop-shadow-md">{a.nome}</p>
-                    <p className="text-sm font-bold text-white/90 drop-shadow">FILIAL {a.filial}</p>
+                    <p className="font-black text-lg text-white drop-shadow-2xl">{a.nome}</p>
+                    <p className="text-sm font-black text-white/90 drop-shadow-xl">
+                      FILIAL {a.filial}
+                    </p>
                   </div>
                 </div>
-                <p className="font-black text-xl text-white drop-shadow-lg">
+                <p className="font-black text-2xl text-white drop-shadow-2xl">
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
               </div>
