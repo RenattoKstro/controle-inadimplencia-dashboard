@@ -11,6 +11,7 @@ interface Item {
   filial: string;
   valor: number;
   created_at: string;
+  mostrar_valor?: boolean;
 }
 
 export default function AprovacoesAdmin() {
@@ -47,7 +48,12 @@ export default function AprovacoesAdmin() {
   }, [user]);
 
   const aprovar = async (item: Item) => {
-    await supabase.from("apoiadores").insert(item);
+    await supabase.from("apoiadores").insert({
+      nome: item.nome,
+      filial: item.filial,
+      valor: item.valor,
+      mostrar_valor: item.mostrar_valor,
+    });
     await supabase.from("apoiadores_pendentes").delete().eq("id", item.id);
     fetchAll();
     alert(`${item.nome} entrou no ranking!`);
@@ -85,51 +91,54 @@ export default function AprovacoesAdmin() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-6">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-black text-purple-800 text-center mb-10">
-          Painel de Gerenciamento Completo
+          Painel de Gerenciamento
         </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* PENDENTES */}
-          <div className="bg-white rounded-3xl shadow-2xl p-8 border-4 border-orange-400">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold text-orange-700">
-                Doações Pendentes ({pendentes.length})
+          <div className="bg-white rounded-3xl shadow-2xl p-6 border-4 border-orange-400">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-orange-700">
+                Pendentes ({pendentes.length})
               </h2>
-              <Button onClick={fetchAll} size="lg">
-                <RefreshCw className={`w-6 h-6 mr-2 ${loading ? "animate-spin" : ""}`} />
+              <Button onClick={fetchAll} size="sm" className="gap-2">
+                <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
                 Atualizar
               </Button>
             </div>
 
             {pendentes.length === 0 ? (
-              <p className="text-center py-20 text-xl text-gray-500">Nenhuma doação pendente</p>
+              <p className="text-center py-16 text-gray-500">Nenhuma doação pendente</p>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {pendentes.map(p => (
-                  <div key={p.id} className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl p-6 border-4 border-orange-300">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                      <div>
-                        <p className="text-2xl font-black text-orange-800">{p.nome}</p>
-                        <p className="text-xl text-orange-600 font-bold">FILIAL {p.filial}</p>
-                        <p className="text-3xl font-black text-green-600 mt-2">
+                  <div key={p.id} className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl p-5 border-2 border-orange-300">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="flex-1">
+                        <p className="text-xl font-black text-orange-800">{p.nome}</p>
+                        <p className="text-lg text-orange-600 font-bold">FILIAL {p.filial}</p>
+                        <p className="text-2xl font-black text-green-600 mt-1">
                           R$ {p.valor.toFixed(0)}
                         </p>
+                        <p className="text-xs text-gray-600 mt-2">
+                          {new Date(p.created_at).toLocaleString("pt-BR")}
+                        </p>
                       </div>
-                      <div className="flex gap-4">
+                      <div className="flex gap-3 w-full sm:w-auto">
                         <Button
-                          className="bg-green-600 hover:bg-green-700 text-white font-bold text-xl px-10 py-6"
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white font-bold flex-1 sm:flex-initial"
                           onClick={() => aprovar(p)}
                         >
-                          <Check className="w-8 h-8 mr-3" />
-                          APROVAR
+                          <Check className="w-5 h-5 mr-1" /> APROVAR
                         </Button>
                         <Button
+                          size="sm"
                           variant="destructive"
-                          className="font-bold text-xl px-10 py-6"
+                          className="font-bold flex-1 sm:flex-initial"
                           onClick={() => rejeitar(p.id)}
                         >
-                          <X className="w-8 h-8 mr-3" />
-                          REJEITAR
+                          <X className="w-5 h-5 mr-1" /> REJEITAR
                         </Button>
                       </div>
                     </div>
@@ -140,59 +149,59 @@ export default function AprovacoesAdmin() {
           </div>
 
           {/* RANKING ATUAL */}
-          <div className="bg-white rounded-3xl shadow-2xl p-8 border-4 border-purple-400">
-            <h2 className="text-2xl font-bold text-purple-700 text-center mb-8">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 border-4 border-purple-400">
+            <h2 className="text-xl font-bold text-purple-700 text-center mb-6">
               Ranking Atual ({apoiadores.length})
             </h2>
 
             {apoiadores.length === 0 ? (
-              <p className="text-center py-20 text-xl text-gray-500">Ranking vazio</p>
+              <p className="text-center py-16 text-gray-500">Ranking vazio</p>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {apoiadores.map(a => (
-                  <div key={a.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-4 border-purple-300">
+                  <div key={a.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5 border-2 border-purple-300">
                     {editando === a.id ? (
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <Input
                           value={editForm.nome}
                           onChange={e => setEditForm({ ...editForm, nome: e.target.value.toUpperCase().slice(0, 14) })}
-                          className="text-2xl font-black text-center"
+                          className="text-xl font-black text-center"
                         />
                         <Input
                           value={editForm.filial}
                           onChange={e => setEditForm({ ...editForm, filial: e.target.value.replace(/\D/g, "") })}
-                          className="text-xl text-center"
+                          className="text-lg text-center"
                         />
                         <Input
                           value={editForm.valor}
                           onChange={e => setEditForm({ ...editForm, valor: Number(e.target.value) || 0 })}
                           type="number"
-                          className="text-3xl font-black text-green-600 text-center"
+                          className="text-2xl font-black text-green-600 text-center"
                         />
-                        <div className="flex gap-4 justify-center">
-                          <Button onClick={salvarEdicao} className="bg-green-600 text-white">
-                            <Save className="w-6 h-6 mr-2" /> Salvar
+                        <div className="flex gap-3 justify-center">
+                          <Button onClick={salvarEdicao} size="sm" className="bg-green-600 text-white">
+                            <Save className="w-5 h-5 mr-1" /> Salvar
                           </Button>
-                          <Button variant="outline" onClick={() => setEditando(null)}>
-                            <XCircle className="w-6 h-6 mr-2" /> Cancelar
+                          <Button variant="outline" size="sm" onClick={() => setEditando(null)}>
+                            <XCircle className="w-5 h-5 mr-1" /> Cancelar
                           </Button>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div>
-                          <p className="text-2xl font-black text-purple-800">{a.nome}</p>
-                          <p className="text-xl text-purple-600 font-bold">FILIAL {a.filial}</p>
-                          <p className="text-3xl font-black text-green-600 mt-2">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div className="flex-1">
+                          <p className="text-xl font-black text-purple-800">{a.nome}</p>
+                          <p className="text-lg text-purple-600 font-bold">FILIAL {a.filial}</p>
+                          <p className="text-2xl font-black text-green-600 mt-1">
                             R$ {a.valor.toFixed(0)}
                           </p>
                         </div>
-                        <div className="flex gap-4">
+                        <div className="flex gap-3 w-full sm:w-auto">
                           <Button size="icon" variant="outline" onClick={() => iniciarEdicao(a)}>
-                            <Edit2 className="w-6 h-6" />
+                            <Edit2 className="w-5 h-5" />
                           </Button>
                           <Button size="icon" variant="destructive" onClick={() => excluir(a.id, a.nome)}>
-                            <Trash2 className="w-6 h-6" />
+                            <Trash2 className="w-5 h-5" />
                           </Button>
                         </div>
                       </div>
