@@ -37,45 +37,39 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    const base = "w-6 h-6"; // Tamanho ligeiramente menor para economizar espaço
+    const base = "w-6 h-6";
     if (i === 0) return <Trophy className={`${base} text-yellow-400`} />;
     if (i === 1) return <Medal className={`${base} text-gray-400`} />;
     if (i === 2) return <Award className={`${base} text-amber-600`} />;
-    // Ajuste de tamanho e alinhamento para o número
     return <span className="text-white font-black text-lg text-center w-6">{i + 1}</span>;
   };
 
   return (
-    // Padding responsivo para garantir que caiba em telas menores
     <div className="relative p-4 sm:p-6"> 
       
-      {/* CONTÊINER PRINCIPAL (Fundo Preto) */}
       <div
         className="
           absolute inset-0
-          rounded-2xl sm:rounded-3xl /* Bordas ajustadas para responsividade */
+          rounded-2xl sm:rounded-3xl
           bg-black/90
           border border-white/10
           shadow-2xl
         "
       />
 
-      {/* CONTEÚDO */}
       <div className="relative z-10">
 
-        {/* TOPO: Usa flexbox para manter alinhamento entre os botões */}
         <div className="flex justify-between items-center mb-6"> 
 
-          {/* Botão Apoiar */}
           <Dialog>
             <DialogTrigger asChild>
               <Button
                 className="
-                  px-4 py-2 sm:px-6 sm:py-3 /* Padding ajustado */
+                  px-4 py-2 sm:px-6 sm:py-3
                   rounded-full
                   bg-gray-700
                   hover:bg-gray-600
-                  text-white text-sm sm:text-base font-bold /* Tamanho de fonte responsivo */
+                  text-white text-sm sm:text-base font-bold
                   shadow-lg
                 "
               >
@@ -91,12 +85,11 @@ export default function RankingApoiadores() {
             </DialogContent>
           </Dialog>
 
-          {/* Botão Atualizar */}
           <Button
             size="icon"
             onClick={fetchRanking}
             className="
-              w-10 h-10 sm:w-11 sm:h-11 /* Tamanho fixo para ícone */
+              w-10 h-10 sm:w-11 sm:h-11
               bg-gray-700 
               hover:bg-gray-600 
               rounded-full
@@ -109,12 +102,10 @@ export default function RankingApoiadores() {
           </Button>
         </div>
 
-        {/* TÍTULO */}
         <h2 className="text-2xl sm:text-3xl font-black text-white text-center mb-6">
           Ranking de Apoiadores
         </h2>
 
-        {/* LISTA */}
         {loading ? (
           <p className="text-center text-white text-lg">Carregando...</p>
         ) : apoiadores.length === 0 ? (
@@ -122,12 +113,12 @@ export default function RankingApoiadores() {
             Seja o primeiro a apoiar!
           </p>
         ) : (
-          <div className="space-y-3"> {/* Espaçamento compacto */}
+          <div className="space-y-3">
             {apoiadores.map((a, i) => (
               <div
                 key={a.id}
                 className="
-                  flex items-center justify-between /* Garante alinhamento horizontal */
+                  flex items-center justify-between
                   p-3 sm:p-4
                   rounded-xl sm:rounded-2xl
                   bg-gray-800/70
@@ -135,21 +126,18 @@ export default function RankingApoiadores() {
                   shadow-md
                 "
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className="flex-shrink-0">{medal(i)}</div> {/* Garante que a medalha não encolha */}
-                  <div>
-                    {/* NOME */}
-                    <p className="text-base sm:text-lg font-bold text-white truncate max-w-[150px] sm:max-w-none"> {/* Adiciona truncate para nomes longos */}
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0"> {/* flex-1 e min-w-0 adicionados */}
+                  <div className="flex-shrink-0">{medal(i)}</div>
+                  <div className="min-w-0"> {/* min-w-0 para permitir o encolhimento */}
+                    <p className="text-base sm:text-lg font-bold text-white truncate max-w-full"> {/* truncate e max-w-full adicionados */}
                       {a.nome}
                     </p>
-                    {/* FILIAL */}
                     <p className="text-xs sm:text-sm font-semibold text-white/80">
                       Filial {a.filial}
                     </p>
                   </div>
                 </div>
 
-                {/* VALOR: Tamanho ajustado para caber melhor */}
                 <p className="text-xl sm:text-2xl font-black text-white flex-shrink-0 ml-2"> 
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
