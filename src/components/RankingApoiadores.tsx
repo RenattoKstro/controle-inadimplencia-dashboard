@@ -11,17 +11,18 @@ interface Apoiador {
   nome: string;
   filial: string;
   valor: number;
+  mostrar_valor?: boolean;
 }
 
 export default function RankingApoiadores() {
-  const [apoiadores, setApoiadores] = useState<Apoiador[]>([]);
+  const [apoiadores, setApoiadores] = useState<Apoi[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchRanking = async () => {
     setLoading(true);
     const { data } = await supabase
       .from("apoiadores")
-      .select("id, nome, filial, valor")
+      .select("id, nome, filial, valor, mostrar_valor")
       .order("valor", { ascending: false })
       .limit(10);
     setApoiadores(data || []);
@@ -35,21 +36,21 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    if (i === 0) return <Trophy className="w-5 h-5 text-yellow-500" />;
-    if (i === 1) return <Medal className="w-5 h-5 text-gray-400" />;
-    if (i === 2) return <Award className="w-5 h-5 text-orange-600" />;
-    return <span className="w-5 text-center text-xs font-bold text-purple-600">{i + 1}</span>;
+    if (i === 0) return <Trophy className="w-6 h-6 text-yellow-500" />;
+    if (i === 1) return <Medal className="w-6 h-6 text-gray-400" />;
+    if (i === 2) return <Award className="w-6 h-6 text-orange-600" />;
+    return <span className="w-6 text-center font-bold text-purple-600 text-sm">{i + 1}</span>;
   };
 
   return (
-    <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-5 border-4 border-purple-300">
+    <div className="bg-white/90 backdrop-blurounded-3xl shadow-2xl p-6 border-4 border-purple-300">
       {/* BOTÃO APOIAR + ATUALIZAR */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-6">
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-lg text-sm px-4 py-2">
-              <Heart className="w-4 h-4 fill-white mr-1" />
-              Apoiar
+            <Button className="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white font-bold shadow-xl">
+              <Heart className="w-5 h-5 fill-white mr-2" />
+              Apoiar o Projeto
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
@@ -61,22 +62,22 @@ export default function RankingApoiadores() {
 
         <Button
           size="icon"
-          variant="ghost"
+          variant="outline"
           onClick={fetchRanking}
-          className="rounded-full hover:bg-purple-100 transition"
+          className="rounded-full shadow-md hover:shadow-xl transition-all"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
         </Button>
       </div>
 
-      <h2 className="text-xl font-black text-purple-800 text-center mb-3">
+      <h2 className="text-2xl font-black text-purple-800 text-center mb-4">
         Ranking de Apoiadores
       </h2>
 
       {loading ? (
-        <p className="text-center py-6 text-sm text-gray-500">Carregando...</p>
+        <p className="text-center py-4 text-gray-500">Carregando...</p>
       ) : apoiadores.length === 0 ? (
-        <p className="text-center py-8 text-purple-600 font-medium text-sm">
+        <p className="text-center text-purple-600 font-medium py-8">
           Seja o primeiro a apoiar!
         </p>
       ) : (
@@ -92,15 +93,13 @@ export default function RankingApoiadores() {
             >
               <div className="flex items-center gap-3">
                 {medal(i)}
-                <div className="text-left">
-                  <p className="font-bold text-sm text-gray-800 leading-tight">{a.nome}</p>
-                  <p className="text-xs font-black text-purple-600 leading-tight">
-                    FILIAL {a.filial}
-                  </p>
+                <div>
+                  <p className="font-bold text-sm text-gray-800">{a.nome}</p>
+                  <p className="text-xs text-purple-600">FILIAL {a.filial}</p>
                 </div>
               </div>
-              <p className="font-black text-green-600 text-sm">
-                R$ {a.valor.toFixed(0)}
+              <p className="font-black text-green-600">
+                VALOR: {a.mostrar_valor === false ? "***" : `R$ ${a.valor.toFixed(0)}`}
               </p>
             </div>
           ))}
