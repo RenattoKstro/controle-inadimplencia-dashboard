@@ -118,7 +118,7 @@ export default function RankingApoiadores() {
               <div
                 key={a.id}
                 className="
-                  flex items-center justify-between
+                  flex flex-col                  /* Organiza verticalmente */
                   p-3 sm:p-4
                   rounded-xl sm:rounded-2xl
                   bg-gray-800/70
@@ -126,21 +126,27 @@ export default function RankingApoiadores() {
                   shadow-md
                 "
               >
-                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0"> {/* flex-1 e min-w-0 adicionados */}
+                
+                {/* LINHA SUPERIOR: Medalha e Nome (sempre visível) */}
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div className="flex-shrink-0">{medal(i)}</div>
-                  <div className="min-w-0"> {/* min-w-0 para permitir o encolhimento */}
-                    <p className="text-base sm:text-lg font-bold text-white truncate max-w-full"> {/* truncate e max-w-full adicionados */}
+                  <div>
+                    {/* NOME: Visibilidade total garantida */}
+                    <p className="text-base sm:text-lg font-bold text-white">
                       {a.nome}
                     </p>
+                    {/* FILIAL */}
                     <p className="text-xs sm:text-sm font-semibold text-white/80">
                       Filial {a.filial}
                     </p>
                   </div>
                 </div>
 
-                <p className="text-xl sm:text-2xl font-black text-white flex-shrink-0 ml-2"> 
+                {/* LINHA INFERIOR: Valor (separado, alinhado à direita) */}
+                <p className="text-xl sm:text-2xl font-black text-white text-right mt-2 pt-2 border-t border-white/10"> 
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
+
               </div>
             ))}
           </div>
