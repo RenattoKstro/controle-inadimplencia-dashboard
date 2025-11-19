@@ -36,41 +36,39 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-400 drop-shadow-[0_0_8px_rgba(255,255,0,0.6)]" />;
-    if (i === 1) return <Medal className="w-7 h-7 text-gray-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />;
-    if (i === 2) return <Award className="w-7 h-7 text-orange-400 drop-shadow-[0_0_8px_rgba(255,180,100,0.6)]" />;
+    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-400" />;
+    if (i === 1) return <Medal className="w-7 h-7 text-gray-300" />;
+    if (i === 2) return <Award className="w-7 h-7 text-orange-400" />;
     return <span className="w-7 text-center font-black text-white">{i + 1}</span>;
   };
 
   return (
-    <div className="
+    <div
+      className="
       relative 
-      bg-black/40           /* ESCURO PARA DAR CONTRASTE */
-      backdrop-blur-2xl 
+      bg-[#0B0B0C]/85       /* FUNDO ESCURO REAL */
+      backdrop-blur-xl
       rounded-3xl 
-      shadow-[0_8px_40px_rgba(0,0,0,0.4)]
+      shadow-2xl
       border border-white/10
       p-6
-      overflow-hidden
-    ">
-
-      {/* brilho leve — sem exagero */}
-      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-
+      "
+    >
       <div className="relative z-10">
         <div className="flex justify-between items-center mb-6">
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="
+              <Button
+                className="
                 bg-white/10 
                 hover:bg-white/20
                 text-white 
-                font-black 
+                font-bold
                 px-6 py-3 
                 rounded-2xl
-                backdrop-blur-xl
                 border border-white/20
-              ">
+              "
+              >
                 <Heart className="w-5 h-5 fill-white mr-2" />
                 Apoiar o Projeto
               </Button>
@@ -90,12 +88,13 @@ export default function RankingApoiadores() {
             className="
               bg-white/10 
               hover:bg-white/20 
-              backdrop-blur-xl
               rounded-full 
               border border-white/20
             "
           >
-            <RefreshCw className={`w-5 h-5 text-white ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-5 h-5 text-white ${loading ? "animate-spin" : ""}`}
+            />
           </Button>
         </div>
 
@@ -104,7 +103,9 @@ export default function RankingApoiadores() {
         </h2>
 
         {loading ? (
-          <p className="text-center py-6 text-white text-lg font-medium">Carregando...</p>
+          <p className="text-center py-6 text-white text-lg font-medium">
+            Carregando...
+          </p>
         ) : apoiadores.length === 0 ? (
           <p className="text-center py-8 text-white text-lg font-medium">
             Seja o primeiro a apoiar!
@@ -114,22 +115,21 @@ export default function RankingApoiadores() {
             {apoiadores.map((a, i) => (
               <div
                 key={a.id}
-                className={`
+                className="
                   flex items-center justify-between
                   p-4
                   rounded-2xl
                   bg-white/5 
-                  backdrop-blur-xl
+                  backdrop-blur-lg
                   border border-white/10 
-                  shadow-[0_4px_20px_rgba(0,0,0,0.25)]
-                  relative
-                `}
+                  shadow-lg
+                "
               >
-                <div className="flex items-center gap-4 relative">
+                <div className="flex items-center gap-4">
                   {medal(i)}
                   <div>
-                    <p className="font-black text-lg text-white">{a.nome}</p>
-                    <p className="text-sm font-bold text-white/80">
+                    <p className="font-bold text-lg text-white">{a.nome}</p>
+                    <p className="text-sm font-semibold text-white/70">
                       Filial {a.filial}
                     </p>
                   </div>
