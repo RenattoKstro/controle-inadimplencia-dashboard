@@ -9,6 +9,7 @@ export default function AvisoApoio() {
   const [filial, setFilial] = useState("");
   const [valor, setValor] = useState("");
   const [mostrarValor, setMostrarValor] = useState<boolean | null>(null);
+  const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState("");
 
   const pixKey = "rena7oalmeida@jim.com";
@@ -42,11 +43,19 @@ export default function AvisoApoio() {
       setErro("Erro ao enviar. Tente novamente.");
       console.error(error);
     } else {
-      setEtapa("enviado");
+      setEnviado(true);
+      setTimeout(() => {
+        setEtapa("mensagem");
+        setNome("");
+        setFilial("");
+        setValor("");
+        setMostrarValor(null);
+        setEnviado(false);
+      }, 4000);
     }
   };
 
-  // ETAPA 1: MENSAGEM (COM SCROLL)
+  // ETAPA 1: MENSAGEM
   if (etapa === "mensagem") {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
@@ -100,7 +109,7 @@ export default function AvisoApoio() {
     );
   }
 
-  // ETAPA 2: FORMULÁRIO
+  // ETAPA 2: FORMULÁRIO + QR CODE + COPIAR
   if (etapa === "formulario") {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
@@ -110,6 +119,10 @@ export default function AvisoApoio() {
           </h2>
 
           <div className="bg-white p-8 rounded-3xl shadow-inner space-y-6">
+            <div className="flex justify-center mb-6">
+              <img src="/PIX.png" alt="PIX" className="w-64 h-64 rounded-2xl shadow-2xl border-8 border-white" />
+            </div>
+
             <input
               type="text"
               placeholder="Seu nome (máx 14)"
@@ -146,6 +159,14 @@ export default function AvisoApoio() {
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black py-6 rounded-2xl text-2xl shadow-2xl"
             >
               Continuar
+            </button>
+
+            <button
+              onClick={copiarPix}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mt-4"
+            >
+              <Copy className="w-6 h-6" />
+              Copiar Chave PIX
             </button>
 
             <button
@@ -188,6 +209,7 @@ export default function AvisoApoio() {
             >
               NÃO
             </button>
+ for="pergunta">
           </div>
 
           <button
