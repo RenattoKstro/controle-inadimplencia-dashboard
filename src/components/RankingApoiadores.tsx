@@ -25,6 +25,7 @@ export default function RankingApoiadores() {
       .select("id, nome, filial, valor, mostrar_valor")
       .order("valor", { ascending: false })
       .limit(10);
+
     setApoiadores(data || []);
     setLoading(false);
   };
@@ -36,40 +37,47 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-400" />;
-    if (i === 1) return <Medal className="w-7 h-7 text-gray-300" />;
-    if (i === 2) return <Award className="w-7 h-7 text-orange-400" />;
-    return <span className="w-7 text-center font-black text-white">{i + 1}</span>;
+    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-400 drop-shadow" />;
+    if (i === 1) return <Medal className="w-7 h-7 text-gray-300 drop-shadow" />;
+    if (i === 2) return <Award className="w-7 h-7 text-orange-400 drop-shadow" />;
+    return (
+      <span className="w-7 text-center font-black text-white/80 text-lg">
+        {i + 1}
+      </span>
+    );
   };
 
   return (
     <div
       className="
-      relative 
-      bg-[#0B0B0C]/85       /* FUNDO ESCURO REAL */
-      backdrop-blur-xl
-      rounded-3xl 
-      shadow-2xl
-      border border-white/10
-      p-6
+        relative
+        bg-[#080808]/95
+        backdrop-blur-2xl
+        rounded-3xl
+        shadow-[0_0_40px_rgba(0,0,0,0.7)]
+        border border-white/10
+        p-6
       "
     >
       <div className="relative z-10">
+        {/* TOPO */}
         <div className="flex justify-between items-center mb-6">
+
+          {/* BOTÃO APOIAR */}
           <Dialog>
             <DialogTrigger asChild>
               <Button
                 className="
-                bg-white/10 
-                hover:bg-white/20
-                text-white 
-                font-bold
-                px-6 py-3 
-                rounded-2xl
-                border border-white/20
-              "
+                  bg-white/10
+                  hover:bg-white/20
+                  text-white
+                  font-bold
+                  px-6 py-3
+                  rounded-2xl
+                  border border-white/20
+                "
               >
-                <Heart className="w-5 h-5 fill-white mr-2" />
+                <Heart className="w-5 h-5 mr-2 fill-white" />
                 Apoiar o Projeto
               </Button>
             </DialogTrigger>
@@ -81,14 +89,15 @@ export default function RankingApoiadores() {
             </DialogContent>
           </Dialog>
 
+          {/* BOTÃO REFRESH */}
           <Button
             size="icon"
             variant="ghost"
             onClick={fetchRanking}
             className="
-              bg-white/10 
-              hover:bg-white/20 
-              rounded-full 
+              bg-white/10
+              hover:bg-white/20
+              rounded-full
               border border-white/20
             "
           >
@@ -98,16 +107,18 @@ export default function RankingApoiadores() {
           </Button>
         </div>
 
-        <h2 className="text-3xl font-black text-white text-center mb-5">
+        {/* TÍTULO */}
+        <h2 className="text-3xl font-black text-white text-center mb-5 tracking-wide">
           Ranking de Apoiadores
         </h2>
 
+        {/* LISTAGEM */}
         {loading ? (
-          <p className="text-center py-6 text-white text-lg font-medium">
+          <p className="text-center py-6 text-white/80 text-lg">
             Carregando...
           </p>
         ) : apoiadores.length === 0 ? (
-          <p className="text-center py-8 text-white text-lg font-medium">
+          <p className="text-center py-8 text-white/80 text-lg">
             Seja o primeiro a apoiar!
           </p>
         ) : (
@@ -119,23 +130,25 @@ export default function RankingApoiadores() {
                   flex items-center justify-between
                   p-4
                   rounded-2xl
-                  bg-white/5 
-                  backdrop-blur-lg
-                  border border-white/10 
+                  bg-gradient-to-r from-white/5 to-white/10
+                  backdrop-blur-xl
+                  border border-white/10
                   shadow-lg
                 "
               >
                 <div className="flex items-center gap-4">
                   {medal(i)}
                   <div>
-                    <p className="font-bold text-lg text-white">{a.nome}</p>
-                    <p className="text-sm font-semibold text-white/70">
+                    <p className="font-bold text-lg text-white">
+                      {a.nome}
+                    </p>
+                    <p className="text-sm font-semibold text-white/60">
                       Filial {a.filial}
                     </p>
                   </div>
                 </div>
 
-                <p className="font-black text-2xl text-white">
+                <p className="font-black text-2xl text-white drop-shadow">
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
               </div>
