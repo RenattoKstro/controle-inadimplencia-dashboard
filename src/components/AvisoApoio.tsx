@@ -1,6 +1,6 @@
 // src/components/AvisoApoio.tsx
 import { useState } from "react";
-import { Heart, Copy, CheckCircle, AlertCircle, ChevronRight } from "lucide-react";
+import { Heart, Copy, CheckCircle, AlertCircle, ChevronRight }  from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AvisoApoio() {
@@ -55,7 +55,7 @@ export default function AvisoApoio() {
     }
   };
 
-  // ETAPA 1: MENSAGEM COMPLETA
+  // ETAPA 1: MENSAGEM
   if (etapa === "mensagem") {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
@@ -72,7 +72,7 @@ export default function AvisoApoio() {
               Este aplicativo foi desenvolvido com a intenção de ajudar pessoas, oferecendo ferramentas úteis de forma simples, prática e totalmente acessível.
             </p>
             <p>
-              Desde o início, o objetivo nunca foi lucrar com o projeto, e quero reforçar que ele sempre será <strong>gratuito para todos os usuários</strong>.
+              Desde o início, o objetivo nunca foi lucrar com o projeto, e quero reforçar que ele sempre será gratuito para todos os usuários.
             </p>
             <p>
               No entanto, para manter o aplicativo funcionando com qualidade, existem custos mensais indispensáveis, como:
