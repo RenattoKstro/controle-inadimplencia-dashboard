@@ -45,120 +45,112 @@ export default function RankingApoiadores() {
   };
 
   return (
-    // Mantendo o wrapper externo para centralizar o bloco inteiro na página, se desejado
-    <div className="flex items-center justify-center min-h-screen bg-gray-900 p-4">
+    <div className="relative p-4 sm:p-6"> 
       
-      <div className="relative p-4 sm:p-6 w-full max-w-xl mx-auto"> 
-        
-        {/* Fundo do Card (Preto Sólido) */}
-        <div
-          className="
-            absolute inset-0
-            rounded-2xl sm:rounded-3xl
-            bg-black/90
-            border border-white/10
-            shadow-2xl
-          "
-        />
+      <div
+        className="
+          absolute inset-0
+          rounded-2xl sm:rounded-3xl
+          bg-black/90
+          border border-white/10
+          shadow-2xl
+        "
+      />
 
-        <div className="relative z-10">
+      <div className="relative z-10">
 
-          {/* TOPO E BOTÕES */}
-          <div className="flex justify-between items-center mb-6"> 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  className="
-                    px-4 py-2 sm:px-6 sm:py-3
-                    rounded-full
-                    bg-gray-700
-                    hover:bg-gray-600
-                    text-white text-sm sm:text-base font-bold
-                    shadow-lg
-                  "
-                >
-                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 fill-white mr-2" />
-                  Apoiar
-                </Button>
-              </DialogTrigger>
+        <div className="flex justify-between items-center mb-6"> 
 
-              <DialogContent className="max-w-md sm:max-w-2xl p-0 bg-transparent border-0">
-                <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
-                  <AvisoApoio />
-                </div>
-              </DialogContent>
-            </Dialog>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                className="
+                  px-4 py-2 sm:px-6 sm:py-3
+                  rounded-full
+                  bg-gray-700
+                  hover:bg-gray-600
+                  text-white text-sm sm:text-base font-bold
+                  shadow-lg
+                "
+              >
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 fill-white mr-2" />
+                Apoiar
+              </Button>
+            </DialogTrigger>
 
-            <Button
-              size="icon"
-              onClick={fetchRanking}
-              className="
-                w-10 h-10 sm:w-11 sm:h-11
-                bg-gray-700 
-                hover:bg-gray-600 
-                rounded-full
-                shadow-lg
-              "
-            >
-              <RefreshCw
-                className={`w-4 h-4 sm:w-5 sm:h-5 text-white ${loading ? "animate-spin" : ""}`}
-              />
-            </Button>
-          </div>
+            <DialogContent className="max-w-md sm:max-w-2xl p-0 bg-transparent border-0">
+              <div className="max-h-[90vh] overflow-y-auto rounded-3xl">
+                <AvisoApoio />
+              </div>
+            </DialogContent>
+          </Dialog>
 
-          {/* TÍTULO */}
-          <h2 className="text-2xl sm:text-3xl font-black text-white text-center mb-6">
-            Ranking de Apoiadores
-          </h2>
-
-          {/* LISTA DE ITENS */}
-          {loading ? (
-            <p className="text-center text-white text-lg">Carregando...</p>
-          ) : apoiadores.length === 0 ? (
-            <p className="text-center text-white text-lg">
-              Seja o primeiro a apoiar!
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {apoiadores.map((a, i) => (
-                <div
-                  key={a.id}
-                  className="
-                    flex items-center justify-between /* Layout Horizontal */
-                    p-3 sm:p-4
-                    rounded-xl sm:rounded-2xl
-                    bg-gray-800/70
-                    border border-white/5
-                    shadow-md
-                  "
-                >
-                  
-                  {/* Lado Esquerdo: Medalha, Nome e Filial */}
-                  {/* flex-1 garante que esta seção ocupe o máximo de espaço disponível */}
-                  {/* min-w-0 é crucial para que o truncate funcione sem forçar o overflow */}
-                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0"> 
-                    <div className="flex-shrink-0">{medal(i)}</div>
-                    {/* min-w-0 permite que o texto encolha */}
-                    <div className="min-w-0"> 
-                      {/* truncate esconde o excesso com "..." e centraliza o texto visível */}
-                      <p className="text-base sm:text-lg font-bold text-white truncate text-center">
-                        {a.nome}
-                      </p>
-                      <p className="text-xs sm:text-sm font-semibold text-white/80 text-center">
-                        Filial {a.filial}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Lado Direito: Valor (não encolhe e mantém alinhamento centralizado) */}
-                  <p className="text-xl sm:text-2xl font-black text-white flex-shrink-0 ml-2 text-right"> 
-                    R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+          <Button
+            size="icon"
+            onClick={fetchRanking}
+            className="
+              w-10 h-10 sm:w-11 sm:h-11
+              bg-gray-700 
+              hover:bg-gray-600 
+              rounded-full
+              shadow-lg
+            "
+          >
+            <RefreshCw
+              className={`w-4 h-4 sm:w-5 sm:h-5 text-white ${loading ? "animate-spin" : ""}`}
+            />
+          </Button>
         </div>
+
+        <h2 className="text-2xl sm:text-3xl font-black text-white text-center mb-6">
+          Ranking de Apoiadores
+        </h2>
+
+        {loading ? (
+          <p className="text-center text-white text-lg">Carregando...</p>
+        ) : apoiadores.length === 0 ? (
+          <p className="text-center text-white text-lg">
+            Seja o primeiro a apoiar!
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {apoiadores.map((a, i) => (
+              <div
+                key={a.id}
+                className="
+                  flex flex-col                  /* Organiza verticalmente */
+                  p-3 sm:p-4
+                  rounded-xl sm:rounded-2xl
+                  bg-gray-800/70
+                  border border-white/5
+                  shadow-md
+                "
+              >
+                
+                {/* LINHA SUPERIOR: Medalha e Nome (sempre visível) */}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="flex-shrink-0">{medal(i)}</div>
+                  <div>
+                    {/* NOME: Visibilidade total garantida */}
+                    <p className="text-base sm:text-lg font-bold text-white">
+                      {a.nome}
+                    </p>
+                    {/* FILIAL */}
+                    <p className="text-xs sm:text-sm font-semibold text-white/80">
+                      Filial {a.filial}
+                    </p>
+                  </div>
+                </div>
+
+                {/* LINHA INFERIOR: Valor (separado, alinhado à direita) */}
+                <p className="text-xl sm:text-2xl font-black text-white text-right mt-2 pt-2 border-t border-white/10"> 
+                  R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
+                </p>
+
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
