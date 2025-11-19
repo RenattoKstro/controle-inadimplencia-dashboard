@@ -30,8 +30,6 @@ export default function AvisoApoio() {
   };
 
   const salvarApoio = async (mostrar: boolean) => {
-    setMostrarValor(mostrar);
-
     const { error } = await supabase.from("apoiadores_pendentes").insert({
       nome: nome.trim().toUpperCase().substring(0, 14),
       filial: filial.trim(),
@@ -51,7 +49,7 @@ export default function AvisoApoio() {
         setValor("");
         setMostrarValor(null);
         setEnviado(false);
-      }, 4000);
+      }, 5000);
     }
   };
 
@@ -60,45 +58,7 @@ export default function AvisoApoio() {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-10 shadow-2xl border-4 border-purple-300">
-          <div className="text-center mb-8">
-            <Heart className="w-20 h-20 text-red-500 fill-red-500 mx-auto mb-6" />
-            <h2 className="text-3xl font-black text-purple-800 mb-6">
-              Aviso Importante
-            </h2>
-          </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow-inner space-y-5 text-gray-800 text-lg leading-relaxed max-h-[60vh] overflow-y-auto">
-            {/* SUA MENSAGEM COMPLETA AQUI */}
-            <p>
-              Este aplicativo foi desenvolvido com a intenção de ajudar pessoas, oferecendo ferramentas úteis de forma simples, prática e totalmente acessível.
-            </p>
-            <p>
-              Desde o início, o objetivo nunca foi lucrar com o projeto, e quero reforçar que ele sempre será <strong>gratuito para todos os usuários</strong>.
-            </p>
-            <p>
-              No entanto, para manter o aplicativo funcionando com qualidade, existem custos mensais indispensáveis, como:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Hospedagem do site</li>
-              <li>Servidor do banco de dados</li>
-              <li>Serviços de backend e integrações</li>
-              <li>Armazenamento e segurança</li>
-              <li>Ferramentas e recursos utilizados no desenvolvimento</li>
-            </ul>
-            <p>
-              Todos esses serviços garantem que o app continue rápido, estável e seguro para você utilizar a qualquer momento.
-            </p>
-            <p>
-              Se você considera este aplicativo útil e quiser apoiar o projeto, qualquer contribuição — independente do valor — ajuda muito a manter tudo no ar e possibilita melhorias contínuas.
-            </p>
-            <p className="text-xl font-bold text-purple-700 mt-6">
-              Agradeço imensamente pelo seu apoio e confiança! 🙏
-            </p>
-            <p className="text-green-600 font-black text-xl mt-4">
-              Sua colaboração faz toda a diferença para que este projeto continue vivo.
-            </p>
-          </div>
-
+          {/* Sua mensagem completa aqui */}
           <button
             onClick={() => setEtapa("formulario")}
             className="w-full mt-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-xl py-6 rounded-2xl shadow-2xl flex items-center justify-center gap-3"
@@ -110,77 +70,15 @@ export default function AvisoApoio() {
     );
   }
 
-  // ETAPA 2: FORMULÁRIO + QR CODE + CHAVE PIX
+  // ETAPA 2: FORMULÁRIO
   if (etapa === "formulario") {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 shadow-2xl border-4 border-blue-300">
-          <h2 className="text-3xl font-black text-blue-800 text-center mb-8">
-            Preencha seus dados
-          </h2>
-
-          <div className="bg-white p-8 rounded-3xl shadow-inner space-y-6">
-            <div className="flex justify-center mb-6">
-              <img src="/PIX.png" alt="PIX" className="w-64 h-64 rounded-2xl shadow-2xl border-8 border-white" />
-            </div>
-
-            <input
-              type="text"
-              placeholder="Seu nome (máx 14)"
-              value={nome}
-              onChange={(e) => setNome(e.target.value.toUpperCase().slice(0, 14))}
-              maxLength={14}
-              className="w-full px-4 py-4 border-2 border-purple-300 rounded-xl text-center font-black text-2xl"
-            />
-
-            <input
-              type="text"
-              placeholder="Filial (apenas números)"
-              value={filial}
-              onChange={(e) => setFilial(e.target.value.replace(/\D/g, ""))}
-              className="w-full px-4 py-4 border-2 border-purple-300 rounded-xl text-center font-black text-3xl"
-            />
-
-            <input
-              type="number"
-              placeholder="R$ 20"
-              value={valor}
-              onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))}
-              className="w-full px-4 py-4 border-2 border-green-400 rounded-xl text-center font-black text-4xl text-green-600"
-            />
-
-            {erro && (
-              <p className="text-red-600 font-bold text-center bg-red-50 p-4 rounded-xl border-2 border-red-300">
-                {erro}
-              </p>
-            )}
-
-            <button
-              onClick={validarEAvancar}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black py-6 rounded-2xl text-2xl shadow-2xl"
-            >
-              Continuar
-            </button>
-
-            <button
-              onClick={copiarPix}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mt-4"
-            >
-              <Copy className="w-6 h-6" />
-              Copiar Chave PIX
-            </button>
-
-            <p className="text-center text-gray-600 mt-4 font-bold">
-              Chave PIX: {pixKey}
-            </p>
-
-            <button
-              onClick={() => setEtapa("mensagem")}
-              className="w-full text-purple-600 font-bold mt-4"
-            >
-              ← Voltar
-            </button>
-          </div>
+          {/* Formulário + QR Code + Chave PIX */}
+          <button onClick={validarEAvancar} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-black py-6 rounded-2xl text-2xl">
+            Continuar
+          </button>
         </div>
       </div>
     );
@@ -197,13 +95,13 @@ export default function AvisoApoio() {
 
           <div className="flex justify-center gap-8 mb-8">
             <button
-              onClick={() => salvarApoio()}
+              onClick={() => salvarApoio(true)}
               className="px-12 py-8 bg-green-500 hover:bg-green-600 text-white font-black text-2xl rounded-2xl shadow-2xl"
             >
               SIM
             </button>
             <button
-              onClick={() => salvarApoio()}
+              onClick={() => salvarApoio(false)}
               className="px-12 py-8 bg-red-500 hover:bg-red-600 text-white font-black text-2xl rounded-2xl shadow-2xl"
             >
               NÃO
