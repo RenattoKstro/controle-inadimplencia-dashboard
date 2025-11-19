@@ -1,6 +1,6 @@
 // src/components/AvisoApoio.tsx
 import { useState } from "react";
-import { Heart, Copy, CheckCircle, ChevronRight } from "lucide-react";
+import { Heart, Copy, CheckCircle, AlertCircle, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AvisoApoio() {
@@ -33,7 +33,7 @@ export default function AvisoApoio() {
     if (mostrarValor === null) return;
 
     const { error } = await supabase.from("apoiadores_pendentes").insert({
-      nome: nome.trim().toUpperCase().substring(0, 14),
+      nome: nome.trim(). toUpperCase().substring(0, 14),
       filial: filial.trim(),
       valor: Number(valor),
       mostrar_valor: mostrarValor,
@@ -109,7 +109,7 @@ export default function AvisoApoio() {
     );
   }
 
-  // ETAPA 2: FORMULÁRIO + QR CODE + COPIAR
+  // ETAPA 2: FORMULÁRIO
   if (etapa === "formulario") {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
@@ -209,7 +209,6 @@ export default function AvisoApoio() {
             >
               NÃO
             </button>
- for="pergunta">
           </div>
 
           <button
