@@ -60,7 +60,19 @@ export default function AvisoApoio() {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-10 shadow-2xl border-4 border-purple-300">
-          {/* Sua mensagem linda aqui */}
+          <div className="text-center mb-8">
+            <Heart className="w-20 h-20 text-red-500 fill-red-500 mx-auto mb-6" />
+            <h2 className="text-3xl font-black text-purple-800 mb-6">
+              Aviso Importante
+            </h2>
+          </div>
+
+          <div className="bg-white rounded-3xl p-8 shadow-inner space-y-5 text-gray-800 text-lg leading-relaxed">
+            {/* SEU TEXTO DA MENSAGEM AQUI */}
+            <p>Este aplicativo foi desenvolvido com a intenção de ajudar pessoas...</p>
+            {/* ... resto do texto */}
+          </div>
+
           <button
             onClick={() => setEtapa("formulario")}
             className="w-full mt-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-xl py-6 rounded-2xl shadow-2xl flex items-center justify-center gap-3"
