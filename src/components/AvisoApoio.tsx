@@ -1,13 +1,14 @@
 // src/components/AvisoApoio.tsx
 import { useState } from "react";
-import { Heart, Copy, CheckCircle, AlertCircle, ChevronRight } from "lucide-react";
+import { Heart, Copy, CheckCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AvisoApoio() {
-  const [etapa, setEtapa] = useState<"mensagem" | "formulario">("mensagem");
+  const [etapa, setEtapa] = useState<"mensagem" | "formulario" | "pergunta">("mensagem");
   const [nome, setNome] = useState("");
   const [filial, setFilial] = useState("");
   const [valor, setValor] = useState("");
+  const [mostrarNoRanking, setMostrarNoRanking] = useState<boolean | null>(null);
   const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -18,25 +19,33 @@ export default function AvisoApoio() {
     alert("Chave PIX copiada!");
   };
 
-  const salvarApoio = async () => {
+  const validarEAvancar = () => {
     setErro("");
 
-    if (nome.trim().length > 14) return setErro("Nome: máximo 14 letras");
-    if (nome.trim().length < 1) return setErro("Digite seu nome");
+    if (nome.trim().length < 1 || nome.trim().length > 14) return setErro("Nome: 1 a 14 letras");
     if (!filial.trim() || !/^\d+$/.test(filial)) return setErro("Filial: apenas números");
     if (!valor || !Number.isInteger(Number(valor)) || Number(valor) < 5) return setErro("Valor mínimo R$ 5 (inteiro)");
 
+    setEtapa("pergunta");
+  };
+
+  const salvarApoio = async () => {
+    if (mostrarNoRanking === null) return;
+
+    const nomeFinal = nome.trim().toUpperCase().substring(0, 14);
+
     const { error } = await supabase.from("apoiadores_pendentes").insert({
-      nome: nome.trim().toUpperCase().substring(0, 14),
+      nome: nomeFinal,
       filial: filial.trim(),
       valor: Number(valor),
+      mostrar_valor: mostrarNoRanking,
     });
 
     if (error) {
       setErro("Erro ao enviar. Tente novamente.");
     } else {
       setEnviado(true);
-      setTimeout(() => setEtapa("mensagem"), 4000);
+      setTimeout(() => setEtapa("mensagem"), 5000);
     }
   };
 
@@ -88,89 +97,121 @@ export default function AvisoApoio() {
             className="w-full mt-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-xl py-6 rounded-2xl shadow-2xl flex items-center justify-center gap-3"
           >
             Entendi! Quero apoiar
-            <ChevronRight className="w-8 h-8" />
           </button>
         </div>
       </div>
     );
   }
 
-  // ETAPA 2: FORMULÁRIO + QR CODE
-  return (
-    <div className="w-full max-w-2xl mx-auto p-6">
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 shadow-2xl border-4 border-blue-300">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-black text-blue-800">
-            Faça sua doação via PIX
+  // ETAPA 2: FORMULÁRIO
+  if (etapa === "formulario") {
+    return (
+      <div className="w-full max-w-2xl mx-auto p-6">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-8 shadow-2xl border-4 border-blue-300">
+          <h2 className="text-3xl font-black text-blue-800 text-center mb-8">
+            Preencha seus dados
           </h2>
-        </div>
 
-        <div className="bg-white p-8 rounded-3xl shadow-inner space-y-6">
-          <div className="flex justify-center mb-6">
-            <img src="/PIX.png" alt="PIX" className="w-64 h-64 rounded-2xl shadow-2xl border-8 border-white" />
-          </div>
-
-          <div className="space-y-4">
+          <div className="bg-white p-8 rounded-3xl shadow-inner space-y-6">
             <input
               type="text"
               placeholder="Seu nome (máx 14)"
               value={nome}
               onChange={(e) => setNome(e.target.value.toUpperCase().slice(0, 14))}
               maxLength={14}
-              className="w-full px-4 py-3 border-2 border-purple-300 rounded-xl text-center font-black text-xl"
+              className="w-full px-4 py-4 border-2 border-purple-300 rounded-xl text-center font-black text-2xl"
             />
+
             <input
               type="text"
               placeholder="Filial (apenas números)"
               value={filial}
               onChange={(e) => setFilial(e.target.value.replace(/\D/g, ""))}
-              className="w-full px-4 py-3 border-2 border-purple-300 rounded-xl text-center font-black text-2xl"
+              className="w-full px-4 py-4 border-2 border-purple-300 rounded-xl text-center font-black text-3xl"
             />
+
             <input
               type="number"
               placeholder="R$ 20"
               value={valor}
               onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))}
-              className="w-full px-4 py-3 border-2 border-green-400 rounded-xl text-center font-black text-3xl text-green-600"
+              className="w-full px-4 py-4 border-2 border-green-400 rounded-xl text-center font-black text-4xl text-green-600"
             />
-          </div>
 
-          {erro && (
-            <p className="text-red-600 font-bold text-center bg-red-50 p-4 rounded-xl border-2 border-red-300">
-              {erro}
-            </p>
-          )}
+            {erro && (
+              <p className="text-red-600 font-bold text-center bg-red-50 p-4 rounded-xl border-2 border-red-300">
+                {erro}
+              </p>
+            )}
 
-          {enviado ? (
-            <div className="text-center bg-green-100 p-8 rounded-3xl border-4 border-green-500">
-              <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-4" />
-              <p className="text-3xl font-black text-green-800">Enviado!</p>
-              <p className="text-green-700 text-xl mt-2">Aguarde aprovação</p>
-            </div>
-          ) : (
             <button
-              onClick={salvarApoio}
+              onClick={validarEAvancar}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black py-6 rounded-2xl text-2xl shadow-2xl"
             >
-              Entrar no Ranking!
+              Continuar
             </button>
-          )}
 
+            <button
+              onClick={() => setEtapa("mensagem")}
+              className="w-full text-purple-600 font-bold mt-4"
+            >
+              ← Voltar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ETAPA 3: PERGUNTA "MOSTRAR NO RANKING?"
+  return (
+    <div className="w-full max-w-2xl mx-auto p-6">
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-10 shadow-2xl border-4 border-purple-300">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-black text-purple-800">
+            Deseja mostrar seu valor doado no ranking?
+          </h2>
+          <p className="text-gray-700 mt-4">
+            Se escolher "Não", seu nome aparecerá como <strong>doador anônimo</strong>.
+          </p>
+        </div>
+
+        <div className="flex justify-center gap-8">
           <button
-            onClick={copiarPix}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mt-4"
+            onClick={() => {
+              setMostrarNoRanking(true);
+              salvarApoio();
+            }}
+            className={`w-40 py-12 rounded-3xl font-black text-2xl shadow-2xl transition-all ${
+              mostrarNoRanking === true
+                ? "bg-green-500 text-white scale-110"
+                : "bg-white text-green-600 border-4 border-green-500"
+            }`}
           >
-            <Copy className="w-6 h-6" />
-            Copiar Chave PIX
+            SIM
           </button>
 
           <button
-            onClick={() => setEtapa("mensagem")}
-            className="w-full text-purple-600 font-bold mt-4"
+            onClick={() => {
+              setMostrarNoRanking(false);
+              salvarApoio();
+            }}
+            className={`w-40 py-12 rounded-3xl font-black text-2xl shadow-2xl transition-all ${
+              mostrarNoRanking === false
+                ? "bg-red-500 text-white scale-110"
+                : "bg-white text-red-600 border-4 border-red-500"
+            }`}
           >
-            ← Voltar para a mensagem
+            NÃO
           </button>
         </div>
+
+        <button
+          onClick={() => setEtapa("formulario")}
+          className="w-full mt-8 text-purple-600 font-bold"
+        >
+          ← Voltar
+        </button>
       </div>
     </div>
   );
