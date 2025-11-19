@@ -15,7 +15,7 @@ interface Apoiador {
 }
 
 export default function RankingApoiadores() {
-  const [apoiadores, setApoiadores] = useState<Apoi[]>([]);
+  const [apoiadores, setApoiadores] = useState<Apoiador[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchRanking = async () => {
@@ -36,14 +36,14 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    if (i === 0) return <Trophy className="w-6 h-6 text-yellow-500" />;
-    if (i === 1) return <Medal className="w-6 h-6 text-gray-400" />;
-    if (i === 2) return <Award className="w-6 h-6 text-orange-600" />;
-    return <span className="w-6 text-center font-bold text-purple-600 text-sm">{i + 1}</span>;
+    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-500" />;
+    if (i === 1) return <Medal className="w-7 h-7 text-gray-400" />;
+    if (i === 2) return <Award className="w-7 h-7 text-orange-600" />;
+    return <span className="w-7 text-center font-bold text-purple-600">{i + 1}</span>;
   };
 
   return (
-    <div className="bg-white/90 backdrop-blurounded-3xl shadow-2xl p-6 border-4 border-purple-300">
+    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-6 border-4 border-purple-300">
       {/* BOTÃO APOIAR + ATUALIZAR */}
       <div className="flex justify-between items-center mb-6">
         <Dialog>
@@ -53,10 +53,9 @@ export default function RankingApoiadores() {
               Apoiar o Projeto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl p-0 bg-transparent border-0">
-            <div className="max-h-[90vh] overflow-y-auto rounded-3xl bg-white">
-              <AvisoApoio />
-            </div>
+          {/* MODAL GRANDE PARA O FORMULÁRIO COMPLETO */}
+          <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 bg-transparent border-0">
+            <AvisoApoio />
           </DialogContent>
         </Dialog>
 
