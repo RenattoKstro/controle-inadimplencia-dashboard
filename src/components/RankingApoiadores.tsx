@@ -45,13 +45,12 @@ export default function RankingApoiadores() {
   };
 
   return (
-    // NOVO LAYOUT EXTERNO PARA CENTRALIZAR O COMPONENTE NA PÁGINA
-    // Adapte o seu arquivo App.tsx ou a página onde você renderiza este componente
+    // Mantendo o wrapper externo para centralizar o bloco inteiro na página, se desejado
     <div className="flex items-center justify-center min-h-screen bg-gray-900 p-4">
       
-      {/* O CARD PRINCIPAL AGORA ESTÁ CENTRALIZADO DENTRO DO ENVOLTÓRIO */}
       <div className="relative p-4 sm:p-6 w-full max-w-xl mx-auto"> 
         
+        {/* Fundo do Card (Preto Sólido) */}
         <div
           className="
             absolute inset-0
@@ -64,8 +63,8 @@ export default function RankingApoiadores() {
 
         <div className="relative z-10">
 
+          {/* TOPO E BOTÕES */}
           <div className="flex justify-between items-center mb-6"> 
-
             <Dialog>
               <DialogTrigger asChild>
                 <Button
@@ -107,10 +106,12 @@ export default function RankingApoiadores() {
             </Button>
           </div>
 
+          {/* TÍTULO */}
           <h2 className="text-2xl sm:text-3xl font-black text-white text-center mb-6">
             Ranking de Apoiadores
           </h2>
 
+          {/* LISTA DE ITENS */}
           {loading ? (
             <p className="text-center text-white text-lg">Carregando...</p>
           ) : apoiadores.length === 0 ? (
@@ -123,7 +124,7 @@ export default function RankingApoiadores() {
                 <div
                   key={a.id}
                   className="
-                    flex flex-col
+                    flex items-center justify-between /* Layout Horizontal */
                     p-3 sm:p-4
                     rounded-xl sm:rounded-2xl
                     bg-gray-800/70
@@ -132,22 +133,27 @@ export default function RankingApoiadores() {
                   "
                 >
                   
-                  <div className="flex items-center gap-3 sm:gap-4">
+                  {/* Lado Esquerdo: Medalha, Nome e Filial */}
+                  {/* flex-1 garante que esta seção ocupe o máximo de espaço disponível */}
+                  {/* min-w-0 é crucial para que o truncate funcione sem forçar o overflow */}
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0"> 
                     <div className="flex-shrink-0">{medal(i)}</div>
-                    <div>
-                      <p className="text-base sm:text-lg font-bold text-white">
+                    {/* min-w-0 permite que o texto encolha */}
+                    <div className="min-w-0"> 
+                      {/* truncate esconde o excesso com "..." e centraliza o texto visível */}
+                      <p className="text-base sm:text-lg font-bold text-white truncate text-center">
                         {a.nome}
                       </p>
-                      <p className="text-xs sm:text-sm font-semibold text-white/80">
+                      <p className="text-xs sm:text-sm font-semibold text-white/80 text-center">
                         Filial {a.filial}
                       </p>
                     </div>
                   </div>
 
-                  <p className="text-xl sm:text-2xl font-black text-white text-right mt-2 pt-2 border-t border-white/10"> 
+                  {/* Lado Direito: Valor (não encolhe e mantém alinhamento centralizado) */}
+                  <p className="text-xl sm:text-2xl font-black text-white flex-shrink-0 ml-2 text-right"> 
                     R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                   </p>
-
                 </div>
               ))}
             </div>
