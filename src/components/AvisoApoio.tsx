@@ -249,7 +249,7 @@ export default function AvisoApoio() {
             Enviado com sucesso!
           </h2>
           <p className="text-2xl text-green-700 mb-8">
-            Sua doação foi enviada para aprovação.
+            Sua doação foi enviada para verificação.
           </p>
           <p className="text-xl text-green-600">
             Em até 24h você entra no ranking!
