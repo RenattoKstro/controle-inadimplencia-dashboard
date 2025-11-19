@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Heart, Copy, CheckCircle, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import confetti from "canvas-confetti";
 
 export default function AvisoApoio() {
   const [etapa, setEtapa] = useState<"mensagem" | "formulario" | "pergunta" | "enviado">("mensagem");
@@ -24,8 +25,7 @@ export default function AvisoApoio() {
 
     if (nome.trim().length < 1 || nome.trim().length > 14) return setErro("Nome: 1 a 14 letras");
     if (!filial.trim() || !/^\d+$/.test(filial)) return setErro("Filial: apenas números");
-    if (!valor || !Number.isInteger(Number(valor)) || Number(valor) < 5)
-      return setErro("Valor mínimo R$ 5 (inteiro)");
+    if (!valor || !Number.isInteger(Number(valor)) || Number(valor) < 5) return setErro("Valor mínimo R$ 5 (inteiro)");
 
     setEtapa("pergunta");
   };
@@ -48,7 +48,14 @@ export default function AvisoApoio() {
       console.error(error);
       setSalvando(false);
     } else {
-      setEtapa("enviado"); // ← MOSTRA A TELA DE SUCESSO
+      // 🎉 CONFETES AQUI
+      confetti({
+        particleCount: 200,
+        spread: 100,
+        origin: { y: 0.6 }
+      });
+
+      setEtapa("enviado");
 
       setTimeout(() => {
         setEtapa("mensagem");
@@ -164,7 +171,7 @@ export default function AvisoApoio() {
               onClick={validarEAvancar}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black py-6 rounded-2xl text-2xl shadow-2xl"
             >
-              Continuar
+              Continue
             </button>
 
             <button
@@ -204,14 +211,18 @@ export default function AvisoApoio() {
             <button
               onClick={() => salvarApoio(true)}
               disabled={salvando}
-              className={`px-12 py-8 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${salvando ? "opacity-70" : ""}`}
+              className={`px-12 py-8 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${
+                salvando ? "opacity-70" : ""
+              }`}
             >
               SIM
             </button>
             <button
               onClick={() => salvarApoio(false)}
               disabled={salvando}
-              className={`px-12 py-8 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${salvando ? "opacity-70" : ""}`}
+              className={`px-12 py-8 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${
+                salvando ? "opacity-70" : ""
+              }`}
             >
               NÃO
             </button>
@@ -229,24 +240,28 @@ export default function AvisoApoio() {
   }
 
   // ETAPA 4: ENVIADO
-  if (etapa === "enviado") {
-    return (
-      <div className="w-full max-w-2xl mx-auto p-6">
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-10 shadow-2xl border-4 border-green-500">
-          <div className="text-center">
-            <CheckCircle className="w-32 h-32 text-green-600 mx-auto mb-8" />
-            <h2 className="text-4xl font-black text-green-800 mb-6">
-              Enviado com sucesso!
-            </h2>
-            <p className="text-2xl text-green-700 mb-8">
-              Sua doação foi enviada para aprovação.
-            </p>
-            <p className="text-xl text-green-600">
-              Em até 24h você entra no ranking!
-            </p>
-          </div>
+  return (
+    <div className="w-full max-w-2xl mx-auto p-6">
+      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl p-10 shadow-2xl border-4 border-green-500">
+        <div className="text-center">
+          <CheckCircle className="w-32 h-32 text-green-600 mx-auto mb-8" />
+          <h2 className="text-4xl font-black text-green-800 mb-6">
+            Enviado com sucesso!
+          </h2>
+          <p className="text-2xl text-green-700 mb-8">
+            Sua doação foi enviada para aprovação.
+          </p>
+          <p className="text-xl text-green-600">
+            Em até 24h você entra no ranking!
+          </p>
+          <button
+            onClick={() => setEtapa("mensagem")}
+            className="mt-10 bg-green-600 hover:bg-green-700 text-white font-black py-6 px-12 rounded-2xl text-2xl shadow-2xl"
+          >
+            Voltar
+          </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 }
