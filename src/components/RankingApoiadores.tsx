@@ -36,43 +36,40 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-300 drop-shadow-[0_0_12px_rgba(255,255,150,0.7)]" />;
-    if (i === 1) return <Medal className="w-7 h-7 text-gray-200 drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]" />;
-    if (i === 2) return <Award className="w-7 h-7 text-orange-300 drop-shadow-[0_0_12px_rgba(255,200,150,0.7)]" />;
-    return <span className="w-7 text-center font-black text-white drop-shadow-xl">{i + 1}</span>;
+    if (i === 0) return <Trophy className="w-7 h-7 text-yellow-400 drop-shadow-[0_0_8px_rgba(255,255,0,0.6)]" />;
+    if (i === 1) return <Medal className="w-7 h-7 text-gray-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" />;
+    if (i === 2) return <Award className="w-7 h-7 text-orange-400 drop-shadow-[0_0_8px_rgba(255,180,100,0.6)]" />;
+    return <span className="w-7 text-center font-black text-white">{i + 1}</span>;
   };
 
   return (
     <div className="
       relative 
-      bg-white/10 
-      backdrop-blur-3xl 
+      bg-black/40           /* ESCURO PARA DAR CONTRASTE */
+      backdrop-blur-2xl 
       rounded-3xl 
-      shadow-[0_8px_40px_rgba(0,0,0,0.25)]
-      border border-white/20
+      shadow-[0_8px_40px_rgba(0,0,0,0.4)]
+      border border-white/10
       p-6
       overflow-hidden
     ">
 
-      {/* Glow iOS 26 */}
-      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/40 to-white/5 opacity-60 pointer-events-none" />
-      <div className="absolute inset-0 rounded-3xl shadow-[inset_0_0_25px_rgba(255,255,255,0.3)] pointer-events-none" />
+      {/* brilho leve — sem exagero */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
 
       <div className="relative z-10">
-        {/* Header + botão */}
         <div className="flex justify-between items-center mb-6">
           <Dialog>
             <DialogTrigger asChild>
               <Button className="
-                bg-white/30 
-                hover:bg-white/50
+                bg-white/10 
+                hover:bg-white/20
                 text-white 
                 font-black 
                 px-6 py-3 
                 rounded-2xl
                 backdrop-blur-xl
-                border border-white/40
-                shadow-[0_0_20px_rgba(255,255,255,0.3)]
+                border border-white/20
               ">
                 <Heart className="w-5 h-5 fill-white mr-2" />
                 Apoiar o Projeto
@@ -91,28 +88,25 @@ export default function RankingApoiadores() {
             variant="ghost"
             onClick={fetchRanking}
             className="
-              bg-white/20 
-              hover:bg-white/40 
+              bg-white/10 
+              hover:bg-white/20 
               backdrop-blur-xl
               rounded-full 
-              border border-white/30
-              shadow-[0_0_20px_rgba(255,255,255,0.2)]
+              border border-white/20
             "
           >
             <RefreshCw className={`w-5 h-5 text-white ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
 
-        <h2 className="text-3xl font-black text-white drop-shadow-xl text-center mb-6 tracking-wide">
+        <h2 className="text-3xl font-black text-white text-center mb-5">
           Ranking de Apoiadores
         </h2>
 
         {loading ? (
-          <p className="text-center py-6 text-white text-lg font-medium drop-shadow-lg">
-            Carregando...
-          </p>
+          <p className="text-center py-6 text-white text-lg font-medium">Carregando...</p>
         ) : apoiadores.length === 0 ? (
-          <p className="text-center py-8 text-white text-lg font-medium drop-shadow-lg">
+          <p className="text-center py-8 text-white text-lg font-medium">
             Seja o primeiro a apoiar!
           </p>
         ) : (
@@ -123,31 +117,25 @@ export default function RankingApoiadores() {
                 className={`
                   flex items-center justify-between
                   p-4
-                  rounded-3xl
-                  bg-white/15 
-                  backdrop-blur-2xl
-                  border border-white/30 
-                  shadow-[0_4px_25px_rgba(0,0,0,0.25)]
+                  rounded-2xl
+                  bg-white/5 
+                  backdrop-blur-xl
+                  border border-white/10 
+                  shadow-[0_4px_20px_rgba(0,0,0,0.25)]
                   relative
-                  overflow-hidden
-                  ${i < 3 ? "ring-4 ring-white/40" : ""}
                 `}
               >
-
-                {/* brilho interno iOS */}
-                <div className="absolute inset-0 rounded-3xl shadow-[inset_0_0_35px_rgba(255,255,255,0.22)] pointer-events-none" />
-
-                <div className="flex items-center gap-4 relative z-10">
+                <div className="flex items-center gap-4 relative">
                   {medal(i)}
                   <div>
-                    <p className="font-black text-lg text-white drop-shadow-lg">{a.nome}</p>
-                    <p className="text-sm font-bold text-white/80 drop-shadow">
+                    <p className="font-black text-lg text-white">{a.nome}</p>
+                    <p className="text-sm font-bold text-white/80">
                       Filial {a.filial}
                     </p>
                   </div>
                 </div>
 
-                <p className="font-black text-2xl text-white drop-shadow-2xl relative z-10">
+                <p className="font-black text-2xl text-white">
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
               </div>
