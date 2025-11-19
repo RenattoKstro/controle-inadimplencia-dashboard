@@ -60,50 +60,12 @@ export default function AvisoApoio() {
     return (
       <div className="w-full max-w-2xl mx-auto p-6">
         <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl p-10 shadow-2xl border-4 border-purple-300">
-          <div className="text-center mb-8">
-            <Heart className="w-20 h-20 text-red-500 fill-red-500 mx-auto mb-6" />
-            <h2 className="text-3xl font-black text-purple-800 mb-6">
-              Aviso Importante
-            </h2>
-          </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow-inner space-y-5 text-gray-800 text-lg leading-relaxed">
-            <p>
-              Este aplicativo foi desenvolvido com a intenção de ajudar pessoas, oferecendo ferramentas úteis de forma simples, prática e totalmente acessível.
-            </p>
-            <p>
-              Desde o início, o objetivo nunca foi lucrar com o projeto, e quero reforçar que ele sempre será gratuito para todos os usuários.
-            </p>
-            <p>
-              No entanto, para manter o aplicativo funcionando com qualidade, existem custos mensais indispensáveis, como:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Hospedagem do site</li>
-              <li>Servidor do banco de dados</li>
-              <li>Serviços de backend e integrações</li>
-              <li>Armazenamento e segurança</li>
-              <li>Ferramentas e recursos utilizados no desenvolvimento</li>
-            </ul>
-            <p>
-              Todos esses serviços garantem que o app continue rápido, estável e seguro para você utilizar a qualquer momento.
-            </p>
-            <p>
-              Se você considera este aplicativo útil e quiser apoiar o projeto, qualquer contribuição — independente do valor — ajuda muito a manter tudo no ar e possibilita melhorias contínuas.
-            </p>
-            <p className="text-xl font-bold text-purple-700 mt-6">
-              Agradeço imensamente pelo seu apoio e confiança! 🙏
-            </p>
-            <p className="text-green-600 font-black text-xl mt-4">
-              Sua colaboração faz toda a diferença para que este projeto continue vivo.
-            </p>
-          </div>
-
+          {/* Sua mensagem linda aqui */}
           <button
             onClick={() => setEtapa("formulario")}
             className="w-full mt-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-xl py-6 rounded-2xl shadow-2xl flex items-center justify-center gap-3"
           >
-            Entendi! Quero apoiar
-            <ChevronRight className="w-8 h-8" />
+            Entendi! Quero apoiar <ChevronRight className="w-8 h-8" />
           </button>
         </div>
       </div>
@@ -180,18 +142,18 @@ export default function AvisoApoio() {
 
         <div className="flex justify-center gap-8 mb-8">
           <button
-            onClick={() => {
+            onClick={async () => {
               setMostrarValor(true);
-              salvarApoio();
+              await salvarApoio();
             }}
             className="px-12 py-8 bg-green-500 hover:bg-green-600 text-white font-black text-2xl rounded-2xl shadow-2xl"
           >
             SIM
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               setMostrarValor(false);
-              salvarApoio();
+              await salvarApoio();
             }}
             className="px-12 py-8 bg-red-500 hover:bg-red-600 text-white font-black text-2xl rounded-2xl shadow-2xl"
           >
