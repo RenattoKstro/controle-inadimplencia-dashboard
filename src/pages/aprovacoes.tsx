@@ -1,209 +1,128 @@
-// src/pages/aprovacoes.tsx
+// Aprovacoes.tsx
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Check, X, RefreshCw, Edit2, Trash2, Save, XCircle } from "lucide-react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Check, X, RefreshCw, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import confetti from "canvas-confetti";
 
-interface Item {
-  id: string;
-  nome: string;
-  filial: string;
-  valor: number;
-  created_at: string;
-}
+const supabase = createClientComponentClient();
 
-export default function AprovacoesAdmin() {
-  const [user, setUser] = useState<any>(null);
-  const [pendentes, setPendentes] = useState<Item[]>([]);
-  const [apoiadores, setApoiadores] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editando, setEditando] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ nome: "", filial: "", valor: 0 });
+export default function Aprovacoes() {
+  const [loading, setLoading] = useState(false);
+  const [dados, setDados] = useState<any[]>([]);
+  const [enviando, setEnviando] = useState(false);
+  const [mensagem, setMensagem] = useState("Enviando...");
+  const [mostraTelaSucesso, setMostraTelaSucesso] = useState(false);
+
+  async function carregar() {
+    setLoading(true);
+    const { data } = await supabase.from("solicitacoes").select("*").order("id", { ascending: false });
+    setDados(data || []);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user?.email === "rks7ro@gmail.com") {
-        setUser(data.user);
-      } else {
-        window.location.href = "/";
-      }
-    });
+    carregar();
   }, []);
 
-  const fetchAll = async () => {
-    setLoading(true);
-    const [pend, apo] = await Promise.all([
-      supabase.from("apoiadores_pendentes").select("*").order("created_at", { ascending: false }),
-      supabase.from("apoiadores").select("*").order("valor", { ascending: false })
-    ]);
-    setPendentes(pend.data || []);
-    setApoiadores(apo.data || []);
-    setLoading(false);
-  };
+  async function aprovar(id: number) {
+    setEnviando(true);
+    setMensagem("Aprovando...");
 
-  useEffect(() => {
-    if (user) fetchAll();
-  }, [user]);
+    await supabase.from("solicitacoes").update({ status: "aprovado" }).eq("id", id);
 
-  const aprovar = async (item: Item) => {
-    await supabase.from("apoiadores").insert(item);
-    await supabase.from("apoiadores_pendentes").delete().eq("id", item.id);
-    fetchAll();
-    alert(`${item.nome} entrou no ranking!`);
-  };
+    setMostraTelaSucesso(true);
+    dispararConfete();
+    carregar();
 
-  const rejeitar = async (id: string) => {
-    if (confirm("Rejeitar doação?")) {
-      await supabase.from("apoiadores_pendentes").delete().eq("id", id);
-      fetchAll();
-    }
-  };
+    setTimeout(() => {
+      setMostraTelaSucesso(false);
+    }, 1500);
 
-  const iniciarEdicao = (item: Item) => {
-    setEditando(item.id);
-    setEditForm({ nome: item.nome, filial: item.filial, valor: item.valor });
-  };
+    setEnviando(false);
+  }
 
-  const salvarEdicao = async () => {
-    if (!editando) return;
-    await supabase.from("apoiadores").update(editForm).eq("id", editando);
-    setEditando(null);
-    fetchAll();
-  };
+  async function rejeitar(id: number) {
+    setEnviando(true);
+    setMensagem("Rejeitando...");
 
-  const excluir = async (id: string, nome: string) => {
-    if (confirm(`Excluir ${nome} do ranking?`)) {
-      await supabase.from("apoiadores").delete().eq("id", id);
-      fetchAll();
-    }
-  };
+    await supabase.from("solicitacoes").update({ status: "rejeitado" }).eq("id", id);
 
-  if (!user) return null;
+    setMostraTelaSucesso(true);
+    dispararConfete();
+    carregar();
+
+    setTimeout(() => {
+      setMostraTelaSucesso(false);
+    }, 1500);
+
+    setEnviando(false);
+  }
+
+  function dispararConfete() {
+    confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-black text-purple-800 text-center mb-10">
-          Painel de Gerenciamento Completo
-        </h1>
+    <div className="min-h-screen bg-gray-100 p-6 flex flex-col items-center">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">
+        Aprovações de Solicitações
+      </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* PENDENTES */}
-          <div className="bg-white rounded-3xl shadow-2xl p-8 border-4 border-orange-400">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold text-orange-700">
-                Doações Pendentes ({pendentes.length})
-              </h2>
-              <Button onClick={fetchAll} size="lg">
-                <RefreshCw className={`w-6 h-6 mr-2 ${loading ? "animate-spin" : ""}`} />
-                Atualizar
-              </Button>
+      <Button
+        onClick={carregar}
+        className="flex items-center gap-2 mb-4"
+        disabled={loading}
+      >
+        {loading ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+        Atualizar
+      </Button>
+
+      <div className="w-full max-w-2xl space-y-4">
+        {dados.map((item) => (
+          <div
+            key={item.id}
+            className="bg-white rounded-xl shadow p-4 flex justify-between items-center border"
+          >
+            <div>
+              <p className="font-semibold text-gray-900">{item.nome}</p>
+              <p className="text-gray-600 text-sm">{item.descricao}</p>
+              <p className="text-xs mt-1 text-gray-500">Status: {item.status}</p>
             </div>
 
-            {pendentes.length === 0 ? (
-              <p className="text-center py-20 text-xl text-gray-500">Nenhuma doação pendente</p>
-            ) : (
-              <div className="space-y-6">
-                {pendentes.map(p => (
-                  <div key={p.id} className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl p-6 border-4 border-orange-300">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                      <div>
-                        <p className="text-2xl font-black text-orange-800">{p.nome}</p>
-                        <p className="text-xl text-orange-600 font-bold">FILIAL {p.filial}</p>
-                        <p className="text-3xl font-black text-green-600 mt-2">
-                          R$ {p.valor.toFixed(0)}
-                        </p>
-                      </div>
-                      <div className="flex gap-4">
-                        <Button
-                          className="bg-green-600 hover:bg-green-700 text-white font-bold text-xl px-10 py-6"
-                          onClick={() => aprovar(p)}
-                        >
-                          <Check className="w-8 h-8 mr-3" />
-                          APROVAR
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          className="font-bold text-xl px-10 py-6"
-                          onClick={() => rejeitar(p.id)}
-                        >
-                          <X className="w-8 h-8 mr-3" />
-                          REJEITAR
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="text-green-600 border-green-600 hover:bg-green-100"
+                onClick={() => aprovar(item.id)}
+                disabled={enviando}
+              >
+                <Check />
+              </Button>
+
+              <Button
+                variant="outline"
+                className="text-red-600 border-red-600 hover:bg-red-100"
+                onClick={() => rejeitar(item.id)}
+                disabled={enviando}
+              >
+                <X />
+              </Button>
+            </div>
           </div>
+        ))}
+      </div>
 
-          {/* RANKING ATUAL */}
-          <div className="bg-white rounded-3xl shadow-2xl p-8 border-4 border-purple-400">
-            <h2 className="text-2xl font-bold text-purple-700 text-center mb-8">
-              Ranking Atual ({apoiadores.length})
-            </h2>
-
-            {apoiadores.length === 0 ? (
-              <p className="text-center py-20 text-xl text-gray-500">Ranking vazio</p>
-            ) : (
-              <div className="space-y-6">
-                {apoiadores.map(a => (
-                  <div key={a.id} className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border-4 border-purple-300">
-                    {editando === a.id ? (
-                      <div className="space-y-4">
-                        <Input
-                          value={editForm.nome}
-                          onChange={e => setEditForm({ ...editForm, nome: e.target.value.toUpperCase().slice(0, 14) })}
-                          className="text-2xl font-black text-center"
-                        />
-                        <Input
-                          value={editForm.filial}
-                          onChange={e => setEditForm({ ...editForm, filial: e.target.value.replace(/\D/g, "") })}
-                          className="text-xl text-center"
-                        />
-                        <Input
-                          value={editForm.valor}
-                          onChange={e => setEditForm({ ...editForm, valor: Number(e.target.value) || 0 })}
-                          type="number"
-                          className="text-3xl font-black text-green-600 text-center"
-                        />
-                        <div className="flex gap-4 justify-center">
-                          <Button onClick={salvarEdicao} className="bg-green-600 text-white">
-                            <Save className="w-6 h-6 mr-2" /> Salvar
-                          </Button>
-                          <Button variant="outline" onClick={() => setEditando(null)}>
-                            <XCircle className="w-6 h-6 mr-2" /> Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div>
-                          <p className="text-2xl font-black text-purple-800">{a.nome}</p>
-                          <p className="text-xl text-purple-600 font-bold">FILIAL {a.filial}</p>
-                          <p className="text-3xl font-black text-green-600 mt-2">
-                            R$ {a.valor.toFixed(0)}
-                          </p>
-                        </div>
-                        <div className="flex gap-4">
-                          <Button size="icon" variant="outline" onClick={() => iniciarEdicao(a)}>
-                            <Edit2 className="w-6 h-6" />
-                          </Button>
-                          <Button size="icon" variant="destructive" onClick={() => excluir(a.id, a.nome)}>
-                            <Trash2 className="w-6 h-6" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+      {mostraTelaSucesso && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl p-8 shadow-xl flex flex-col items-center text-center">
+            <Sparkles className="w-10 h-10 text-yellow-500 mb-3" />
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Sucesso!</h2>
+            <p className="text-gray-600 mb-4">Ação concluída com êxito.</p>
+            <Loader2 className="animate-spin w-6 h-6 text-gray-500" />
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
