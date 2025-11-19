@@ -37,27 +37,26 @@ export default function RankingApoiadores() {
   }, []);
 
   const medal = (i: number) => {
-    const base = "w-7 h-7 drop-shadow-lg"; // Sombra maior para profundidade
+    const base = "w-7 h-7 drop-shadow-lg";
     if (i === 0) return <Trophy className={`${base} text-yellow-300`} />;
-    if (i === 1) return <Medal className={`${base} text-gray-300`} />; // Cor mais clara
-    if (i === 2) return <Award className={`${base} text-amber-500`} />; // Laranja mais vibrante
+    if (i === 1) return <Medal className={`${base} text-gray-300`} />;
+    if (i === 2) return <Award className={`${base} text-amber-500`} />;
     return <span className="text-white font-black text-xl">{i + 1}</span>;
   };
 
   return (
     <div className="relative p-6">
       
-      {/* 🧊 CONTÊINER PRINCIPAL (ESTILO LIQUID GLASS) */}
+      {/* CONTÊINER PRINCIPAL (ESTILO LIQUID GLASS) */}
       <div
         className="
           absolute inset-0
           rounded-3xl
-          backdrop-blur-3xl           /* Blur mais intenso */
-          bg-white/10                 /* Fundo mais transparente */
-          border border-white/20      /* Borda sutil */
-          shadow-2xl shadow-white/10  /* Sombra externa para profundidade */
-          shadow-inner                /* Sombra interna para o brilho sutil */
-          /* Brilho Especular (como luz refletida no vidro) */
+          backdrop-blur-3xl
+          bg-white/10
+          border border-white/20
+          shadow-2xl shadow-white/10
+          shadow-inner
           before:absolute before:inset-0
           before:bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.3),rgba(255,255,255,0)_60%)]
           before:opacity-100
@@ -65,17 +64,6 @@ export default function RankingApoiadores() {
           overflow-hidden
         "
       />
-
-      {/* 🔳 RUÍDO SUAVE (iOS) - Adicione uma imagem de ruído sutil no seu projeto */}
-      {/* Certifique-se de ter um arquivo de ruído, se quiser usar esta parte */}
-      {/* <div
-        className="
-          absolute inset-0 rounded-3xl pointer-events-none opacity-[0.08]
-          mix-blend-overlay
-          bg-[url('/textures/noise.png')]
-          bg-cover bg-repeat
-        "
-      /> */}
 
       {/* CONTEÚDO */}
       <div className="relative z-10">
@@ -89,13 +77,13 @@ export default function RankingApoiadores() {
               <Button
                 className="
                   px-6 py-3
-                  rounded-full             /* Completamente arredondado */
+                  rounded-full
                   bg-white/20
                   hover:bg-white/30
                   backdrop-blur-lg
                   border border-white/30
                   text-white font-bold
-                  shadow-xl shadow-blue-500/30 /* Sombra colorida sutil */
+                  shadow-xl shadow-blue-500/30
                   transition duration-300 transform hover:scale-105
                 "
               >
@@ -144,34 +132,37 @@ export default function RankingApoiadores() {
             Seja o primeiro a apoiar!
           </p>
         ) : (
-          <div className="space-y-4"> {/* Espaçamento um pouco menor */}
+          <div className="space-y-4">
             {apoiadores.map((a, i) => (
               <div
                 key={a.id}
                 className="
                   flex items-center justify-between
-                  p-4                        /* Padding menor */
-                  rounded-2xl                /* Bordas mais suaves */
-                  bg-white/5                 /* Mais transparente ainda */
+                  p-4
+                  rounded-2xl
+                  bg-white/5
                   backdrop-blur-xl
                   border border-white/10
-                  shadow-xl                  /* Sombra para flutuar */
+                  shadow-xl
                 "
               >
                 <div className="flex items-center gap-4">
                   {medal(i)}
 
                   <div>
-                    <p className="text-lg font-bold text-white drop-shadow-lg">
+                    {/* NOME: Cor azul para melhor visibilidade */}
+                    <p className="text-lg font-bold text-sky-200 drop-shadow-lg">
                       {a.nome}
                     </p>
-                    <p className="text-sm font-semibold text-white/70 drop-shadow">
+                    {/* FILIAL: Cor cinza claro */}
+                    <p className="text-sm font-semibold text-gray-300 drop-shadow">
                       Filial {a.filial}
                     </p>
                   </div>
                 </div>
 
-                <p className="text-3xl font-black text-white drop-shadow-xl">
+                {/* VALOR: Cor verde para destaque */}
+                <p className="text-3xl font-black text-green-300 drop-shadow-xl">
                   R$ {a.mostrar_valor === false ? "***" : a.valor.toFixed(0)}
                 </p>
               </div>
