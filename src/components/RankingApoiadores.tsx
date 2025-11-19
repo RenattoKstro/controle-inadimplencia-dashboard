@@ -98,7 +98,7 @@ export default function RankingApoiadores() {
                 </div>
               </div>
               <p className="font-black text-green-600">
-                R: {a.mostrar_valor === false ? "***" : `R$ ${a.valor.toFixed(0)}`}
+                {a.mostrar_valor === false ? "***" : `R$ ${a.valor.toFixed(0)}`}
               </p>
             </div>
           ))}
