@@ -1,4 +1,3 @@
-// src/app/dashboard/page.tsx
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -7,7 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integr integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import Metas from "./dashboard/Metas";
 import MetaFiado from "./dashboard/MetaFiado";
@@ -34,7 +33,7 @@ import RankingApoiadores from "@/components/RankingApoiadores";
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { toast } from useToast();
+  const { toast } = useToast(); // ← CORRIGIDO AQUI!
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
