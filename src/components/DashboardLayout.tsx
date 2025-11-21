@@ -1,4 +1,5 @@
 // src/layouts/DashboardLayout.tsx
+
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -29,7 +30,6 @@ import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import AvisoApoio from "@/components/AvisoApoio";
-// Certifique-se de que o caminho está correto:
 import RankingApoiadores from "@/components/RankingApoiadores";
 
 const DashboardLayout = () => {
@@ -45,17 +45,17 @@ const DashboardLayout = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   
-  // 🎯 1. NOVO ESTADO AQUI
+  // 1. ESTADO DE CONTROLE
   const [recolhido, setRecolhido] = useState(false);
   
-  // 🎯 2. VARIÁVEIS DE LARGURA/MARGEM DINÂMICA
+  // 2. VARIÁVEIS DE LARGURA/MARGEM DINÂMICA
   // Largura da sidebar fixa: w-80 (20rem) -> w-16 (4rem)
   const rankingWidth = recolhido ? "w-16" : "w-80";
-  // Margem do conteúdo principal: lg:ml-80 -> lg:ml-16. ISSO É O QUE LIBERA O ESPAÇO.
+  // Margem do conteúdo principal: lg:ml-80 -> lg:ml-16.
   const mainMargin = recolhido ? "lg:ml-16" : "lg:ml-80";
   
   const today = new Date();
-
+// ... (Seus useEffects e Funções) ...
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -112,7 +112,6 @@ const DashboardLayout = () => {
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
       {/* HEADER (NÃO ALTERADO) */}
       <header className="bg-card shadow-md sticky top-0 z-40">
-        {/* ... Conteúdo do Header ... */}
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           {isMobile ? (
             <>
@@ -159,20 +158,19 @@ const DashboardLayout = () => {
       {/* LAYOUT PRINCIPAL: RANKING FIXO + CONTEÚDO */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         
-        {/* 3. RANKING FIXO (ESQUERDA) - Usa a largura dinâmica */}
+        {/* 3. RANKING FIXO (ESQUERDA) - Sidebar com largura dinâmica */}
         <aside 
-          // Classe de Largura Dinâmica
+          // Aplica a largura dinâmica na sidebar FIXA
           className={`hidden lg:block ${rankingWidth} transition-all duration-500 
                       bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 
                       fixed left-0 top-20 bottom-0 overflow-y-auto z-30`}
         >
           <div className="p-6 h-full">
-            {/* Passando o estado e a função de toggle */}
             <RankingApoiadores recolhido={recolhido} setRecolhido={setRecolhido} />
           </div>
         </aside>
         
-        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - Usa a margem dinâmica para expandir o espaço */}
+        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - Margem dinâmica para compensação */}
         <main className={`flex-1 ${mainMargin} transition-all duration-500 pt-6 pb-20`}>
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -202,7 +200,6 @@ const DashboardLayout = () => {
       </div>
       {/* FOOTER (NÃO ALTERADO) */}
       <footer className="bg-card shadow-md p-4 mt-8">
-        {/* ... Conteúdo do Footer ... */}
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />
