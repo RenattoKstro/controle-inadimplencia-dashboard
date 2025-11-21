@@ -1,5 +1,4 @@
-// src/layouts/DashboardLayout.tsx (Exemplo de nome)
-
+// src/layouts/DashboardLayout.tsx
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -30,6 +29,7 @@ import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import AvisoApoio from "@/components/AvisoApoio";
+// Certifique-se de que o caminho está correto:
 import RankingApoiadores from "@/components/RankingApoiadores";
 
 const DashboardLayout = () => {
@@ -45,13 +45,15 @@ const DashboardLayout = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   
-  // 🎯 NOVOS ESTADOS E VARIÁVEIS PARA O RECOLHIMENTO
+  // 🎯 1. NOVO ESTADO AQUI
   const [recolhido, setRecolhido] = useState(false);
-  // w-16 = 4rem (recolhido) | w-80 = 20rem (expandido)
+  
+  // 🎯 2. VARIÁVEIS DE LARGURA/MARGEM DINÂMICA
+  // Largura da sidebar fixa: w-80 (20rem) -> w-16 (4rem)
   const rankingWidth = recolhido ? "w-16" : "w-80";
-  // ml-16 (4rem) para compensar a largura recolhida | ml-80 (20rem) para compensar a largura expandida
+  // Margem do conteúdo principal: lg:ml-80 -> lg:ml-16. ISSO É O QUE LIBERA O ESPAÇO.
   const mainMargin = recolhido ? "lg:ml-16" : "lg:ml-80";
-
+  
   const today = new Date();
 
   useEffect(() => {
@@ -108,10 +110,10 @@ const DashboardLayout = () => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
-      {/* HEADER (SEM ALTERAÇÕES) */}
+      {/* HEADER (NÃO ALTERADO) */}
       <header className="bg-card shadow-md sticky top-0 z-40">
+        {/* ... Conteúdo do Header ... */}
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          {/* ... (conteúdo do header) */}
           {isMobile ? (
             <>
               <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
@@ -153,21 +155,24 @@ const DashboardLayout = () => {
           )}
         </div>
       </header>
-
+      
       {/* LAYOUT PRINCIPAL: RANKING FIXO + CONTEÚDO */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         
-        {/* 1. RANKING FIXO (ESQUERDA) - Sidebar com largura dinâmica */}
+        {/* 3. RANKING FIXO (ESQUERDA) - Usa a largura dinâmica */}
         <aside 
-          className={`hidden lg:block ${rankingWidth} transition-all duration-500 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30`}
+          // Classe de Largura Dinâmica
+          className={`hidden lg:block ${rankingWidth} transition-all duration-500 
+                      bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 
+                      fixed left-0 top-20 bottom-0 overflow-y-auto z-30`}
         >
           <div className="p-6 h-full">
-            {/* Passando o estado e a função de toggle para o componente filho */}
+            {/* Passando o estado e a função de toggle */}
             <RankingApoiadores recolhido={recolhido} setRecolhido={setRecolhido} />
           </div>
         </aside>
         
-        {/* 2. CONTEÚDO PRINCIPAL (DIREITA) - Margem dinâmica que libera o espaço */}
+        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - Usa a margem dinâmica para expandir o espaço */}
         <main className={`flex-1 ${mainMargin} transition-all duration-500 pt-6 pb-20`}>
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -193,11 +198,11 @@ const DashboardLayout = () => {
       </div>
       {/* RANKING NO CELULAR (embaixo) */}
       <div className="lg:hidden mt-8 px-4">
-        {/* Passando o estado e a função de toggle para o componente filho (opcional no mobile) */}
         <RankingApoiadores recolhido={recolhido} setRecolhido={setRecolhido} />
       </div>
-      {/* FOOTER (SEM ALTERAÇÕES) */}
+      {/* FOOTER (NÃO ALTERADO) */}
       <footer className="bg-card shadow-md p-4 mt-8">
+        {/* ... Conteúdo do Footer ... */}
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />
