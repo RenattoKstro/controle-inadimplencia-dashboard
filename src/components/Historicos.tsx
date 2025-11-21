@@ -1,7 +1,7 @@
 // src/pages/Historicos.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, X, RefreshCw, Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HistoricosProps {
@@ -47,11 +47,11 @@ const Historicos = ({
   }, [userData]);
 
   const handleEdit = (item: any) => {
-    alert("Editar: " + item.month); // ← você coloca sua lógica aqui depois
+    alert("Editar mês: " + item.month); // ← sua lógica de edição aqui depois
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Excluir este mês?")) {
+    if (confirm("Excluir este mês do histórico?")) {
       supabase.from("historico").delete().eq("id", id).then(() => fetchHistorico());
     }
   };
@@ -60,66 +60,56 @@ const Historicos = ({
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full border-collapse">
+      <table className="min-w-full border-collapse border border-gray-300">
         <thead>
-          <tr className="bg-muted">
-            <th className="border border-border p-3 text-left text-sm font-medium">Mês</th>
-            <th className="border border-border p-3 text-left text-sm font-medium">Abertura</th>
-            <th className="border border-border p-3 text-left text-sm font-medium">Meta Mês</th>
-            <th className="border border-border p-3 text-left text-sm font-medium">Meta Desafio</th>
-            <th className="border border-border p-3 text-left text-sm font-medium">Vencido Atual</th>
+          <tr className="bg-card">
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Mês</th>
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Abertura Vencido Mês</th>
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Meta Mês</th>
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Meta Desafio</th>
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Vencido Atual</th>
             {bonusPerdidoAtivado && (
               <>
-                <th className="border border-border p-3 text-left text-sm font-medium">Meta Perdido</th>
-                <th className="border border-border p-3 text-left text-sm font-medium">Rec Perdido</th>
+                <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Meta Perdido</th>
+                <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Rec Perdido</th>
               </>
             )}
-            <th className="border border-border p-3 text-left text-sm font-medium">Fiado %</th>
-            <th className="border border-border p-3 text-left text-sm font-medium">Desafio %</th>
-            <th className="border border-border p-3 text-left text-sm font-medium">Prêmios</th>
-            <th className="border border-border p-3 text-center text-sm font-medium w-28">Ações</th>
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Fiado (%)</th>
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Desafio (%)</th>
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm">Prêmios Recebidos</th>
+            <th className="border border-gray-300 p-3 text-center text-foreground text-sm w-24">Ações</th> {/* ← TAMANHO FIXO */}
           </tr>
         </thead>
         <tbody>
           {historico.length === 0 ? (
             <tr>
               <td colSpan={bonusPerdidoAtivado ? 11 : 9} className="text-center py-10 text-muted-foreground">
-                Nenhum histórico disponível
+                Nenhum histórico disponível.
               </td>
             </tr>
           ) : (
             historico.map((item) => (
-              <tr key={item.id} className="hover:bg-muted/50 transition-colors">
-                <td className="border border-border p-3 text-sm">{item.month}</td>
-                <td className="border border-border p-3 text-sm">{item.aberturavencidomes?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                <td className="border border-border p-3 text-sm">{item.metames?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                <td className="border border-border p-3 text-sm">{item.metadesafio?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                <td className="border border-border p-3 text-sm">{item.vencidoatual?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+              <tr key={item.id} className="hover:bg-muted/50">
+                <td className="border border-gray-300 p-3 text-center text-sm">{item.month}</td>
+                <td className="border border-gray-300 p-3 text-center text-sm">{formatCurrency(item.aberturavencidomes || 0)}</td>
+                <td className="border border-gray-300 p-3 text-center text-sm">{formatCurrency(item.metames || 0)}</td>
+                <td className="border border-gray-300 p-3 text-center text-sm">{formatCurrency(item.metadesafio || 0)}</td>
+                <td className="border border-gray-300 p-3 text-center text-sm">{formatCurrency(item.vencidoatual || 0)}</td>
                 {bonusPerdidoAtivado && (
                   <>
-                    <td className="border border-border p-3 text-sm">{item.metaperdido?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                    <td className="border border-border p-3 text-sm">{item.recperdido?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+                    <td className="border border-gray-300 p-3 text-center text-sm">{formatCurrency(item.metaperdido || 0)}</td>
+                    <td className="border border-gray-300 p-3 text-center text-sm">{formatCurrency(item.recperdido || 0)}</td>
                   </>
                 )}
-                <td className="border border-border p-3 text-sm">{item.percentual_meta_fiado || 0}%</td>
-                <td className="border border-border p-3 text-sm">{item.percentual_meta_desafio || 0}%</td>
-                <td className="border border-border p-3 text-sm">{item.premiosrecebidos?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
-                <td className="border border-border p-3">
+                <td className="border border-gray-300 p-3 text-center text-sm">{item.percentual_meta_fiado || 0}%</td>
+                <td className="border border-gray-300 p-3 text-center text-sm">{item.percentual_meta_desafio || 0}%</td>
+                <td className="border border-gray-300 p-3 text-center text-sm">{formatCurrency(item.premiosrecebidos || 0)}</td>
+                <td className="border border-gray-300 p-3">
                   <div className="flex justify-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 hover:bg-primary/10"
-                      onClick={() => handleEdit(item)}
-                    >
+                    <Button size="icon" variant="ghost" onClick={() => handleEdit(item)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 hover:bg-destructive/10 text-destructive"
-                      onClick={() => handleDelete(item.id)}
-                    >
+                    <Button size="icon" variant="destructive" onClick={() => handleDelete(item.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
