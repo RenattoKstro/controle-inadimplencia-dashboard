@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import Metas from "./dashboard/Metas";
 import MetaFiado from "./dashboard/MetaFiado";
 import MetaDesafio from "./dashboard/MetaDesafio";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
@@ -28,7 +27,6 @@ import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
-import AvisoApoio from "@/components/AvisoApoio";
 import RankingApoiadores from "@/components/RankingApoiadores";
 
 const DashboardLayout = () => {
@@ -51,11 +49,10 @@ const DashboardLayout = () => {
   // Largura da sidebar fixa: w-80 (20rem) -> w-16 (4rem)
   const rankingWidth = recolhido ? "w-16" : "w-80";
   
-  // Margem esquerda do conteúdo principal (para mover o conteúdo para a direita da sidebar)
+  // Margem esquerda do conteúdo principal
   const mainMargin = recolhido ? "lg:ml-16" : "lg:ml-80";
   
-  // 🔑 NOVIDADE/CORREÇÃO: Largura dinâmica do Conteúdo Principal (para forçar o preenchimento)
-  // Isso garante que o elemento <main> ocupe 100% menos a largura da sidebar.
+  // Largura dinâmica do Conteúdo Principal (mantemos para forçar a compensação)
   const mainWidth = recolhido ? "lg:w-[calc(100%-4rem)]" : "lg:w-[calc(100%-20rem)]";
   
   const today = new Date();
@@ -162,7 +159,7 @@ const DashboardLayout = () => {
       {/* LAYOUT PRINCIPAL: RANKING FIXO + CONTEÚDO */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         
-        {/* 3. RANKING FIXO (ESQUERDA) - Sidebar com largura dinâmica */}
+        {/* 3. RANKING FIXO (ESQUERDA) */}
         <aside 
           className={`hidden lg:block ${rankingWidth} transition-all duration-500 
                       bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 
@@ -173,9 +170,10 @@ const DashboardLayout = () => {
           </div>
         </aside>
         
-        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - Margem e Largura Dinâmicas (Ajuste Final) */}
-        <main className={`flex-1 ${mainMargin} ${mainWidth} transition-all duration-500 pt-6 pb-20`}>
-          <div className="max-w-5xl mx-auto px-4">
+        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - AGORA SEM max-w-5xl NO CONTAINER INTERNO */}
+        <main className={`w-full ${mainMargin} ${mainWidth} transition-all duration-500 pt-6 pb-20`}>
+          {/* CLASSE ALTERADA AQUI: max-w-5xl removido para permitir a expansão */}
+          <div className="mx-auto px-4"> 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid grid-cols-7 w-full p-1 bg-card rounded-xl mb-6">
                 <TabsTrigger value="ajustes-metas" className="gap-1"><Sliders className="h-4 w-4" /> Ajustes</TabsTrigger>
