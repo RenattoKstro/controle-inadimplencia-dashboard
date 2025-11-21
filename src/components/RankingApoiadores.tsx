@@ -17,7 +17,7 @@ interface Apoiador {
 export default function RankingApoiadores() {
   const [apoiadores, setApoiadores] = useState<Apoiador[]>([]);
   const [loading, setLoading] = useState(true);
-  const [recolhido, setRecolhido] = useState(false); // Estado para controlar se está recolhido
+  const [recolhido, setRecolhido] = useState(false);
 
   const fetchRanking = async () => {
     setLoading(true);
@@ -45,34 +45,19 @@ export default function RankingApoiadores() {
   };
 
   return (
-    // O div principal deve ter 'relative' para o botão absoluto funcionar
     <div className="relative">
-      {/* CARD PRINCIPAL */}
-      {/* A transição de largura (w-16 para w-full) é o que libera o espaço para outros elementos. */}
+      {/* CARD PRINCIPAL (mesmo lugar de antes) */}
       <div className={`transition-all duration-500 ${recolhido ? "w-16" : "w-full"}`}>
         <div className="bg-black/90 rounded-3xl shadow-2xl border border-white/10 p-6">
-          
-          {/* BOTÃO RECOLHER/EXPANDIR - MANTIDO NA ESQUERDA */}
-          {/* Você já tinha essa lógica, garantindo que ele está sempre no mesmo lugar fora do card. */}
+          {/* BOTÃO RECOLHER/EXPANDIR */}
           <button
             onClick={() => setRecolhido(!recolhido)}
-            // A classe 'absolute' e as coordenadas o posicionam à esquerda
-            className="absolute -left-12 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-2xl z-10"
+            className="absolute -left-12 top-1/2 -translate-y-1/2 bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full shadow-2xl"
           >
             {recolhido ? <ChevronRight className="w-6 h-6" /> : <ChevronLeft className="w-6 h-6" />}
           </button>
 
-          {/* NOVO CONTEÚDO RECOLHIDO (aparece apenas quando recolhido) */}
-          {recolhido && (
-            <div className="flex items-center justify-center h-full">
-              {/* O contêiner de texto com transformações CSS para o efeito diagonal */}
-              <div className="transform rotate-90 whitespace-nowrap text-white text-lg font-black tracking-widest uppercase">
-                Ranking de Apoiadores
-              </div>
-            </div>
-          )}
-
-          {/* CONTEÚDO EXPANDIDO (só aparece quando expandido) */}
+          {/* CONTEÚDO (só aparece quando expandido) */}
           {!recolhido && (
             <>
               <div className="flex justify-between items-center mb-6">
