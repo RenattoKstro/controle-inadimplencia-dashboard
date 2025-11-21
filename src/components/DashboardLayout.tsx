@@ -45,15 +45,12 @@ const DashboardLayout = () => {
   // 1. ESTADO DE CONTROLE
   const [recolhido, setRecolhido] = useState(false);
   
-  // 2. VARIÁVEIS DE LARGURA/MARGEM DINÂMICA
+  // 2. VARIÁVEIS DE LARGURA/PADDING DINÂMICA
   // Largura da sidebar fixa: w-80 (20rem) -> w-16 (4rem)
   const rankingWidth = recolhido ? "w-16" : "w-80";
   
-  // Margem esquerda do conteúdo principal
-  const mainMargin = recolhido ? "lg:ml-16" : "lg:ml-80";
-  
-  // Largura dinâmica do Conteúdo Principal (mantemos para forçar a compensação)
-  const mainWidth = recolhido ? "lg:w-[calc(100%-4rem)]" : "lg:w-[calc(100%-20rem)]";
+  // VARIÁVEL CHAVE: Padding esquerdo do wrapper principal para compensar a sidebar fixa.
+  const mainPaddingWrapper = recolhido ? "lg:pl-16" : "lg:pl-80";
   
   const today = new Date();
 
@@ -157,7 +154,8 @@ const DashboardLayout = () => {
       </header>
       
       {/* LAYOUT PRINCIPAL: RANKING FIXO + CONTEÚDO */}
-      <div className="flex flex-col lg:flex-row min-h-screen">
+      {/* APLICANDO O PADDING AQUI PARA COMPENSAR O RANKING FIXO: */}
+      <div className={`flex flex-col lg:flex-row min-h-screen ${mainPaddingWrapper} transition-all duration-500`}>
         
         {/* 3. RANKING FIXO (ESQUERDA) */}
         <aside 
@@ -170,9 +168,9 @@ const DashboardLayout = () => {
           </div>
         </aside>
         
-        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - AGORA SEM max-w-5xl NO CONTAINER INTERNO */}
-        <main className={`w-full ${mainMargin} ${mainWidth} transition-all duration-500 pt-6 pb-20`}>
-          {/* CLASSE ALTERADA AQUI: max-w-5xl removido para permitir a expansão */}
+        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - APENAS W-FULL */}
+        <main className={`w-full pt-6 pb-20`}>
+          {/* mx-auto px-4 - SEM max-w-5xl, permitindo preencher a largura restante */}
           <div className="mx-auto px-4"> 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid grid-cols-7 w-full p-1 bg-card rounded-xl mb-6">
