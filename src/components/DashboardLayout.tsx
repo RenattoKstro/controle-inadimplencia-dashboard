@@ -1,5 +1,4 @@
 // src/layouts/DashboardLayout.tsx
-
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -51,11 +50,16 @@ const DashboardLayout = () => {
   // 2. VARIÁVEIS DE LARGURA/MARGEM DINÂMICA
   // Largura da sidebar fixa: w-80 (20rem) -> w-16 (4rem)
   const rankingWidth = recolhido ? "w-16" : "w-80";
-  // Margem do conteúdo principal: lg:ml-80 -> lg:ml-16.
+  
+  // Margem esquerda do conteúdo principal (para mover o conteúdo para a direita da sidebar)
   const mainMargin = recolhido ? "lg:ml-16" : "lg:ml-80";
   
+  // 🔑 NOVIDADE/CORREÇÃO: Largura dinâmica do Conteúdo Principal (para forçar o preenchimento)
+  // Isso garante que o elemento <main> ocupe 100% menos a largura da sidebar.
+  const mainWidth = recolhido ? "lg:w-[calc(100%-4rem)]" : "lg:w-[calc(100%-20rem)]";
+  
   const today = new Date();
-// ... (Seus useEffects e Funções) ...
+
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -160,7 +164,6 @@ const DashboardLayout = () => {
         
         {/* 3. RANKING FIXO (ESQUERDA) - Sidebar com largura dinâmica */}
         <aside 
-          // Aplica a largura dinâmica na sidebar FIXA
           className={`hidden lg:block ${rankingWidth} transition-all duration-500 
                       bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 
                       fixed left-0 top-20 bottom-0 overflow-y-auto z-30`}
@@ -170,8 +173,8 @@ const DashboardLayout = () => {
           </div>
         </aside>
         
-        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - Margem dinâmica para compensação */}
-        <main className={`flex-1 ${mainMargin} transition-all duration-500 pt-6 pb-20`}>
+        {/* 4. CONTEÚDO PRINCIPAL (DIREITA) - Margem e Largura Dinâmicas (Ajuste Final) */}
+        <main className={`flex-1 ${mainMargin} ${mainWidth} transition-all duration-500 pt-6 pb-20`}>
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList className="grid grid-cols-7 w-full p-1 bg-card rounded-xl mb-6">
