@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FiTrendingUp, FiTrendingDown } from "react-icons/fi";
 import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
-import { ChevronsUpDown, ChevronsDownUp } from "lucide-react"; // ÍCONES CORRETOS
+import { ChevronsUpDown, ChevronsDownUp } from "lucide-react"; // ÍCONES NOVOS ADICIONADOS
 import {
   Dialog,
   DialogContent,
@@ -105,7 +105,7 @@ const Historicos = ({
       const calculoGanhos = () => {
         const premiosFiado = [
           { percentual: 94, valor: 52.50, atingido: percentualMetaFiado >= 94 },
-          { percentual: 96, valor: 63.00, atingido: percentualMetaFiado >= 96 },
+          { percentual: 96, valor: 63.00, atingido: percentualMetaFiado >= 9696 },
           { percentual: 98, valor: 84.00, atingido: percentualMetaFiado >= 98 },
           { percentual: 99, valor: 94.50, atingido: percentualMetaFiado >= 99 },
           { percentual: 100, valor: 241.50, atingido: percentualMetaFiado >= 100 },
@@ -517,7 +517,7 @@ const Historicos = ({
                 />
               </div>
               <div>
-                <label>Abertura:</label>
+                <label>Abertura Vencido Mês:</label>
                 <input
                   type="number"
                   value={formData.aberturavencidomes}
@@ -640,19 +640,19 @@ const Historicos = ({
           <thead>
             <tr className="bg-card">
               <th className="border border-gray-300 p-2 text-center text-foreground">Mês</th>
-              <th className="border border-gray-300 p-2 text-center text-foreground">Abertura</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Abertura Vencido Mês</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Meta Mês</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Meta Desafio</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Vencido</th>
               {bonusPerdidoAtivado && (
                 <>
-                  <th className="border border-gray-300 p-2 text-center text-title text-foreground">Meta Perdido</th>
+                  <th className="border border-gray-300 p-2 text-center text-foreground">Meta Perdido</th>
                   <th className="border border-gray-300 p-2 text-center text-foreground">Rec Perdido</th>
                 </>
               )}
               <th className="border border-gray-300 p-2 text-center text-foreground">Fiado (%)</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Desafio (%)</th>
-              <th className="border border-gray-300 p-2 text-center text-foreground">Prêmios</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Prêmios Recebidos</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Ações</th>
             </tr>
           </thead>
@@ -692,7 +692,7 @@ const Historicos = ({
                       <FaTrashAlt size={14} />
                     </Button>
 
-                    {/* AQUI ESTÁ A ÚNICA MUDANÇA REAL */}
+                    {/* ÍCONES NOVOS DO LUCIDE */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -767,6 +767,11 @@ const Historicos = ({
                 )}
               </React.Fragment>
             ))}
+            {historico.length === 0 && (
+              <tr>
+                <td colSpan={bonusPerdidoAtivado ? 11 : 9} className="border border-gray-300 p-2 text-center text-foreground">Nenhum histórico disponível.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -776,10 +781,12 @@ const Historicos = ({
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
           </DialogHeader>
-          <p>Tem certeza de que deseja excluir este registro e todos os seus recebimentos diários associados?</p>
+          <div className="py-4">
+            <p>Tem certeza de que deseja excluir este mês? Essa ação não poderá ser desfeita.</p>
+          </div>
           <DialogFooter>
-            <Button onClick={cancelDelete} variant="outline">Cancelar</Button>
-            <Button onClick={confirmDelete} variant="destructive">Excluir</Button>
+            <Button variant="outline" onClick={cancelDelete}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Confirmar Exclusão</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
