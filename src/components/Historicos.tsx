@@ -646,7 +646,7 @@ const Historicos = ({
               <th className="border border-gray-300 p-2 text-center text-foreground">Vencido</th>
               {bonusPerdidoAtivado && (
                 <>
-                  <th className="border border-gray-300 p-2 text-center text-foreground">Meta Perdido</th>
+                  <th className="border border-gray-300 p-2 text-center text-title text-foreground">Meta Perdido</th>
                   <th className="border border-gray-300 p-2 text-center text-foreground">Rec Perdido</th>
                 </>
               )}
@@ -692,7 +692,7 @@ const Historicos = ({
                       <FaTrashAlt size={14} />
                     </Button>
 
-                    {/* ÍCONES CORRETOS DO LUCIDE */}
+                    {/* AQUI ESTÁ A ÚNICA MUDANÇA REAL */}
                     <Button
                       variant="ghost"
                       size="sm"
