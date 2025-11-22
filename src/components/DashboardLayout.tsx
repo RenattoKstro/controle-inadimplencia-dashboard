@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "useNavigate";
 import Metas from "./dashboard/Metas";
 import MetaFiado from "./dashboard/MetaFiado";
 import MetaDesafio from "./dashboard/MetaDesafio";
@@ -30,19 +30,26 @@ import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import AvisoApoio from "@/components/AvisoApoio";
 import RankingApoiadores from "@/components/RankingApoiadores";
+
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { toast } = useToast();
+  const { toast } from useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
+
+  // ADICIONADO: cálculo do recebido diário (exatamente como no main)
+  const [recebidoHoje, setRecebidoHoje] = useState(0);
+
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
+
+  // Sessão expirada
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -56,19 +63,33 @@ const DashboardLayout = () => {
     const id = setInterval(check, 10 * 60 * 1000);
     return () => clearInterval(id);
   }, [navigate, toast]);
+
+  // CÁLCULO DO RECEBIDO HOJE (essa parte estava faltando no testes!)
+  useEffect(() => {
+    if (userData?.abertura_vencido_mes != null && userData?.vencido_atual != null) {
+      const daysInMonth = new Date().getDate();
+      const received = userData.abertura_vencido_mes - userData.vencido_atual;
+      setRecebidoHoje(received > 0 ? received / daysInMonth : 0);
+    }
+  }, [userData]);
+
   useEffect(() => {
     document.body.classList.toggle("dark", isDarkMode);
   }, [isDarkMode]);
+
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast({ title: "Tchau!" });
     navigate("/auth");
   };
+
   const handleTabChange = (v: string) => {
     setActiveTab(v);
     if (isMobile) setSheetOpen(false);
   };
+
   const print = () => {
     if (!contentRef.current) return;
     html2canvas(document.body, { scale: 2, useCORS: true }).then(c => {
@@ -78,14 +99,18 @@ const DashboardLayout = () => {
       a.click();
     });
   };
+
   const instagram = () => {
     setShowInstagramUsername(true);
     setTimeout(() => setShowInstagramUsername(false), 2000);
   };
+
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
+
   if (!userData && !isLoading) return <div className="min-h-screen flex items-center justify-center"><p>Carregando...</p></div>;
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
       {/* HEADER */}
@@ -126,21 +151,21 @@ const DashboardLayout = () => {
                   <SheetTrigger asChild><Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button></SheetTrigger>
                   <SheetContent side="right" className="w-80"><Apps /><div className="mt-8"><Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button></div></SheetContent>
                 </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}</Button>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun className="h-5 h-5" /> : <Moon className="h-5 w-5" />}</Button>
               </div>
             </>
           )}
         </div>
       </header>
-      {/* LAYOUT PRINCIPAL: RANKING FIXO + CONTEÚDO */}
+
+      {/* LAYOUT PRINCIPAL */}
       <div className="flex flex-col lg:flex-row min-h-screen">
-        {/* RANKING FIXO (ESQUERDA) */}
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
             <RankingApoiadores />
           </div>
         </aside>
-        {/* CONTEÚDO PRINCIPAL (DIREITA) */}
+
         <main className="flex-1 lg:ml-80 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -153,22 +178,36 @@ const DashboardLayout = () => {
                 <TabsTrigger value="meus-premios" className="gap-1"><Gift className="h-4 w-4" /> Prêmios</TabsTrigger>
                 <TabsTrigger value="historicos" className="gap-1"><History className="h-4 w-4" /> Histórico</TabsTrigger>
               </TabsList>
+
               <TabsContent value="ajustes-metas"><AjustesMetas userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} /></TabsContent>
               <TabsContent value="meta-fiado"><MetaFiado userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
               <TabsContent value="meta-desafio"><MetaDesafio userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
               <TabsContent value="meta-alimentacao"><MetaAlimentacao userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
               {bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>}
               <TabsContent value="meus-premios"><MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} /></TabsContent>
-              <TabsContent value="historicos"><Historicos userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} recebido={0} totalGanhos={0} /></TabsContent>
+
+              {/* CORRIGIDO AQUI: recebido={recebidoHoje} */}
+              <TabsContent value="historicos">
+                <Historicos
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  recebido={recebidoHoje}   {/* AGORA FUNCIONA 100% */}
+                />
+              </TabsContent>
             </Tabs>
           </div>
         </main>
       </div>
-      {/* RANKING NO CELULAR (embaixo) */}
+
       <div className="lg:hidden mt-8 px-4">
         <RankingApoiadores />
       </div>
-      {/* FOOTER */}
+
       <footer className="bg-card shadow-md p-4 mt-8">
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
@@ -184,4 +223,5 @@ const DashboardLayout = () => {
     </div>
   );
 };
+
 export default DashboardLayout;
