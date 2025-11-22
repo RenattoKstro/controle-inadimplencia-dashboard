@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FiTrendingUp, FiTrendingDown } from "react-icons/fi";
-import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
-import { ChevronsUpDown, ChevronsDownUp } from "lucide-react"; // ÍCONES NOVOS ADICIONADOS
 import {
   Dialog,
   DialogContent,
@@ -12,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ChevronsUpDown, ChevronsDownUp, Pencil, Trash2 } from "lucide-react";
 
 interface HistoricosProps {
   userData: any;
@@ -105,7 +104,7 @@ const Historicos = ({
       const calculoGanhos = () => {
         const premiosFiado = [
           { percentual: 94, valor: 52.50, atingido: percentualMetaFiado >= 94 },
-          { percentual: 96, valor: 63.00, atingido: percentualMetaFiado >= 9696 },
+          { percentual: 96, valor: 63.00, atingido: percentualMetaFiado >= 96 },
           { percentual: 98, valor: 84.00, atingido: percentualMetaFiado >= 98 },
           { percentual: 99, valor: 94.50, atingido: percentualMetaFiado >= 99 },
           { percentual: 100, valor: 241.50, atingido: percentualMetaFiado >= 100 },
@@ -177,6 +176,7 @@ const Historicos = ({
     console.log("Submitting form data - ID:", formData.id, "Editing Daily ID:", editingDailyId, "Month:", formData.month, "Data Recebimento:", formData.data_recebimento, "Recebido Diario:", formData.recebidoDiario);
     try {
       if (editingDailyId) {
+        // Edição de registro diário
         const diarioPayload = {
           data_recebimento: formData.data_recebimento,
           recebido: formData.recebidoDiario,
@@ -194,6 +194,7 @@ const Historicos = ({
         console.log("Daily record updated successfully");
         setEditingDailyId(null);
       } else {
+        // Edição ou inserção de registro mensal e diário
         const historicoPayload = {
           id: formData.id || crypto.randomUUID(),
           user_id: authUserId,
@@ -242,6 +243,7 @@ const Historicos = ({
           return;
         }
         console.log("Historico saved successfully, response:", historicoData);
+        // Salvar ou atualizar registro diário
         const diarioPayload = {
           user_id: authUserId,
           data_recebimento: formData.data_recebimento,
@@ -282,6 +284,7 @@ const Historicos = ({
         } else {
           console.log("Historico_diario saved successfully, response:", diarioData);
         }
+        // Atualiza userData apenas com campos relevantes
         updateUserData({
           ...userData,
           abertura_vencido_mes: formData.aberturavencidomes,
@@ -476,7 +479,6 @@ const Historicos = ({
   return (
     <div className="space-y-4">
       <Button onClick={handleAutoFill}>Adicionar/Atualizar Dados</Button>
-
       {showForm && (
         <form onSubmit={handleSubmit} className="space-y-4">
           {editingDailyId ? (
@@ -634,7 +636,6 @@ const Historicos = ({
           <Button type="button" onClick={() => { setShowForm(false); setEditingDailyId(null); }}>Cancelar</Button>
         </form>
       )}
-
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
@@ -675,39 +676,22 @@ const Historicos = ({
                   <td className="border border-gray-300 p-2 text-center text-foreground">{item.percentual_meta_desafio || 0}%</td>
                   <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.premiosrecebidos || 0)}</td>
                   <td className="border border-gray-300 p-2 text-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(item)}
-                      className="bg-white text-gray-800 mr-2 p-1 h-auto"
-                    >
-                      <FaPencilAlt size={14} />
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(item)} className="h-8 w-8">
+                      <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(item.id)}
-                      className="bg-red-500 text-white p-1 h-auto"
-                    >
-                      <FaTrashAlt size={14} />
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="h-8 w-8 text-red-600">
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-
-                    {/* ÍCONES NOVOS DO LUCIDE */}
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="ml-2 p-1 h-auto hover:bg-accent/50"
+                      size="icon"
+                      className="h-8 w-8 ml-2"
                       onClick={() => toggleExpand(item.id)}
                     >
-                      {expandedRows.has(item.id) ? (
-                        <ChevronsDownUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronsUpDown className="h-4 w-4" />
-                      )}
+                      {expandedRows.has(item.id) ? <ChevronsUpDown className="h-4 w-4" /> : <ChevronsDownUp className="h-4 w-4" />}
                     </Button>
                   </td>
                 </tr>
-
                 {expandedRows.has(item.id) && (
                   <tr>
                     <td colSpan={bonusPerdidoAtivado ? 11 : 9} className="border border-gray-300 p-2 bg-card">
@@ -739,22 +723,22 @@ const Historicos = ({
                                       </span>
                                     )}
                                   </td>
-                                  <td className="border border-gray-300 p-2 text-center text-foreground">
+                                  <td className="border border-gray-300 p-2 text-center">
                                     <Button
-                                      variant="outline"
-                                      size="sm"
+                                      variant="ghost"
+                                      size="icon"
                                       onClick={() => handleEditDaily(item.id, daily.id)}
-                                      className="bg-white text-gray-800 mr-2 p-1 h-auto"
+                                      className="h-8 w-8"
                                     >
-                                      <FaPencilAlt size={14} />
+                                      <Pencil className="h-4 w-4" />
                                     </Button>
                                     <Button
-                                      variant="destructive"
-                                      size="sm"
+                                      variant="ghost"
+                                      size="icon"
                                       onClick={() => handleDeleteDaily(item.id, daily.id)}
-                                      className="bg-red-500 text-white p-1 h-auto"
+                                      className="h-8 w-8 text-red-600"
                                     >
-                                      <FaTrashAlt size={14} />
+                                      <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </td>
                                 </tr>
@@ -775,7 +759,6 @@ const Historicos = ({
           </tbody>
         </table>
       </div>
-
       <Dialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
         <DialogContent>
           <DialogHeader>
