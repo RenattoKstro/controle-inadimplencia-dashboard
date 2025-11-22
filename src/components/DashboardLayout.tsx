@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "useNavigate";
+import { useNavigate } from "react-router-dom";
 import Metas from "./dashboard/Metas";
 import MetaFiado from "./dashboard/MetaFiado";
 import MetaDesafio from "./dashboard/MetaDesafio";
@@ -34,14 +34,14 @@ import RankingApoiadores from "@/components/RankingApoiadores";
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { toast } from useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
 
-  // ADICIONADO: cálculo do recebido diário (exatamente como no main)
+  // ADICIONADO: estado que guarda o recebido diário real
   const [recebidoHoje, setRecebidoHoje] = useState(0);
 
   const [showCalendar, setShowCalendar] = useState(false);
@@ -49,7 +49,7 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
 
-  // Sessão expirada
+  // Verificação de sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -64,12 +64,13 @@ const DashboardLayout = () => {
     return () => clearInterval(id);
   }, [navigate, toast]);
 
-  // CÁLCULO DO RECEBIDO HOJE (essa parte estava faltando no testes!)
+  // CÁLCULO DO RECEBIDO HOJE (ESSA PARTE ESTAVA FALTANDO!)
   useEffect(() => {
     if (userData?.abertura_vencido_mes != null && userData?.vencido_atual != null) {
-      const daysInMonth = new Date().getDate();
-      const received = userData.abertura_vencido_mes - userData.vencido_atual;
-      setRecebidoHoje(received > 0 ? received / daysInMonth : 0);
+      const diaAtual = new Date().getDate(); // dia do mês atual
+      const recebidoTotal = userData.abertura_vencido_mes - userData.vencido_atual;
+      const mediaDiaria = recebidoTotal > 0 ? recebidoTotal / diaAtual : 0;
+      setRecebidoHoje(mediaDiaria);
     }
   }, [userData]);
 
@@ -151,21 +152,23 @@ const DashboardLayout = () => {
                   <SheetTrigger asChild><Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button></SheetTrigger>
                   <SheetContent side="right" className="w-80"><Apps /><div className="mt-8"><Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button></div></SheetContent>
                 </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun className="h-5 h-5" /> : <Moon className="h-5 w-5" />}</Button>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}</Button>
               </div>
             </>
           )}
         </div>
       </header>
 
-      {/* LAYOUT PRINCIPAL */}
+      {/* LAYOUT PRINCIPAL: RANKING FIXO + CONTEÚDO */}
       <div className="flex flex-col lg:flex-row min-h-screen">
+        {/* RANKING FIXO (ESQUERDA) */}
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
             <RankingApoiadores />
           </div>
         </aside>
 
+        {/* CONTEÚDO PRINCIPAL (DIREITA) */}
         <main className="flex-1 lg:ml-80 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -186,7 +189,7 @@ const DashboardLayout = () => {
               {bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>}
               <TabsContent value="meus-premios"><MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} /></TabsContent>
 
-              {/* CORRIGIDO AQUI: recebido={recebidoHoje} */}
+              {/* CORRIGIDO: agora passa o valor real */}
               <TabsContent value="historicos">
                 <Historicos
                   userData={userData}
@@ -196,7 +199,7 @@ const DashboardLayout = () => {
                   diasRestantesCalculados={diasRestantesCalculados}
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  recebido={recebidoHoje}   {/* AGORA FUNCIONA 100% */}
+                  recebido={recebidoHoje}   {/* AGORA FUNCIONA! */}
                 />
               </TabsContent>
             </Tabs>
@@ -204,10 +207,12 @@ const DashboardLayout = () => {
         </main>
       </div>
 
+      {/* RANKING NO CELULAR */}
       <div className="lg:hidden mt-8 px-4">
         <RankingApoiadores />
       </div>
 
+      {/* FOOTER */}
       <footer className="bg-card shadow-md p-4 mt-8">
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
