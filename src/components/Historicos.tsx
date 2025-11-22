@@ -641,7 +641,7 @@ const Historicos = ({
           <thead>
             <tr className="bg-card">
               <th className="border border-gray-300 p-2 text-center text-foreground">Mês</th>
-              <th className="border border-gray-300 p-2 text-center text-foreground">Abertura Vencido Mês</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Abertura Mês</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Meta Mês</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Meta Desafio</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Vencido</th>
@@ -653,7 +653,7 @@ const Historicos = ({
               )}
               <th className="border border-gray-300 p-2 text-center text-foreground">Fiado (%)</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Desafio (%)</th>
-              <th className="border border-gray-300 p-2 text-center text-foreground">Prêmios Recebidos</th>
+              <th className="border border-gray-300 p-2 text-center text-foreground">Prêmios</th>
               <th className="border border-gray-300 p-2 text-center text-foreground">Ações</th>
             </tr>
           </thead>
