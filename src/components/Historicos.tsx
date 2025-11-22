@@ -7,7 +7,7 @@ import { FaPencilAlt, FaTrashAlt } from "react-icons/fa";
 import {
   ListChevronsUpDown,
   ListChevronsDownUp,
-} from "lucide-react"; // ÍCONES NOVOS ADICIONADOS
+} from "lucide-react"; // Ícones novos
 import {
   Dialog,
   DialogContent,
@@ -180,6 +180,7 @@ const Historicos = ({
     console.log("Submitting form data - ID:", formData.id, "Editing Daily ID:", editingDailyId, "Month:", formData.month, "Data Recebimento:", formData.data_recebimento, "Recebido Diario:", formData.recebidoDiario);
     try {
       if (editingDailyId) {
+        // Edição de registro diário
         const diarioPayload = {
           data_recebimento: formData.data_recebimento,
           recebido: formData.recebidoDiario,
@@ -197,6 +198,7 @@ const Historicos = ({
         console.log("Daily record updated successfully");
         setEditingDailyId(null);
       } else {
+        // Edição ou inserção de registro mensal e diário
         const historicoPayload = {
           id: formData.id || crypto.randomUUID(),
           user_id: authUserId,
@@ -245,6 +247,7 @@ const Historicos = ({
           return;
         }
         console.log("Historico saved successfully, response:", historicoData);
+        // Salvar ou atualizar registro diário
         const diarioPayload = {
           user_id: authUserId,
           data_recebimento: formData.data_recebimento,
@@ -285,6 +288,7 @@ const Historicos = ({
         } else {
           console.log("Historico_diario saved successfully, response:", diarioData);
         }
+        // Atualiza userData apenas com campos relevantes
         updateUserData({
           ...userData,
           abertura_vencido_mes: formData.aberturavencidomes,
@@ -479,7 +483,6 @@ const Historicos = ({
   return (
     <div className="space-y-4">
       <Button onClick={handleAutoFill}>Adicionar/Atualizar Dados</Button>
-
       {showForm && (
         <form onSubmit={handleSubmit} className="space-y-4">
           {editingDailyId ? (
@@ -497,7 +500,7 @@ const Historicos = ({
                 />
               </div>
               <div>
-                <label####>Recebido Diário:</label>
+                <label>Recebido Diário:</label>
                 <input
                   type="number"
                   value={formData.recebidoDiario}
@@ -637,7 +640,6 @@ const Historicos = ({
           <Button type="button" onClick={() => { setShowForm(false); setEditingDailyId(null); }}>Cancelar</Button>
         </form>
       )}
-
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
@@ -678,6 +680,7 @@ const Historicos = ({
                   <td className="border border-gray-300 p-2 text-center text-foreground">{item.percentual_meta_desafio || 0}%</td>
                   <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.premiosrecebidos || 0)}</td>
                   <td className="border border-gray-300 p-2 text-center">
+                    {/* Botão Editar */}
                     <Button
                       variant="outline"
                       size="sm"
@@ -686,6 +689,7 @@ const Historicos = ({
                     >
                       <FaPencilAlt size={14} />
                     </Button>
+                    {/* Botão Excluir */}
                     <Button
                       variant="destructive"
                       size="sm"
@@ -694,8 +698,7 @@ const Historicos = ({
                     >
                       <FaTrashAlt size={14} />
                     </Button>
-
-                    {/* AQUI FOI ALTERADO: ÍCONE LUCIDE NO LUGAR DO ▲/▼ */}
+                    {/* Botão Expandir/Recolher com Lucide */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -710,7 +713,6 @@ const Historicos = ({
                     </Button>
                   </td>
                 </tr>
-
                 {expandedRows.has(item.id) && (
                   <tr>
                     <td colSpan={bonusPerdidoAtivado ? 11 : 9} className="border border-gray-300 p-2 bg-card">
@@ -773,7 +775,6 @@ const Historicos = ({
           </tbody>
         </table>
       </div>
-
       <Dialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
         <DialogContent>
           <DialogHeader>
