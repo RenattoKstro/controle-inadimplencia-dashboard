@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ChevronsUpDown, ChevronsDownUp, Pencil, Trash2 } from "lucide-react";
 
 interface HistoricosProps {
   userData: any;
@@ -98,10 +99,8 @@ const Historicos = ({
       const safeMetadesafio = userData.meta_desafio || 433994;
       const safeMetaperdido = userData.meta_perdido || 0;
       const safeRecperdido = userData.rec_perdido || 0;
-
       console.log("Safe values - vencidoatual:", safeVencidoatual, "metames:", safeMetames, "metadesafio:", safeMetadesafio);
       const { percentualMetaFiado, percentualMetaDesafio } = calculatePercentages(safeMetames, safeVencidoatual, safeMetadesafio);
-
       const calculoGanhos = () => {
         const premiosFiado = [
           { percentual: 94, valor: 52.50, atingido: percentualMetaFiado >= 94 },
@@ -124,16 +123,13 @@ const Historicos = ({
               { percentual: 105, valor: 200.00, atingido: (safeRecperdido / safeMetaperdido) >= 1.05 },
             ]
           : [];
-
         const fiadoGanhos = premiosFiado.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
         const desafioGanhos = premiosDesafio.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
         const bonusPerdidoGanhos = bonusPerdido.filter((p) => p.atingido).reduce((acc, p) => acc + p.valor, 0);
         const isPastDay15 = new Date().getDate() > 15;
         const alimentacaoGanhos = userData.metaTicketConfirmada && isPastDay15 ? 100.00 : 0;
-
         return fiadoGanhos + desafioGanhos + alimentacaoGanhos + bonusPerdidoGanhos;
       };
-
       const selectedMonth = formData.month || new Date().toISOString().slice(0, 7);
       const { data: existingRecords, error: fetchError } = await supabase
         .from("historico")
@@ -146,7 +142,6 @@ const Historicos = ({
       }
       const existingRecord = existingRecords?.[0];
       const premiosrecebidos = existingRecord ? existingRecord.premiosrecebidos : calculoGanhos();
-
       console.log("Existing record found:", existingRecord);
       setFormData({
         id: existingRecord?.id || "",
@@ -179,7 +174,6 @@ const Historicos = ({
       return;
     }
     console.log("Submitting form data - ID:", formData.id, "Editing Daily ID:", editingDailyId, "Month:", formData.month, "Data Recebimento:", formData.data_recebimento, "Recebido Diario:", formData.recebidoDiario);
-
     try {
       if (editingDailyId) {
         // Edição de registro diário
@@ -216,7 +210,6 @@ const Historicos = ({
           premiosrecebidos: formData.premiosrecebidos,
         };
         console.log("Historico payload to insert/update:", historicoPayload);
-
         let historicoResult;
         const { data: existingRecords, error: fetchError } = await supabase
           .from("historico")
@@ -228,7 +221,6 @@ const Historicos = ({
           throw fetchError;
         }
         const existingRecord = existingRecords?.[0];
-
         if (existingRecord) {
           console.log("Updating existing record for month:", formData.month, "with id:", existingRecord.id);
           historicoResult = await supabase
@@ -251,7 +243,6 @@ const Historicos = ({
           return;
         }
         console.log("Historico saved successfully, response:", historicoData);
-
         // Salvar ou atualizar registro diário
         const diarioPayload = {
           user_id: authUserId,
@@ -293,7 +284,6 @@ const Historicos = ({
         } else {
           console.log("Historico_diario saved successfully, response:", diarioData);
         }
-
         // Atualiza userData apenas com campos relevantes
         updateUserData({
           ...userData,
@@ -305,7 +295,6 @@ const Historicos = ({
           rec_perdido: formData.recperdido,
         });
       }
-
       setShowForm(false);
       setEditingDailyId(null);
       await fetchHistorico();
@@ -346,7 +335,6 @@ const Historicos = ({
         console.error("Erro ao excluir registros diários:", diarioError.message, diarioError.details);
         throw diarioError;
       }
-
       const { data, error } = await supabase
         .from("historico")
         .delete()
@@ -688,15 +676,19 @@ const Historicos = ({
                   <td className="border border-gray-300 p-2 text-center text-foreground">{item.percentual_meta_desafio || 0}%</td>
                   <td className="border border-gray-300 p-2 text-center text-foreground">{formatCurrency(item.premiosrecebidos || 0)}</td>
                   <td className="border border-gray-300 p-2 text-center">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(item)} className="bg-white text-gray-800 mr-2">Editar</Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)} className="bg-white text-gray-800">Excluir</Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(item)} className="h-8 w-8">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} className="h-8 w-8 text-red-600">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-white text-gray-800 ml-2"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 ml-2"
                       onClick={() => toggleExpand(item.id)}
                     >
-                      {expandedRows.has(item.id) ? "▲" : "▼"}
+                      {expandedRows.has(item.id) ? <ChevronsUpDown className="h-4 w-4" /> : <ChevronsDownUp className="h-4 w-4" />}
                     </Button>
                   </td>
                 </tr>
@@ -719,7 +711,6 @@ const Historicos = ({
                               const { diff, isIncrease } = getDifference(getDailyRecordsForRow(item.id), index);
                               const diffText = diff === 0 ? "" : isIncrease ? `+${formatCurrency(diff)}` : `-${formatCurrency(Math.abs(diff))}`;
                               const diffClass = isIncrease ? "text-green-500" : "text-red-500";
-
                               return (
                                 <tr key={daily.id} className="border border-gray-300">
                                   <td className="border border-gray-300 p-2 text-center text-foreground">{daily.date}</td>
@@ -734,19 +725,20 @@ const Historicos = ({
                                   </td>
                                   <td className="border border-gray-300 p-2 text-center">
                                     <Button
-                                      variant="outline"
-                                      size="sm"
+                                      variant="ghost"
+                                      size="icon"
                                       onClick={() => handleEditDaily(item.id, daily.id)}
-                                      className="mr-2"
+                                      className="h-8 w-8"
                                     >
-                                      Editar
+                                      <Pencil className="h-4 w-4" />
                                     </Button>
                                     <Button
-                                      variant="destructive"
-                                      size="sm"
+                                      variant="ghost"
+                                      size="icon"
                                       onClick={() => handleDeleteDaily(item.id, daily.id)}
+                                      className="h-8 w-8 text-red-600"
                                     >
-                                      Excluir
+                                      <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </td>
                                 </tr>
@@ -767,7 +759,6 @@ const Historicos = ({
           </tbody>
         </table>
       </div>
-
       <Dialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
         <DialogContent>
           <DialogHeader>
