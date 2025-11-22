@@ -517,7 +517,7 @@ const Historicos = ({
                 />
               </div>
               <div>
-                <label>Abertura:</label>
+                <label>Abertura Vencido Mês:</label>
                 <input
                   type="number"
                   value={formData.aberturavencidomes}
