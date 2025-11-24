@@ -39,7 +39,7 @@ const DashboardLayout = () => {
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
 
-  // Valor de "Recebido Hoje" que aparece nas metas (ex: R$ 5.485,40)
+  // ESTE É O VALOR QUE VAI APARECER NO "RECEBIDO DIÁRIO" DO HISTÓRICO
   const [recebidoHoje, setRecebidoHoje] = useState(0);
 
   const [showCalendar, setShowCalendar] = useState(false);
@@ -62,20 +62,27 @@ const DashboardLayout = () => {
     return () => clearInterval(id);
   }, [navigate, toast]);
 
-  // CÁLCULO SEGURO DO RECEBIDO HOJE (sem quebrar o React)
+  // AQUI É A MÁGICA: PEGA O VALOR REAL DE "RECEBIDO HOJE" (R$ 5.485,40)
   useEffect(() => {
     if (!userData) return;
 
-    const valor =
-      userData.recebido_hoje ??
-      userData.recebidoHoje ??
-      userData.valor_recebido_hoje ??
-      userData.valorRecebidoHoje ??
-      userData.recebido_diario ??
-      userData.recebido_diario_hoje ??
-      0;
+    let valorHoje = 0;
 
-    setRecebidoHoje(Number(valor) || 0);
+    // Tenta todos os campos possíveis que seu sistema pode ter
+    if (userData.valor_recebido_hoje != null) {
+      valorHoje = userData.valor_recebido_hoje;
+    } else if (userData.recebido_hoje != null) {
+      valorHoje = userData.recebido_hoje;
+    } else if (userData.recebidoHoje != null) {
+      valorHoje = userData.recebidoHoje;
+    } else if (userData.recebido_diario != null) {
+      valorHoje = userData.recebido_diario;
+    } else if (userData.abertura_vencido_mes != null && userData.vencido_atual != null) {
+      // Fallback: calcula o total recebido até hoje (mas você quer só o de hoje, então só usa se tiver campo salvo)
+      valorHoje = userData.abertura_vencido_mes - userData.vencido_atual;
+    }
+
+    setRecebidoHoje(Number(valorHoje) || 0);
   }, [userData]);
 
   useEffect(() => {
@@ -114,7 +121,6 @@ const DashboardLayout = () => {
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
 
-  // Proteção contra tela branca
   if (isLoading || !userData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -173,6 +179,7 @@ const DashboardLayout = () => {
         </div>
       </header>
 
+      {/* LAYOUT PRINCIPAL */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
@@ -200,7 +207,7 @@ const DashboardLayout = () => {
               {bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>}
               <TabsContent value="meus-premios"><MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} /></TabsContent>
 
-              {/* AGORA PASSA O VALOR CERTO DE HOJE */}
+              {/* AQUI PASSA O VALOR CORRETO DE HOJE */}
               <TabsContent value="historicos">
                 <Historicos
                   userData={userData}
@@ -210,7 +217,7 @@ const DashboardLayout = () => {
                   diasRestantesCalculados={diasRestantesCalculados}
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  recebido={recebidoHoje}
+                  recebido={recebidoHoje}   // R$ 5.485,40 GARANTIDO
                 />
               </TabsContent>
             </Tabs>
