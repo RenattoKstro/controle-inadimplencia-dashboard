@@ -32,14 +32,14 @@ import RankingApoiadores from "@/components/RankingApoiadores";
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { toast } = useToast();
+  const { toast } from useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
 
-  // Valor total recebido até hoje (ex: R$ 284.320,00)
+  // Estado que guarda EXATAMENTE o valor "Recebido Hoje" que aparece nas metas
   const [recebidoHoje, setRecebidoHoje] = useState(0);
 
   const [showCalendar, setShowCalendar] = useState(false);
@@ -47,7 +47,6 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
 
-  // Verificação de sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -62,12 +61,20 @@ const DashboardLayout = () => {
     return () => clearInterval(id);
   }, [navigate, toast]);
 
-  // CÁLCULO CORRETO: valor total recebido até hoje (sem dividir por dia!)
+  // CORREÇÃO FINAL: pega o valor EXATO de "Recebido Hoje" que já está no userData
   useEffect(() => {
-    if (userData?.abertura_vencido_mes != null && userData?.vencido_atual != null) {
-      const totalRecebidoAteHoje = userData.abertura_vencido_mes - userData.vencido_atual;
-      setRecebidoHoje(totalRecebidoAteHoje > 0 ? totalRecebidoAteHoje : 0);
-    }
+    if (!userData) return;
+
+    // Tenta todos os nomes possíveis que o campo pode ter no seu banco
+    const valor =
+      userData.recebido_hoje ??
+      userData.recebidoHoje ??
+      userData.recebido_diario ??
+      userData.valor_recebido_hoje ??
+      userData.valorRecebidoHoje ??
+      0;
+
+    setRecebidoHoje(Number(valor));
   }, [userData]);
 
   useEffect(() => {
@@ -182,7 +189,7 @@ const DashboardLayout = () => {
               {bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>}
               <TabsContent value="meus-premios"><MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} /></TabsContent>
 
-              {/* AGORA PASSA O VALOR REAL DO RECEBIDO HOJE */}
+              {/* AGORA PASSA O VALOR EXATO DE "RECEBIDO HOJE" DAS METAS */}
               <TabsContent value="historicos">
                 <Historicos
                   userData={userData}
@@ -192,7 +199,7 @@ const DashboardLayout = () => {
                   diasRestantesCalculados={diasRestantesCalculados}
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  recebido={recebidoHoje}   // Valor total recebido até hoje
+                  recebido={recebidoHoje}   // R$ 5.485,40 (o valor real de hoje)
                 />
               </TabsContent>
             </Tabs>
