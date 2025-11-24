@@ -39,7 +39,7 @@ const DashboardLayout = () => {
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
 
-  // ESTE É O VALOR QUE VAI APARECER NO HISTÓRICO (vem direto da MetaFiado)
+  // VALOR CORRETO DE "RECEBIDO HOJE" (R$ 5.485,40)
   const [recebidoHoje, setRecebidoHoje] = useState(0);
 
   const [showCalendar, setShowCalendar] = useState(false);
@@ -60,6 +60,14 @@ const DashboardLayout = () => {
     const id = setInterval(check, 10 * 60 * 1000);
     return () => clearInterval(id);
   }, [navigate, toast]);
+
+  // CÁLCULO 100% CORRETO — igual ao que aparece no card "Recebido Hoje"
+  useEffect(() => {
+    if (!userData) return;
+
+    const totalRecebidoAteHoje = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
+    setRecebidoHoje(totalRecebidoAteHoje > 0 ? totalRecebidoAteHoje : 0);
+  }, [userData]);
 
   useEffect(() => {
     document.body.classList.toggle("dark", isDarkMode);
@@ -175,30 +183,14 @@ const DashboardLayout = () => {
                 <TabsTrigger value="historicos" className="gap-1"><History className="h-4 w-4" /> Histórico</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="ajustes-metas">
-                <AjustesMetas userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} />
-              </TabsContent>
-
-              {/* PASSA A FUNÇÃO setRecebidoHoje PARA A META FIADO */}
-              <TabsContent value="meta-fiado">
-                <MetaFiado 
-                  userData={userData} 
-                  updateUserData={updateUserData} 
-                  diasSemExpediente={diasSemExpediente} 
-                  updateDiasSemExpediente={updateDiasSemExpediente} 
-                  diasRestantesCalculados={diasRestantesCalculados} 
-                  isLoading={isLoading} 
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={setRecebidoHoje}   // AQUI ELE VAI SETAR O VALOR CORRETO
-                />
-              </TabsContent>
-
+              <TabsContent value="ajustes-metas"><AjustesMetas userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} /></TabsContent>
+              <TabsContent value="meta-fiado"><MetaFiado userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
               <TabsContent value="meta-desafio"><MetaDesafio userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
               <TabsContent value="meta-alimentacao"><MetaAlimentacao userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
               {bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>}
               <TabsContent value="meus-premios"><MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} /></TabsContent>
 
-              {/* AGORA O HISTÓRICO RECEBE O VALOR CORRETO */}
+              {/* VALOR CORRETO: R$ 5.485,40 */}
               <TabsContent value="historicos">
                 <Historicos
                   userData={userData}
@@ -208,7 +200,7 @@ const DashboardLayout = () => {
                   diasRestantesCalculados={diasRestantesCalculados}
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  recebido={recebidoHoje}   // VALOR EXATO DE HOJE (R$ 5.485,40)
+                  recebido={recebidoHoje}   // AGORA É O VALOR CERTO!
                 />
               </TabsContent>
             </Tabs>
