@@ -39,7 +39,7 @@ const DashboardLayout = () => {
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
 
-  // Estado que vai guardar o "Recebido Hoje" (ex: R$ 5.485,40)
+  // Valor de "Recebido Hoje" que aparece nas metas (ex: R$ 5.485,40)
   const [recebidoHoje, setRecebidoHoje] = useState(0);
 
   const [showCalendar, setShowCalendar] = useState(false);
@@ -47,6 +47,7 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
 
+  // Verificação de sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -61,20 +62,20 @@ const DashboardLayout = () => {
     return () => clearInterval(id);
   }, [navigate, toast]);
 
-  // CALCULA O RECEBIDO SÓ DE HOJE (exatamente o que aparece nas metas)
+  // CÁLCULO SEGURO DO RECEBIDO HOJE (sem quebrar o React)
   useEffect(() => {
     if (!userData) return;
 
-    // Tenta pegar o campo que já contém o valor diário (o mais comum no seu projeto)
-    const valorDiario =
-      userData.recebido_hoje ||
-      userData.recebidoHoje ||
-      userData.valor_recebido_hoje ||
-      userData.valorRecebidoHoje ||
-      userData.recebido_diario ||
+    const valor =
+      userData.recebido_hoje ??
+      userData.recebidoHoje ??
+      userData.valor_recebido_hoje ??
+      userData.valorRecebidoHoje ??
+      userData.recebido_diario ??
+      userData.recebido_diario_hoje ??
       0;
 
-    setRecebidoHoje(Number(valorDiario));
+    setRecebidoHoje(Number(valor) || 0);
   }, [userData]);
 
   useEffect(() => {
@@ -113,11 +114,64 @@ const DashboardLayout = () => {
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
 
-  if (!userData && !isLoading) return <div className="min-h-screen flex items-center justify-center"><p>Carregando...</p></div>;
+  // Proteção contra tela branca
+  if (isLoading || !userData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-lg">Carregando dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-background dark' : 'bg-gradient-to-br from-slate-50 to-slate-100'}`} ref={contentRef}>
-      {/* ... resto do header igual ... */}
+      {/* HEADER */}
+      <header className="bg-card shadow-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          {isMobile ? (
+            <>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Inadimplência {percentual && `${percentual}%`}
+              </h1>
+              <div className="flex gap-2">
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild><Button variant="outline" size="icon"><Menu /></Button></SheetTrigger>
+                  <SheetContent side="right" className="w-80">
+                    <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
+                    <Apps />
+                    <div className="py-4 border-t"><Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button></div>
+                  </SheetContent>
+                </Sheet>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun /> : <Moon />}</Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Controle de Inadimplência {percentual && `${percentual}%`}
+              </h1>
+              <div className="flex gap-3">
+                <Button onClick={print} variant="outline" className="gap-2">
+                  <RiScreenshot2Fill className="w-5 h-5" /> Print
+                </Button>
+                <Dialog><DialogTrigger asChild><Button variant="outline" className="gap-2"><File className="w-4 h-4" /> Anexos</Button></DialogTrigger><DialogContent><Anexos /></DialogContent></Dialog>
+                <Dialog><DialogTrigger asChild><Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button></DialogTrigger><DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent></Dialog>
+                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
+                  <Calendar className="h-4 w-4" /> {today.toLocaleDateString("pt-BR")}
+                </Button>
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild><Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button></SheetTrigger>
+                  <SheetContent side="right" className="w-80">
+                    <Apps />
+                    <div className="mt-8"><Button variant="destructive" className="w-full" onClick={handleLogout}>Sair</Button></div>
+                  </SheetContent>
+                </Sheet>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>{isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}</Button>
+              </div>
+            </>
+          )}
+        </div>
+      </header>
 
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
@@ -129,11 +183,24 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-80 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              {/* ... TabsList igual ... */}
+              <TabsList className="grid grid-cols-7 w-full p-1 bg-card rounded-xl mb-6">
+                <TabsTrigger value="ajustes-metas" className="gap-1"><Sliders className="h-4 w-4" /> Ajustes</TabsTrigger>
+                <TabsTrigger value="meta-fiado" className="gap-1"><Wallet className="h-4 w-4" /> Fiado</TabsTrigger>
+                <TabsTrigger value="meta-desafio" className="gap-1"><Trophy className="h-4 w-4" /> Desafio</TabsTrigger>
+                <TabsTrigger value="meta-alimentacao" className="gap-1"><Utensils className="h-4 w-4" /> Alimentação</TabsTrigger>
+                {bonusPerdidoAtivado && <TabsTrigger value="meta-perdido" className="gap-1"><AlertTriangle className="h-4 w-4" /> Perdido</TabsTrigger>}
+                <TabsTrigger value="meus-premios" className="gap-1"><Gift className="h-4 w-4" /> Prêmios</TabsTrigger>
+                <TabsTrigger value="historicos" className="gap-1"><History className="h-4 w-4" /> Histórico</TabsTrigger>
+              </TabsList>
 
-              {/* ... outras TabsContent ... */}
+              <TabsContent value="ajustes-metas"><AjustesMetas userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} /></TabsContent>
+              <TabsContent value="meta-fiado"><MetaFiado userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
+              <TabsContent value="meta-desafio"><MetaDesafio userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
+              <TabsContent value="meta-alimentacao"><MetaAlimentacao userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>
+              {bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>}
+              <TabsContent value="meus-premios"><MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} /></TabsContent>
 
-              {/* AQUI ESTÁ A CORREÇÃO FINAL */}
+              {/* AGORA PASSA O VALOR CERTO DE HOJE */}
               <TabsContent value="historicos">
                 <Historicos
                   userData={userData}
@@ -143,7 +210,7 @@ const DashboardLayout = () => {
                   diasRestantesCalculados={diasRestantesCalculados}
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  recebido={recebidoHoje}   // Agora é o valor de HOJE (ex: R$ 5.485,40)
+                  recebido={recebidoHoje}
                 />
               </TabsContent>
             </Tabs>
@@ -151,7 +218,22 @@ const DashboardLayout = () => {
         </main>
       </div>
 
-      {/* ... resto do footer ... */}
+      <div className="lg:hidden mt-8 px-4">
+        <RankingApoiadores />
+      </div>
+
+      <footer className="bg-card shadow-md p-4 mt-8">
+        <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <FaWhatsapp className="text-green-600" />
+            <a href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              Grupo de Ajuda
+            </a>
+          </div>
+          <Instagram className="text-pink-600 cursor-pointer" onClick={instagram} />
+          {showInstagramUsername && <span className="text-pink-600 text-xs bg-card px-2 py-1 rounded shadow">@renato_alme1da</span>}
+        </div>
+      </footer>
     </div>
   );
 };
