@@ -5,7 +5,7 @@ import {
   Calendar, AlertTriangle, History, Instagram, File
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";  // ← Corrigido!
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import MetaFiado from "./dashboard/MetaFiado";
@@ -32,14 +32,14 @@ import RankingApoiadores from "@/components/RankingApoiadores";
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { toast } from useToast();
+  const { toast } = useToast();  // ← Agora com chaves!
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
 
-  // Estado que guarda EXATAMENTE o valor "Recebido Hoje" que aparece nas metas
+  // Valor EXATO de "Recebido Hoje" que aparece nas metas
   const [recebidoHoje, setRecebidoHoje] = useState(0);
 
   const [showCalendar, setShowCalendar] = useState(false);
@@ -61,11 +61,10 @@ const DashboardLayout = () => {
     return () => clearInterval(id);
   }, [navigate, toast]);
 
-  // CORREÇÃO FINAL: pega o valor EXATO de "Recebido Hoje" que já está no userData
+  // Pega o valor real de "Recebido Hoje" do userData (ex: R$ 5.485,40)
   useEffect(() => {
     if (!userData) return;
 
-    // Tenta todos os nomes possíveis que o campo pode ter no seu banco
     const valor =
       userData.recebido_hoje ??
       userData.recebidoHoje ??
@@ -189,7 +188,7 @@ const DashboardLayout = () => {
               {bonusPerdidoAtivado && <TabsContent value="meta-perdido"><MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} /></TabsContent>}
               <TabsContent value="meus-premios"><MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} /></TabsContent>
 
-              {/* AGORA PASSA O VALOR EXATO DE "RECEBIDO HOJE" DAS METAS */}
+              {/* AGORA PASSA O VALOR CORRETO DE HOJE */}
               <TabsContent value="historicos">
                 <Historicos
                   userData={userData}
@@ -199,7 +198,7 @@ const DashboardLayout = () => {
                   diasRestantesCalculados={diasRestantesCalculados}
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  recebido={recebidoHoje}   // R$ 5.485,40 (o valor real de hoje)
+                  recebido={recebidoHoje}
                 />
               </TabsContent>
             </Tabs>
