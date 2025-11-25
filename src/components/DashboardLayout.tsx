@@ -39,7 +39,7 @@ const DashboardLayout = () => {
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
 
-  // ESTE É O VALOR QUE VAI APARECER NO HISTÓRICO (vem 100% da MetaFiado)
+  // Valor recebido hoje — vem 100% da MetaFiado
   const [recebidoHoje, setRecebidoHoje] = useState(0);
 
   const [showCalendar, setShowCalendar] = useState(false);
@@ -179,7 +179,7 @@ const DashboardLayout = () => {
                 <AjustesMetas userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} />
               </TabsContent>
 
-              {/* ESSA É A CHAVE: PASSA setRecebidoHoje PARA A META FIADO */}
+              {/* PASSA A FUNÇÃO PARA A META FIADO SETAR O VALOR */}
               <TabsContent value="meta-fiado">
                 <MetaFiado
                   userData={userData}
@@ -189,7 +189,7 @@ const DashboardLayout = () => {
                   diasRestantesCalculados={diasRestantesCalculados}
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={setRecebidoHoje}   {/* AQUI ELE VAI SETAR O VALOR CORRETO! */}
+                  setRecebidoHoje={setRecebidoHoje}
                 />
               </TabsContent>
 
@@ -211,7 +211,7 @@ const DashboardLayout = () => {
                 <MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} />
               </TabsContent>
 
-              {/* HISTÓRICO RECEBE O VALOR CERTO DE HOJE */}
+              {/* HISTÓRICO RECEBE O VALOR CORRETO */}
               <TabsContent value="historicos">
                 <Historicos
                   userData={userData}
@@ -221,7 +221,7 @@ const DashboardLayout = () => {
                   diasRestantesCalculados={diasRestantesCalculados}
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  recebido={recebidoHoje}   {/* VALOR REAL DE HOJE (R$ 5.485,40) */}
+                  recebido={recebidoHoje}
                 />
               </TabsContent>
             </Tabs>
