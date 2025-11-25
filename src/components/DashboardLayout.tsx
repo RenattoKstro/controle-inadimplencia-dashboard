@@ -47,6 +47,7 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
 
+  // Sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
