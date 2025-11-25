@@ -9,56 +9,26 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ResetPassword from "./pages/ResetPassword";
+import AprovacoesAdmin from "./pages/aprovacoes"; // ← ADICIONEI A ROTA!
 import { supabase } from "./integrations/supabase/client";
 
 const Callback: React.FC = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        console.log("Callback started, current URL:", window.location.href);
-        const searchParams = Object.fromEntries(new URLSearchParams(window.location.search));
-        console.log("Search params:", searchParams);
-
-        if (searchParams.error) {
-          console.error("OAuth error from Google:", searchParams);
-          throw new Error(`OAuth Error: ${searchParams.error_description || 'Unknown error'}`);
-        }
-
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log("Callback session data:", session);
-        console.log("Callback session error:", sessionError);
-
-        if (sessionError) {
-          console.error("Session error details:", sessionError);
-          throw new Error(`Falha na sessão: ${sessionError.message}`);
-        } else if (session) {
-          console.log("Session established, user:", session.user);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
           window.location.href = "/dashboard";
         } else {
-          console.log("No session, checking user...");
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
-          console.log("Callback user data:", user);
-          console.log("Callback user error:", userError);
-          if (userError) {
-            console.error("User error details:", userError);
-            throw new Error(`Falha no usuário: ${userError.message}`);
-          } else if (user) {
-            console.log("User found, redirecting to dashboard...");
-            window.location.href = "/dashboard";
-          } else {
-            console.log("No user or session, redirecting to auth with details...");
-            window.location.href = "/auth?error=login_failed_no_user&details=" + encodeURIComponent(JSON.stringify({ sessionError, userError, searchParams }));
-          }
+          window.location.href = "/auth";
         }
-      } catch (error: any) {
-        console.error("Unexpected error in callback:", error);
-        window.location.href = "/auth?error=" + encodeURIComponent(error.message) + "&details=" + encodeURIComponent(JSON.stringify(error));
+      } catch {
+        window.location.href = "/auth";
       }
     };
     handleCallback();
   }, []);
-
-  return <div>Processando login... Redirecionando...</div>;
+  return <div>Processando login...</div>;
 };
 
 const queryClient = new QueryClient();
@@ -75,6 +45,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/callback" element={<Callback />} />
+          <Route path="/aprovacoes" element={<AprovacoesAdmin />} /> {/* ← ROTA ADICIONADA */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

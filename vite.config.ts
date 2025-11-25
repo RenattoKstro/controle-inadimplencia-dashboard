@@ -12,33 +12,35 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    // VitePWA desativado temporariamente
-    // VitePWA({
-    //   registerType: "autoUpdate",
-    //   manifest: {
-    //     name: "Controle de Inadimplência",
-    //     short_name: "Controle", // Corrigido: removido " extra
-    //     description: "Controle de Inadimplência Dashboard", // Corrigido
-    //     start_url: "/dashboard", // Corrigido
-    //     display: "standalone", // Corrigido
-    //     background_color: "#ffffff", // Corrigido
-    //     theme_color: "#9b87f5", // Corrigido
-    //     icons: [
-    //       {
-    //         src: "/icon-192x192.png", // Corrigido
-    //         sizes: "192x192", // Corrigido
-    //         type: "image/png", // Corrigido
-    //         purpose: "any maskable", // Corrigido
-    //       },
-    //       {
-    //         src: "/icon-512x512.png", // Corrigido
-    //         sizes: "512x512", // Corrigido
-    //         type: "image/png", // Corrigido
-    //         purpose: "any maskable", // Corrigido
-    //       },
-    //     ],
-    //   },
-    // }),
+    VitePWA({
+      registerType: "autoUpdate",
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+      },
+      manifest: {
+        name: "Controle de Inadimplência",
+        short_name: "Controle",
+        description: "Dashboard de Controle de Inadimplência",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#ffffff",
+        theme_color: "#9b87f5",
+        icons: [
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+          {
+            src: "/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+        ],
+      },
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
