@@ -238,8 +238,8 @@ const DashboardLayout = () => {
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />
-            <a href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              Grupo de Ajuda
+            <a href="https://gazinassisbrasil.shop/busca/renato" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              Suporte
             </a>
           </div>
           <Instagram className="text-pink-600 cursor-pointer" onClick={instagram} />
