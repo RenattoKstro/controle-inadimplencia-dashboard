@@ -11,7 +11,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Wallet, Building, AlertTriangle, Target, Store, Check, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
+import {
+  Wallet,
+  Building,
+  AlertTriangle,
+  Target,
+  Store,
+  Check,
+  ChevronsUpDown,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -56,11 +66,10 @@ const AjustesMetas = ({
   const [isEditing, setIsEditing] = useState(false);
   const [openPopover, setOpenPopover] = useState(false);
 
-  // Estados da filial
+  // Filial
   const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
   const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
 
-  // Estado do formulário
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
     abertura_dia: userData?.abertura_dia || 0,
@@ -75,19 +84,19 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
-  // Carrega lista de filiais do Supabase
+  // Carrega filiais do Supabase (usando suas colunas exatas)
   useEffect(() => {
     const fetchFiliais = async () => {
       const { data } = await supabase
         .from("filiais")
-        .select("numero, nome, cidade, estado")
+        .select("IDfilial, Filial, Cidade, UF")
         .eq("ativo", true)
-        .order("numero");
+        .order("IDfilial");
 
       if (data) {
-        const formatted = data.map(f => ({
-          numero: f.numero,
-          label: `${String(f.numero).padStart(3, "0")} - ${f.nome} - ${f.cidade}/${f.estado || "PR"}`
+        const formatted = data.map((f) => ({
+          numero: f.IDfilial,
+          label: `${String(f.IDfilial).padStart(3, "0")} - ${f.Filial} - ${f.Cidade}/${f.UF || "PR"}`,
         }));
         setFiliaisList(formatted);
       }
@@ -98,14 +107,14 @@ const AjustesMetas = ({
   // Sincroniza filial selecionada com userData (só se já tiver salva)
   useEffect(() => {
     if (userData?.filial && filiaisList.length > 0) {
-      const found = filiaisList.find(f => f.numero === userData.filial);
+      const found = filiaisList.find((f) => f.numero === userData.filial);
       if (found) setSelectedFilial(found);
     }
   }, [userData?.filial, filiaisList]);
 
   // Atualiza formState com userData
   useEffect(() => {
-    setFormState(prev => ({
+    setFormState((prev) => ({
       ...prev,
       ...userData,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
@@ -115,7 +124,7 @@ const AjustesMetas = ({
   const handleSave = () => {
     const dadosParaSalvar: any = { ...formState };
 
-    // Só salva a filial se for a primeira vez (selectedFilial existe e userData.filial ainda não)
+    // Só salva a filial na primeira vez
     if (!userData?.filial && selectedFilial) {
       dadosParaSalvar.filial = selectedFilial.numero;
     }
@@ -126,7 +135,7 @@ const AjustesMetas = ({
   };
 
   const handleCancel = () => {
-    setFormState(prev => ({
+    setFormState((prev) => ({
       ...prev,
       ...userData,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
@@ -136,7 +145,7 @@ const AjustesMetas = ({
   };
 
   const handleChange = (field: string, value: number | string) => {
-    setFormState(prev => ({ ...prev, [field]: value }));
+    setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
   const CardItem = ({
@@ -177,16 +186,20 @@ const AjustesMetas = ({
 
   if (isLoading) {
     return (
-      <Card className="w-full shadow-sm">
-        <CardHeader><Skeleton className="h-8 w-3/4" /></CardHeader>
-        <CardContent><Skeleton className="h-[300px] w-full" /></CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <div className="grid grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho com botões */}
+      {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Ajustes de Metas
@@ -198,7 +211,9 @@ const AjustesMetas = ({
               <Button onClick={handleSave} className="bg-gradient-to-r from-blue-600 to-indigo-600">
                 Salvar
               </Button>
-              <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
+              <Button variant="outline" onClick={handleCancel}>
+                Cancelar
+              </Button>
             </div>
           ) : (
             <Button variant="outline" onClick={() => setIsEditing(true)} className="border-blue-300 text-blue-600">
@@ -206,6 +221,7 @@ const AjustesMetas = ({
             </Button>
           )}
 
+          {/* Mostrar/Ocultar Histórico */}
           <div className="flex items-center gap-2">
             <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
             <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
@@ -230,16 +246,14 @@ const AjustesMetas = ({
         </div>
       </div>
 
-      {/* PRIMEIRA VEZ: Campo obrigatório de filial */}
+      {/* PRIMEIRA VEZ: Seleção obrigatória de filial */}
       {!userData?.filial && !isEditing && (
         <Card className="border-2 border-dashed border-red-400 bg-red-50">
           <CardContent className="pt-6 text-center">
             <Store className="h-12 w-12 text-red-600 mx-auto mb-3" />
-            <p className="text-lg font-bold text-red-800">
-              Você ainda não selecionou sua filial!
-            </p>
+            <p className="text-lg font-bold text-red-800">Você ainda não selecionou sua filial!</p>
             <p className="text-sm text-red-700 mt-2">
-              Clique em <strong>Editar</strong> para selecionar sua filial (obrigatório).
+              Clique em <strong>Editar</strong> para escolher sua loja (obrigatório).
             </p>
           </CardContent>
         </Card>
@@ -257,17 +271,17 @@ const AjustesMetas = ({
                 <Popover open={openPopover} onOpenChange={setOpenPopover}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between h-14 text-left font-medium text-lg">
-                      {selectedFilial ? selectedFilial.label : "Buscar filial por número, nome ou cidade..."}
+                      {selectedFilial ? selectedFilial.label : "Buscar filial..."}
                       <ChevronsUpDown className="ml-2 h-6 w-6 shrink-0 opacity-60" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Digite para buscar..." className="h-12" />
+                      <CommandInput placeholder="Digite número, nome ou cidade..." className="h-12" />
                       <CommandList>
                         <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
                         <CommandGroup>
-                          {filiaisList.map(f => (
+                          {filiaisList.map((f) => (
                             <CommandItem
                               key={f.numero}
                               value={`${f.numero} ${f.label}`}
@@ -287,7 +301,7 @@ const AjustesMetas = ({
                 </Popover>
                 {!selectedFilial && (
                   <p className="text-sm text-red-600 font-medium">
-                    Você precisa selecionar uma filial antes de salvar.
+                    Você deve selecionar uma filial antes de salvar.
                   </p>
                 )}
               </div>
@@ -296,22 +310,20 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* Filial já definida - Card bonito (fora do modo edição) */}
+      {/* Filial já salva → Card bonito (nunca mais muda) */}
       {userData?.filial && selectedFilial && !isEditing && (
         <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="flex items-center gap-5">
-              <Store className="h-14 w-14" />
-              <div>
-                <p className="text-sm opacity-90">Sua Filial Vinculada</p>
-                <p className="text-3xl font-bold">{selectedFilial.label}</p>
-              </div>
+          <CardContent className="p-6 flex items-center gap-6">
+            <Store className="h-16 w-16" />
+            <div>
+              <p className="text-sm opacity-90">Sua Filial Vinculada</p>
+              <p className="text-3xl font-bold">{selectedFilial.label}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Grid de metas - TODOS OS CARDS VISÍVEIS */}
+      {/* Grid de metas */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
         <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditing} />
         <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditing} />
@@ -334,11 +346,19 @@ const AjustesMetas = ({
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Trabalhados</p>
-              {isEditing ? <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="text-lg font-bold" /> : <div className="text-xl font-bold">{formState.dias_trabalhados}</div>}
+              {isEditing ? (
+                <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
+              ) : (
+                <div className="text-xl font-bold">{formState.dias_trabalhados}</div>
+              )}
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Restantes</p>
-              {isEditing ? <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="text-lg font-bold" /> : <div className="text-xl font-bold">{formState.dias_restantes}</div>}
+              {isEditing ? (
+                <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
+              ) : (
+                <div className="text-xl font-bold">{formState.dias_restantes}</div>
+              )}
             </div>
           </CardContent>
         </Card>
