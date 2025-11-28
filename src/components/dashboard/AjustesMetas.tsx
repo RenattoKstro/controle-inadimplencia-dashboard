@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Wallet, Building, AlertTriangle, Target, Pencil, Store, Check, ChevronsUpDown } from "lucide-react";
-import { CurrencyInput } from "@/components/ui/currency-input";
 import { Switch } from "@/components/ui/switch";
+import { Wallet, Building, AlertTriangle, Target, Store, Check, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Command,
@@ -37,7 +37,6 @@ interface CardItemProps {
   color?: string;
   isEditMode?: boolean;
   formatAsCurrency?: boolean;
-  onEdit?: () => void;
 }
 
 const AjustesMetas = ({
@@ -47,11 +46,15 @@ const AjustesMetas = ({
   isLoading,
   bonusPerdidoAtivado,
   setBonusPerdidoAtivado,
-}: DashboardProps & { setBonusPerdidoAtivado: (value: boolean) => void }) => {
+  mostrarHistorico,        // ← novo
+  setMostrarHistorico,     // ← novo
+}: DashboardProps & {
+  setBonusPerdidoAtivado: (value: boolean) => void;
+  mostrarHistorico: boolean;           // ← novo
+  setMostrarHistorico: (value: boolean) => void; // ← novo
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [openPopover, setOpenPopover] = useState(false);
-
-  // Lista de filiais do Supabase
   const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
   const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
 
@@ -69,16 +72,15 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
-  // Carrega filiais do Supabase
+  // Carregar filiais
   useEffect(() => {
     const fetchFiliais = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("filiais")
         .select("numero, nome, cidade, estado")
         .eq("ativo", true)
-        .order("numero", { ascending: true });
-
-      if (!error && data) {
+        .order("numero");
+      if (data) {
         const formatted = data.map(f => ({
           numero: f.numero,
           label: `${String(f.numero).padStart(3, "0")} - ${f.nome} - ${f.cidade}/${f.estado || "PR"}`
@@ -89,7 +91,7 @@ const AjustesMetas = ({
     fetchFiliais();
   }, []);
 
-  // Sincroniza filial selecionada com userData
+  // Sincronizar filial selecionada
   useEffect(() => {
     if (userData?.filial && filiaisList.length > 0) {
       const found = filiaisList.find(f => f.numero === userData.filial);
@@ -97,7 +99,7 @@ const AjustesMetas = ({
     }
   }, [userData?.filial, filiaisList]);
 
-  // Atualiza formState com userData
+  // Atualizar formState
   useEffect(() => {
     setFormState(prev => ({
       ...prev,
@@ -111,7 +113,6 @@ const AjustesMetas = ({
       ...formState,
       filial: selectedFilial?.numero || userData?.filial || null,
     };
-
     updateUserData(dadosParaSalvar);
     setIsEditing(false);
     setOpenPopover(false);
@@ -141,18 +142,13 @@ const AjustesMetas = ({
     isEditMode = false,
     formatAsCurrency = true,
   }: CardItemProps) => {
-    const formatValue = (value: number): string => {
-      if (formatAsCurrency) {
-        return new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(value);
-      }
-      return value.toString();
-    };
+    const formatValue = (v: number) =>
+      formatAsCurrency
+        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
+        : v.toString();
 
     return (
-      <Card className={`shadow-sm hover:shadow transition-shadow duration-200 ${color} bg-opacity-50`}>
+      <Card className={`shadow-sm hover:shadow transition-shadow ${color} bg-opacity-50`}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-medium text-foreground">{title}</h3>
@@ -160,14 +156,9 @@ const AjustesMetas = ({
           </div>
           {isEditable && isEditMode ? (
             formatAsCurrency ? (
-              <CurrencyInput value={value} onValueChange={(v) => onChange?.(v || 0)} className="text-lg font-bold mt-1" />
+              <CurrencyInput value={value} onValueChange={(v) => onChange?.(v || 0)} className="text-lg font-bold" />
             ) : (
-              <Input
-                type="number"
-                value={value}
-                onChange={(e) => onChange?.(parseInt(e.target.value) || 0)}
-                className="text-lg font-bold mt-1"
-              />
+              <Input type="number" value={value} onChange={(e) => onChange?.(parseInt(e.target.value) || 0)} className="text-lg font-bold" />
             )
           ) : (
             <div className="text-xl font-bold">{formatValue(value)}</div>
@@ -180,13 +171,8 @@ const AjustesMetas = ({
   if (isLoading) {
     return (
       <Card className="w-full shadow-sm">
-        <CardHeader>
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </CardHeader>
-        <CardContent className="flex flex-col items-center">
-          <Skeleton className="h-[300px] w-full max-w-[350px]" />
-        </CardContent>
+        <CardHeader><Skeleton className="h-8 w-3/4" /></CardHeader>
+        <CardContent><Skeleton className="h-[300px] w-full" /></CardContent>
       </Card>
     );
   }
@@ -201,9 +187,7 @@ const AjustesMetas = ({
         <div className="flex flex-wrap items-center gap-3">
           {isEditing ? (
             <div className="flex gap-2">
-              <Button onClick={handleSave} className="bg-gradient-to-r from-blue-600 to-indigo-600">
-                Salvar
-              </Button>
+              <Button onClick={handleSave} className="bg-gradient-to-r from-blue-600 to-indigo-600">Salvar</Button>
               <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
             </div>
           ) : (
@@ -212,68 +196,59 @@ const AjustesMetas = ({
             </Button>
           )}
 
-          <div className="flex items-center space-x-2">
+          {/* NOVO BOTÃO MOSTRAR/OCULTAR HISTÓRICO */}
+          <div className="flex items-center gap-2">
             <Switch
-              checked={bonusPerdidoAtivado}
-              onCheckedChange={(v) => {
-                setBonusPerdidoAtivado(v);
-                updateUserData({ ...userData, bonusPerdidoAtivado: v });
-              }}
+              checked={mostrarHistorico}
+              onCheckedChange={(checked) => setMostrarHistorico(checked)}
             />
+            <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
+              {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              Histórico
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
             <Label>Ativar Meta Perdido</Label>
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant={formState.role === "líder" ? "default" : "outline"}
-              onClick={() => { handleChange("role", "líder"); updateUserData({ ...userData, role: "líder" }); }}
-            >
+            <Button variant={formState.role === "líder" ? "default" : "outline"} onClick={() => updateUserData({ ...userData, role: "líder" })}>
               {formState.role === "líder" ? "Líder" : "Op. Líder"}
             </Button>
-            <Button
-              variant={formState.role === "auxiliar" ? "default" : "outline"}
-              onClick={() => { handleChange("role", "auxiliar"); updateUserData({ ...userData, role: "auxiliar" }); }}
-            >
+            <Button variant={formState.role === "auxiliar" ? "default" : "outline"} onClick={() => updateUserData({ ...userData, role: "auxiliar" })}>
               {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* PRIMEIRA VEZ: Selecionar filial */}
+      {/* Seleção de filial (primeira vez) */}
       {isEditing && !userData?.filial && (
         <Card className="border-2 border-dashed border-blue-400 bg-blue-50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <Store className="h-8 w-8 text-blue-600" />
               <div className="flex-1 space-y-3">
-                <Label className="text-lg font-bold text-blue-900">
-                  Selecione sua Filial (obrigatório)
-                </Label>
+                <Label className="text-lg font-bold text-blue-900">Selecione sua Filial (obrigatório)</Label>
                 <Popover open={openPopover} onOpenChange={setOpenPopover}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between h-14 text-left font-medium">
-                      {selectedFilial ? selectedFilial.label : "Buscar filial por número, nome ou cidade..."}
+                      {selectedFilial ? selectedFilial.label : "Buscar filial..."}
                       <ChevronsUpDown className="ml-2 h-5 w-5 shrink-0 opacity-60" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
+                  <PopoverContent className="w-full p-0">
                     <Command>
                       <CommandInput placeholder="Digite para buscar..." />
                       <CommandList>
                         <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
                         <CommandGroup>
-                          {filiaisList.map((filial) => (
-                            <CommandItem
-                              key={filial.numero}
-                              value={`${filial.numero} ${filial.label}`}
-                              onSelect={() => {
-                                setSelectedFilial(filial);
-                                setOpenPopover(false);
-                              }}
-                            >
-                              <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === filial.numero ? "opacity-100" : "opacity-0"}`} />
-                              {filial.label}
+                          {filiaisList.map(f => (
+                            <CommandItem key={f.numero} value={`${f.numero} ${f.label}`} onSelect={() => { setSelectedFilial(f); setOpenPopover(false); }}>
+                              <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
+                              {f.label}
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -281,14 +256,13 @@ const AjustesMetas = ({
                     </Command>
                   </PopoverContent>
                 </Popover>
-                <p className="text-sm text-blue-700">Esta filial aparecerá no ranking geral.</p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* FILIAL JÁ DEFINIDA: Card bonito + opção de alterar */}
+      {/* Filial já definida */}
       {!isEditing && userData?.filial && selectedFilial && (
         <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
           <CardContent className="p-6 flex items-center justify-between">
@@ -306,7 +280,7 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* MODO EDIÇÃO: Alterar filial */}
+      {/* Alterar filial (modo edição) */}
       {isEditing && userData?.filial && (
         <Card className="border-2 border-orange-400 bg-orange-50">
           <CardContent className="pt-6">
@@ -316,28 +290,21 @@ const AjustesMetas = ({
                 <Label className="text-lg font-bold text-orange-900">Alterar Filial</Label>
                 <Popover open={openPopover} onOpenChange={setOpenPopover}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between h-14 text-left font-medium border-orange-300">
-                      {selectedFilial ? selectedFilial.label : "Selecionar nova filial..."}
+                    <Button variant="outline" className="w-full justify-between h-14 border-orange-300">
+                      {selectedFilial?.label || "Selecionar nova filial..."}
                       <ChevronsUpDown className="ml-2 h-5 w-5 shrink-0 opacity-60" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Buscar nova filial..." />
+                      <CommandInput placeholder="Buscar..." />
                       <CommandList>
                         <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
                         <CommandGroup>
-                          {filiaisList.map((filial) => (
-                            <CommandItem
-                              key={filial.numero}
-                              value={`${filial.numero} ${filial.label}`}
-                              onSelect={() => {
-                                setSelectedFilial(filial);
-                                setOpenPopover(false);
-                              }}
-                            >
-                              <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === filial.numero ? "opacity-100" : "opacity-0"}`} />
-                              {filial.label}
+                          {filiaisList.map(f => (
+                            <CommandItem key={f.numero} value={`${f.numero} ${f.label}`} onSelect={() => { setSelectedFilial(f); setOpenPopover(false); }}>
+                              <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
+                              {f.label}
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -345,16 +312,14 @@ const AjustesMetas = ({
                     </Command>
                   </PopoverContent>
                 </Popover>
-                <p className="text-sm text-orange-700">
-                  Filial atual: <strong>{selectedFilial?.label}</strong>
-                </p>
+                <p className="text-sm text-orange-700">Filial atual: <strong>{selectedFilial?.label}</strong></p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Grid de metas */}
+      {/* TODOS OS CARDS DE METAS (agora todos aparecem!) */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
         <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={true} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditing} />
         <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={true} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditing} />
@@ -368,7 +333,7 @@ const AjustesMetas = ({
           </>
         )}
         <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={true} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditing} />
-        
+
         <Card className="shadow-sm bg-gray-500 bg-opacity-50">
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center justify-between mb-2">
