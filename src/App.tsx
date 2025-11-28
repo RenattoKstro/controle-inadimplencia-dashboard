@@ -10,7 +10,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ResetPassword from "./pages/ResetPassword";
 import AprovacoesAdmin from "./pages/aprovacoes"; // ← ADICIONEI A ROTA!
-import Admin from "/pages/Admin";
+import Admin from "./pages/Admin";
 import { supabase } from "./integrations/supabase/client";
 
 const Callback: React.FC = () => {
