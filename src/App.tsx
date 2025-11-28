@@ -46,6 +46,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/callback" element={<Callback />} />
           <Route path="/aprovacoes" element={<AprovacoesAdmin />} /> {/* ← ROTA ADICIONADA */}
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
