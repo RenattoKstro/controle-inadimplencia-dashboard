@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet, Trophy, Utensils, Gift, Sliders, Menu,
-  Calendar, AlertTriangle, History, Instagram, File
+  Calendar, AlertTriangle, History, Instagram, File, Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
+import Filiais from "./dashboard/Filiais"; // ← NOVO COMPONENTE
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -38,16 +39,13 @@ const DashboardLayout = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const { userData, updateUserData, diasSemExpediente, updateDiasSemExpediente, isLoading, diasRestantesCalculados } = useUserData();
-
-  // Valor recebido hoje — vem 100% da MetaFiado
   const [recebidoHoje, setRecebidoHoje] = useState(0);
-
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
 
-  // Sessão
+  // Verificação de sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -166,21 +164,31 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-80 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-7 w-full p-1 bg-card rounded-xl mb-6">
-                <TabsTrigger value="ajustes-metas" className="gap-1"><Sliders className="h-4 w-4" /> Ajustes</TabsTrigger>
-                <TabsTrigger value="meta-fiado" className="gap-1"><Wallet className="h-4 w-4" /> Fiado</TabsTrigger>
-                <TabsTrigger value="meta-desafio" className="gap-1"><Trophy className="h-4 w-4" /> Desafio</TabsTrigger>
-                <TabsTrigger value="meta-alimentacao" className="gap-1"><Utensils className="h-4 w-4" /> Alimentação</TabsTrigger>
-                {bonusPerdidoAtivado && <TabsTrigger value="meta-perdido" className="gap-1"><AlertTriangle className="h-4 w-4" /> Perdido</TabsTrigger>}
-                <TabsTrigger value="meus-premios" className="gap-1"><Gift className="h-4 w-4" /> Prêmios</TabsTrigger>
-                <TabsTrigger value="historicos" className="gap-1"><History className="h-4 w-4" /> Histórico</TabsTrigger>
+              {/* 8 abas fixas + 1 condicional = grid-cols-8 ou auto-ajuste */}
+              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 w-full p-1 bg-card rounded-xl mb-6 gap-1">
+                <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm"><Sliders className="h-4 w-4" /> Ajustes</TabsTrigger>
+                <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm"><Wallet className="h-4 w-4" /> Fiado</TabsTrigger>
+                <TabsTrigger value="meta-desafio" className="gap-1 text-xs sm:text-sm"><Trophy className="h-4 w-4" /> Desafio</TabsTrigger>
+                <TabsTrigger value="meta-alimentacao" className="gap-1 text-xs sm:text-sm"><Utensils className="h-4 w-4" /> Alimentação</TabsTrigger>
+                {bonusPerdidoAtivado && <TabsTrigger value="meta-perdido" className="gap-1 text-xs sm:text-sm"><AlertTriangle className="h-4 w-4" /> Perdido</TabsTrigger>}
+                <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm"><Store className="h-4 w-4" /> Filiais %</TabsTrigger>
+                <TabsTrigger value="meus-premios" className="gap-1 text-xs sm:text-sm"><Gift className="h-4 w-4" /> Prêmios</TabsTrigger>
+                <TabsTrigger value="historicos" className="gap-1 text-xs sm:text-sm"><History className="h-4 w-4" /> Histórico</TabsTrigger>
               </TabsList>
 
               <TabsContent value="ajustes-metas">
-                <AjustesMetas userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} />
+                <AjustesMetas
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+                />
               </TabsContent>
 
-              {/* PASSA A FUNÇÃO PARA A META FIADO SETAR O VALOR */}
               <TabsContent value="meta-fiado">
                 <MetaFiado
                   userData={userData}
@@ -195,24 +203,65 @@ const DashboardLayout = () => {
               </TabsContent>
 
               <TabsContent value="meta-desafio">
-                <MetaDesafio userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} />
+                <MetaDesafio
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={() => {}}
+                />
               </TabsContent>
 
               <TabsContent value="meta-alimentacao">
-                <MetaAlimentacao userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} />
+                <MetaAlimentacao
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={() => {}}
+                />
               </TabsContent>
 
               {bonusPerdidoAtivado && (
                 <TabsContent value="meta-perdido">
-                  <MetaPerdido userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setRecebidoHoje={() => {}} />
+                  <MetaPerdido
+                    userData={userData}
+                    updateUserData={updateUserData}
+                    diasSemExpediente={diasSemExpediente}
+                    updateDiasSemExpediente={updateDiasSemExpediente}
+                    diasRestantesCalculados={diasRestantesCalculados}
+                    isLoading={isLoading}
+                    bonusPerdidoAtivado={bonusPerdidoAtivado}
+                    setRecebidoHoje={() => {}}
+                  />
                 </TabsContent>
               )}
 
-              <TabsContent value="meus-premios">
-                <MeusPremios userData={userData} updateUserData={updateUserData} diasSemExpediente={diasSemExpediente} updateDiasSemExpediente={updateDiasSemExpediente} diasRestantesCalculados={diasRestantesCalculados} isLoading={isLoading} bonusPerdidoAtivado={bonusPerdidoAtivado} setBonusPerdidoAtivado={setBonusPerdidoAtivado} setTotalGanhos={() => {}} />
+              {/* NOVA ABA FILIAIS % */}
+              <TabsContent value="filiais">
+                <Filiais />
               </TabsContent>
 
-              {/* HISTÓRICO RECEBE O VALOR CORRETO */}
+              <TabsContent value="meus-premios">
+                <MeusPremios
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+                  setTotalGanhos={() => {}}
+                />
+              </TabsContent>
+
               <TabsContent value="historicos">
                 <Historicos
                   userData={userData}
