@@ -46,18 +46,21 @@ const AjustesMetas = ({
   isLoading,
   bonusPerdidoAtivado,
   setBonusPerdidoAtivado,
-  mostrarHistorico,        // ← novo
-  setMostrarHistorico,     // ← novo
+  mostrarHistorico,
+  setMostrarHistorico,
 }: DashboardProps & {
   setBonusPerdidoAtivado: (value: boolean) => void;
-  mostrarHistorico: boolean;           // ← novo
-  setMostrarHistorico: (value: boolean) => void; // ← novo
+  mostrarHistorico: boolean;
+  setMostrarHistorico: (value: boolean) => void;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [openPopover, setOpenPopover] = useState(false);
+
+  // Estados da filial
   const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
   const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
 
+  // Estado do formulário
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
     abertura_dia: userData?.abertura_dia || 0,
@@ -72,7 +75,7 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
-  // Carregar filiais
+  // Carrega lista de filiais do Supabase
   useEffect(() => {
     const fetchFiliais = async () => {
       const { data } = await supabase
@@ -80,6 +83,7 @@ const AjustesMetas = ({
         .select("numero, nome, cidade, estado")
         .eq("ativo", true)
         .order("numero");
+
       if (data) {
         const formatted = data.map(f => ({
           numero: f.numero,
@@ -91,7 +95,7 @@ const AjustesMetas = ({
     fetchFiliais();
   }, []);
 
-  // Sincronizar filial selecionada
+  // Sincroniza filial selecionada com userData (só se já tiver salva)
   useEffect(() => {
     if (userData?.filial && filiaisList.length > 0) {
       const found = filiaisList.find(f => f.numero === userData.filial);
@@ -99,7 +103,7 @@ const AjustesMetas = ({
     }
   }, [userData?.filial, filiaisList]);
 
-  // Atualizar formState
+  // Atualiza formState com userData
   useEffect(() => {
     setFormState(prev => ({
       ...prev,
@@ -109,10 +113,13 @@ const AjustesMetas = ({
   }, [userData, diasRestantesCalculados]);
 
   const handleSave = () => {
-    const dadosParaSalvar = {
-      ...formState,
-      filial: selectedFilial?.numero || userData?.filial || null,
-    };
+    const dadosParaSalvar: any = { ...formState };
+
+    // Só salva a filial se for a primeira vez (selectedFilial existe e userData.filial ainda não)
+    if (!userData?.filial && selectedFilial) {
+      dadosParaSalvar.filial = selectedFilial.numero;
+    }
+
     updateUserData(dadosParaSalvar);
     setIsEditing(false);
     setOpenPopover(false);
@@ -179,6 +186,7 @@ const AjustesMetas = ({
 
   return (
     <div className="space-y-6">
+      {/* Cabeçalho com botões */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Ajustes de Metas
@@ -187,7 +195,9 @@ const AjustesMetas = ({
         <div className="flex flex-wrap items-center gap-3">
           {isEditing ? (
             <div className="flex gap-2">
-              <Button onClick={handleSave} className="bg-gradient-to-r from-blue-600 to-indigo-600">Salvar</Button>
+              <Button onClick={handleSave} className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                Salvar
+              </Button>
               <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
             </div>
           ) : (
@@ -196,12 +206,8 @@ const AjustesMetas = ({
             </Button>
           )}
 
-          {/* NOVO BOTÃO MOSTRAR/OCULTAR HISTÓRICO */}
           <div className="flex items-center gap-2">
-            <Switch
-              checked={mostrarHistorico}
-              onCheckedChange={(checked) => setMostrarHistorico(checked)}
-            />
+            <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
             <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
               {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               Histórico
@@ -224,30 +230,53 @@ const AjustesMetas = ({
         </div>
       </div>
 
-      {/* Seleção de filial (primeira vez) */}
+      {/* PRIMEIRA VEZ: Campo obrigatório de filial */}
+      {!userData?.filial && !isEditing && (
+        <Card className="border-2 border-dashed border-red-400 bg-red-50">
+          <CardContent className="pt-6 text-center">
+            <Store className="h-12 w-12 text-red-600 mx-auto mb-3" />
+            <p className="text-lg font-bold text-red-800">
+              Você ainda não selecionou sua filial!
+            </p>
+            <p className="text-sm text-red-700 mt-2">
+              Clique em <strong>Editar</strong> para selecionar sua filial (obrigatório).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {isEditing && !userData?.filial && (
         <Card className="border-2 border-dashed border-blue-400 bg-blue-50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <Store className="h-8 w-8 text-blue-600" />
-              <div className="flex-1 space-y-3">
-                <Label className="text-lg font-bold text-blue-900">Selecione sua Filial (obrigatório)</Label>
+              <Store className="h-10 w-10 text-blue-600" />
+              <div className="flex-1 space-y-4">
+                <Label className="text-xl font-bold text-blue-900">
+                  Selecione sua Filial (obrigatório)
+                </Label>
                 <Popover open={openPopover} onOpenChange={setOpenPopover}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-full justify-between h-14 text-left font-medium">
-                      {selectedFilial ? selectedFilial.label : "Buscar filial..."}
-                      <ChevronsUpDown className="ml-2 h-5 w-5 shrink-0 opacity-60" />
+                    <Button variant="outline" role="combobox" className="w-full justify-between h-14 text-left font-medium text-lg">
+                      {selectedFilial ? selectedFilial.label : "Buscar filial por número, nome ou cidade..."}
+                      <ChevronsUpDown className="ml-2 h-6 w-6 shrink-0 opacity-60" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Digite para buscar..." />
+                      <CommandInput placeholder="Digite para buscar..." className="h-12" />
                       <CommandList>
                         <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
                         <CommandGroup>
                           {filiaisList.map(f => (
-                            <CommandItem key={f.numero} value={`${f.numero} ${f.label}`} onSelect={() => { setSelectedFilial(f); setOpenPopover(false); }}>
-                              <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
+                            <CommandItem
+                              key={f.numero}
+                              value={`${f.numero} ${f.label}`}
+                              onSelect={() => {
+                                setSelectedFilial(f);
+                                setOpenPopover(false);
+                              }}
+                            >
+                              <Check className={`mr-3 h-6 w-6 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
                               {f.label}
                             </CommandItem>
                           ))}
@@ -256,83 +285,46 @@ const AjustesMetas = ({
                     </Command>
                   </PopoverContent>
                 </Popover>
+                {!selectedFilial && (
+                  <p className="text-sm text-red-600 font-medium">
+                    Você precisa selecionar uma filial antes de salvar.
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Filial já definida */}
-      {!isEditing && userData?.filial && selectedFilial && (
+      {/* Filial já definida - Card bonito (fora do modo edição) */}
+      {userData?.filial && selectedFilial && !isEditing && (
         <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="flex items-center gap-5">
-              <Store className="h-12 w-12" />
+              <Store className="h-14 w-14" />
               <div>
                 <p className="text-sm opacity-90">Sua Filial Vinculada</p>
-                <p className="text-2xl font-bold">{selectedFilial.label}</p>
-              </div>
-            </div>
-            <Button variant="secondary" size="lg" onClick={() => setIsEditing(true)} className="bg-white text-blue-700 font-bold">
-              Alterar Filial
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Alterar filial (modo edição) */}
-      {isEditing && userData?.filial && (
-        <Card className="border-2 border-orange-400 bg-orange-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <Store className="h-8 w-8 text-orange-600" />
-              <div className="flex-1 space-y-3">
-                <Label className="text-lg font-bold text-orange-900">Alterar Filial</Label>
-                <Popover open={openPopover} onOpenChange={setOpenPopover}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between h-14 border-orange-300">
-                      {selectedFilial?.label || "Selecionar nova filial..."}
-                      <ChevronsUpDown className="ml-2 h-5 w-5 shrink-0 opacity-60" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Buscar..." />
-                      <CommandList>
-                        <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
-                        <CommandGroup>
-                          {filiaisList.map(f => (
-                            <CommandItem key={f.numero} value={`${f.numero} ${f.label}`} onSelect={() => { setSelectedFilial(f); setOpenPopover(false); }}>
-                              <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
-                              {f.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <p className="text-sm text-orange-700">Filial atual: <strong>{selectedFilial?.label}</strong></p>
+                <p className="text-3xl font-bold">{selectedFilial.label}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* TODOS OS CARDS DE METAS (agora todos aparecem!) */}
+      {/* Grid de metas - TODOS OS CARDS VISÍVEIS */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={true} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditing} />
-        <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={true} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditing} />
-        <CardItem title="Meta do Mês" value={formState.meta_mes} icon={<Target size={16} />} isEditable={true} onChange={(v) => handleChange("meta_mes", v)} color="bg-blue-500" isEditMode={isEditing} />
-        <CardItem title="Vencido Atual" value={formState.vencido_atual} icon={<AlertTriangle size={16} />} isEditable={true} onChange={(v) => handleChange("vencido_atual", v)} color="bg-yellow-500" isEditMode={isEditing} />
-        <CardItem title="Meta Desafio" value={formState.meta_desafio} icon={<Target size={16} />} isEditable={true} onChange={(v) => handleChange("meta_desafio", v)} color="bg-green-500" isEditMode={isEditing} />
+        <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditing} />
+        <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditing} />
+        <CardItem title="Meta do Mês" value={formState.meta_mes} icon={<Target size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_mes", v)} color="bg-blue-500" isEditMode={isEditing} />
+        <CardItem title="Vencido Atual" value={formState.vencido_atual} icon={<AlertTriangle size={16} />} isEditable={isEditing} onChange={(v) => handleChange("vencido_atual", v)} color="bg-yellow-500" isEditMode={isEditing} />
+        <CardItem title="Meta Desafio" value={formState.meta_desafio} icon={<Target size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_desafio", v)} color="bg-green-500" isEditMode={isEditing} />
         {bonusPerdidoAtivado && (
           <>
-            <CardItem title="Meta Perdido" value={formState.meta_perdido} icon={<AlertTriangle size={16} />} isEditable={true} onChange={(v) => handleChange("meta_perdido", v)} color="bg-red-500" isEditMode={isEditing} />
-            <CardItem title="Rec. Perdido" value={formState.rec_perdido} icon={<Wallet size={16} />} isEditable={true} onChange={(v) => handleChange("rec_perdido", v)} color="bg-red-500" isEditMode={isEditing} />
+            <CardItem title="Meta Perdido" value={formState.meta_perdido} icon={<AlertTriangle size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_perdido", v)} color="bg-red-500" isEditMode={isEditing} />
+            <CardItem title="Rec. Perdido" value={formState.rec_perdido} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("rec_perdido", v)} color="bg-red-500" isEditMode={isEditing} />
           </>
         )}
-        <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={true} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditing} />
+        <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditing} />
 
         <Card className="shadow-sm bg-gray-500 bg-opacity-50">
           <CardContent className="p-4 space-y-4">
