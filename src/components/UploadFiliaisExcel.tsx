@@ -35,7 +35,14 @@ const UploadFiliaisExcel = () => {
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: "binary" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet, { defval: null });
+        
+        // Força o cabeçalho correto (seu arquivo tem exatamente esses nomes)
+        const json = XLSX.utils.sheet_to_json(sheet, {
+          header: ["idfilial", "filial", "uf", "cidade", "praca", "regional", "qtd_cidade"],
+          range: 1 // pula a primeira linha (cabeçalho do Excel)
+        });
+
+        console.log("Primeiras 3 linhas lidas:", json.slice(0, 3));
 
         let success = 0;
         let error = 0;
@@ -45,16 +52,8 @@ const UploadFiliaisExcel = () => {
         for (let i = 0; i < json.length; i++) {
           const row = json[i] as any;
 
-          // Seu arquivo tem exatamente esses nomes (minúsculo)
           const idfilial = Number(row.idfilial);
-          const filial = String(row.filial || "").trim();
-          const uf = String(row.uf || "").trim().toUpperCase();
-          const cidade = String(row.cidade || "").trim();
-          const praca = String(row.praca || "").trim();
-          const regional = String(row.regional || "").trim();
-          const qtd_cidade = Number(row.qtd_cidade || 1);
 
-          // Validação simples
           if (!idfilial || isNaN(idfilial) || idfilial < 10000) {
             error++;
             continue;
@@ -62,12 +61,12 @@ const UploadFiliaisExcel = () => {
 
           batch.push({
             IDfilial: idfilial,
-            Filial: filial || `Filial ${idfilial}`,
-            UF: uf,
-            Cidade: cidade,
-            praca: praca,
-            Regional: regional,
-            qtd_cidade: qtd_cidade > 0 ? qtd_cidade : 1,
+            Filial: String(row.filial || "").trim(),
+            UF: String(row.uf || "").trim().toUpperCase(),
+            Cidade: String(row.cidade || "").trim(),
+            praca: String(row.praca || "").trim(),
+            Regional: String(row.regional || "").trim(),
+            qtd_cidade: Number(row.qtd_cidade) || 1,
             ativo: true
           });
 
@@ -77,7 +76,7 @@ const UploadFiliaisExcel = () => {
               .upsert(batch, { onConflict: "IDfilial" });
 
             if (upsertError) {
-              console.error("Erro no Supabase:", upsertError);
+              console.error("Erro Supabase:", upsertError);
               error += batch.length;
             } else {
               success += batch.length;
@@ -92,12 +91,12 @@ const UploadFiliaisExcel = () => {
           success,
           error,
           message: success > 0
-            ? `SUCESSO TOTAL! ${success} filiais importadas com sucesso!`
-            : `Nenhuma filial importada. Verifique o arquivo.`
+            ? `PARABÉNS! ${success} filiais importadas com sucesso!`
+            : `Nenhuma filial importada. Erros: ${error}`
         });
 
       } catch (err) {
-        console.error("Erro:", err);
+        console.error("Erro fatal:", err);
         setResult({ message: "Erro ao processar o arquivo." });
       } finally {
         setUploading(false);
@@ -109,26 +108,23 @@ const UploadFiliaisExcel = () => {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-2xl">
-      <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <CardTitle className="flex items-center gap-4 text-3xl">
-          <Upload className="h-12 w-12" />
-          Importar Base de Filiais
+    <Card className="w-full max-w-4xl mx-auto shadow-2xl border-4 border-purple-600">
+      <CardHeader className="bg-gradient-to-r from-purple-700 to-blue-700 text-white text-center">
+        <CardTitle className="text-4xl font-bold flex items-center justify-center gap-4">
+          <Upload className="h-16 w-16" />
+          IMPORTAR FILIAIS
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-10 space-y-8">
-        <div className="space-y-3">
-          <Label className="text-lg">Selecione seu arquivo Excel</Label>
-          <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} disabled={uploading} className="text-lg" />
-          <p className="text-sm text-green-600 font-bold">
-            Seu arquivo está no formato correto! (idfilial, filial, uf, cidade, praca, etc)
-          </p>
+      <CardContent className="p-12 space-y-10">
+        <div className="text-center">
+          <Label className="text-2xl">Selecione seu arquivo Excel</Label>
+          <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} disabled={uploading} className="mt-4 text-lg" />
         </div>
 
         {file && (
-          <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
-            <p className="text-lg font-bold text-blue-800">
-              Arquivo carregado: <span className="text-purple-700">{file.name}</span>
+          <div className="p-6 bg-green-50 border-4 border-green-400 rounded-xl text-center">
+            <p className="text-2xl font-bold text-green-800">
+              PRONTO! Arquivo carregado: <span className="text-purple-700">{file.name}</span>
             </p>
           </div>
         )}
@@ -137,22 +133,27 @@ const UploadFiliaisExcel = () => {
           onClick={handleUpload}
           disabled={!file || uploading}
           size="lg"
-          className="w-full h-16 text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+          className="w-full h-20 text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-2xl"
         >
-          {uploading ? `Importando... ${Math.round(progress)}%` : "IMPORTAR TODAS AS FILIAIS"}
+          {uploading ? `IMPORTANDO... ${Math.round(progress)}%` : "IMPORTAR TODAS AS 378 FILIAIS AGORA"}
         </Button>
 
-        {uploading && <Progress value={progress} className="h-8" />}
+        {uploading && <Progress value={progress} className="h-10" />}
 
         {result.message && (
-          <div className={`p-10 rounded-2xl text-center text-3xl font-bold border-4 ${result.success! > 0 ? "bg-green-100 border-green-600 text-green-800" : "bg-red-100 border-red-600 text-red-800"}`}>
+          <div className={`p-12 rounded-3xl text-center text-4xl font-bold border-8 ${result.success! > 0 ? "bg-green-100 border-green-600 text-green-800" : "bg-red-100 border-red-600 text-red-800"}`}>
             {result.success! > 0 ? (
-              <CheckCircle className="h-20 w-20 mx-auto mb-6 text-green-600" />
+              <>
+                <CheckCircle className="h-32 w-32 mx-auto mb-6 text-green-600" />
+                <p>{result.message}</p>
+                <p className="text-6xl mt-6 animate-bounce">SUCESSO TOTAL!</p>
+              </>
             ) : (
-              <AlertCircle className="h-20 w-20 mx-auto mb-6 text-red-600" />
+              <>
+                <AlertCircle className="h-32 w-32 mx-auto mb-6 text-red-600" />
+                <p>{result.message}</p>
+              </>
             )}
-            <p>{result.message}</p>
-            {result.success! > 0 && <p className="text-5xl mt-4">PARABÉNS!</p>}
           </div>
         )}
       </CardContent>
