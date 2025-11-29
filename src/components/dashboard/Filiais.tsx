@@ -37,7 +37,9 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return <p className="text-center text-xl">Carregando Filiais %...</p>;
+  if (loading) {
+    return <p className="text-center text-xl py-20">Carregando Filiais %...</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -89,11 +91,13 @@ const Filiais = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>R$ {f.total_vencido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                        <span className="font-bold text-lg">{f.pct_fiado}%</span>
+                        <span className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</span>
                       </div>
-                      <Progress value={f.pct_fiado} className="h-4" 
-                        indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 90 ? "bg-yellow-500" : f.pct_fiado >= 70 ? "bg-orange-500" : "bg-red-500"} />
-                      <p className="text-xs text-gray-600">Meta: R$ {f.total_meta_fiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                      <Progress value={f.pct_fiado} className="h-5"
+                        indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
+                      <p className="text-xs text-gray-600">
+                        Meta: R$ {f.total_meta_fiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </p>
                     </div>
                   </td>
 
@@ -101,9 +105,9 @@ const Filiais = () => {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Zap className="h-5 w-5 text-yellow-500" />
-                        <span className="font-bold text-lg">{f.pct_desafio}%</span>
+                        <span className="font-bold text-lg">{f.pct_desafio.toFixed(2)}%</span>
                       </div>
-                      <Progress value={f.pct_desafio} className="h-4" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
+                      <Progress value={f.pct_desafio} className="h-5" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
                     </div>
                   </td>
                 </tr>
