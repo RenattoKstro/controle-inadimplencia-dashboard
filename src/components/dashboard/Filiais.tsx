@@ -92,7 +92,7 @@ const Filiais = () => {
               </tr>
             ) : (
               dadosFiltrados.map((f, i) => {
-                // CÁLCULO 100% CORRETO: BATE 100% QUANDO VENCIDO >= META
+                // CÁLCULO 100% CORRETO E HONESTO
                 const fiadoBateu = f.total_vencido >= f.total_meta_fiado;
                 const desafioBateu = f.total_vencido >= f.total_meta_desafio;
 
@@ -121,7 +121,7 @@ const Filiais = () => {
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
                         <p className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</p>
-                        <Progress value={f.pct_fiado} className="h-3"
+                        <Progress value={Math.min(f.pct_fiado, 150)} className="h-3"
                           indicatorClassName={fiadoBateu ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
                         
                         {fiadoBateu ? (
@@ -143,7 +143,7 @@ const Filiais = () => {
                           <Zap className="h-4 w-4 text-yellow-500" />
                           {f.pct_desafio.toFixed(2)}%
                         </p>
-                        <Progress value={f.pct_desafio} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
+                        <Progress value={Math.min(f.pct_desafio, 150)} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
                         
                         {desafioBateu ? (
                           <p className="text-xs font-bold text-green-600 flex items-center justify-center gap-1">
