@@ -64,12 +64,14 @@ const Filiais = () => {
           f.meta_desafio = Number(f.meta_desafio.toFixed(2));
         });
 
-        // ORDEM CORRETA: quem tem maior % da meta fiado vem primeiro
-        lista.sort((a, b) => {
-          const pctA = a.vencido_atual > 0 ? (a.meta_mes / a.vencido_atual) * 100 : 0;
-          const pctB = b.vencido_atual > 0 ? (b.meta_mes / b.vencido_atual) * 100 : 0;
-          return pctB - pctA;
+        // CÁLCULO CORRETO E SEGURO (evita Infinity/NaN)
+        lista.forEach(f => {
+          f.pct_fiado = f.vencido_atual > 0 ? (f.meta_mes / f.vencido_atual) * 100 : 0;
+          f.pct_desafio = f.vencido_atual > 0 ? (f.meta_desafio / f.vencido_atual) * 100 : 0;
         });
+
+        // Ordena por Meta Fiado
+        lista.sort((a, b) => b.pct_fiado - a.pct_fiado);
 
         setFiliais(lista);
       } catch (err) {
@@ -84,7 +86,18 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return <p className="text-center text-xl">Carregando Filiais %...</p>;
+  if (loading) {
+    return <p className="text-center text-xl">Carregando Filiais %...</p>;
+  }
+
+  if (filiais.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <Store className="h-20 w-20 mx-auto text-gray-400 mb-4" />
+        <p className="text-xl text-gray-600">Nenhuma filial com meta cadastrada ainda.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -108,59 +121,45 @@ const Filiais = () => {
             </tr>
           </thead>
           <tbody>
-            {filiais.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="text-center py-16 text-gray-500">
-                  <Store className="h-20 w-20 mx-auto mb-4" />
-                  <p className="text-xl">Nenhuma filial com meta ainda.</p>
+            {filiais.map((f, i) => (
+              <tr key={f.idfilial} className="border-b hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    {i < 3 && (
+                      <Trophy className={`h-6 w-6 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
+                    )}
+                    <span className="text-lg font-bold">{i + 1}º</span>
+                  </div>
+                </td>
+
+                <td className="px-6 py-4">
+                  <p className="font-semibold text-lg">{f.filial}</p>
+                  <p className="text-sm text-gray-600">{f.regional}</p>
+                </td>
+
+                <td className="px-6 py-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>R$ {f.vencido_atual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      <span className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</span>
+                    </div>
+                    <Progress value={Math.min(f.pct_fiado, 120)} className="h-4"
+                      indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
+                    <p className="text-xs text-gray-600">Meta: R$ {f.meta_mes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                  </div>
+                </td>
+
+                <td className="px-6 py-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-yellow-500" />
+                      <span className="font-bold text-lg">{f.pct_desafio.toFixed(2)}%</span>
+                    </div>
+                    <Progress value={Math.min(f.pct_desafio, 120)} className="h-4" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
+                  </div>
                 </td>
               </tr>
-            ) : (
-              filiais.map((f, i) => {
-                const pctFiado = f.vencido_atual > 0 ? (f.meta_mes / f.vencido_atual) * 100 : 0;
-                const pctDesafio = f.vencido_atual > 0 ? (f.meta_desafio / f.vencido_atual) * 100 : 0;
-
-                return (
-                  <tr key={f.idfilial} className="border-b hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {i < 3 && (
-                          <Trophy className={`h-6 w-6 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
-                        )}
-                        <span className="text-lg font-bold">{i + 1}º</span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-lg">{f.filial}</p>
-                      <p className="text-sm text-gray-600">{f.regional}</p>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>R$ {f.vencido_atual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                          <span className="font-bold text-lg">{pctFiado.toFixed(2)}%</span>
-                        </div>
-                        <Progress value={pctFiado} className="h-4"
-                          indicatorClassName={pctFiado >= 100 ? "bg-green-500" : pctFiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
-                        <p className="text-xs text-gray-600">Meta: R$ {f.meta_mes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-5 w-5 text-yellow-500" />
-                          <span className="font-bold text-lg">{pctDesafio.toFixed(2)}%</span>
-                        </div>
-                        <Progress value={pctDesafio} className="h-4" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
+            ))}
           </tbody>
         </table>
       </div>
