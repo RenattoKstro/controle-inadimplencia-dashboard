@@ -35,9 +35,9 @@ const UploadFiliaisExcel = () => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
+        const json = XLSX.utils.sheet_to_json(sheet, { raw: false });
 
-        console.log("Primeiras 3 linhas lidas do .XLSX:", json.slice(0, 3));
+        console.log("Primeiras 3 linhas lidas:", json.slice(0, 3));
 
         let success = 0;
         let error = 0;
@@ -47,40 +47,27 @@ const UploadFiliaisExcel = () => {
         for (let i = 0; i < json.length; i++) {
           const row = json[i] as any;
 
-          // Busca o campo idfilial em QUALQUER variação possível
-          let idfilial = null;
+          // Converte todas as chaves para minúsculo pra facilitar
+          const rowLower: any = {};
           for (const key in row) {
-            if (key.toLowerCase().includes("idfilial") || key.toLowerCase().includes("id filial")) {
-              idfilial = Number(row[key]);
-              break;
-            }
+            rowLower[key.toLowerCase()] = row[key];
           }
+
+          const idfilial = Number(rowLower["idfilial"]);
 
           if (!idfilial || isNaN(idfilial) || idfilial < 10000) {
             error++;
             continue;
           }
 
-          // Pega os outros campos de forma flexível
-          const getValue = (keys: string[]) => {
-            for (const k of keys) {
-              for (const key in row) {
-                if (key.toLowerCase().includes(k.toLowerCase())) {
-                  return row[key];
-                }
-              }
-            }
-            return "";
-          };
-
           batch.push({
             IDfilial: idfilial,
-            Filial: String(getValue(["filial"]) || `Filial ${idfilial}`).trim(),
-            UF: String(getValue(["uf", "estado"]) || "").trim().toUpperCase(),
-            Cidade: String(getValue(["cidade"]) || "").trim(),
-            praca: String(getValue(["praca", "praça"]) || "").trim(),
-            Regional: String(getValue(["regional"]) || "").trim(),
-            qtd_cidade: Number(getValue(["qtd_cidade", "qtdcidade"]) || 1) || 1,
+            Filial: String(rowLower["filial"] || `Filial ${idfilial}`).trim(),
+            UF: String(rowLower["uf"] || "").trim().toUpperCase(),
+            Cidade: String(rowLower["cidade"] || "").trim(),
+            praca: String(rowLower["praca"] || "").trim(),
+            Regional: String(rowLower["regional"] || "").trim(),
+            qtd_cidade: Number(rowLower["qtd_cidade"] || 1) || 1,
             ativo: true
           });
 
@@ -90,7 +77,7 @@ const UploadFiliaisExcel = () => {
               .upsert(batch, { onConflict: "IDfilial" });
 
             if (upsertError) {
-              console.error("Erro Supabase:", upsertError);
+              console.error("Erro no Supabase:", upsertError);
               error += batch.length;
             } else {
               success += batch.length;
@@ -105,13 +92,13 @@ const UploadFiliaisExcel = () => {
           success,
           error,
           message: success > 0
-            ? `PARABÉNS! ${success} filiais importadas com sucesso!`
-            : `Nenhuma filial importada. ${error} linhas sem IDfilial válido.`
+            ? `SUCESSO TOTAL! ${success} filiais importadas com sucesso!`
+            : `Nenhuma filial importada. ${error} linhas sem idfilial válido.`
         });
 
       } catch (err) {
         console.error("Erro fatal:", err);
-        setResult({ message: "Erro ao ler o arquivo .XLSX" });
+        setResult({ message: "Erro ao processar o arquivo." });
       } finally {
         setUploading(false);
         setProgress(0);
@@ -138,7 +125,7 @@ const UploadFiliaisExcel = () => {
         {file && (
           <div className="p-8 bg-green-100 border-4 border-green-600 rounded-2xl text-center">
             <p className="text-4xl font-bold text-green-800">
-              ARQUIVO PRONTO: <span className="text-purple-700">{file.name}</span>
+              ARQUIVO CARREGADO: <span className="text-purple-700">{file.name}</span>
             </p>
           </div>
         )}
@@ -160,7 +147,7 @@ const UploadFiliaisExcel = () => {
               <>
                 <CheckCircle className="h-32 w-32 mx-auto mb-8 text-green-600" />
                 <p>{result.message}</p>
-                <p className="text-7xl mt-8 animate-pulse">SUCESSO TOTAL!</p>
+                <p className="text-7xl mt-8 animate-bounce">SUCESSO TOTAL!</p>
               </>
             ) : (
               <>
