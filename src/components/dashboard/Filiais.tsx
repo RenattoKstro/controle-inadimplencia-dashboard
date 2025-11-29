@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Target, Zap, Store } from "lucide-react";
+import { Trophy, Target, Zap, Store, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RankingFilial {
@@ -24,10 +24,7 @@ const Filiais = () => {
 
   useEffect(() => {
     const fetchRanking = async () => {
-      const { data, error } = await supabase
-        .from("vw_ranking_filiais")
-        .select("*");
-
+      const { data, error } = await supabase.from("vw_ranking_filiais").select("*");
       if (!error && data) {
         const lista = data as RankingFilial[];
         const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
@@ -74,7 +71,7 @@ const Filiais = () => {
         </Select>
       </div>
 
-      {/* LISTA ULTRA COMPACTA */}
+      {/* LISTA COMPACTA E PERFEITA */}
       <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
@@ -95,12 +92,11 @@ const Filiais = () => {
               </tr>
             ) : (
               dadosFiltrados.map((f, i) => {
-                // Valor restante pra bater 100%
-                const restanteFiado = f.total_meta_fiado > f.total_vencido
+                const faltaFiado = f.total_meta_fiado > f.total_vencido
                   ? f.total_meta_fiado - f.total_vencido
                   : 0;
 
-                const restanteDesafio = f.total_meta_desafio > f.total_vencido
+                const faltaDesafio = f.total_meta_desafio > f.total_vencido
                   ? f.total_meta_desafio - f.total_vencido
                   : 0;
 
@@ -128,9 +124,15 @@ const Filiais = () => {
                         <p className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</p>
                         <Progress value={f.pct_fiado} className="h-3"
                           indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
-                        {restanteFiado > 0 && (
-                          <p className="text-xs text-red-600 font-medium">
-                            Faltam R$ {restanteFiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        
+                        {/* FALTA OU OK */}
+                        {faltaFiado > 0 ? (
+                          <p className="text-xs font-bold text-red-600">
+                            Faltam R$ {faltaFiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </p>
+                        ) : (
+                          <p className="text-xs font-bold text-green-600 flex items-center justify-center gap-1">
+                            <CheckCircle className="h-4 w-4" /> OK
                           </p>
                         )}
                       </div>
@@ -144,9 +146,15 @@ const Filiais = () => {
                           {f.pct_desafio.toFixed(2)}%
                         </p>
                         <Progress value={f.pct_desafio} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
-                        {restanteDesafio > 0 && (
-                          <p className="text-xs text-orange-600 font-medium">
-                            Faltam R$ {restanteDesafio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        
+                        {/* FALTA OU OK */}
+                        {faltaDesafio > 0 ? (
+                          <p className="text-xs font-bold text-orange-600">
+                            Faltam R$ {faltaDesafio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </p>
+                        ) : (
+                          <p className="text-xs font-bold text-green-600 flex items-center justify-center gap-1">
+                            <CheckCircle className="h-4 w-4" /> OK
                           </p>
                         )}
                       </div>
