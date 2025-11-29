@@ -31,67 +31,71 @@ const UploadFiliaisExcel = () => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: "binary" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
         let success = 0;
         let error = 0;
         const batchSize = 100;
         const batch: any[] = [];
 
-        for (const row of json) {
-          const r = row as any;
-          const idfilial = Number(r.idfilial);
+        for (let i = 0; i < json.length; i++) {
+          const row = json[i] as any;
 
-          if (!idfilial || isNaN(idfilial)) {
+          // Converte todas as chaves para minúsculo e remove espaços/aspas
+          const cleanRow: any = {};
+          for (const key in row) {
+            const cleanKey = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+            cleanRow[cleanKey] = String(row[key]).trim();
+          }
+
+          const idfilial = Number(cleanRow["idfilial"] || cleanRow["id"] || cleanRow["filial"]);
+
+          if (!idfilial || isNaN(idfilial) || idfilial < 10000) {
             error++;
             continue;
           }
 
           batch.push({
             idfilial: idfilial,
-            filial: String(r.filial || "").trim(),
-            uf: String(r.uf || "").trim().toUpperCase(),
-            cidade: String(r.cidade || "").trim(),
-            praca: String(r.praca || "").trim(),
-            regional: String(r.regional || "").trim(),
-            qtd_cidade: Number(r.qtd_cidade) || 1,
-            ativo: true,
+            filial: cleanRow["filial"] || `Filial ${idfilial}`,
+            uf: (cleanRow["uf"] || "").toUpperCase(),
+            cidade: cleanRow["cidade"] || "",
+            praca: cleanRow["praca"] || "",
+            regional: cleanRow["regional"] || "",
+            qtd_cidade: Number(cleanRow["qtdcidade"] || cleanRow["qtd_cidade"] || 1) || 1,
+            ativo: true
           });
 
-          if (batch.length === batchSize) {
+          if (batch.length === batchSize || i === json.length - 1) {
             const { error: err } = await supabase
               .from("filiais")
               .upsert(batch, { onConflict: "idfilial" });
 
-            if (err) error += batch.length;
-            else success += batch.length;
-
-            setProgress((success + error) / json.length * 100);
+            if (err) {
+              console.error("Erro Supabase:", err);
+              error += batch.length;
+            } else {
+              success += batch.length;
+            }
+            setProgress(((i + 1) / json.length) * 100);
             batch.length = 0;
           }
         }
 
-        // último lote
-        if (batch.length > 0) {
-          const { error: err } = await supabase
-            .from("filiais")
-            .upsert(batch, { onConflict: "idfilial" });
-          if (err) error += batch.length;
-          else success += batch.length;
-        }
-
         setResult(`SUCESSO! ${success} filiais importadas. ${error} ignoradas.`);
+
       } catch (err) {
+        console.error(err);
         setResult("Erro ao processar o arquivo.");
       } finally {
         setUploading(false);
       }
     };
 
-    reader.readAsArrayBuffer(file);
+    reader.readAsBinaryString(file);
   };
 
   return (
@@ -99,18 +103,19 @@ const UploadFiliaisExcel = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-2xl">
           <Upload className="h-8 w-8" />
-          Importar Filiais
+          Importar Filiais (ACEITA QUALQUER ARQUIVO)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} disabled={uploading} />
-        {file && <p className="text-sm font-medium">Arquivo: {file.name}</p>}
+        <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} disabled={uploading} />
+        {file && <p className="text-green-600 font-bold">Arquivo carregado: {file.name}</p>}
         <Button onClick={handleUpload} disabled={!file || uploading} className="w-full" size="lg">
           {uploading ? `Importando... ${Math.round(progress)}%` : "IMPORTAR AGORA"}
         </Button>
         {uploading && <Progress value={progress} />}
         {result && (
-          <div className={`p-4 rounded-lg text-center font-bold text-lg ${result.includes("SUCESSO") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+          <div className={`p-6 text-center text-xl font-bold rounded-lg ${result.includes("SUCESSO") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+            <CheckCircle className="h-12 w-12 mx-auto mb-3 text-green-600" />
             {result}
           </div>
         )}
