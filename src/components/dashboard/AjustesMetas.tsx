@@ -88,7 +88,7 @@ const AjustesMetas = ({
   const fetchFiliais = async () => {
     const { data, error } = await supabase
       .from("filiais")
-      .select("idfilial, filial, cidade, uf")  // ← tudo minúsculo, sem aspas
+      .select("idfilial, filial, regional")
       .eq("ativo", true)
       .order("idfilial");
 
@@ -97,13 +97,13 @@ const AjustesMetas = ({
       return;
     }
 
-    if (data) {
+    if (data && data.length > 0) {
       const formatted = data.map((f: any) => ({
         numero: f.idfilial,
-        label: `${String(f.idfilial).padStart(5, "0")} - ${f.filial} - ${f.cidade}/${f.uf || "PR"}`,
+        label: `${f.idfilial} - ${f.filial} (${f.regional || "Sem regional"})`,
       }));
       setFiliaisList(formatted);
-      console.log("Filiais carregadas:", formatted); // ← você vai ver no console!
+      console.log("Filiais carregadas com regional:", formatted);
     }
   };
 
