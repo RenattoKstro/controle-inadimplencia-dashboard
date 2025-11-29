@@ -92,14 +92,12 @@ const Filiais = () => {
               </tr>
             ) : (
               dadosFiltrados.map((f, i) => {
-                // CÁLCULO CORRETO DO QUE FALTA
-                const faltaFiado = f.total_vencido < f.total_meta_fiado
-                  ? f.total_meta_fiado - f.total_vencido
-                  : 0;
+                // CÁLCULO 100% CORRETO: BATE 100% QUANDO VENCIDO >= META
+                const fiadoBateu = f.total_vencido >= f.total_meta_fiado;
+                const desafioBateu = f.total_vencido >= f.total_meta_desafio;
 
-                const faltaDesafio = f.total_vencido < f.total_meta_desafio
-                  ? f.total_meta_desafio - f.total_vencido
-                  : 0;
+                const faltaFiado = fiadoBateu ? 0 : f.total_meta_fiado - f.total_vencido;
+                const faltaDesafio = desafioBateu ? 0 : f.total_meta_desafio - f.total_vencido;
 
                 return (
                   <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
@@ -124,15 +122,15 @@ const Filiais = () => {
                       <div className="space-y-1">
                         <p className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</p>
                         <Progress value={f.pct_fiado} className="h-3"
-                          indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
+                          indicatorClassName={fiadoBateu ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
                         
-                        {faltaFiado > 0 ? (
-                          <p className="text-xs font-bold text-red-600">
-                            Faltam R$ {faltaFiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </p>
-                        ) : (
+                        {fiadoBateu ? (
                           <p className="text-xs font-bold text-green-600 flex items-center justify-center gap-1">
                             <CheckCircle className="h-4 w-4" /> OK
+                          </p>
+                        ) : (
+                          <p className="text-xs font-bold text-red-600">
+                            Faltam R$ {faltaFiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </p>
                         )}
                       </div>
@@ -147,13 +145,13 @@ const Filiais = () => {
                         </p>
                         <Progress value={f.pct_desafio} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
                         
-                        {faltaDesafio > 0 ? (
-                          <p className="text-xs font-bold text-orange-600">
-                            Faltam R$ {faltaDesafio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </p>
-                        ) : (
+                        {desafioBateu ? (
                           <p className="text-xs font-bold text-green-600 flex items-center justify-center gap-1">
                             <CheckCircle className="h-4 w-4" /> OK
+                          </p>
+                        ) : (
+                          <p className="text-xs font-bold text-orange-600">
+                            Faltam R$ {faltaDesafio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </p>
                         )}
                       </div>
