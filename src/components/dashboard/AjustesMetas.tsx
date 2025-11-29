@@ -84,25 +84,31 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
-  // Carrega filiais do Supabase (usando suas colunas exatas)
-  useEffect(() => {
-    const fetchFiliais = async () => {
-      const { data } = await supabase
-        .from("filiais")
-        .select("idfilial, filial, cidade, uf")
-        .eq("ativo", true)
-        .order("idfilial");
+  // Dentro de AjustesMetas.tsx — SUBSTITUA o useEffect que carrega filiais
+useEffect(() => {
+  const fetchFiliais = async () => {
+    const { data, error } = await supabase
+      .from("filiais")
+      .select('"IDfilial", "Filial", "Cidade", "UF"')  // ← ASPAS DUPLAS OBRIGATÓRIAS
+      .eq("ativo", true)
+      .order("IDfilial", { ascending: true });
 
-      if (data) {
-        const formatted = data.map((f) => ({
-          numero: f.idfilial,
-          label: `${String(f.idfilial).padStart(3, "0")} - ${f.Filial} - ${f.Cidade}/${f.UF || "PR"}`,
-        }));
-        setFiliaisList(formatted);
-      }
-    };
-    fetchFiliais();
-  }, []);
+    if (error) {
+      console.error("Erro ao carregar filiais:", error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const formatted = data.map((f: any) => ({
+        numero: f.IDfilial,
+        label: `${String(f.IDfilial).padStart(5, "0")} - ${f.Filial} - ${f.Cidade}/${f.UF || "PR"}`,
+      }));
+      setFiliaisList(formatted);
+    }
+  };
+
+  fetchFiliais();
+}, []);
 
   // Sincroniza filial selecionada com userData (só se já tiver salva)
   useEffect(() => {
