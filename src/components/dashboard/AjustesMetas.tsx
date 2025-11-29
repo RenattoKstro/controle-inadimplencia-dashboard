@@ -84,26 +84,26 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
-  // Dentro de AjustesMetas.tsx — SUBSTITUA o useEffect que carrega filiais
-useEffect(() => {
+  useEffect(() => {
   const fetchFiliais = async () => {
     const { data, error } = await supabase
       .from("filiais")
-      .select('"IDfilial", "Filial", "Cidade", "UF"')  // ← ASPAS DUPLAS OBRIGATÓRIAS
+      .select("idfilial, filial, cidade, uf")  // ← tudo minúsculo, sem aspas
       .eq("ativo", true)
-      .order("IDfilial", { ascending: true });
+      .order("idfilial");
 
     if (error) {
       console.error("Erro ao carregar filiais:", error);
       return;
     }
 
-    if (data && data.length > 0) {
+    if (data) {
       const formatted = data.map((f: any) => ({
-        numero: f.IDfilial,
-        label: `${String(f.IDfilial).padStart(5, "0")} - ${f.Filial} - ${f.Cidade}/${f.UF || "PR"}`,
+        numero: f.idfilial,
+        label: `${String(f.idfilial).padStart(5, "0")} - ${f.filial} - ${f.cidade}/${f.uf || "PR"}`,
       }));
       setFiliaisList(formatted);
+      console.log("Filiais carregadas:", formatted); // ← você vai ver no console!
     }
   };
 
