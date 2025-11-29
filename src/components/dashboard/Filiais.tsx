@@ -71,7 +71,7 @@ const Filiais = () => {
         </Select>
       </div>
 
-      {/* LISTA COMPACTA E PERFEITA */}
+      {/* LISTA COMPACTA */}
       <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
@@ -92,11 +92,12 @@ const Filiais = () => {
               </tr>
             ) : (
               dadosFiltrados.map((f, i) => {
-                const faltaFiado = f.total_meta_fiado > f.total_vencido
+                // CÁLCULO CORRETO DO QUE FALTA
+                const faltaFiado = f.total_vencido < f.total_meta_fiado
                   ? f.total_meta_fiado - f.total_vencido
                   : 0;
 
-                const faltaDesafio = f.total_meta_desafio > f.total_vencido
+                const faltaDesafio = f.total_vencido < f.total_meta_desafio
                   ? f.total_meta_desafio - f.total_vencido
                   : 0;
 
@@ -125,7 +126,6 @@ const Filiais = () => {
                         <Progress value={f.pct_fiado} className="h-3"
                           indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
                         
-                        {/* FALTA OU OK */}
                         {faltaFiado > 0 ? (
                           <p className="text-xs font-bold text-red-600">
                             Faltam R$ {faltaFiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -147,7 +147,6 @@ const Filiais = () => {
                         </p>
                         <Progress value={f.pct_desafio} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
                         
-                        {/* FALTA OU OK */}
                         {faltaDesafio > 0 ? (
                           <p className="text-xs font-bold text-orange-600">
                             Faltam R$ {faltaDesafio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
