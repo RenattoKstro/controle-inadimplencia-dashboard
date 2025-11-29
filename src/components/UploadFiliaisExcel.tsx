@@ -42,37 +42,34 @@ const UploadFiliaisExcel = () => {
         const batchSize = 100;
         const batch: any[] = [];
 
-        const findColumn = (row: any, names: string[]) => {
-          for (const name of names) {
-            const found = Object.keys(row).find(k => k.trim().toLowerCase() === name.toLowerCase());
-            if (found) return row[found];
-          }
-          return null;
-        };
-
         for (let i = 0; i < json.length; i++) {
           const row = json[i] as any;
 
-          const idRaw = findColumn(row, ["IDfilial", "idfilial", "IDFilial", "filial", "loja", "numero"]);
-          const idfilial = Number(idRaw);
+          // Seu arquivo tem exatamente esses nomes (minúsculo)
+          const idfilial = Number(row.idfilial);
+          const filial = String(row.filial || "").trim();
+          const uf = String(row.uf || "").trim().toUpperCase();
+          const cidade = String(row.cidade || "").trim();
+          const praca = String(row.praca || "").trim();
+          const regional = String(row.regional || "").trim();
+          const qtd_cidade = Number(row.qtd_cidade || 1);
 
-          if (!idfilial || isNaN(idfilial) || idfilial <= 0) {
+          // Validação simples
+          if (!idfilial || isNaN(idfilial) || idfilial < 10000) {
             error++;
             continue;
           }
 
-          const registro = {
+          batch.push({
             IDfilial: idfilial,
-            Filial: String(findColumn(row, ["Filial", "filial", "nome", "nome_filial"]) || "Sem nome").trim(),
-            UF: String(findColumn(row, ["UF", "uf", "estado"]) || "").trim().toUpperCase(),
-            Cidade: String(findColumn(row, ["Cidade", "cidade"]) || "").trim(),
-            praca: String(findColumn(row, ["Praça", "praca", "Praça ", "praca ", "praca"]) || "").trim(), // ← agora é "praca"
-            Regional: String(findColumn(row, ["Regional", "regional"]) || "").trim(),
-            qtd_cidade: Number(findColumn(row, ["qtd_cidade", "qtdcidade", "quantidade_cidade"]) || 1) || 1,
+            Filial: filial || `Filial ${idfilial}`,
+            UF: uf,
+            Cidade: cidade,
+            praca: praca,
+            Regional: regional,
+            qtd_cidade: qtd_cidade > 0 ? qtd_cidade : 1,
             ativo: true
-          };
-
-          batch.push(registro);
+          });
 
           if (batch.length === batchSize || i === json.length - 1) {
             const { error: upsertError } = await supabase
@@ -80,7 +77,7 @@ const UploadFiliaisExcel = () => {
               .upsert(batch, { onConflict: "IDfilial" });
 
             if (upsertError) {
-              console.error("Erro no lote:", upsertError);
+              console.error("Erro no Supabase:", upsertError);
               error += batch.length;
             } else {
               success += batch.length;
@@ -94,12 +91,14 @@ const UploadFiliaisExcel = () => {
         setResult({
           success,
           error,
-          message: `Importação concluída com sucesso! ${success} filiais importadas/atualizadas. ${error > 0 ? `${error} linhas ignoradas (IDfilial inválido).` : ""}`
+          message: success > 0
+            ? `SUCESSO TOTAL! ${success} filiais importadas com sucesso!`
+            : `Nenhuma filial importada. Verifique o arquivo.`
         });
 
       } catch (err) {
-        console.error("Erro fatal:", err);
-        setResult({ message: "Erro ao processar o arquivo. Verifique o formato." });
+        console.error("Erro:", err);
+        setResult({ message: "Erro ao processar o arquivo." });
       } finally {
         setUploading(false);
         setProgress(0);
@@ -110,38 +109,50 @@ const UploadFiliaisExcel = () => {
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-3 text-2xl">
-          <Upload className="h-8 w-8" />
-          Importar Base de Filiais (Excel)
+    <Card className="w-full max-w-4xl mx-auto shadow-2xl">
+      <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <CardTitle className="flex items-center gap-4 text-3xl">
+          <Upload className="h-12 w-12" />
+          Importar Base de Filiais
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label>Arquivo Excel (.xlsx)</Label>
-          <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} disabled={uploading} />
-          <p className="text-sm text-green-600 font-medium">
-            Funciona com qualquer nome de coluna (com ou sem acento, maiúscula/minúscula)
+      <CardContent className="p-10 space-y-8">
+        <div className="space-y-3">
+          <Label className="text-lg">Selecione seu arquivo Excel</Label>
+          <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} disabled={uploading} className="text-lg" />
+          <p className="text-sm text-green-600 font-bold">
+            Seu arquivo está no formato correto! (idfilial, filial, uf, cidade, praca, etc)
           </p>
         </div>
 
-        {file && <p className="text-sm">Arquivo carregado: <strong>{file.name}</strong></p>}
+        {file && (
+          <div className="p-4 bg-blue-50 rounded-lg border-2 border-blue-300">
+            <p className="text-lg font-bold text-blue-800">
+              Arquivo carregado: <span className="text-purple-700">{file.name}</span>
+            </p>
+          </div>
+        )}
 
-        <Button onClick={handleUpload} disabled={!file || uploading} size="lg" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-          {uploading ? `Importando... ${Math.round(progress)}%` : "Importar Todas as Filiais"}
+        <Button
+          onClick={handleUpload}
+          disabled={!file || uploading}
+          size="lg"
+          className="w-full h-16 text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+        >
+          {uploading ? `Importando... ${Math.round(progress)}%` : "IMPORTAR TODAS AS FILIAIS"}
         </Button>
 
-        {uploading && <Progress value={progress} className="h-4" />}
+        {uploading && <Progress value={progress} className="h-8" />}
 
         {result.message && (
-          <div className={`p-6 rounded-lg border-2 text-center ${result.success! > 0 ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"}`}>
+          <div className={`p-10 rounded-2xl text-center text-3xl font-bold border-4 ${result.success! > 0 ? "bg-green-100 border-green-600 text-green-800" : "bg-red-100 border-red-600 text-red-800"}`}>
             {result.success! > 0 ? (
-              <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
+              <CheckCircle className="h-20 w-20 mx-auto mb-6 text-green-600" />
             ) : (
-              <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-3" />
+              <AlertCircle className="h-20 w-20 mx-auto mb-6 text-red-600" />
             )}
-            <p className="text-lg font-bold">{result.message}</p>
+            <p>{result.message}</p>
+            {result.success! > 0 && <p className="text-5xl mt-4">PARABÉNS!</p>}
           </div>
         )}
       </CardContent>
