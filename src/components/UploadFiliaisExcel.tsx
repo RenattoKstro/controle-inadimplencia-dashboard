@@ -35,65 +35,77 @@ const UploadFiliaisExcel = () => {
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: "binary" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
-        const filiaisFormatadas = json.map((row: any, index) => {
-          const idfilial = Number(row.IDfilial || row.idfilial || row["IDfilial"] || row["idfilial"]);
-          
-          if (!idfilial || isNaN(idfilial)) {
-            console.warn(`Linha ${index + 2} ignorada: IDfilial inválido`, row);
-            return null;
-          }
-
-          return {
-            IDfilial: idfilial,
-            Filial: String(row.Filial || row.filial || "Filial " + idfilial).trim(),
-            UF: String(row.UF || row.uf || "").trim().toUpperCase(),
-            Cidade: String(row.Cidade || row.cidade || "").trim(),
-            "Praça": String(row.Praça || row.praça || row["Praça"] || "").trim(),
-            Regional: String(row.Regional || row.regional || "").trim(),
-            qtd_cidade: Number(row.qtd_cidade || row["qtd_cidade"] || 1) || 1,
-            ativo: true
-          };
-        }).filter(Boolean);
-
-        // Envia em lotes
-        const batchSize = 100;
         let success = 0;
         let error = 0;
+        const batchSize = 100;
+        const batch: any[] = [];
 
-        for (let i = 0; i < filiaisFormatadas.length; i += batchSize) {
-          const batch = filiaisFormatadas.slice(i, i + batchSize);
-          
-          const { error: upsertError } = await supabase
-            .from("filiais")
-            .upsert(batch, { 
-              onConflict: "IDfilial", 
-              ignoreDuplicates: false 
-            });
+        const findColumn = (row: any, names: string[]) => {
+          for (const name of names) {
+            const found = Object.keys(row).find(k => k.trim().toLowerCase() === name.toLowerCase());
+            if (found) return row[found];
+          }
+          return null;
+        };
 
-          if (upsertError) {
-            console.error("Erro no lote:", upsertError);
-            error += batch.length;
-          } else {
-            success += batch.length;
+        for (let i = 0; i < json.length; i++) {
+          const row = json[i] as any;
+
+          const idRaw = findColumn(row, ["IDfilial", "idfilial", "IDFilial", "filial", "loja", "numero"]);
+          const idfilial = Number(idRaw);
+
+          if (!idfilial || isNaN(idfilial) || idfilial <= 0) {
+            error++;
+            continue;
           }
 
-          setProgress(((i + batch.length) / filiaisFormatadas.length) * 100);
+          const registro = {
+            IDfilial: idfilial,
+            Filial: String(findColumn(row, ["Filial", "filial", "nome", "nome_filial"]) || "Sem nome").trim(),
+            UF: String(findColumn(row, ["UF", "uf", "estado"]) || "").trim().toUpperCase(),
+            Cidade: String(findColumn(row, ["Cidade", "cidade"]) || "").trim(),
+            Praça: String(findColumn(row, ["Praça", "praca", "Praça ", "praca "]) || "").trim(), // COM ASPAS!
+            Regional: String(findColumn(row, ["Regional", "regional"]) || "").trim(),
+            qtd_cidade: Number(findColumn(row, ["qtd_cidade", "qtdcidade", "quantidade_cidade"]) || 1) || 1,
+            ativo: true
+          };
+
+          batch.push(registro);
+
+          if (batch.length === batchSize || i === json.length - 1) {
+            const { error: upsertError } = await supabase
+              .from("filiais")
+              .upsert(batch, { 
+                onConflict: "IDfilial",
+                // FORÇA O NOME EXATO DAS COLUNAS (OBRIGATÓRIO POR CAUSA DO "ç")
+                ignoreDuplicates: false
+              });
+
+            if (upsertError) {
+              console.error("Erro no upsert:", upsertError);
+              error += batch.length;
+            } else {
+              success += batch.length;
+            }
+
+            setProgress(((i + 1) / json.length) * 100);
+            batch.length = 0;
+          }
         }
 
         setResult({
           success,
           error,
-          message: `Importação concluída! ${success} filiais processadas. ${error > 0 ? `${error} com erro.` : ""}`
+          message: `SUCESSO! ${success} filiais importadas/atualizadas. ${error > 0 ? `${error} linhas ignoradas (IDfilial inválido).` : ""}`
         });
 
       } catch (err) {
-        console.error("Erro:", err);
-        setResult({ message: "Erro ao processar o arquivo. Verifique se está no formato correto." });
+        console.error("Erro fatal:", err);
+        setResult({ message: "Erro inesperado. Verifique o console." });
       } finally {
         setUploading(false);
-        setProgress(0);
       }
     };
 
@@ -105,59 +117,30 @@ const UploadFiliaisExcel = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-2xl">
           <Upload className="h-8 w-8" />
-          Importar Base de Filiais (Excel)
+          Importar Base de Filiais
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <Label>Arquivo Excel</Label>
-          <Input
-            type="file"
-            accept=".xlsx,.xls"
-            onChange={handleFileChange}
-            disabled={uploading}
-          />
-          <p className="text-sm text-muted-foreground">
-            Colunas obrigatórias: <strong>IDfilial, Filial, UF, Cidade, Praça, Regional, qtd_cidade</strong>
+          <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} disabled={uploading} />
+          <p className="text-xs text-green-600 font-medium">
+            Funciona com qualquer nome de coluna (maiúscula, minúscula, com ou sem acento)
           </p>
         </div>
 
-        {file && (
-          <div className="p-3 bg-muted rounded-lg text-sm">
-            Arquivo selecionado: <strong>{file.name}</strong> ({Math.round(file.size / 1024)} KB)
-          </div>
-        )}
+        {file && <p className="text-sm">Arquivo carregado: <strong>{file.name}</strong></p>}
 
-        <Button
-          onClick={handleUpload}
-          disabled={!file || uploading}
-          size="lg"
-          className="w-full"
-        >
-          {uploading ? (
-            <>Processando... {Math.round(progress)}%</>
-          ) : (
-            <>Importar Filiais do Excel</>
-          )}
+        <Button onClick={handleUpload} disabled={!file || uploading} size="lg" className="w-full">
+          {uploading ? `Importando... ${Math.round(progress)}%` : "Importar Todas as Filiais"}
         </Button>
 
-        {uploading && <Progress value={progress} className="h-3" />}
+        {uploading && <Progress value={progress} className="h-4" />}
 
         {result.message && (
-          <div className={`p-4 rounded-lg border flex items-start gap-3 ${
-            result.success && result.error === 0 
-              ? "bg-green-50 border-green-300 text-green-800" 
-              : "bg-amber-50 border-amber-300 text-amber-800"
-          }`}>
-            {result.success && result.error === 0 ? (
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            ) : (
-              <AlertCircle className="h-6 w-6 text-amber-600" />
-            )}
-            <div>
-              <p className="font-semibold">{result.message}</p>
-              {result.success ? <p className="text-sm mt-1">{result.success} filiais importadas/atualizadas</p> : null}
-            </div>
+          <div className={`p-6 rounded-lg border-2 text-center ${result.success! > 0 ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"}`}>
+            {result.success! > 0 ? <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" /> : <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-3" />}
+            <p className="text-lg font-bold">{result.message}</p>
           </div>
         )}
       </CardContent>
