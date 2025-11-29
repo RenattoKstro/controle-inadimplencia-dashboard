@@ -20,26 +20,26 @@ const Filiais = () => {
   useEffect(() => {
     const fetchRanking = async () => {
       try {
-        // 1. Pega todos os usuários com filial
-        const { data: users } = await supabase
+        // 1. BUSCA TODOS OS USUÁRIOS COM FILIAL (SEM FILTRO DE USUÁRIO LOGADO)
+        const { data: users, error: err1 } = await supabase
           .from("user_dashboard")
           .select("filial, vencido_atual, meta_mes, meta_desafio")
           .not("filial", "is", null);
 
-        if (!users || users.length === 0) {
+        if (err1 || !users || users.length === 0) {
           setFiliais([]);
           setLoading(false);
           return;
         }
 
-        // 2. Pega nome e regional das filiais
-        const ids = [...new Set(users.map(u => u.filial))];
+        // 2. BUSCA NOME E REGIONAL DE TODAS AS FILIAIS PRESENTES
+        const filiaisIds = [...new Set(users.map(u => u.filial))];
         const { data: infoFiliais } = await supabase
           .from("filiais")
           .select("idfilial, filial, regional")
-          .in("idfilial", ids);
+          .in("idfilial", filiaisIds);
 
-        // 3. Agrupa por filial
+        // 3. AGRUPA E SOMA TUDO
         const agrupado = users.reduce((acc: any, u) => {
           const fil = u.filial!;
           if (!acc[fil]) {
@@ -77,7 +77,7 @@ const Filiais = () => {
 
         setFiliais(lista);
       } catch (err) {
-        console.error("Erro:", err);
+        console.error("Erro no ranking:", err);
       } finally {
         setLoading(false);
       }
@@ -99,7 +99,7 @@ const Filiais = () => {
           Filiais %
         </h2>
         <p className="text-muted-foreground mt-2">
-          Meta Fiado (principal) • Meta Desafio (secundária)
+          Todas as filiais com meta cadastrada • Atualizado a cada 30s
         </p>
       </div>
 
@@ -116,9 +116,9 @@ const Filiais = () => {
           <tbody>
             {filiais.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-12 text-gray-500">
-                  <Store className="h-16 w-16 mx-auto mb-4" />
-                  Nenhuma filial com meta cadastrada.
+                <td colSpan={4} className="text-center py-16 text-gray-500">
+                  <Store className="h-20 w-20 mx-auto mb-4" />
+                  <p className="text-xl">Nenhuma filial com meta cadastrada ainda.</p>
                 </td>
               </tr>
             ) : (
@@ -127,69 +127,39 @@ const Filiais = () => {
                 const pctDesafio = f.meta_desafio > 0 ? (f.vencido_atual / f.meta_desafio) * 100 : 0;
 
                 return (
-                  <tr
-                    key={f.idfilial}
-                    className={`border-b hover:bg-gray-50 transition-colors ${
-                      i < 3 ? "font-bold" : ""
-                    }`}
-                  >
-                    {/* Posição */}
+                  <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         {i < 3 && (
-                          <Trophy
-                            className={`h-6 w-6 ${
-                              i === 0 ? "text-yellow-500" :
-                              i === 1 ? "text-gray-400" : "text-orange-600"
-                            }`}
-                          />
+                          <Trophy className={`h-6 w-6 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
                         )}
-                        <span className="text-lg">{i + 1}º</span>
+                        <span className="text-lg font-bold">{i + 1}º</span>
                       </div>
                     </td>
 
-                    {/* Nome + Regional */}
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="font-semibold text-lg">{f.filial}</p>
-                        <p className="text-sm text-gray-600">{f.regional}</p>
-                      </div>
+                      <p className="font-semibold text-lg">{f.filial}</p>
+                      <p className="text-sm text-gray-600">{f.regional}</p>
                     </td>
 
-                    {/* Meta Fiado */}
                     <td className="px-6 py-4">
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span>R$ {f.vencido_atual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                          <span className="font-bold">{pctFiado.toFixed(1)}%</span>
+                          <span className="font-bold text-lg">{pctFiado.toFixed(1)}%</span>
                         </div>
-                        <Progress
-                          value={Math.min(pctFiado, 100)}
-                          className="h-3"
-                          indicatorClassName={
-                            pctFiado >= 100 ? "bg-green-500" :
-                            pctFiado >= 90 ? "bg-yellow-500" :
-                            pctFiado >= 70 ? "bg-orange-500" : "bg-red-500"
-                          }
-                        />
-                        <p className="text-xs text-gray-600">
-                          Meta: R$ {f.meta_mes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                        </p>
+                        <Progress value={Math.min(pctFiado, 100)} className="h-4" indicatorClassName={pctFiado >= 100 ? "bg-green-500" : pctFiado >= 90 ? "bg-yellow-500" : pctFiado >= 70 ? "bg-orange-500" : "bg-red-500"} />
+                        <p className="text-xs text-gray-600">Meta: R$ {f.meta_mes.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                       </div>
                     </td>
 
-                    {/* Meta Desafio */}
                     <td className="px-6 py-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Zap className="h-5 w-5 text-yellow-500" />
                           <span className="font-bold text-lg">{pctDesafio.toFixed(1)}%</span>
                         </div>
-                        <Progress
-                          value={Math.min(pctDesafio, 100)}
-                          className="h-3"
-                          indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500"
-                        />
+                        <Progress value={Math.min(pctDesafio, 100)} className="h-4" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
                       </div>
                     </td>
                   </tr>
