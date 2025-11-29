@@ -89,14 +89,14 @@ const AjustesMetas = ({
     const fetchFiliais = async () => {
       const { data } = await supabase
         .from("filiais")
-        .select("IDfilial, Filial, Cidade, UF")
+        .select("idfilial, filial, cidade, uf")
         .eq("ativo", true)
-        .order("IDfilial");
+        .order("idfilial");
 
       if (data) {
         const formatted = data.map((f) => ({
-          numero: f.IDfilial,
-          label: `${String(f.IDfilial).padStart(3, "0")} - ${f.Filial} - ${f.Cidade}/${f.UF || "PR"}`,
+          numero: f.idfilial,
+          label: `${String(f.idfilial).padStart(3, "0")} - ${f.Filial} - ${f.Cidade}/${f.UF || "PR"}`,
         }));
         setFiliaisList(formatted);
       }
