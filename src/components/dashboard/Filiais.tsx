@@ -30,11 +30,8 @@ const Filiais = () => {
 
       if (!error && data) {
         const lista = data as RankingFilial[];
-        
-        // Extrai regionais únicas
         const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
         setRegionais(regs);
-
         setRanking(lista);
       }
       setLoading(false);
@@ -45,8 +42,8 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const dadosFiltrados = filtroRegional === "todas" 
-    ? ranking 
+  const dadosFiltrados = filtroRegional === "todas"
+    ? ranking
     : ranking.filter(f => (f.regional || "Sem regional") === filtroRegional);
 
   if (loading) return <p className="text-center py-20 text-xl">Carregando Filiais %...</p>;
@@ -65,29 +62,27 @@ const Filiais = () => {
       {/* FILTRO POR REGIONAL */}
       <div className="max-w-xs mx-auto">
         <Select value={filtroRegional} onValueChange={setFiltroRegional}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrar por regional" />
+          <SelectTrigger>
+            <SelectValue placeholder="Todas as regionais" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="todas">Todas as regionais</SelectItem>
             {regionais.map(reg => (
-              <SelectItem key={reg} value={reg}>
-                {reg}
-              </SelectItem>
+              <SelectItem key={reg} value={reg}>{reg}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* LISTA COMPACTA */}
+      {/* LISTA ULTRA COMPACTA */}
       <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+          <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
             <tr>
-              <th className="px-4 py-3 text-xs font-bold">#</th>
-              <th className="px-4 py-3 text-xs font-bold">Filial</th>
-              <th className="px-4 py-3 text-xs font-bold text-center">Meta Fiado</th>
-              <th className="px-4 py-3 text-xs font-bold text-center">Meta Desafio</th>
+              <th className="px-4 py-2">#</th>
+              <th className="px-4 py-2">Filial</th>
+              <th className="px-4 py-2 text-center">Meta Fiado</th>
+              <th className="px-4 py-2 text-center">Meta Desafio</th>
             </tr>
           </thead>
           <tbody>
@@ -99,48 +94,66 @@ const Filiais = () => {
                 </td>
               </tr>
             ) : (
-              dadosFiltrados.map((f, i) => (
-                <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
-                  {/* Posição */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {i < 3 && (
-                        <Trophy className={`h-5 w-5 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
-                      )}
-                      <span className="font-bold">{i + 1}º</span>
-                    </div>
-                  </td>
+              dadosFiltrados.map((f, i) => {
+                // Valor restante pra bater 100%
+                const restanteFiado = f.total_meta_fiado > f.total_vencido
+                  ? f.total_meta_fiado - f.total_vencido
+                  : 0;
 
-                  {/* Filial + Regional */}
-                  <td className="px-4 py-3">
-                    <p className="font-semibold">{f.filial}</p>
-                    <p className="text-xs text-gray-600">{f.regional}</p>
-                  </td>
+                const restanteDesafio = f.total_meta_desafio > f.total_vencido
+                  ? f.total_meta_desafio - f.total_vencido
+                  : 0;
 
-                  {/* Meta Fiado */}
-                  <td className="px-4 py-3 text-center">
-                    <div className="space-y-1">
-                      <p className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</p>
-                      <Progress value={f.pct_fiado} className="h-3"
-                        indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
-                      <p className="text-xs text-gray-600">
-                        R$ {f.total_vencido.toLocaleString("pt-BR", { minimumFractionDigits: 0 })}
-                      </p>
-                    </div>
-                  </td>
+                return (
+                  <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
+                    {/* Posição */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {i < 3 && (
+                          <Trophy className={`h-5 w-5 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
+                        )}
+                        <span className="font-bold">{i + 1}</span>
+                      </div>
+                    </td>
 
-                  {/* Meta Desafio */}
-                  <td className="px-4 py-3 text-center">
-                    <div className="space-y-1">
-                      <p className="font-bold text-lg flex items-center justify-center gap-1">
-                        <Zap className="h-4 w-4 text-yellow-500" />
-                        {f.pct_desafio.toFixed(2)}%
-                      </p>
-                      <Progress value={f.pct_desafio} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
-                    </div>
-                  </td>
-                </tr>
-              ))
+                    {/* Filial + Regional */}
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{f.filial}</p>
+                      <p className="text-xs text-gray-600">{f.regional}</p>
+                    </td>
+
+                    {/* Meta Fiado */}
+                    <td className="px-4 py-3 text-center">
+                      <div className="space-y-1">
+                        <p className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</p>
+                        <Progress value={f.pct_fiado} className="h-3"
+                          indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
+                        {restanteFiado > 0 && (
+                          <p className="text-xs text-red-600 font-medium">
+                            Faltam R$ {restanteFiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Meta Desafio */}
+                    <td className="px-4 py-3 text-center">
+                      <div className="space-y-1">
+                        <p className="font-bold text-lg flex items-center justify-center gap-1">
+                          <Zap className="h-4 w-4 text-yellow-500" />
+                          {f.pct_desafio.toFixed(2)}%
+                        </p>
+                        <Progress value={f.pct_desafio} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
+                        {restanteDesafio > 0 && (
+                          <p className="text-xs text-orange-600 font-medium">
+                            Faltam R$ {restanteDesafio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          </p>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
