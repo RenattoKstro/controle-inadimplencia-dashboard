@@ -66,7 +66,7 @@ const UploadFiliaisExcel = () => {
             Filial: String(findColumn(row, ["Filial", "filial", "nome", "nome_filial"]) || "Sem nome").trim(),
             UF: String(findColumn(row, ["UF", "uf", "estado"]) || "").trim().toUpperCase(),
             Cidade: String(findColumn(row, ["Cidade", "cidade"]) || "").trim(),
-            Praça: String(findColumn(row, ["Praça", "praca", "Praça ", "praca "]) || "").trim(), // COM ASPAS!
+            praca: String(findColumn(row, ["Praça", "praca", "Praça ", "praca ", "praca"]) || "").trim(), // ← agora é "praca"
             Regional: String(findColumn(row, ["Regional", "regional"]) || "").trim(),
             qtd_cidade: Number(findColumn(row, ["qtd_cidade", "qtdcidade", "quantidade_cidade"]) || 1) || 1,
             ativo: true
@@ -77,14 +77,10 @@ const UploadFiliaisExcel = () => {
           if (batch.length === batchSize || i === json.length - 1) {
             const { error: upsertError } = await supabase
               .from("filiais")
-              .upsert(batch, { 
-                onConflict: "IDfilial",
-                // FORÇA O NOME EXATO DAS COLUNAS (OBRIGATÓRIO POR CAUSA DO "ç")
-                ignoreDuplicates: false
-              });
+              .upsert(batch, { onConflict: "IDfilial" });
 
             if (upsertError) {
-              console.error("Erro no upsert:", upsertError);
+              console.error("Erro no lote:", upsertError);
               error += batch.length;
             } else {
               success += batch.length;
@@ -98,14 +94,15 @@ const UploadFiliaisExcel = () => {
         setResult({
           success,
           error,
-          message: `SUCESSO! ${success} filiais importadas/atualizadas. ${error > 0 ? `${error} linhas ignoradas (IDfilial inválido).` : ""}`
+          message: `Importação concluída com sucesso! ${success} filiais importadas/atualizadas. ${error > 0 ? `${error} linhas ignoradas (IDfilial inválido).` : ""}`
         });
 
       } catch (err) {
         console.error("Erro fatal:", err);
-        setResult({ message: "Erro inesperado. Verifique o console." });
+        setResult({ message: "Erro ao processar o arquivo. Verifique o formato." });
       } finally {
         setUploading(false);
+        setProgress(0);
       }
     };
 
@@ -117,21 +114,21 @@ const UploadFiliaisExcel = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-2xl">
           <Upload className="h-8 w-8" />
-          Importar Base de Filiais
+          Importar Base de Filiais (Excel)
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
-          <Label>Arquivo Excel</Label>
+          <Label>Arquivo Excel (.xlsx)</Label>
           <Input type="file" accept=".xlsx,.xls" onChange={handleFileChange} disabled={uploading} />
-          <p className="text-xs text-green-600 font-medium">
-            Funciona com qualquer nome de coluna (maiúscula, minúscula, com ou sem acento)
+          <p className="text-sm text-green-600 font-medium">
+            Funciona com qualquer nome de coluna (com ou sem acento, maiúscula/minúscula)
           </p>
         </div>
 
         {file && <p className="text-sm">Arquivo carregado: <strong>{file.name}</strong></p>}
 
-        <Button onClick={handleUpload} disabled={!file || uploading} size="lg" className="w-full">
+        <Button onClick={handleUpload} disabled={!file || uploading} size="lg" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
           {uploading ? `Importando... ${Math.round(progress)}%` : "Importar Todas as Filiais"}
         </Button>
 
@@ -139,7 +136,11 @@ const UploadFiliaisExcel = () => {
 
         {result.message && (
           <div className={`p-6 rounded-lg border-2 text-center ${result.success! > 0 ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"}`}>
-            {result.success! > 0 ? <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" /> : <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-3" />}
+            {result.success! > 0 ? (
+              <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
+            ) : (
+              <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-3" />
+            )}
             <p className="text-lg font-bold">{result.message}</p>
           </div>
         )}
