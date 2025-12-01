@@ -1,8 +1,9 @@
 // src/components/dashboard/Filiais.tsx
+// VERSÃO QUE JÁ ESTAVA FUNCIONANDO PERFEITO PRA VOCÊ
 import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Target, Zap, Store, CheckCircle } from "lucide-react";
+import { Trophy, Target, Zap, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RankingFilial {
@@ -14,6 +15,7 @@ interface RankingFilial {
   total_meta_desafio: number;
   pct_fiado: number;
   pct_desafio: number;
+  total_usuarios: number;
 }
 
 const Filiais = () => {
@@ -24,7 +26,10 @@ const Filiais = () => {
 
   useEffect(() => {
     const fetchRanking = async () => {
-      const { data, error } = await supabase.from("vw_ranking_filiais").select("*");
+      const { data, error } = await supabase
+        .from("vw_ranking_filiais")
+        .select("*");
+
       if (!error && data) {
         const lista = data as RankingFilial[];
         const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
@@ -39,11 +44,13 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const dadosFiltrados = filtroRegional === "todas"
-    ? ranking
+  const dadosFiltrados = filtroRegional === "todas" 
+    ? ranking 
     : ranking.filter(f => (f.regional || "Sem regional") === filtroRegional);
 
-  if (loading) return <p className="text-center py-20 text-xl">Carregando Filiais %...</p>;
+  if (loading) {
+    return <p className="text-center py-20 text-xl">Carregando Filiais %...</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -56,6 +63,7 @@ const Filiais = () => {
         </p>
       </div>
 
+      {/* FILTRO POR REGIONAL */}
       <div className="max-w-xs mx-auto">
         <Select value={filtroRegional} onValueChange={setFiltroRegional}>
           <SelectTrigger>
@@ -70,6 +78,7 @@ const Filiais = () => {
         </Select>
       </div>
 
+      {/* LISTA COMPACTA E LIMPA */}
       <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
@@ -89,70 +98,41 @@ const Filiais = () => {
                 </td>
               </tr>
             ) : (
-              dadosFiltrados.map((f, i) => {
-                // BATE 100% QUANDO VENCIDO >= META
-                const fiadoBateu = f.total_vencido >= f.total_meta_fiado;
-                const desafioBateu = f.total_vencido >= f.total_meta_desafio;
+              dadosFiltrados.map((f, i) => (
+                <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {i < 3 && (
+                        <Trophy className={`h-5 w-5 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
+                      )}
+                      <span className="font-bold">{i + 1}</span>
+                    </div>
+                  </td>
 
-                const faltaFiado = fiadoBateu ? 0 : f.total_meta_fiado - f.total_vencido;
-                const faltaDesafio = desafioBateu ? 0 : f.total_meta_desafio - f.total_vencido;
+                  <td className="px-4 py-3">
+                    <p className="font-medium">{f.filial}</p>
+                    <p className="text-xs text-gray-600">{f.regional}</p>
+                  </td>
 
-                return (
-                  <tr key={f.idfilial} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {i < 3 && (
-                          <Trophy className={`h-5 w-5 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
-                        )}
-                        <span className="font-bold">{i + 1}</span>
-                      </div>
-                    </td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="space-y-1">
+                      <p className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</p>
+                      <Progress value={f.pct_fiado} className="h-3"
+                        indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
+                    </div>
+                  </td>
 
-                    <td className="px-4 py-3">
-                      <p className="font-medium">{f.filial}</p>
-                      <p className="text-xs text-gray-600">{f.regional}</p>
-                    </td>
-
-                    <td className="px-4 py-3 text-center">
-                      <div className="space-y-1">
-                        <p className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</p>
-                        <Progress value={Math.min(f.pct_fiado, 150)} className="h-3"
-                          indicatorClassName={fiadoBateu ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"} />
-                        
-                        {fiadoBateu ? (
-                          <p className="text-xs font-bold text-green-600 flex items-center justify-center gap-1">
-                            <CheckCircle className="h-4 w-4" /> OK
-                          </p>
-                        ) : (
-                          <p className="text-xs font-bold text-red-600">
-                            Faltam R$ {faltaFiado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3 text-center">
-                      <div className="space-y-1">
-                        <p className="font-bold text-lg flex items-center justify-center gap-1">
-                          <Zap className="h-4 w-4 text-yellow-500" />
-                          {f.pct_desafio.toFixed(2)}%
-                        </p>
-                        <Progress value={Math.min(f.pct_desafio, 150)} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
-                        
-                        {desafioBateu ? (
-                          <p className="text-xs font-bold text-green-600 flex items-center justify-center gap-1">
-                            <CheckCircle className="h-4 w-4" /> OK
-                          </p>
-                        ) : (
-                          <p className="text-xs font-bold text-orange-600">
-                            Faltam R$ {faltaDesafio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+                  <td className="px-4 py-3 text-center">
+                    <div className="space-y-1">
+                      <p className="font-bold text-lg flex items-center justify-center gap-1">
+                        <Zap className="h-4 w-4 text-yellow-500" />
+                        {f.pct_desafio.toFixed(2)}%
+                      </p>
+                      <Progress value={f.pct_desafio} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
