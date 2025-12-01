@@ -127,17 +127,20 @@ const AjustesMetas = ({
     }));
   }, [userData, diasRestantesCalculados]);
 
-  // SALVAR — AGORA SÓ SALVA SE TIVER FILIAL NA PRIMEIRA VEZ!
+  // SALVAR — FILIAL OBRIGATÓRIA NA PRIMEIRA VEZ + AVISO CLARO
   const handleSave = () => {
-    // PRIMEIRA VEZ: FILIAL É OBRIGATÓRIA
     if (!userData?.filial && !selectedFilial) {
-      alert("Você precisa selecionar uma filial antes de salvar pela primeira vez!");
+      alert(
+        "Você precisa selecionar uma filial antes de salvar pela primeira vez!\n\n" +
+        "Atenção: Escolha com cuidado!\n" +
+        "Após salvar, somente o administrador pode alterar a filial."
+      );
       return;
     }
 
     const dadosParaSalvar: any = { ...formState };
 
-    // Salva a filial (só na primeira vez)
+    // Salva a filial só na primeira vez
     if (selectedFilial && !userData?.filial) {
       dadosParaSalvar.filial = selectedFilial.numero;
     }
@@ -261,7 +264,6 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* MODO EDIÇÃO: PRIMEIRA VEZ → FILIAL OBRIGATÓRIA */}
       {isEditing && !userData?.filial && (
         <Card className="border-2 border-dashed border-blue-400 bg-blue-50">
           <CardContent className="pt-6">
@@ -313,7 +315,7 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* FILIAL JÁ SALVA → SÓ MOSTRA (NÃO EDITA MAIS) */}
+      {/* FILIAL JÁ SALVA → SÓ MOSTRA (NUNCA MAIS EDITA) */}
       {userData?.filial && selectedFilial && !isEditing && (
         <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
           <CardContent className="p-6 flex items-center gap-6">
