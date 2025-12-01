@@ -1,3 +1,4 @@
+// src/components/dashboard/AjustesMetas.tsx
 import { useState, useEffect } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import {
@@ -84,33 +85,32 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
+  // Carrega filiais
   useEffect(() => {
-  const fetchFiliais = async () => {
-    const { data, error } = await supabase
-      .from("filiais")
-      .select("idfilial, filial, regional")
-      .eq("ativo", true)
-      .order("idfilial");
+    const fetchFiliais = async () => {
+      const { data, error } = await supabase
+        .from("filiais")
+        .select("idfilial, filial, regional")
+        .eq("ativo", true)
+        .order("idfilial");
 
-    if (error) {
-      console.error("Erro ao carregar filiais:", error);
-      return;
-    }
+      if (error) {
+        console.error("Erro ao carregar filiais:", error);
+        return;
+      }
 
-    if (data && data.length > 0) {
-      const formatted = data.map((f: any) => ({
-        numero: f.idfilial,
-        label: `${f.idfilial} - ${f.filial} (${f.regional || "Sem regional"})`,
-      }));
-      setFiliaisList(formatted);
-      console.log("Filiais carregadas com regional:", formatted);
-    }
-  };
+      if (data && data.length > 0) {
+        const formatted = data.map((f: any) => ({
+          numero: f.idfilial,
+          label: `${f.idfilial} - ${f.filial} (${f.regional || "Sem regional"})`,
+        }));
+        setFiliaisList(formatted);
+      }
+    };
+    fetchFiliais();
+  }, []);
 
-  fetchFiliais();
-}, []);
-
-  // Sincroniza filial selecionada com userData (só se já tiver salva)
+  // Sincroniza filial selecionada com userData
   useEffect(() => {
     if (userData?.filial && filiaisList.length > 0) {
       const found = filiaisList.find((f) => f.numero === userData.filial);
@@ -127,11 +127,18 @@ const AjustesMetas = ({
     }));
   }, [userData, diasRestantesCalculados]);
 
+  // SALVAR — AGORA SÓ SALVA SE TIVER FILIAL NA PRIMEIRA VEZ!
   const handleSave = () => {
+    // PRIMEIRA VEZ: FILIAL É OBRIGATÓRIA
+    if (!userData?.filial && !selectedFilial) {
+      alert("Você precisa selecionar uma filial antes de salvar pela primeira vez!");
+      return;
+    }
+
     const dadosParaSalvar: any = { ...formState };
 
-    // Só salva a filial na primeira vez
-    if (!userData?.filial && selectedFilial) {
+    // Salva a filial (só na primeira vez)
+    if (selectedFilial && !userData?.filial) {
       dadosParaSalvar.filial = selectedFilial.numero;
     }
 
@@ -210,7 +217,6 @@ const AjustesMetas = ({
         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Ajustes de Metas
         </h2>
-
         <div className="flex flex-wrap items-center gap-3">
           {isEditing ? (
             <div className="flex gap-2">
@@ -226,8 +232,6 @@ const AjustesMetas = ({
               Editar
             </Button>
           )}
-
-          {/* Mostrar/Ocultar Histórico */}
           <div className="flex items-center gap-2">
             <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
             <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
@@ -235,36 +239,29 @@ const AjustesMetas = ({
               Histórico
             </Label>
           </div>
-
           <div className="flex items-center space-x-2">
             <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
             <Label>Ativar Meta Perdido</Label>
           </div>
-
-          <div className="flex gap-2">
-            <Button variant={formState.role === "líder" ? "default" : "outline"} onClick={() => updateUserData({ ...userData, role: "líder" })}>
-              {formState.role === "líder" ? "Líder" : "Op. Líder"}
-            </Button>
-            <Button variant={formState.role === "auxiliar" ? "default" : "outline"} onClick={() => updateUserData({ ...userData, role: "auxiliar" })}>
-              {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
-            </Button>
-          </div>
         </div>
       </div>
 
-      {/* PRIMEIRA VEZ: Seleção obrigatória de filial */}
+      {/* PRIMEIRA VEZ: FILIAL OBRIGATÓRIA */}
       {!userData?.filial && !isEditing && (
         <Card className="border-2 border-dashed border-red-400 bg-red-50">
           <CardContent className="pt-6 text-center">
             <Store className="h-12 w-12 text-red-600 mx-auto mb-3" />
-            <p className="text-lg font-bold text-red-800">Você ainda não selecionou sua filial!</p>
+            <p className="text-lg font-bold text-red-800">
+              Você ainda não selecionou sua filial!
+            </p>
             <p className="text-sm text-red-700 mt-2">
-              Clique em <strong>Editar</strong> para escolher sua loja (obrigatório).
+              Clique em <strong>Editar</strong> e escolha sua loja (obrigatório).
             </p>
           </CardContent>
         </Card>
       )}
 
+      {/* MODO EDIÇÃO: PRIMEIRA VEZ → FILIAL OBRIGATÓRIA */}
       {isEditing && !userData?.filial && (
         <Card className="border-2 border-dashed border-blue-400 bg-blue-50">
           <CardContent className="pt-6">
@@ -283,7 +280,7 @@ const AjustesMetas = ({
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Digite número, nome ou cidade..." className="h-12" />
+                      <CommandInput placeholder="Digite número, nome ou regional..." className="h-12" />
                       <CommandList>
                         <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
                         <CommandGroup>
@@ -306,8 +303,8 @@ const AjustesMetas = ({
                   </PopoverContent>
                 </Popover>
                 {!selectedFilial && (
-                  <p className="text-sm text-red-600 font-medium">
-                    Você deve selecionar uma filial antes de salvar.
+                  <p className="text-sm font-bold text-red-600 mt-2">
+                    Você deve selecionar uma filial antes de salvar!
                   </p>
                 )}
               </div>
@@ -316,7 +313,7 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* Filial já salva → Card bonito (nunca mais muda) */}
+      {/* FILIAL JÁ SALVA → SÓ MOSTRA (NÃO EDITA MAIS) */}
       {userData?.filial && selectedFilial && !isEditing && (
         <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
           <CardContent className="p-6 flex items-center gap-6">
@@ -343,7 +340,6 @@ const AjustesMetas = ({
           </>
         )}
         <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditing} />
-
         <Card className="shadow-sm bg-gray-500 bg-opacity-50">
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center justify-between mb-2">
