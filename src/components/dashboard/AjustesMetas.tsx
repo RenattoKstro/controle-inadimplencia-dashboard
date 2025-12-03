@@ -127,12 +127,12 @@ const AjustesMetas = ({
     }));
   }, [userData, diasRestantesCalculados]);
 
-  // SALVAR — FILIAL OBRIGATÓRIA NA PRIMEIRA VEZ + AVISO CLARO
+  // SALVAR — FILIAL OBRIGATÓRIA NA PRIMEIRA VEZ + AVISO
   const handleSave = () => {
     if (!userData?.filial && !selectedFilial) {
       alert(
         "Você precisa selecionar uma filial antes de salvar pela primeira vez!\n\n" +
-        "Atenção: Escolha com cuidado!\n" +
+        "⚠️ Atenção: Escolha com cuidado!\n" +
         "Após salvar, somente o administrador pode alterar a filial."
       );
       return;
@@ -140,7 +140,6 @@ const AjustesMetas = ({
 
     const dadosParaSalvar: any = { ...formState };
 
-    // Salva a filial só na primeira vez
     if (selectedFilial && !userData?.filial) {
       dadosParaSalvar.filial = selectedFilial.numero;
     }
@@ -235,6 +234,25 @@ const AjustesMetas = ({
               Editar
             </Button>
           )}
+
+          {/* BOTÕES DE VOLTA: Op. Líder e Op. Auxiliar */}
+          <div className="flex gap-2">
+            <Button
+              variant={formState.role === "líder" ? "default" : "outline"}
+              onClick={() => updateUserData({ ...userData, role: "líder" })}
+              className="px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              {formState.role === "líder" ? "Líder" : "Op. Líder"}
+            </Button>
+            <Button
+              variant={formState.role === "auxiliar" ? "default" : "outline"}
+              onClick={() => updateUserData({ ...userData, role: "auxiliar" })}
+              className="px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
+            </Button>
+          </div>
+
           <div className="flex items-center gap-2">
             <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
             <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
@@ -242,6 +260,7 @@ const AjustesMetas = ({
               Histórico
             </Label>
           </div>
+
           <div className="flex items-center space-x-2">
             <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
             <Label>Ativar Meta Perdido</Label>
@@ -315,7 +334,7 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* FILIAL JÁ SALVA → SÓ MOSTRA (NUNCA MAIS EDITA) */}
+      {/* FILIAL JÁ SALVA → SÓ MOSTRA */}
       {userData?.filial && selectedFilial && !isEditing && (
         <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
           <CardContent className="p-6 flex items-center gap-6">
