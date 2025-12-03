@@ -1,5 +1,5 @@
 // src/components/AvisoApoio.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, Copy, CheckCircle, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import confetti from "canvas-confetti";
@@ -12,8 +12,16 @@ export default function AvisoApoio() {
   const [mostrarValor, setMostrarValor] = useState<boolean | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
+  const [userId, setUserId] = useState<string | null>(null); // ← UID DO USUÁRIO
 
   const pixKey = "rena7oalmeida@jim.com";
+
+  // PEGA O UID DO USUÁRIO LOGADO
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
+  }, []);
 
   const copiarPix = () => {
     navigator.clipboard.writeText(pixKey);
@@ -32,31 +40,28 @@ export default function AvisoApoio() {
 
   const salvarApoio = async (mostrar: boolean) => {
     if (salvando) return;
-
     setSalvando(true);
-    setMostrarValor(mostrar);
+    setErro("");
 
     const { error } = await supabase.from("apoiadores_pendentes").insert({
       nome: nome.trim().toUpperCase().substring(0, 14),
       filial: filial.trim(),
       valor: Number(valor),
       mostrar_valor: mostrar,
+      user_id: userId, // ← AQUI SALVA O UID DO USUÁRIO LOGADO
     });
 
     if (error) {
       setErro("Erro ao enviar. Tente novamente.");
-      console.error(error);
+      console.error("Erro Supabase:", error);
       setSalvando(false);
     } else {
-      // 🎉 CONFETES AQUI
       confetti({
         particleCount: 200,
         spread: 100,
-        origin: { y: 0.6 }
+        origin: { y: 0.6 },
       });
-
       setEtapa("enviado");
-
       setTimeout(() => {
         setEtapa("mensagem");
         setNome("");
@@ -64,7 +69,7 @@ export default function AvisoApoio() {
         setValor("");
         setMostrarValor(null);
         setSalvando(false);
-      }, 4000);
+      }, 5000);
     }
   };
 
@@ -104,7 +109,7 @@ export default function AvisoApoio() {
               Se você considera este aplicativo útil e quiser apoiar o projeto, qualquer contribuição — independente do valor — ajuda muito a manter tudo no ar e possibilita melhorias contínuas.
             </p>
             <p className="text-xl font-bold text-purple-700 mt-6">
-              Agradeço imensamente pelo seu apoio e confiança! 🙏
+              Agradeço imensamente pelo seu apoio e confiança! 
             </p>
             <p className="text-green-600 font-black text-xl mt-4">
               Sua colaboração faz toda a diferença para que este projeto continue vivo.
@@ -155,7 +160,7 @@ export default function AvisoApoio() {
 
             <input
               type="number"
-              placeholder="R$ 0"
+              placeholder="R$ 20"
               value={valor}
               onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))}
               className="w-full px-4 py-4 border-2 border-green-400 rounded-xl text-center font-black text-4xl text-green-600"
@@ -171,7 +176,7 @@ export default function AvisoApoio() {
               onClick={validarEAvancar}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black py-6 rounded-2xl text-2xl shadow-2xl"
             >
-              Continue
+              Continuar
             </button>
 
             <button
@@ -211,18 +216,14 @@ export default function AvisoApoio() {
             <button
               onClick={() => salvarApoio(true)}
               disabled={salvando}
-              className={`px-12 py-8 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${
-                salvando ? "opacity-70" : ""
-              }`}
+              className={`px-12 py-8 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${salvando ? "opacity-70" : ""}`}
             >
               SIM
             </button>
             <button
               onClick={() => salvarApoio(false)}
               disabled={salvando}
-              className={`px-12 py-8 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${
-                salvando ? "opacity-70" : ""
-              }`}
+              className={`px-12 py-8 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${salvando ? "opacity-70" : ""}`}
             >
               NÃO
             </button>
@@ -249,7 +250,7 @@ export default function AvisoApoio() {
             Enviado com sucesso!
           </h2>
           <p className="text-2xl text-green-700 mb-8">
-            Sua doação foi enviada para verificação.
+            Sua doação foi enviada para aprovação.
           </p>
           <p className="text-xl text-green-600">
             Em até 24h você entra no ranking!
