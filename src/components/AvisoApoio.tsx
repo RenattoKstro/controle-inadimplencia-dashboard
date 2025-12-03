@@ -1,5 +1,5 @@
 // src/components/AvisoApoio.tsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Heart, Copy, CheckCircle, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import confetti from "canvas-confetti";
@@ -12,16 +12,8 @@ export default function AvisoApoio() {
   const [mostrarValor, setMostrarValor] = useState<boolean | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
-  const [userId, setUserId] = useState<string | null>(null); // ← AQUI GUARDA O UID
 
   const pixKey = "rena7oalmeida@jim.com";
-
-  // PEGA O UID DO USUÁRIO LOGADO (S
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id || null);
-    });
-  }, []);
 
   const copiarPix = () => {
     navigator.clipboard.writeText(pixKey);
@@ -30,14 +22,17 @@ export default function AvisoApoio() {
 
   const validarEAvancar = () => {
     setErro("");
+
     if (nome.trim().length < 1 || nome.trim().length > 14) return setErro("Nome: 1 a 14 letras");
     if (!filial.trim() || !/^\d+$/.test(filial)) return setErro("Filial: apenas números");
     if (!valor || !Number.isInteger(Number(valor)) || Number(valor) < 5) return setErro("Valor mínimo R$ 5 (inteiro)");
+
     setEtapa("pergunta");
   };
 
   const salvarApoio = async (mostrar: boolean) => {
     if (salvando) return;
+
     setSalvando(true);
     setMostrarValor(mostrar);
 
@@ -46,7 +41,6 @@ export default function AvisoApoio() {
       filial: filial.trim(),
       valor: Number(valor),
       mostrar_valor: mostrar,
-      user_id: userId, // ← AQUI ENVIA O UID DO USUÁRIO LOGADO (ou null se não estiver logado)
     });
 
     if (error) {
@@ -54,12 +48,15 @@ export default function AvisoApoio() {
       console.error(error);
       setSalvando(false);
     } else {
+      // 🎉 CONFETES AQUI
       confetti({
         particleCount: 200,
         spread: 100,
         origin: { y: 0.6 }
       });
+
       setEtapa("enviado");
+
       setTimeout(() => {
         setEtapa("mensagem");
         setNome("");
@@ -71,7 +68,6 @@ export default function AvisoApoio() {
     }
   };
 
-  // ... (o resto do código exatamente como você enviou — não mexi em nada!)
   // ETAPA 1: MENSAGEM
   if (etapa === "mensagem") {
     return (
@@ -83,6 +79,7 @@ export default function AvisoApoio() {
               Aviso Importante
             </h2>
           </div>
+
           <div className="bg-white rounded-3xl p-8 shadow-inner space-y-5 text-gray-800 text-lg leading-relaxed max-h-[60vh] overflow-y-auto">
             <p>
               Este aplicativo foi desenvolvido com a intenção de ajudar pessoas, oferecendo ferramentas úteis de forma simples, prática e totalmente acessível.
@@ -113,6 +110,7 @@ export default function AvisoApoio() {
               Sua colaboração faz toda a diferença para que este projeto continue vivo.
             </p>
           </div>
+
           <button
             onClick={() => setEtapa("formulario")}
             className="w-full mt-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-xl py-6 rounded-2xl shadow-2xl flex items-center justify-center gap-3"
@@ -124,10 +122,6 @@ export default function AvisoApoio() {
     );
   }
 
-  // ... (o resto do código exatamente como você enviou — não mexi em nada!)
-  // ETAPA 2, 3 e 4 permanecem 100% iguais ao seu código original
-  // (só adicionei o `user_id` no insert acima)
-
   // ETAPA 2: FORMULÁRIO
   if (etapa === "formulario") {
     return (
@@ -136,10 +130,12 @@ export default function AvisoApoio() {
           <h2 className="text-3xl font-black text-blue-800 text-center mb-8">
             Preencha seus dados
           </h2>
+
           <div className="bg-white p-8 rounded-3xl shadow-inner space-y-6">
             <div className="flex justify-center mb-6">
               <img src="/PIX.png" alt="PIX" className="w-64 h-64 rounded-2xl shadow-2xl border-8 border-white" />
             </div>
+
             <input
               type="text"
               placeholder="Seu nome (máx 14)"
@@ -148,6 +144,7 @@ export default function AvisoApoio() {
               maxLength={14}
               className="w-full px-4 py-4 border-2 border-purple-300 rounded-xl text-center font-black text-2xl"
             />
+
             <input
               type="text"
               placeholder="Filial (apenas números)"
@@ -155,6 +152,7 @@ export default function AvisoApoio() {
               onChange={(e) => setFilial(e.target.value.replace(/\D/g, ""))}
               className="w-full px-4 py-4 border-2 border-purple-300 rounded-xl text-center font-black text-3xl"
             />
+
             <input
               type="number"
               placeholder="R$ 0"
@@ -162,17 +160,20 @@ export default function AvisoApoio() {
               onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))}
               className="w-full px-4 py-4 border-2 border-green-400 rounded-xl text-center font-black text-4xl text-green-600"
             />
+
             {erro && (
               <p className="text-red-600 font-bold text-center bg-red-50 p-4 rounded-xl border-2 border-red-300">
                 {erro}
               </p>
             )}
+
             <button
               onClick={validarEAvancar}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black py-6 rounded-2xl text-2xl shadow-2xl"
             >
-              Continuar
+              Continue
             </button>
+
             <button
               onClick={copiarPix}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 mt-4"
@@ -180,9 +181,11 @@ export default function AvisoApoio() {
               <Copy className="w-6 h-6" />
               Copiar Chave PIX
             </button>
+
             <p className="text-center text-gray-600 mt-4 font-bold">
               Chave PIX: {pixKey}
             </p>
+
             <button
               onClick={() => setEtapa("mensagem")}
               className="w-full text-purple-600 font-bold mt-4"
@@ -203,22 +206,28 @@ export default function AvisoApoio() {
           <h2 className="text-3xl font-black text-purple-800 text-center mb-8">
             Deseja mostrar o valor doado no ranking?
           </h2>
+
           <div className="flex justify-center gap-8 mb-8">
             <button
               onClick={() => salvarApoio(true)}
               disabled={salvando}
-              className={`px-12 py-8 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${salvando ? "opacity-70" : ""}`}
+              className={`px-12 py-8 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${
+                salvando ? "opacity-70" : ""
+              }`}
             >
               SIM
             </button>
             <button
               onClick={() => salvarApoio(false)}
               disabled={salvando}
-              className={`px-12 py-8 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${salvando ? "opacity-70" : ""}`}
+              className={`px-12 py-8 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white font-black text-2xl rounded-2xl shadow-2xl transition-all ${
+                salvando ? "opacity-70" : ""
+              }`}
             >
               NÃO
             </button>
           </div>
+
           <button
             onClick={() => setEtapa("formulario")}
             className="w-full text-purple-600 font-bold"
