@@ -4,8 +4,6 @@ import { DashboardProps } from "../DashboardLayout";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,28 +15,11 @@ import {
   Building,
   AlertTriangle,
   Target,
-  Store,
   Check,
-  ChevronsUpDown,
   Eye,
   EyeOff,
-  User,
 } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 
 interface CardItemProps {
   title: string;
@@ -66,14 +47,6 @@ const AjustesMetas = ({
   setMostrarHistorico: (value: boolean) => void;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [openPopover, setOpenPopover] = useState(false);
-
-  // Filial
-  const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
-  const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
-
-  // Nome do usuário
-  const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
 
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
@@ -89,74 +62,17 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
-  // Carrega filiais
-  useEffect(() => {
-    const fetchFiliais = async () => {
-      const { data, error } = await supabase
-        .from("filiais")
-        .select("idfilial, filial, regional")
-        .eq("ativo", true)
-        .order("idfilial");
-
-      if (error) {
-        console.error("Erro ao carregar filiais:", error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const formatted = data.map((f: any) => ({
-          numero: f.idfilial,
-          label: `${f.idfilial} - ${f.filial} (${f.regional || "Sem regional"})`,
-        }));
-        setFiliaisList(formatted);
-      }
-    };
-    fetchFiliais();
-  }, []);
-
-  // Sincroniza filial
-  useEffect(() => {
-    if (userData?.filial && filiaisList.length > 0) {
-      const found = filiaisList.find((f) => f.numero === userData.filial);
-      if (found) setSelectedFilial(found);
-    }
-  }, [userData?.filial, filiaisList]);
-
-  // Atualiza formState e nome
   useEffect(() => {
     setFormState((prev) => ({
       ...prev,
       ...userData,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
     }));
-    setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
   }, [userData, diasRestantesCalculados]);
 
-  // SALVAR — NOME E FILIAL OBRIGATÓRIOS NA PRIMEIRA VEZ
   const handleSave = () => {
-    if (!userData?.filial && !selectedFilial) {
-      alert("Você precisa selecionar uma filial antes de salvar pela primeira vez!");
-      return;
-    }
-
-    if (!userData?.nome_usuario && !nomeUsuario.trim()) {
-      alert("Você precisa informar seu nome antes de salvar pela primeira vez!");
-      return;
-    }
-
-    const dadosParaSalvar: any = { ...formState };
-
-    if (selectedFilial && !userData?.filial) {
-      dadosParaSalvar.filial = selectedFilial.numero;
-    }
-
-    if (nomeUsuario.trim() && !userData?.nome_usuario) {
-      dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
-    }
-
-    updateUserData(dadosParaSalvar);
+    updateUserData(formState);
     setIsEditing(false);
-    setOpenPopover(false);
   };
 
   const handleCancel = () => {
@@ -165,9 +81,7 @@ const AjustesMetas = ({
       ...userData,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
     }));
-    setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
     setIsEditing(false);
-    setOpenPopover(false);
   };
 
   const handleChange = (field: string, value: number | string) => {
@@ -245,6 +159,17 @@ const AjustesMetas = ({
               Editar
             </Button>
           )}
+          <div className="flex items-center gap-2">
+            <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
+            <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
+              {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              Histórico
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
+            <Label>Ativar Meta Perdido</Label>
+          </div>
           <div className="flex gap-2">
             <Button
               variant={formState.role === "líder" ? "default" : "outline"}
@@ -259,152 +184,10 @@ const AjustesMetas = ({
               {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
             </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
-            <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
-              {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              Histórico
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
-            <Label>Ativar Meta Perdido</Label>
-          </div>
         </div>
       </div>
 
-      {/* PRIMEIRA VEZ: NOME OBRIGATÓRIO */}
-      {!userData?.nome_usuario && !isEditing && (
-        <Card className="border-2 border-dashed border-red-400 bg-red-50">
-          <CardContent className="pt-6 text-center">
-            <User className="h-12 w-12 text-red-600 mx-auto mb-3" />
-            <p className="text-lg font-bold text-red-800">
-              Você ainda não informou seu nome!
-            </p>
-            <p className="text-sm text-red-700 mt-2">
-              Clique em <strong>Editar</strong> para cadastrar seu nome (obrigatório).
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {isEditing && !userData?.nome_usuario && (
-        <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <User className="h-10 w-10 text-purple-600" />
-              <div className="flex-1 space-y-4">
-                <Label className="text-xl font-bold text-purple-900">
-                  Informe seu Nome (obrigatório)
-                </Label>
-                <Input
-                  value={nomeUsuario}
-                  onChange={(e) => setNomeUsuario(e.target.value.toUpperCase())}
-                  placeholder="SEU NOME COMPLETO"
-                  className="text-2xl font-bold text-center tracking-wider"
-                />
-                <p className="text-sm text-purple-700 text-center">
-                  Seu nome será salvo em letras maiúsculas e não poderá ser alterado depois.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* NOME JÁ SALVO → SÓ MOSTRA */}
-      {userData?.nome_usuario && !isEditing && (
-        <Card className="bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xl">
-          <CardContent className="p-6 flex items-center gap-6">
-            <User className="h-16 w-16" />
-            <div>
-              <p className="text-sm opacity-90">Seu Nome Cadastrado</p>
-              <p className="text-4xl font-bold">{userData.nome_usuario}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* PRIMEIRA VEZ: FILIAL OBRIGATÓRIA */}
-      {!userData?.filial && !isEditing && (
-        <Card className="border-2 border-dashed border-red-400 bg-red-50">
-          <CardContent className="pt-6 text-center">
-            <Store className="h-12 w-12 text-red-600 mx-auto mb-3" />
-            <p className="text-lg font-bold text-red-800">
-              Você ainda não selecionou sua filial!
-            </p>
-            <p className="text-sm text-red-700 mt-2">
-              Clique em <strong>Editar</strong> para escolher (obrigatório).
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {isEditing && !userData?.filial && (
-        <Card className="border-2 border-dashed border-blue-400 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <Store className="h-10 w-10 text-blue-600" />
-              <div className="flex-1 space-y-4">
-                <Label className="text-xl font-bold text-blue-900">
-                  Selecione sua Filial (obrigatório)
-                </Label>
-                <Popover open={openPopover} onOpenChange={setOpenPopover}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-full justify-between h-14 text-left font-medium text-lg">
-                      {selectedFilial ? selectedFilial.label : "Buscar filial..."}
-                      <ChevronsUpDown className="ml-2 h-6 w-6 shrink-0 opacity-60" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Digite número, nome ou regional..." className="h-12" />
-                      <CommandList>
-                        <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
-                        <CommandGroup>
-                          {filiaisList.map((f) => (
-                            <CommandItem
-                              key={f.numero}
-                              value={`${f.numero} ${f.label}`}
-                              onSelect={() => {
-                                setSelectedFilial(f);
-                                setOpenPopover(false);
-                              }}
-                            >
-                              <Check className={`mr-3 h-6 w-6 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
-                              {f.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                {!selectedFilial && (
-                  <p className="text-sm font-bold text-red-600 mt-2">
-                    Você deve selecionar uma filial antes de salvar!
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* FILIAL JÁ SALVA */}
-      {userData?.filial && selectedFilial && !isEditing && (
-        <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
-          <CardContent className="p-6 flex items-center gap-6">
-            <Store className="h-16 w-16" />
-            <div>
-              <p className="text-sm opacity-90">Sua Filial Vinculada</p>
-              <p className="text-3xl font-bold">{selectedFilial.label}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Grid de metas */}
+      {/* Grid de metas — SEM NOME E SEM FILIAL */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
         <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditing} />
         <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditing} />
