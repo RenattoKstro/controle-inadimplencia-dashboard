@@ -8,8 +8,6 @@ import { Trash2, Edit, Save, X } from "lucide-react";
 const GerenciarUsuarios = () => {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
 
   useEffect(() => {
     fetchUsuarios();
@@ -17,27 +15,30 @@ const GerenciarUsuarios = () => {
 
   const fetchUsuarios = async () => {
     try {
-      // 1. Pega todos os usuários da tabela user_dashboard
-      const { data: users, error } = await supabase
-        .from("user_dashboard")
-        .select("id, user_id, email, nome_usuario, filial")
-        .order("email");
+      // 1. Pega TODOS os usuários da tabela auth.users
+      const { data: authUsers, error: err1 } = await supabase.auth.admin.listUsers();
 
-      if (error) {
-        console.error("Erro ao carregar usuários:", error);
-        return;
-      }
-
-      if (!users || users.length === 0) {
-        setUsuarios([]);
+      if (err1 || !authUsers?.users) {
+        console.error("Erro ao carregar usuários do auth:", err1);
         setLoading(false);
         return;
       }
 
-      // 2. Pega o nome das filiais
-      const filiaisIds = users
-        .map(u => u.filial)
-        .filter(Boolean);
+      // 2. Pega dados do user_dashboard (nome_usuario, filial, etc)
+      const { data: dashboardUsers, error: err2 } = await supabase
+        .from("user_dashboard")
+        .select("user_id, nome_usuario, filial");
+
+      if (err2) {
+        console.error("Erro no user_dashboard:", err2);
+        setLoading(false);
+        return;
+      }
+
+      // 3. Pega nome das filiais
+      const filiaisIds = dashboardUsers
+        ?.map(u => u.filial)
+        .filter(Boolean) || [];
 
       let filiaisMap: any = {};
       if (filiaisIds.length > 0) {
@@ -51,13 +52,22 @@ const GerenciarUsuarios = () => {
         );
       }
 
-      // 3. Junta tudo
-      const usuariosFormatados = users.map(u => ({
-        ...u,
-        nome_filial: u.filial ? filiaisMap[u.filial] || `Filial ${u.filial}` : "Sem filial"
-      }));
+      // 4. Junta tudo: auth.users + user_dashboard + filiais
+      const usuariosCompletos = authUsers.users.map(authUser => {
+        const dash = dashboardUsers?.find(d => d.user_id === authUser.id);
+        const nomeFilial = dash?.filial 
+          ? filiaisMap[dash.filial] || `Filial ${dash.filial}`
+          : "Sem filial";
 
-      setUsuarios(usuariosFormatados);
+        return {
+          user_id: authUser.id,
+          email: authUser.email || "Sem e-mail",
+          nome_usuario: dash?.nome_usuario || "Sem nome",
+          nome_filial: nomeFilial,
+        };
+      });
+
+      setUsuarios(usuariosCompletos);
     } catch (err) {
       console.error("Erro fatal:", err);
     } finally {
@@ -65,15 +75,15 @@ const GerenciarUsuarios = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (user_id: string) => {
     if (!confirm("Tem certeza que quer excluir este usuário?")) return;
-    await supabase.from("user_dashboard").delete().eq("id", id);
-    fetchUsuarios();
-  };
 
-  const handleSave = async (id: string) => {
-    await supabase.from("user_dashboard").update(editForm).eq("id", id);
-    setEditingId(null);
+    // Exclui do user_dashboard
+    await supabase.from("user_dashboard").delete().eq("user_id", user_id);
+    
+    // Exclui do auth (só admin pode)
+    await supabase.auth.admin.deleteUser(user_id);
+
     fetchUsuarios();
   };
 
@@ -102,35 +112,23 @@ const GerenciarUsuarios = () => {
             </TableRow>
           ) : (
             usuarios.map((u) => (
-              <TableRow key={u.id} className="hover:bg-gray-50 transition-colors">
-                <TableCell className="font-medium">{u.email || "—"}</TableCell>
+              <TableRow key={u.user_id} className="hover:bg-gray-50">
+                <TableCell className="font-medium">{u.email}</TableCell>
                 <TableCell className="font-bold text-purple-700">
-                  {u.nome_usuario || "—"}
+                  {u.nome_usuario}
                 </TableCell>
                 <TableCell>{u.nome_filial}</TableCell>
                 <TableCell className="text-xs font-mono text-gray-600">
-                  {u.user_id ? u.user_id.slice(0, 8) + "..." : "—"}
+                  {u.user_id.slice(0, 8)}...
                 </TableCell>
-                <TableCell className="text-right space-x-2">
-                  {editingId === u.id ? (
-                    <>
-                      <Button size="sm" onClick={() => handleSave(u.id)} className="bg-green-600 hover:bg-green-700">
-                        <Save className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button size="sm" onClick={() => { setEditingId(u.id); setEditForm(u); }}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(u.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
+                <TableCell className="text-right">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(u.user_id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
