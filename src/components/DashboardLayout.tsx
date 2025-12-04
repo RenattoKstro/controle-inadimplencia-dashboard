@@ -35,7 +35,7 @@ const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
-  const [showProfileMenu, setShowProfileMenu] = useState(false); // ← MENU DE PERFIL
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -55,7 +55,6 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
 
-  // Verificação de sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -204,30 +203,27 @@ const DashboardLayout = () => {
                         src={userData.avatar_url}
                         alt="Perfil"
                         className="h-10 w-10 object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                          e.currentTarget.nextElementSibling?.classList.remove("hidden");
-                        }}
                       />
-                    ) : null}
-                    <div className={`h-10 w-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center ${userData?.avatar_url ? "hidden" : ""}`}>
-                      <User className="h-6 w-6 text-white" />
-                    </div>
+                    ) : (
+                      <div className="h-10 w-10 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <User className="h-6 w-6 text-white" />
+                      </div>
+                    )}
                   </Button>
 
                   {/* MENU EXPANSÍVEL COM UPLOAD */}
                   {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50 animate-in fade-in slide-in-from-top-2">
+                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50">
                       <div className="flex items-center gap-5 mb-6">
-                        <label htmlFor="upload-foto" className="cursor-pointer">
+                        <label htmlFor="upload-foto" className="cursor-pointer group">
                           {userData?.avatar_url ? (
                             <img
                               src={userData.avatar_url}
                               alt="Perfil"
-                              className="h-24 w-24 rounded-full object-cover border-4 border-purple-500 hover:opacity-80 transition"
+                              className="h-24 w-24 rounded-full object-cover border-4 border-purple-500 group-hover:opacity-80 transition"
                             />
                           ) : (
-                            <div className="h-24 w-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-4 border-purple-500 hover:opacity-80 transition">
+                            <div className="h-24 w-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-4 border-purple-500 group-hover:opacity-80 transition">
                               <User className="h-14 w-14 text-white" />
                             </div>
                           )}
@@ -241,22 +237,24 @@ const DashboardLayout = () => {
                               if (!file || !userData?.user_id) return;
 
                               const fileExt = file.name.split(".").pop();
-                              const fileName = `${userData.user_id}.${fileExt}`;
+                              const filePath = `${userData.user_id}/perfil.${fileExt}`;
 
                               const { error } = await supabase.storage
                                 .from("perfis")
-                                .upload(fileName, file, { upsert: true });
+                                .upload(filePath, file, { upsert: true });
 
-                              if (!error) {
-                                const { data: { publicUrl } } = supabase.storage
-                                  .from("perfis")
-                                  .getPublicUrl(fileName);
-
-                                await updateUserData({ avatar_url: publicUrl });
-                                toast({ title: "Foto atualizada com sucesso!" });
-                              } else {
-                                toast({ title: "Erro ao fazer upload", variant: "destructive" });
+                              if (error) {
+                                console.error("Erro no upload:", error);
+                                toast({ title: "Erro ao fazer upload da foto", variant: "destructive" });
+                                return;
                               }
+
+                              const { data: { publicUrl } } = supabase.storage
+                                .from("perfis")
+                                .getPublicUrl(filePath);
+
+                              await updateUserData({ avatar_url: publicUrl });
+                              toast({ title: "Foto atualizada com sucesso!" });
                             }}
                           />
                         </label>
@@ -270,7 +268,7 @@ const DashboardLayout = () => {
                               ? `Filial ${String(userData.filial).padStart(5, "0")}`
                               : "Sem filial"}
                           </p>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-gray-500 mt-2">
                             Clique na foto para alterar
                           </p>
                         </div>
@@ -293,7 +291,7 @@ const DashboardLayout = () => {
         </div>
       </header>
 
-      {/* RESTO DO CÓDIGO 100% IGUAL — NADA FOI ALTERADO AQUI */}
+      {/* RESTO DO CÓDIGO 100% IGUAL */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
