@@ -1,3 +1,4 @@
+// src/pages/DashboardLayout.tsx
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -34,12 +35,12 @@ const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
+  const [showProfileMenu, setShowProfileMenu] = useState(false); // ← MENU DE PERFIL
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false); // ← NOVO: controle do menu
   const {
     userData,
     updateUserData,
@@ -152,7 +153,6 @@ const DashboardLayout = () => {
                 Controle de Inadimplência {percentual && `${percentual}%`}
               </h1>
 
-              {/* BOTÕES DIREITA + NOVO MENU DE PERFIL */}
               <div className="flex items-center gap-3">
                 <Button onClick={print} variant="outline" className="gap-2">
                   <RiScreenshot2Fill className="w-5 h-5" /> Print
@@ -191,39 +191,97 @@ const DashboardLayout = () => {
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
 
-                {/* NOVO BOTÃO DE PERFIL (discreto, ao lado do tema) */}
+                {/* BOTÃO DE PERFIL COM FOTO + UPLOAD */}
                 <div className="relative">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
-                    className="rounded-full border-2 border-purple-500 hover:bg-purple-50"
+                    className="rounded-full overflow-hidden border-2 border-purple-500 hover:border-purple-600 transition-all"
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                   >
-                    <User className="h-5 w-5 text-purple-600" />
+                    {userData?.avatar_url ? (
+                      <img
+                        src={userData.avatar_url}
+                        alt="Perfil"
+                        className="h-10 w-10 object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                        }}
+                      />
+                    ) : null}
+                    <div className={`h-10 w-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center ${userData?.avatar_url ? "hidden" : ""}`}>
+                      <User className="h-6 w-6 text-white" />
+                    </div>
                   </Button>
 
-                  {/* MENU EXPANSÍVEL */}
+                  {/* MENU EXPANSÍVEL COM UPLOAD */}
                   {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-purple-200 p-6 z-50 animate-in fade-in slide-in-from-top-2">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-4">
-                          <User className="h-10 w-10 text-white" />
-                        </div>
+                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center gap-5 mb-6">
+                        <label htmlFor="upload-foto" className="cursor-pointer">
+                          {userData?.avatar_url ? (
+                            <img
+                              src={userData.avatar_url}
+                              alt="Perfil"
+                              className="h-24 w-24 rounded-full object-cover border-4 border-purple-500 hover:opacity-80 transition"
+                            />
+                          ) : (
+                            <div className="h-24 w-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-4 border-purple-500 hover:opacity-80 transition">
+                              <User className="h-14 w-14 text-white" />
+                            </div>
+                          )}
+                          <input
+                            id="upload-foto"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file || !userData?.user_id) return;
+
+                              const fileExt = file.name.split(".").pop();
+                              const fileName = `${userData.user_id}.${fileExt}`;
+
+                              const { error } = await supabase.storage
+                                .from("perfis")
+                                .upload(fileName, file, { upsert: true });
+
+                              if (!error) {
+                                const { data: { publicUrl } } = supabase.storage
+                                  .from("perfis")
+                                  .getPublicUrl(fileName);
+
+                                await updateUserData({ avatar_url: publicUrl });
+                                toast({ title: "Foto atualizada com sucesso!" });
+                              } else {
+                                toast({ title: "Erro ao fazer upload", variant: "destructive" });
+                              }
+                            }}
+                          />
+                        </label>
+
                         <div>
-                          <p className="text-xl font-bold text-gray-800">
+                          <p className="text-2xl font-bold text-gray-800">
                             {userData?.nome_usuario || "Usuário"}
                           </p>
-                          <p className="text-sm text-purple-600 font-medium">
-                            {userData?.filial ? `Filial ${String(userData.filial).padStart(5, "0")}` : "Sem filial"}
+                          <p className="text-lg text-purple-600 font-medium">
+                            {userData?.filial
+                              ? `Filial ${String(userData.filial).padStart(5, "0")}`
+                              : "Sem filial"}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Clique na foto para alterar
                           </p>
                         </div>
                       </div>
+
                       <Button
                         variant="destructive"
-                        className="w-full mt-4 flex items-center justify-center gap-2"
+                        className="w-full mt-4 flex items-center justify-center gap-3 text-lg"
                         onClick={handleLogout}
                       >
-                        <LogOut className="h-5 w-5" />
+                        <LogOut className="h-6 w-6" />
                         Sair
                       </Button>
                     </div>
@@ -235,7 +293,7 @@ const DashboardLayout = () => {
         </div>
       </header>
 
-      {/* RESTO DO CÓDIGO 100% IGUAL — NADA FOI ALTERADO */}
+      {/* RESTO DO CÓDIGO 100% IGUAL — NADA FOI ALTERADO AQUI */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
