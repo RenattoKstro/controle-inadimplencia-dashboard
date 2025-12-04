@@ -2,13 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet, Trophy, Utensils, Gift, Sliders, Menu,
-  Calendar, AlertTriangle, History, Instagram, File, Store
+  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-
 import MetaFiado from "./dashboard/MetaFiado";
 import MetaDesafio from "./dashboard/MetaDesafio";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
@@ -16,7 +15,6 @@ import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
 import Filiais from "./dashboard/Filiais";
-
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -35,14 +33,12 @@ import RankingApoiadores from "@/components/RankingApoiadores";
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [mostrarHistorico, setMostrarHistorico] = useState(true); // ← NOVO CONTROLE
-
+  const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
-
   const {
     userData,
     updateUserData,
@@ -51,7 +47,6 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados,
   } = useUserData();
-
   const [recebidoHoje, setRecebidoHoje] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -123,7 +118,7 @@ const DashboardLayout = () => {
       ref={contentRef}
     >
       {/* HEADER */}
-      <header className="bg-card shadow-md sticky top-0 z-40">
+      <header className="bg-card shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           {isMobile ? (
             <>
@@ -155,7 +150,33 @@ const DashboardLayout = () => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 Controle de Inadimplência {percentual && `${percentual}%`}
               </h1>
-              <div className="flex gap-3">
+              <div className="flex items-center gap-4">
+                {/* BOTÃO DE PERFIL NOVO */}
+                <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-5 py-3 shadow-lg border border-purple-200">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-3">
+                      <User className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-gray-800">
+                        {userData?.nome_usuario || "Usuário"}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {userData?.filial ? `Filial ${String(userData.filial).padStart(5, "0")}` : "Sem filial"}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleLogout}
+                    className="text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                {/* BOTÕES ORIGINAIS */}
                 <Button onClick={print} variant="outline" className="gap-2">
                   <RiScreenshot2Fill className="w-5 h-5" /> Print
                 </Button>
@@ -196,17 +217,16 @@ const DashboardLayout = () => {
         </div>
       </header>
 
+      {/* RESTO DO CÓDIGO 100% IGUAL — NADA FOI ALTERADO AQUI */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
             <RankingApoiadores />
           </div>
         </aside>
-
         <main className="flex-1 lg:ml-80 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              {/* ABAS - HISTÓRICO CONTROLADO POR STATE */}
               <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 w-full p-1 bg-card rounded-xl mb-6 gap-1">
                 <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm"><Sliders className="h-4 w-4" /> Ajustes</TabsTrigger>
                 <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm"><Wallet className="h-4 w-4" /> Fiado</TabsTrigger>
@@ -222,7 +242,6 @@ const DashboardLayout = () => {
                 <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm"><Store className="h-4 w-4" /> Filiais %</TabsTrigger>
               </TabsList>
 
-              {/* AJUSTES DE METAS - PASSANDO O CONTROLE DO HISTÓRICO */}
               <TabsContent value="ajustes-metas">
                 <AjustesMetas
                   userData={userData}
@@ -237,7 +256,6 @@ const DashboardLayout = () => {
                   setMostrarHistorico={setMostrarHistorico}
                 />
               </TabsContent>
-
               <TabsContent value="meta-fiado">
                 <MetaFiado
                   userData={userData}
@@ -250,7 +268,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={setRecebidoHoje}
                 />
               </TabsContent>
-
               <TabsContent value="meta-desafio">
                 <MetaDesafio
                   userData={userData}
@@ -263,7 +280,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
-
               <TabsContent value="meta-alimentacao">
                 <MetaAlimentacao
                   userData={userData}
@@ -276,7 +292,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
-
               {bonusPerdidoAtivado && (
                 <TabsContent value="meta-perdido">
                   <MetaPerdido
@@ -291,7 +306,6 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
-
               <TabsContent value="meus-premios">
                 <MeusPremios
                   userData={userData}
@@ -305,8 +319,6 @@ const DashboardLayout = () => {
                   setTotalGanhos={() => {}}
                 />
               </TabsContent>
-
-              {/* HISTÓRICO - SÓ MOSTRA SE ESTIVER ATIVADO */}
               {mostrarHistorico && (
                 <TabsContent value="historicos">
                   <Historicos
@@ -321,8 +333,6 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
-
-              {/* FILIAIS % - ÚLTIMA ABA */}
               <TabsContent value="filiais">
                 <Filiais />
               </TabsContent>
@@ -331,12 +341,10 @@ const DashboardLayout = () => {
         </main>
       </div>
 
-      {/* RANKING MOBILE */}
       <div className="lg:hidden mt-8 px-4">
         <RankingApoiadores />
       </div>
 
-      {/* FOOTER */}
       <footer className="bg-card shadow-md p-4 mt-8">
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
