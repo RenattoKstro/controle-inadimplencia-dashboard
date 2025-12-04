@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Edit, Save, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 const GerenciarUsuarios = () => {
   const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -15,30 +15,23 @@ const GerenciarUsuarios = () => {
 
   const fetchUsuarios = async () => {
     try {
-      // 1. Pega TODOS os usuários da tabela auth.users
-      const { data: authUsers, error: err1 } = await supabase.auth.admin.listUsers();
-
-      if (err1 || !authUsers?.users) {
-        console.error("Erro ao carregar usuários do auth:", err1);
-        setLoading(false);
-        return;
-      }
-
-      // 2. Pega dados do user_dashboard (nome_usuario, filial, etc)
-      const { data: dashboardUsers, error: err2 } = await supabase
+      // 1. Pega TODOS os registros da tabela user_dashboard
+      const { data: dashboard, error } = await supabase
         .from("user_dashboard")
-        .select("user_id, nome_usuario, filial");
+        .select("id, user_id, email, nome_usuario, filial")
+        .not("user_id", "is", null);
 
-      if (err2) {
-        console.error("Erro no user_dashboard:", err2);
+      if (error || !dashboard || dashboard.length === 0) {
+        console.log("Nenhum usuário encontrado ou erro:", error);
+        setUsuarios([]);
         setLoading(false);
         return;
       }
 
-      // 3. Pega nome das filiais
-      const filiaisIds = dashboardUsers
-        ?.map(u => u.filial)
-        .filter(Boolean) || [];
+      // 2. Pega os nomes das filiais
+      const filiaisIds = dashboard
+        .map(u => u.filial)
+        .filter(Boolean);
 
       let filiaisMap: any = {};
       if (filiaisIds.length > 0) {
@@ -52,22 +45,15 @@ const GerenciarUsuarios = () => {
         );
       }
 
-      // 4. Junta tudo: auth.users + user_dashboard + filiais
-      const usuariosCompletos = authUsers.users.map(authUser => {
-        const dash = dashboardUsers?.find(d => d.user_id === authUser.id);
-        const nomeFilial = dash?.filial 
-          ? filiaisMap[dash.filial] || `Filial ${dash.filial}`
-          : "Sem filial";
+      // 3. Monta a lista completa
+      const lista = dashboard.map(u => ({
+        user_id: u.user_id,
+        email: u.email || "Sem e-mail",
+        nome_usuario: u.nome_usuario || "Sem nome",
+        nome_filial: u.filial ? filiaisMap[u.filial] || `Filial ${u.filial}` : "Sem filial"
+      }));
 
-        return {
-          user_id: authUser.id,
-          email: authUser.email || "Sem e-mail",
-          nome_usuario: dash?.nome_usuario || "Sem nome",
-          nome_filial: nomeFilial,
-        };
-      });
-
-      setUsuarios(usuariosCompletos);
+      setUsuarios(lista);
     } catch (err) {
       console.error("Erro fatal:", err);
     } finally {
@@ -78,12 +64,9 @@ const GerenciarUsuarios = () => {
   const handleDelete = async (user_id: string) => {
     if (!confirm("Tem certeza que quer excluir este usuário?")) return;
 
-    // Exclui do user_dashboard
+    // Remove do user_dashboard
     await supabase.from("user_dashboard").delete().eq("user_id", user_id);
     
-    // Exclui do auth (só admin pode)
-    await supabase.auth.admin.deleteUser(user_id);
-
     fetchUsuarios();
   };
 
@@ -93,14 +76,19 @@ const GerenciarUsuarios = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
+      <div className="p-6 border-b bg-gradient-to-r from-blue-600 to-purple-600">
+        <h3 className="text-2xl font-bold text-white">Gerenciamento de Usuários</h3>
+        <p className="text-blue-100 mt-1">{usuarios.length} usuários encontrados</p>
+      </div>
+
       <Table>
         <TableHeader>
-          <TableRow className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-            <TableHead className="text-white">E-mail</TableHead>
-            <TableHead className="text-white">Nome</TableHead>
-            <TableHead className="text-white">Filial</TableHead>
-            <TableHead className="text-white">User ID</TableHead>
-            <TableHead className="text-right text-white">Ações</TableHead>
+          <TableRow className="bg-gray-50">
+            <TableHead>E-mail</TableHead>
+            <TableHead>Nome</TableHead>
+            <TableHead>Filial</TableHead>
+            <TableHead>User ID</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
