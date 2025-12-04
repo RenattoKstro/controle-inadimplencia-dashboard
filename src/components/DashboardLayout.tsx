@@ -22,7 +22,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp } } from "react-icons/fa";
 import { Moon, Sun } from "lucide-react";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
@@ -199,7 +199,7 @@ const DashboardLayout = () => {
                   >
                     {userData?.avatar_url ? (
                       <img
-                        src={userData.avatar_url}
+                        src={`${userData.avatar_url}?t=${Date.now()}`}
                         alt="Perfil"
                         className="h-10 w-10 object-cover"
                       />
@@ -217,7 +217,7 @@ const DashboardLayout = () => {
                         <label htmlFor="upload-foto" className="cursor-pointer group">
                           {userData?.avatar_url ? (
                             <img
-                              src={userData.avatar_url}
+                              src={`${userData.avatar_url}?t=${Date.now()}`}
                               alt="Perfil"
                               className="h-24 w-24 rounded-full object-cover border-4 border-purple-500 group-hover:opacity-80 transition"
                             />
@@ -235,7 +235,7 @@ const DashboardLayout = () => {
                               const file = e.target.files?.[0];
                               if (!file || !userData?.user_id) return;
 
-                              const fileExt = file.name.split(".").pop();
+                              const fileExt = file.name.split(".").pop() || "jpg";
                               const fileName = `${userData.user_id}.${fileExt}`;
 
                               const { error } = await supabase.storage
@@ -244,7 +244,7 @@ const DashboardLayout = () => {
 
                               if (error) {
                                 console.error("Erro no upload:", error);
-                                toast({ title: "Erro ao fazer upload da foto", variant: "destructive" });
+                                toast({ title: "Erro ao fazer upload", variant: "destructive" });
                                 return;
                               }
 
@@ -252,7 +252,9 @@ const DashboardLayout = () => {
                                 .from("perfis")
                                 .getPublicUrl(fileName);
 
-                              await updateUserData({ avatar_url: publicUrl });
+                              const urlComTimestamp = `${publicUrl}?t=${Date.now()}`;
+
+                              await updateUserData({ avatar_url: urlComTimestamp });
                               toast({ title: "Foto atualizada com sucesso!" });
                             }}
                           />
@@ -290,7 +292,7 @@ const DashboardLayout = () => {
         </div>
       </header>
 
-      {/* RESTO DO DASHBOARD (100% IGUAL) */}
+      {/* RESTO DO DASHBOARD */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
