@@ -22,6 +22,7 @@ import {
   ChevronsUpDown,
   Eye,
   EyeOff,
+  User,
 } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +72,9 @@ const AjustesMetas = ({
   const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
   const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
 
+  // Nome do usuário
+  const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
+
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
     abertura_dia: userData?.abertura_dia || 0,
@@ -110,7 +114,7 @@ const AjustesMetas = ({
     fetchFiliais();
   }, []);
 
-  // Sincroniza filial selecionada com userData
+  // Sincroniza filial
   useEffect(() => {
     if (userData?.filial && filiaisList.length > 0) {
       const found = filiaisList.find((f) => f.numero === userData.filial);
@@ -118,23 +122,25 @@ const AjustesMetas = ({
     }
   }, [userData?.filial, filiaisList]);
 
-  // Atualiza formState com userData
+  // Atualiza formState e nome
   useEffect(() => {
     setFormState((prev) => ({
       ...prev,
       ...userData,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
     }));
+    setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
   }, [userData, diasRestantesCalculados]);
 
-  // SALVAR — FILIAL OBRIGATÓRIA NA PRIMEIRA VEZ + AVISO
+  // SALVAR — NOME E FILIAL OBRIGATÓRIOS NA PRIMEIRA VEZ
   const handleSave = () => {
     if (!userData?.filial && !selectedFilial) {
-      alert(
-        "Você precisa selecionar uma filial antes de salvar pela primeira vez!\n\n" +
-        "⚠️ Atenção: Escolha com cuidado!\n" +
-        "Após salvar, somente o administrador pode alterar a filial."
-      );
+      alert("Você precisa selecionar uma filial antes de salvar pela primeira vez!");
+      return;
+    }
+
+    if (!userData?.nome_usuario && !nomeUsuario.trim()) {
+      alert("Você precisa informar seu nome antes de salvar pela primeira vez!");
       return;
     }
 
@@ -142,6 +148,10 @@ const AjustesMetas = ({
 
     if (selectedFilial && !userData?.filial) {
       dadosParaSalvar.filial = selectedFilial.numero;
+    }
+
+    if (nomeUsuario.trim() && !userData?.nome_usuario) {
+      dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
     }
 
     updateUserData(dadosParaSalvar);
@@ -155,6 +165,7 @@ const AjustesMetas = ({
       ...userData,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
     }));
+    setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
     setIsEditing(false);
     setOpenPopover(false);
   };
@@ -234,25 +245,20 @@ const AjustesMetas = ({
               Editar
             </Button>
           )}
-
-          {/* BOTÕES DE VOLTA: Op. Líder e Op. Auxiliar */}
           <div className="flex gap-2">
             <Button
               variant={formState.role === "líder" ? "default" : "outline"}
               onClick={() => updateUserData({ ...userData, role: "líder" })}
-              className="px-4 py-2 rounded-md flex items-center gap-2"
             >
               {formState.role === "líder" ? "Líder" : "Op. Líder"}
             </Button>
             <Button
               variant={formState.role === "auxiliar" ? "default" : "outline"}
               onClick={() => updateUserData({ ...userData, role: "auxiliar" })}
-              className="px-4 py-2 rounded-md flex items-center gap-2"
             >
               {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
             </Button>
           </div>
-
           <div className="flex items-center gap-2">
             <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
             <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
@@ -260,13 +266,64 @@ const AjustesMetas = ({
               Histórico
             </Label>
           </div>
-
           <div className="flex items-center space-x-2">
             <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
             <Label>Ativar Meta Perdido</Label>
           </div>
         </div>
       </div>
+
+      {/* PRIMEIRA VEZ: NOME OBRIGATÓRIO */}
+      {!userData?.nome_usuario && !isEditing && (
+        <Card className="border-2 border-dashed border-red-400 bg-red-50">
+          <CardContent className="pt-6 text-center">
+            <User className="h-12 w-12 text-red-600 mx-auto mb-3" />
+            <p className="text-lg font-bold text-red-800">
+              Você ainda não informou seu nome!
+            </p>
+            <p className="text-sm text-red-700 mt-2">
+              Clique em <strong>Editar</strong> para cadastrar seu nome (obrigatório).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {isEditing && !userData?.nome_usuario && (
+        <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <User className="h-10 w-10 text-purple-600" />
+              <div className="flex-1 space-y-4">
+                <Label className="text-xl font-bold text-purple-900">
+                  Informe seu Nome (obrigatório)
+                </Label>
+                <Input
+                  value={nomeUsuario}
+                  onChange={(e) => setNomeUsuario(e.target.value.toUpperCase())}
+                  placeholder="SEU NOME COMPLETO"
+                  className="text-2xl font-bold text-center tracking-wider"
+                />
+                <p className="text-sm text-purple-700 text-center">
+                  Seu nome será salvo em letras maiúsculas e não poderá ser alterado depois.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* NOME JÁ SALVO → SÓ MOSTRA */}
+      {userData?.nome_usuario && !isEditing && (
+        <Card className="bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xl">
+          <CardContent className="p-6 flex items-center gap-6">
+            <User className="h-16 w-16" />
+            <div>
+              <p className="text-sm opacity-90">Seu Nome Cadastrado</p>
+              <p className="text-4xl font-bold">{userData.nome_usuario}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* PRIMEIRA VEZ: FILIAL OBRIGATÓRIA */}
       {!userData?.filial && !isEditing && (
@@ -277,7 +334,7 @@ const AjustesMetas = ({
               Você ainda não selecionou sua filial!
             </p>
             <p className="text-sm text-red-700 mt-2">
-              Clique em <strong>Editar</strong> e escolha sua loja (obrigatório).
+              Clique em <strong>Editar</strong> para escolher (obrigatório).
             </p>
           </CardContent>
         </Card>
@@ -334,7 +391,7 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* FILIAL JÁ SALVA → SÓ MOSTRA */}
+      {/* FILIAL JÁ SALVA */}
       {userData?.filial && selectedFilial && !isEditing && (
         <Card className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
           <CardContent className="p-6 flex items-center gap-6">
