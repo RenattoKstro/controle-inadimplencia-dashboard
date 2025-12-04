@@ -39,6 +39,7 @@ const DashboardLayout = () => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false); // ← NOVO: controle do menu
   const {
     userData,
     updateUserData,
@@ -150,33 +151,9 @@ const DashboardLayout = () => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 Controle de Inadimplência {percentual && `${percentual}%`}
               </h1>
-              <div className="flex items-center gap-4">
-                {/* BOTÃO DE PERFIL NOVO */}
-                <div className="flex items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-5 py-3 shadow-lg border border-purple-200">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-3">
-                      <User className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-gray-800">
-                        {userData?.nome_usuario || "Usuário"}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        {userData?.filial ? `Filial ${String(userData.filial).padStart(5, "0")}` : "Sem filial"}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleLogout}
-                    className="text-red-600 hover:bg-red-50"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </Button>
-                </div>
 
-                {/* BOTÕES ORIGINAIS */}
+              {/* BOTÕES DIREITA + NOVO MENU DE PERFIL */}
+              <div className="flex items-center gap-3">
                 <Button onClick={print} variant="outline" className="gap-2">
                   <RiScreenshot2Fill className="w-5 h-5" /> Print
                 </Button>
@@ -208,16 +185,57 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
+
+                {/* BOTÃO DE TEMA */}
                 <Button variant="outline" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
+
+                {/* NOVO BOTÃO DE PERFIL (discreto, ao lado do tema) */}
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full border-2 border-purple-500 hover:bg-purple-50"
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  >
+                    <User className="h-5 w-5 text-purple-600" />
+                  </Button>
+
+                  {/* MENU EXPANSÍVEL */}
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-purple-200 p-6 z-50 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-4">
+                          <User className="h-10 w-10 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold text-gray-800">
+                            {userData?.nome_usuario || "Usuário"}
+                          </p>
+                          <p className="text-sm text-purple-600 font-medium">
+                            {userData?.filial ? `Filial ${String(userData.filial).padStart(5, "0")}` : "Sem filial"}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        className="w-full mt-4 flex items-center justify-center gap-2"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-5 w-5" />
+                        Sair
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
         </div>
       </header>
 
-      {/* RESTO DO CÓDIGO 100% IGUAL — NADA FOI ALTERADO AQUI */}
+      {/* RESTO DO CÓDIGO 100% IGUAL — NADA FOI ALTERADO */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
