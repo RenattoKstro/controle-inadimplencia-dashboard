@@ -16,46 +16,53 @@ const GerenciarUsuarios = () => {
   }, []);
 
   const fetchUsuarios = async () => {
-    const { data, error } = await supabase
-      .from("user_dashboard")
-      .select(`
-        id,
-        user_id,
-        email,
-        nome_usuario,
-        filial,
-        role,
-        created_at
-      `)
-      .order("created_at", { ascending: false });
+    try {
+      // 1. Pega todos os usuários da tabela user_dashboard
+      const { data: users, error } = await supabase
+        .from("user_dashboard")
+        .select("id, user_id, email, nome_usuario, filial")
+        .order("email");
 
-    if (!error && data) {
-      // Busca nome da filial pra mostrar bonito
-      const filiaisIds = data
+      if (error) {
+        console.error("Erro ao carregar usuários:", error);
+        return;
+      }
+
+      if (!users || users.length === 0) {
+        setUsuarios([]);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Pega o nome das filiais
+      const filiaisIds = users
         .map(u => u.filial)
         .filter(Boolean);
-      
+
+      let filiaisMap: any = {};
       if (filiaisIds.length > 0) {
         const { data: filiais } = await supabase
           .from("filiais")
           .select("idfilial, filial")
           .in("idfilial", filiaisIds);
 
-        const filiaisMap = Object.fromEntries(
+        filiaisMap = Object.fromEntries(
           (filiais || []).map(f => [f.idfilial, f.filial])
         );
-
-        const usuariosComFilial = data.map(u => ({
-          ...u,
-          nome_filial: u.filial ? filiaisMap[u.filial] || `Filial ${u.filial}` : "Sem filial"
-        }));
-
-        setUsuarios(usuariosComFilial);
-      } else {
-        setUsuarios(data.map(u => ({ ...u, nome_filial: "Sem filial" })));
       }
+
+      // 3. Junta tudo
+      const usuariosFormatados = users.map(u => ({
+        ...u,
+        nome_filial: u.filial ? filiaisMap[u.filial] || `Filial ${u.filial}` : "Sem filial"
+      }));
+
+      setUsuarios(usuariosFormatados);
+    } catch (err) {
+      console.error("Erro fatal:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -70,7 +77,9 @@ const GerenciarUsuarios = () => {
     fetchUsuarios();
   };
 
-  if (loading) return <p className="text-center py-10 text-xl">Carregando usuários...</p>;
+  if (loading) {
+    return <p className="text-center py-20 text-xl">Carregando usuários...</p>;
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
@@ -81,16 +90,14 @@ const GerenciarUsuarios = () => {
             <TableHead className="text-white">Nome</TableHead>
             <TableHead className="text-white">Filial</TableHead>
             <TableHead className="text-white">User ID</TableHead>
-            <TableHead className="text-white">Função</TableHead>
-            <TableHead className="text-white">Cadastro</TableHead>
             <TableHead className="text-right text-white">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {usuarios.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-16 text-gray-500">
-                Nenhum usuário cadastrado ainda.
+              <TableCell colSpan={5} className="text-center py-16 text-gray-500">
+                Nenhum usuário encontrado.
               </TableCell>
             </TableRow>
           ) : (
@@ -102,31 +109,7 @@ const GerenciarUsuarios = () => {
                 </TableCell>
                 <TableCell>{u.nome_filial}</TableCell>
                 <TableCell className="text-xs font-mono text-gray-600">
-                  {u.user_id?.slice(0, 8)}...
-                </TableCell>
-                <TableCell>
-                  {editingId === u.id ? (
-                    <select
-                      value={editForm.role || u.role}
-                      onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                      className="bg-gray-100 px-3 py-1 rounded border"
-                    >
-                      <option value="líder">Líder</option>
-                      <option value="auxiliar">Auxiliar</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  ) : (
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      u.role === "líder" ? "bg-blue-100 text-blue-800" :
-                      u.role === "auxiliar" ? "bg-gray-100 text-gray-800" :
-                      "bg-purple-100 text-purple-800"
-                    }`}>
-                      {u.role || "—"}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-sm text-gray-600">
-                  {new Date(u.created_at).toLocaleDateString("pt-BR")}
+                  {u.user_id ? u.user_id.slice(0, 8) + "..." : "—"}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
                   {editingId === u.id ? (
