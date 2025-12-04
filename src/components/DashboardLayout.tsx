@@ -185,7 +185,6 @@ const DashboardLayout = () => {
                   </SheetContent>
                 </Sheet>
 
-                {/* BOTÃO DE TEMA */}
                 <Button variant="outline" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
@@ -211,7 +210,7 @@ const DashboardLayout = () => {
                     )}
                   </Button>
 
-                  {/* MENU EXPANSÍVEL COM UPLOAD */}
+                  {/* MENU EXPANSÍVEL */}
                   {showProfileMenu && (
                     <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50">
                       <div className="flex items-center gap-5 mb-6">
@@ -237,11 +236,11 @@ const DashboardLayout = () => {
                               if (!file || !userData?.user_id) return;
 
                               const fileExt = file.name.split(".").pop();
-                              const filePath = `${userData.user_id}/perfil.${fileExt}`;
+                              const fileName = `${userData.user_id}.${fileExt}`;
 
                               const { error } = await supabase.storage
                                 .from("perfis")
-                                .upload(filePath, file, { upsert: true });
+                                .upload(fileName, file, { upsert: true });
 
                               if (error) {
                                 console.error("Erro no upload:", error);
@@ -251,7 +250,7 @@ const DashboardLayout = () => {
 
                               const { data: { publicUrl } } = supabase.storage
                                 .from("perfis")
-                                .getPublicUrl(filePath);
+                                .getPublicUrl(fileName);
 
                               await updateUserData({ avatar_url: publicUrl });
                               toast({ title: "Foto atualizada com sucesso!" });
@@ -291,7 +290,7 @@ const DashboardLayout = () => {
         </div>
       </header>
 
-      {/* RESTO DO CÓDIGO 100% IGUAL */}
+      {/* RESTO DO DASHBOARD (100% IGUAL) */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
