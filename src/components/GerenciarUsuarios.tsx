@@ -18,10 +18,43 @@ const GerenciarUsuarios = () => {
   const fetchUsuarios = async () => {
     const { data, error } = await supabase
       .from("user_dashboard")
-      .select("id, email, role, filial, created_at")
+      .select(`
+        id,
+        user_id,
+        email,
+        nome_usuario,
+        filial,
+        role,
+        created_at
+      `)
       .order("created_at", { ascending: false });
 
-    if (!error) setUsuarios(data || []);
+    if (!error && data) {
+      // Busca nome da filial pra mostrar bonito
+      const filiaisIds = data
+        .map(u => u.filial)
+        .filter(Boolean);
+      
+      if (filiaisIds.length > 0) {
+        const { data: filiais } = await supabase
+          .from("filiais")
+          .select("idfilial, filial")
+          .in("idfilial", filiaisIds);
+
+        const filiaisMap = Object.fromEntries(
+          (filiais || []).map(f => [f.idfilial, f.filial])
+        );
+
+        const usuariosComFilial = data.map(u => ({
+          ...u,
+          nome_filial: u.filial ? filiaisMap[u.filial] || `Filial ${u.filial}` : "Sem filial"
+        }));
+
+        setUsuarios(usuariosComFilial);
+      } else {
+        setUsuarios(data.map(u => ({ ...u, nome_filial: "Sem filial" })));
+      }
+    }
     setLoading(false);
   };
 
@@ -37,65 +70,91 @@ const GerenciarUsuarios = () => {
     fetchUsuarios();
   };
 
-  if (loading) return <p>Carregando usuários...</p>;
+  if (loading) return <p className="text-center py-10 text-xl">Carregando usuários...</p>;
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>E-mail</TableHead>
-          <TableHead>Função</TableHead>
-          <TableHead>Filial</TableHead>
-          <TableHead>Data Cadastro</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {usuarios.map((u) => (
-          <TableRow key={u.id}>
-            <TableCell>{u.email}</TableCell>
-            <TableCell>
-              {editingId === u.id ? (
-                <select
-                  value={editForm.role || u.role}
-                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                  className="bg-gray-800 text-white px-2 py-1 rounded"
-                >
-                  <option value="líder">Líder</option>
-                  <option value="auxiliar">Auxiliar</option>
-                  <option value="admin">Admin</option>
-                </select>
-              ) : (
-                u.role
-              )}
-            </TableCell>
-            <TableCell>{u.filial || "—"}</TableCell>
-            <TableCell>{new Date(u.created_at).toLocaleDateString("pt-BR")}</TableCell>
-            <TableCell className="text-right space-x-2">
-              {editingId === u.id ? (
-                <>
-                  <Button size="sm" onClick={() => handleSave(u.id)} className="bg-green-600 hover:bg-green-700">
-                    <Save className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button size="sm" onClick={() => { setEditingId(u.id); setEditForm(u); }}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(u.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </TableCell>
+    <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <TableHead className="text-white">E-mail</TableHead>
+            <TableHead className="text-white">Nome</TableHead>
+            <TableHead className="text-white">Filial</TableHead>
+            <TableHead className="text-white">User ID</TableHead>
+            <TableHead className="text-white">Função</TableHead>
+            <TableHead className="text-white">Cadastro</TableHead>
+            <TableHead className="text-right text-white">Ações</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {usuarios.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-16 text-gray-500">
+                Nenhum usuário cadastrado ainda.
+              </TableCell>
+            </TableRow>
+          ) : (
+            usuarios.map((u) => (
+              <TableRow key={u.id} className="hover:bg-gray-50 transition-colors">
+                <TableCell className="font-medium">{u.email || "—"}</TableCell>
+                <TableCell className="font-bold text-purple-700">
+                  {u.nome_usuario || "—"}
+                </TableCell>
+                <TableCell>{u.nome_filial}</TableCell>
+                <TableCell className="text-xs font-mono text-gray-600">
+                  {u.user_id?.slice(0, 8)}...
+                </TableCell>
+                <TableCell>
+                  {editingId === u.id ? (
+                    <select
+                      value={editForm.role || u.role}
+                      onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                      className="bg-gray-100 px-3 py-1 rounded border"
+                    >
+                      <option value="líder">Líder</option>
+                      <option value="auxiliar">Auxiliar</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  ) : (
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      u.role === "líder" ? "bg-blue-100 text-blue-800" :
+                      u.role === "auxiliar" ? "bg-gray-100 text-gray-800" :
+                      "bg-purple-100 text-purple-800"
+                    }`}>
+                      {u.role || "—"}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-sm text-gray-600">
+                  {new Date(u.created_at).toLocaleDateString("pt-BR")}
+                </TableCell>
+                <TableCell className="text-right space-x-2">
+                  {editingId === u.id ? (
+                    <>
+                      <Button size="sm" onClick={() => handleSave(u.id)} className="bg-green-600 hover:bg-green-700">
+                        <Save className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button size="sm" onClick={() => { setEditingId(u.id); setEditForm(u); }}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(u.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 
