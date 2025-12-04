@@ -1,391 +1,233 @@
-import { useEffect, useState, useRef } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// src/components/dashboard/AjustesMetas.tsx
+import { useState, useEffect } from "react";
+import { DashboardProps } from "../DashboardLayout";
 import {
-  Wallet, Trophy, Utensils, Gift, Sliders, Menu,
-  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut
-} from "lucide-react";
+  Card,
+  CardContent,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import MetaFiado from "./dashboard/MetaFiado";
-import MetaDesafio from "./dashboard/MetaDesafio";
-import MetaAlimentacao from "./dashboard/MetaAlimentacao";
-import MeusPremios from "./dashboard/MeusPremios";
-import AjustesMetas from "./dashboard/AjustesMetas";
-import Historicos from "./Historicos";
-import Filiais from "./dashboard/Filiais";
-import { useUserData } from "@/hooks/useUserData";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import RelatoriosSabium from "./RelatoriosSabium";
-import html2canvas from "html2canvas";
-import { FaWhatsapp } from "react-icons/fa";
-import { Moon, Sun } from "lucide-react";
-import { RiScreenshot2Fill } from "react-icons/ri";
-import { BiSolidReport } from "react-icons/bi";
-import Anexos from "./Anexos";
-import Apps from "./Apps";
-import MetaPerdido from "./dashboard/MetaPerdido";
-import RankingApoiadores from "@/components/RankingApoiadores";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import {
+  Wallet,
+  Building,
+  AlertTriangle,
+  Target,
+  Check,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
-const DashboardLayout = () => {
-  const [activeTab, setActiveTab] = useState("meta-fiado");
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [mostrarHistorico, setMostrarHistorico] = useState(true);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false); // ← NOVO: controle do menu
-  const {
-    userData,
-    updateUserData,
-    diasSemExpediente,
-    updateDiasSemExpediente,
-    isLoading,
-    diasRestantesCalculados,
-  } = useUserData();
-  const [recebidoHoje, setRecebidoHoje] = useState(0);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [showInstagramUsername, setShowInstagramUsername] = useState(false);
-  const today = new Date();
+interface CardItemProps {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  isEditable?: boolean;
+  onChange?: (value: number) => void;
+  color?: string;
+  isEditMode?: boolean;
+  formatAsCurrency?: boolean;
+}
 
-  // Verificação de sessão
-  useEffect(() => {
-    const check = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        toast({ title: "Sessão expirada", variant: "destructive" });
-        await supabase.auth.signOut();
-        navigate("/auth");
-      }
-    };
-    check();
-    const id = setInterval(check, 10 * 60 * 1000);
-    return () => clearInterval(id);
-  }, [navigate, toast]);
+const AjustesMetas = ({
+  userData,
+  updateUserData,
+  diasRestantesCalculados,
+  isLoading,
+  bonusPerdidoAtivado,
+  setBonusPerdidoAtivado,
+  mostrarHistorico,
+  setMostrarHistorico,
+}: DashboardProps & {
+  setBonusPerdidoAtivado: (value: boolean) => void;
+  mostrarHistorico: boolean;
+  setMostrarHistorico: (value: boolean) => void;
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [formState, setFormState] = useState({
+    abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
+    abertura_dia: userData?.abertura_dia || 0,
+    meta_mes: userData?.meta_mes || 0,
+    vencido_atual: userData?.vencido_atual || 0,
+    dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+    dias_trabalhados: userData?.dias_trabalhados || 0,
+    meta_desafio: userData?.meta_desafio || 0,
+    meta_perdido: userData?.meta_perdido || 0,
+    rec_perdido: userData?.rec_perdido || 0,
+    carteira_total: userData?.carteira_total || 0,
+    role: userData?.role || "líder",
+  });
 
   useEffect(() => {
-    document.body.classList.toggle("dark", isDarkMode);
-  }, [isDarkMode]);
+    setFormState((prev) => ({
+      ...prev,
+      ...userData,
+      dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+    }));
+  }, [userData, diasRestantesCalculados]);
 
-  const toggleDarkMode = () => setIsDarkMode(prev => !prev);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast({ title: "Tchau!" });
-    navigate("/auth");
+  const handleSave = () => {
+    updateUserData(formState);
+    setIsEditing(false);
   };
 
-  const handleTabChange = (v: string) => {
-    setActiveTab(v);
-    if (isMobile) setSheetOpen(false);
+  const handleCancel = () => {
+    setFormState((prev) => ({
+      ...prev,
+      ...userData,
+      dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
+    }));
+    setIsEditing(false);
   };
 
-  const print = () => {
-    if (!contentRef.current) return;
-    html2canvas(document.body, { scale: 2, useCORS: true }).then(c => {
-      const a = document.createElement("a");
-      a.download = `dashboard_${today.toISOString().slice(0, 10)}.png`;
-      a.href = c.toDataURL();
-      a.click();
-    });
+  const handleChange = (field: string, value: number | string) => {
+    setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
-  const instagram = () => {
-    setShowInstagramUsername(true);
-    setTimeout(() => setShowInstagramUsername(false), 2000);
-  };
+  const CardItem = ({
+    title,
+    value,
+    icon,
+    isEditable = false,
+    onChange,
+    color = "bg-blue-500",
+    isEditMode = false,
+    formatAsCurrency = true,
+  }: CardItemProps) => {
+    const formatValue = (v: number) =>
+      formatAsCurrency
+        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
+        : v.toString();
 
-  const percentual = userData?.carteira_total > 0
-    ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
-    : null;
-
-  if (isLoading || !userData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-lg">Carregando dashboard...</p>
+      <Card className={`shadow-sm hover:shadow transition-shadow ${color} bg-opacity-50`}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-foreground">{title}</h3>
+            <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
+          </div>
+          {isEditable && isEditMode ? (
+            formatAsCurrency ? (
+              <CurrencyInput value={value} onValueChange={(v) => onChange?.(v || 0)} className="text-lg font-bold" />
+            ) : (
+              <Input type="number" value={value} onChange={(e) => onChange?.(parseInt(e.target.value) || 0)} className="text-lg font-bold" />
+            )
+          ) : (
+            <div className="text-xl font-bold">{formatValue(value)}</div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-64" />
+        <div className="grid grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className={`min-h-screen ${isDarkMode ? "bg-background dark" : "bg-gradient-to-br from-slate-50 to-slate-100"}`}
-      ref={contentRef}
-    >
-      {/* HEADER */}
-      <header className="bg-card shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          {isMobile ? (
-            <>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Inadimplência {percentual && `${percentual}%`}
-              </h1>
-              <div className="flex gap-2">
-                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon"><Menu /></Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-80">
-                    <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
-                    <Apps />
-                    <div className="py-4 border-t">
-                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
-                        Sair
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
-                  {isDarkMode ? <Sun /> : <Moon />}
-                </Button>
-              </div>
-            </>
+    <div className="space-y-6">
+      {/* Cabeçalho */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          Ajustes de Metas
+        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          {isEditing ? (
+            <div className="flex gap-2">
+              <Button onClick={handleSave} className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                Salvar
+              </Button>
+              <Button variant="outline" onClick={handleCancel}>
+                Cancelar
+              </Button>
+            </div>
           ) : (
-            <>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Controle de Inadimplência {percentual && `${percentual}%`}
-              </h1>
-
-              {/* BOTÕES DIREITA + NOVO MENU DE PERFIL */}
-              <div className="flex items-center gap-3">
-                <Button onClick={print} variant="outline" className="gap-2">
-                  <RiScreenshot2Fill className="w-5 h-5" /> Print
-                </Button>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2"><File className="w-4 h-4" /> Anexos</Button>
-                  </DialogTrigger>
-                  <DialogContent><Anexos /></DialogContent>
-                </Dialog>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
-                </Dialog>
-                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
-                  <Calendar className="h-4 w-4" /> {today.toLocaleDateString("pt-BR")}
-                </Button>
-                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-80">
-                    <Apps />
-                    <div className="mt-8">
-                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
-                        Sair
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-
-                {/* BOTÃO DE TEMA */}
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
-                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </Button>
-
-                {/* NOVO BOTÃO DE PERFIL (discreto, ao lado do tema) */}
-                <div className="relative">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full border-2 border-purple-500 hover:bg-purple-50"
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  >
-                    <User className="h-5 w-5 text-purple-600" />
-                  </Button>
-
-                  {/* MENU EXPANSÍVEL */}
-                  {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-purple-200 p-6 z-50 animate-in fade-in slide-in-from-top-2">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-4">
-                          <User className="h-10 w-10 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-xl font-bold text-gray-800">
-                            {userData?.nome_usuario || "Usuário"}
-                          </p>
-                          <p className="text-sm text-purple-600 font-medium">
-                            {userData?.filial ? `Filial ${String(userData.filial).padStart(5, "0")}` : "Sem filial"}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="destructive"
-                        className="w-full mt-4 flex items-center justify-center gap-2"
-                        onClick={handleLogout}
-                      >
-                        <LogOut className="h-5 w-5" />
-                        Sair
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
+            <Button variant="outline" onClick={() => setIsEditing(true)} className="border-blue-300 text-blue-600">
+              Editar
+            </Button>
           )}
-        </div>
-      </header>
-
-      {/* RESTO DO CÓDIGO 100% IGUAL — NADA FOI ALTERADO */}
-      <div className="flex flex-col lg:flex-row min-h-screen">
-        <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
-          <div className="p-6">
-            <RankingApoiadores />
-          </div>
-        </aside>
-        <main className="flex-1 lg:ml-80 pt-6 pb-20">
-          <div className="max-w-5xl mx-auto px-4">
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 w-full p-1 bg-card rounded-xl mb-6 gap-1">
-                <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm"><Sliders className="h-4 w-4" /> Ajustes</TabsTrigger>
-                <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm"><Wallet className="h-4 w-4" /> Fiado</TabsTrigger>
-                <TabsTrigger value="meta-desafio" className="gap-1 text-xs sm:text-sm"><Trophy className="h-4 w-4" /> Desafio</TabsTrigger>
-                <TabsTrigger value="meta-alimentacao" className="gap-1 text-xs sm:text-sm"><Utensils className="h-4 w-4" /> Alimentação</TabsTrigger>
-                {bonusPerdidoAtivado && (
-                  <TabsTrigger value="meta-perdido" className="gap-1 text-xs sm:text-sm"><AlertTriangle className="h-4 w-4" /> Perdido</TabsTrigger>
-                )}
-                <TabsTrigger value="meus-premios" className="gap-1 text-xs sm:text-sm"><Gift className="h-4 w-4" /> Prêmios</TabsTrigger>
-                {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className="gap-1 text-xs sm:text-sm"><History className="h-4 w-4" /> Histórico</TabsTrigger>
-                )}
-                <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm"><Store className="h-4 w-4" /> Filiais %</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="ajustes-metas">
-                <AjustesMetas
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-                  mostrarHistorico={mostrarHistorico}
-                  setMostrarHistorico={setMostrarHistorico}
-                />
-              </TabsContent>
-              <TabsContent value="meta-fiado">
-                <MetaFiado
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={setRecebidoHoje}
-                />
-              </TabsContent>
-              <TabsContent value="meta-desafio">
-                <MetaDesafio
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={() => {}}
-                />
-              </TabsContent>
-              <TabsContent value="meta-alimentacao">
-                <MetaAlimentacao
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={() => {}}
-                />
-              </TabsContent>
-              {bonusPerdidoAtivado && (
-                <TabsContent value="meta-perdido">
-                  <MetaPerdido
-                    userData={userData}
-                    updateUserData={updateUserData}
-                    diasSemExpediente={diasSemExpediente}
-                    updateDiasSemExpediente={updateDiasSemExpediente}
-                    diasRestantesCalculados={diasRestantesCalculados}
-                    isLoading={isLoading}
-                    bonusPerdidoAtivado={bonusPerdidoAtivado}
-                    setRecebidoHoje={() => {}}
-                  />
-                </TabsContent>
-              )}
-              <TabsContent value="meus-premios">
-                <MeusPremios
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-                  setTotalGanhos={() => {}}
-                />
-              </TabsContent>
-              {mostrarHistorico && (
-                <TabsContent value="historicos">
-                  <Historicos
-                    userData={userData}
-                    updateUserData={updateUserData}
-                    diasSemExpediente={diasSemExpediente}
-                    updateDiasSemExpediente={updateDiasSemExpediente}
-                    diasRestantesCalculados={diasRestantesCalculados}
-                    isLoading={isLoading}
-                    bonusPerdidoAtivado={bonusPerdidoAtivado}
-                    recebido={recebidoHoje}
-                  />
-                </TabsContent>
-              )}
-              <TabsContent value="filiais">
-                <Filiais />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
-      </div>
-
-      <div className="lg:hidden mt-8 px-4">
-        <RankingApoiadores />
-      </div>
-
-      <footer className="bg-card shadow-md p-4 mt-8">
-        <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <FaWhatsapp className="text-green-600" />
-            <a
-              href="https://gazinassisbrasil.shop/busca/renato"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              Suporte
-            </a>
+            <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
+            <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
+              {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              Histórico
+            </Label>
           </div>
-          <Instagram className="text-pink-600 cursor-pointer" onClick={instagram} />
-          {showInstagramUsername && (
-            <span className="text-pink-600 text-xs bg-card px-2 py-1 rounded shadow">
-              @renato_alme1da
-            </span>
-          )}
+          <div className="flex items-center space-x-2">
+            <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
+            <Label>Ativar Meta Perdido</Label>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={formState.role === "líder" ? "default" : "outline"}
+              onClick={() => updateUserData({ ...userData, role: "líder" })}
+            >
+              {formState.role === "líder" ? "Líder" : "Op. Líder"}
+            </Button>
+            <Button
+              variant={formState.role === "auxiliar" ? "default" : "outline"}
+              onClick={() => updateUserData({ ...userData, role: "auxiliar" })}
+            >
+              {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
+            </Button>
+          </div>
         </div>
-      </footer>
+      </div>
+
+      {/* Grid de metas — SEM NOME E SEM FILIAL */}
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditing} />
+        <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditing} />
+        <CardItem title="Meta do Mês" value={formState.meta_mes} icon={<Target size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_mes", v)} color="bg-blue-500" isEditMode={isEditing} />
+        <CardItem title="Vencido Atual" value={formState.vencido_atual} icon={<AlertTriangle size={16} />} isEditable={isEditing} onChange={(v) => handleChange("vencido_atual", v)} color="bg-yellow-500" isEditMode={isEditing} />
+        <CardItem title="Meta Desafio" value={formState.meta_desafio} icon={<Target size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_desafio", v)} color="bg-green-500" isEditMode={isEditing} />
+        {bonusPerdidoAtivado && (
+          <>
+            <CardItem title="Meta Perdido" value={formState.meta_perdido} icon={<AlertTriangle size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_perdido", v)} color="bg-red-500" isEditMode={isEditing} />
+            <CardItem title="Rec. Perdido" value={formState.rec_perdido} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("rec_perdido", v)} color="bg-red-500" isEditMode={isEditing} />
+          </>
+        )}
+        <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditing} />
+        <Card className="shadow-sm bg-gray-500 bg-opacity-50">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium">Dias</h3>
+              <span className="p-2 rounded-full bg-gray-500 text-white"><Target size={16} /></span>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Trabalhados</p>
+              {isEditing ? (
+                <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
+              ) : (
+                <div className="text-xl font-bold">{formState.dias_trabalhados}</div>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Restantes</p>
+              {isEditing ? (
+                <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
+              ) : (
+                <div className="text-xl font-bold">{formState.dias_restantes}</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
 
-export default DashboardLayout;
+export default AjustesMetas;
