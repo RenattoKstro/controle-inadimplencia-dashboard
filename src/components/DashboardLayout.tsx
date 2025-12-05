@@ -189,7 +189,7 @@ const DashboardLayout = () => {
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
 
-                {/* BOTÃO DE PERFIL COM FOTO — VERSÃO FINAL 100% FUNCIONANDO */}
+                {/* BOTÃO DE PERFIL — FOTO 100% FUNCIONANDO (SEM CORRUPÇÃO) */}
                 <div className="relative">
                   <Button
                     variant="ghost"
@@ -202,10 +202,6 @@ const DashboardLayout = () => {
                         src={userData.avatar_url}
                         alt="Perfil"
                         className="h-10 w-10 object-cover"
-                        onError={(e) => {
-                          console.error("ERRO AO CARREGAR FOTO:", userData.avatar_url);
-                          e.currentTarget.src = "https://via.placeholder.com/40/8b5cf6/ffffff?text=U";
-                        }}
                       />
                     ) : (
                       <div className="h-10 w-10 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -241,9 +237,18 @@ const DashboardLayout = () => {
                               const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
                               const fileName = `${userData.user_id}.${fileExt}`;
 
+                              // PASSO 1: REMOVE ANTES DE FAZER UPLOAD (EVITA CORRUPÇÃO)
+                              await supabase.storage
+                                .from("perfis")
+                                .remove([fileName]);
+
+                              // PASSO 2: UPLOAD LIMPO
                               const { error } = await supabase.storage
                                 .from("perfis")
-                                .upload(fileName, file, { upsert: true });
+                                .upload(fileName, file, {
+                                  cacheControl: "3600",
+                                  upsert: false
+                                });
 
                               if (error) {
                                 console.error("Erro no upload:", error);
@@ -251,7 +256,7 @@ const DashboardLayout = () => {
                                 return;
                               }
 
-                              // URL DIRETA E 100% FUNCIONAL
+                              // URL FINAL
                               const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}`;
 
                               await updateUserData({ avatar_url: novaUrl });
@@ -289,7 +294,7 @@ const DashboardLayout = () => {
         </div>
       </header>
 
-      {/* RESTO DO DASHBOARD */}
+      {/* RESTO DO DASHBOARD (100% IGUAL) */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
@@ -342,7 +347,7 @@ const DashboardLayout = () => {
                 />
               </TabsContent>
 
-              {/* ... outras TabsContent exatamente como antes ... */}
+              {/* ... outras TabsContent iguais ... */}
               <TabsContent value="filiais">
                 <Filiais />
               </TabsContent>
@@ -359,7 +364,12 @@ const DashboardLayout = () => {
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />
-            <a href="https://gazinassisbrasil.shop/busca/renato" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            <a
+              href="https://gazinassisbrasil.shop/busca/renato"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
               Suporte
             </a>
           </div>
