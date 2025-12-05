@@ -55,6 +55,7 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
 
+  // Verificação de sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -189,7 +190,7 @@ const DashboardLayout = () => {
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
 
-                {/* BOTÃO DE PERFIL COM FOTO + UPLOAD */}
+                {/* BOTÃO DE PERFIL COM FOTO + UPLOAD + CONSOLE.LOGS */}
                 <div className="relative">
                   <Button
                     variant="ghost"
@@ -199,9 +200,14 @@ const DashboardLayout = () => {
                   >
                     {userData?.avatar_url ? (
                       <img
-                        src={`${userData.avatar_url}?t=${Date.now()}`}
+                        src={userData.avatar_url}
                         alt="Perfil"
                         className="h-10 w-10 object-cover"
+                        onLoad={() => console.log("FOTO CARREGADA:", userData.avatar_url)}
+                        onError={(e) => {
+                          console.error("ERRO AO CARREGAR FOTO:", userData.avatar_url);
+                          e.currentTarget.src = "https://via.placeholder.com/40/8b5cf6/ffffff?text=User";
+                        }}
                       />
                     ) : (
                       <div className="h-10 w-10 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -216,9 +222,13 @@ const DashboardLayout = () => {
                         <label htmlFor="upload-foto" className="cursor-pointer group">
                           {userData?.avatar_url ? (
                             <img
-                              src={`${userData.avatar_url}?t=${Date.now()}`}
+                              src={userData.avatar_url}
                               alt="Perfil"
                               className="h-24 w-24 rounded-full object-cover border-4 border-purple-500 group-hover:opacity-80 transition"
+                              onLoad={() => console.log("FOTO GRANDE CARREGADA:", userData.avatar_url)}
+                              onError={(e) => {
+                                console.error("ERRO AO CARREGAR FOTO GRANDE:", userData.avatar_url);
+                              }}
                             />
                           ) : (
                             <div className="h-24 w-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-4 border-purple-500 group-hover:opacity-80 transition">
@@ -232,23 +242,32 @@ const DashboardLayout = () => {
                             className="hidden"
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
-                              if (!file || !userData?.user_id) return;
+                              if (!file || !userData?.user_id) {
+                                console.error("Arquivo ou user_id não encontrado");
+                                return;
+                              }
 
-                              const fileExt = file.name.split(".").pop() || "jpg";
+                              console.log("Iniciando upload...");
+                              console.log("user_id:", userData.user_id);
+                              console.log("Arquivo:", file.name, file.type, file.size);
+
+                              const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
                               const fileName = `${userData.user_id}.${fileExt}`;
 
-                              const { error } = await supabase.storage
+                              const { data, error } = await supabase.storage
                                 .from("perfis")
                                 .upload(fileName, file, { upsert: true });
 
                               if (error) {
-                                console.error("Erro no upload:", error);
-                                toast({ title: "Erro ao fazer upload", variant: "destructive" });
+                                console.error("ERRO NO UPLOAD:", error);
+                                toast({ title: "Erro ao enviar foto", variant: "destructive" });
                                 return;
                               }
 
-                              // URL DIRETA COM SEU ID DO SUPABASE
+                              console.log("Upload feito com sucesso:", data);
+
                               const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}?t=${Date.now()}`;
+                              console.log("URL GERADA:", novaUrl);
 
                               await updateUserData({ avatar_url: novaUrl });
                               toast({ title: "Foto atualizada com sucesso!" });
