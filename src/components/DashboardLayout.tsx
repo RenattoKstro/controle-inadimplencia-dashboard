@@ -247,13 +247,10 @@ const DashboardLayout = () => {
                                 return;
                               }
 
-                              const { data: { publicUrl } } = supabase.storage
-                                .from("perfis")
-                                .getPublicUrl(fileName);
+                              // URL DIRETA COM SEU ID DO SUPABASE
+                              const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}?t=${Date.now()}`;
 
-                              const urlComTimestamp = `${publicUrl}?t=${Date.now()}`;
-
-                              await updateUserData({ avatar_url: urlComTimestamp });
+                              await updateUserData({ avatar_url: novaUrl });
                               toast({ title: "Foto atualizada com sucesso!" });
                             }}
                           />
@@ -342,7 +339,71 @@ const DashboardLayout = () => {
                   setRecebidoHoje={setRecebidoHoje}
                 />
               </TabsContent>
-              {/* ... resto das TabsContent exatamente como antes ... */}
+              <TabsContent value="meta-desafio">
+                <MetaDesafio
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={() => {}}
+                />
+              </TabsContent>
+              <TabsContent value="meta-alimentacao">
+                <MetaAlimentacao
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={() => {}}
+                />
+              </TabsContent>
+              {bonusPerdidoAtivado && (
+                <TabsContent value="meta-perdido">
+                  <MetaPerdido
+                    userData={userData}
+                    updateUserData={updateUserData}
+                    diasSemExpediente={diasSemExpediente}
+                    updateDiasSemExpediente={updateDiasSemExpediente}
+                    diasRestantesCalculados={diasRestantesCalculados}
+                    isLoading={isLoading}
+                    bonusPerdidoAtivado={bonusPerdidoAtivado}
+                    setRecebidoHoje={() => {}}
+                  />
+                </TabsContent>
+              )}
+              <TabsContent value="meus-premios">
+                <MeusPremios
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+                  setTotalGanhos={() => {}}
+                />
+              </TabsContent>
+              {mostrarHistorico && (
+                <TabsContent value="historicos">
+                  <Historicos
+                    userData={userData}
+                    updateUserData={updateUserData}
+                    diasSemExpediente={diasSemExpediente}
+                    updateDiasSemExpediente={updateDiasSemExpediente}
+                    diasRestantesCalculados={diasRestantesCalculados}
+                    isLoading={isLoading}
+                    bonusPerdidoAtivado={bonusPerdidoAtivado}
+                    recebido={recebidoHoje}
+                  />
+                </TabsContent>
+              )}
               <TabsContent value="filiais">
                 <Filiais />
               </TabsContent>
