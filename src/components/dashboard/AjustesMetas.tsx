@@ -23,6 +23,7 @@ import {
   User,
   Phone,
   Instagram,
+  Info,
 } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +66,8 @@ const AjustesMetas = ({
   mostrarHistorico: boolean;
   setMostrarHistorico: (value: boolean) => void;
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingMetas, setIsEditingMetas] = useState(false);
+  const [isEditingPerfil, setIsEditingPerfil] = useState(false);
   const [openPopover, setOpenPopover] = useState(false);
 
   // Filial
@@ -91,6 +93,14 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
+  // Máscara simples de WhatsApp
+  const formatWhatsapp = (value: string) => {
+    const num = value.replace(/\D/g, "");
+    if (num.length <= 2) return num;
+    if (num.length <= 7) return `(${num.slice(0, 2)}) ${num.slice(2)}`;
+    return `(${num.slice(0, 2)}) ${num.slice(2, 7)}-${num.slice(7, 11)}`;
+  };
+
   // Carrega filiais
   useEffect(() => {
     const fetchFiliais = async () => {
@@ -111,7 +121,6 @@ const AjustesMetas = ({
     fetchFiliais();
   }, []);
 
-  // Sincroniza filial selecionada
   useEffect(() => {
     if (userData?.filial && filiaisList.length > 0) {
       const found = filiaisList.find((f) => f.numero === userData.filial);
@@ -119,7 +128,6 @@ const AjustesMetas = ({
     }
   }, [userData?.filial, filiaisList]);
 
-  // Atualiza todos os campos
   useEffect(() => {
     setFormState((prev) => ({
       ...prev,
@@ -131,45 +139,28 @@ const AjustesMetas = ({
     setInstagram(userData?.instagram || "");
   }, [userData, diasRestantesCalculados]);
 
-  // MÁSCARA DE WHATSAPP (SEM DEPENDÊNCIA EXTERNA)
-  const formatWhatsapp = (value: string) => {
-    const num = value.replace(/\D/g, "");
-    if (num.length <= 2) return num;
-    if (num.length <= 7) return `(${num.slice(0, 2)}) ${num.slice(2)}`;
-    return `(${num.slice(0, 2)}) ${num.slice(2, 7)}-${num.slice(7, 11)}`;
-  };
-
   const handleSave = () => {
-    if (!userData?.filial && !selectedFilial) {
-      alert("Você precisa selecionar uma filial antes de salvar pela primeira vez!\n\nAtenção: Escolha com cuidado!\nApós salvar, somente o administrador pode alterar a filial.");
-      return;
-    }
-    if (!userData?.nome_usuario && !nomeUsuario.trim()) {
-      alert("Você precisa informar seu nome antes de salvar pela primeira vez!");
-      return;
-    }
-    if (!userData?.whatsapp && !whatsapp.replace(/\D/g, "").trim()) {
-      alert("WhatsApp é obrigatório!");
-      return;
+    const dadosParaSalvar: any = {};
+
+    // Salva metas se estiver editando
+    if (isEditingMetas) {
+      dadosParaSalvar = { ...formState };
     }
 
-    const dadosParaSalvar: any = { ...formState };
-
-    if (selectedFilial && !userData?.filial) {
-      dadosParaSalvar.filial = selectedFilial.numero;
-    }
-    if (nomeUsuario.trim() && !userData?.nome_usuario) {
-      dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
-    }
-    if (whatsapp.replace(/\D/g, "").length >= 11) {
-      dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
-    }
-    if (instagram.trim()) {
-      dadosParaSalvar.instagram = instagram.trim().replace("@", "");
+    // Salva perfil se estiver editando
+    if (isEditingPerfil) {
+      if (nomeUsuario.trim()) dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
+      if (whatsapp.replace(/\D/g, "").length >= 11) dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
+      if (instagram.trim()) dadosParaSalvar.instagram = instagram.trim().replace("@", "");
+      if (selectedFilial && !userData?.filial) dadosParaSalvar.filial = selectedFilial.numero;
     }
 
-    updateUserData(dadosParaSalvar);
-    setIsEditing(false);
+    if (Object.keys(dadosParaSalvar).length > 0) {
+      updateUserData(dadosParaSalvar);
+    }
+
+    setIsEditingMetas(false);
+    setIsEditingPerfil(false);
     setOpenPopover(false);
   };
 
@@ -182,7 +173,8 @@ const AjustesMetas = ({
     setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
     setWhatsapp(userData?.whatsapp || "");
     setInstagram(userData?.instagram || "");
-    setIsEditing(false);
+    setIsEditingMetas(false);
+    setIsEditingPerfil(false);
     setOpenPopover(false);
   };
 
@@ -241,13 +233,13 @@ const AjustesMetas = ({
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
+      {/* Cabeçalho com dois botões */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Ajustes de Metas
         </h2>
         <div className="flex flex-wrap items-center gap-3">
-          {isEditing ? (
+          {(isEditingMetas || isEditingPerfil) ? (
             <div className="flex gap-2">
               <Button onClick={handleSave} className="bg-gradient-to-r from-blue-600 to-indigo-600">
                 Salvar
@@ -257,202 +249,192 @@ const AjustesMetas = ({
               </Button>
             </div>
           ) : (
-            <Button variant="outline" onClick={() => setIsEditing(true)} className="border-blue-300 text-blue-600">
-              Editar
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setIsEditingMetas(true)} className="border-blue-300 text-blue-600">
+                Editar Metas
+              </Button>
+
+              {/* BOTÃO DISCRETO DE INFORMAÇÃO — SÓ APARECE QUANDO CLICA EM "EDITAR" */}
+              {isEditingMetas && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsEditingPerfil(true)}
+                  title="Editar nome, WhatsApp, Instagram e filial"
+                >
+                  <Info className="h-5 w-5" />
+                </Button>
+              )}
+            </>
           )}
-          <div className="flex gap-2">
-            <Button
-              variant={formState.role === "líder" ? "default" : "outline"}
-              onClick={() => updateUserData({ ...userData, role: "líder" })}
-            >
-              {formState.role === "líder" ? "Líder" : "Op. Líder"}
-            </Button>
-            <Button
-              variant={formState.role === "auxiliar" ? "default" : "outline"}
-              onClick={() => updateUserData({ ...userData, role: "auxiliar" })}
-            >
-              {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
-            <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
-              {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              Histórico
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
-            <Label>Ativar Meta Perdido</Label>
-          </div>
+
+          {/* Switches e botões de role (só aparecem quando NÃO está editando) */}
+          {!(isEditingMetas || isEditingPerfil) && (
+            <>
+              <div className="flex gap-2">
+                <Button
+                  variant={formState.role === "líder" ? "default" : "outline"}
+                  onClick={() => updateUserData({ role: "líder" })}
+                >
+                  {formState.role === "líder" ? "Líder" : "Op. Líder"}
+                </Button>
+                <Button
+                  variant={formState.role === "auxiliar" ? "default" : "outline"}
+                  onClick={() => updateUserData({ role: "auxiliar" })}
+                >
+                  {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
+                <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
+                  {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  Histórico
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
+                <Label>Ativar Meta Perdido</Label>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* NOME OBRIGATÓRIO */}
-      {isEditing && !userData?.nome_usuario && (
+      {/* EDIÇÃO DE PERFIL — SÓ APARECE QUANDO CLICA NO BOTÃO "i" */}
+      {isEditingPerfil && (
         <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-6">
+            {/* Nome */}
             <div className="flex items-center gap-4">
               <User className="h-10 w-10 text-purple-600" />
-              <div className="flex-1 space-y-4">
-                <Label className="text-xl font-bold text-purple-900">
-                  Informe seu Nome (obrigatório)
-                </Label>
+              <div className="flex-1">
+                <Label className="text-xl font-bold text-purple-900">Nome completo</Label>
                 <Input
                   value={nomeUsuario}
                   onChange={(e) => setNomeUsuario(e.target.value.toUpperCase())}
                   placeholder="SEU NOME COMPLETO"
-                  className="text-2xl font-bold text-center tracking-wider"
+                  className="text-2xl font-bold text-center"
                 />
-                <p className="text-sm text-purple-700 text-center">
-                  Seu nome será salvo em letras maiúsculas e não poderá ser alterado depois.
-                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* WHATSAPP OBRIGATÓRIO (SEM DEPENDÊNCIA EXTERNA) */}
-      {isEditing && !userData?.whatsapp && (
-        <Card className="border-2 border-dashed border-green-400 bg-green-50">
-          <CardContent className="pt-6">
+            {/* WhatsApp */}
             <div className="flex items-center gap-4">
               <Phone className="h-10 w-10 text-green-600" />
-              <div className="flex-1 space-y-4">
-                <Label className="text-xl font-bold text-green-900">
-                  WhatsApp (obrigatório)
-                </Label>
+              <div className="flex-1">
+                <Label className="text-xl font-bold text-green-900">WhatsApp (obrigatório)</Label>
                 <Input
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
                   placeholder="(99) 99999-9999"
                   maxLength={15}
-                  className="text-2xl font-bold text-center tracking-wider"
+                  className="text-2xl font-bold text-center"
                 />
-                <p className="text-sm text-green-700 text-center">
-                  Número com DDD — será usado no ranking de filiais
-                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* INSTAGRAM OPCIONAL */}
-      {isEditing && (
-        <Card className="border-2 border-dashed border-pink-400 bg-pink-50">
-          <CardContent className="pt-6">
+            {/* Instagram (opcional) */}
             <div className="flex items-center gap-4">
               <Instagram className="h-10 w-10 text-pink-600" />
-              <div className="flex-1 space-y-4">
-                <Label className="text-xl font-bold text-pink-900">
-                  Instagram (opcional)
-                </Label>
+              <div className="flex-1">
+                <Label className="text-xl font-bold text-pink-900">Instagram (opcional)</Label>
                 <Input
                   value={instagram}
                   onChange={(e) => setInstagram(e.target.value)}
                   placeholder="@seu_perfil"
-                  className="text-2xl font-bold text-center tracking-wider"
+                  className="text-2xl font-bold text-center"
                 />
+                <p className="text-sm text-gray-600 mt-1">Se deixar em branco, não aparecerá no ranking</p>
               </div>
             </div>
+
+            {/* Filial (só uma vez) */}
+            {!userData?.filial && (
+              <div className="flex items-center gap-4">
+                <Store className="h-10 w-10 text-blue-600" />
+                <div className="flex-1">
+                  <Label className="text-xl font-bold text-blue-900">Filial</Label>
+                  <Popover open={openPopover} onOpenChange={setOpenPopover}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between h-14 text-lg">
+                        {selectedFilial ? selectedFilial.label : "Selecionar filial..."}
+                        <ChevronsUpDown className="ml-2 h-6 w-6"/>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Buscar filial..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
+                          <CommandGroup>
+                            {filiaisList.map(f => (
+                              <CommandItem
+                                key={f.numero}
+                                value={`${f.numero} ${f.label}`}
+                                onSelect={() => {
+                                  setSelectedFilial(f);
+                                  setOpenPopover(false);
+                                }}
+                              >
+                                <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
+                                {f.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
-      {/* FILIAL OBRIGATÓRIA */}
-      {isEditing && !userData?.filial && (
-        <Card className="border-2 border-dashed border-blue-400 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <Store className="h-10 w-10 text-blue-600" />
-              <div className="flex-1 space-y-4">
-                <Label className="text-xl font-bold text-blue-900">
-                  Selecione sua Filial (obrigatório)
-                </Label>
-                <Popover open={openPopover} onOpenChange={setOpenPopover}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-full justify-between h-14 text-left font-medium text-lg">
-                      {selectedFilial ? selectedFilial.label : "Buscar filial..."}
-                      <ChevronsUpDown className="ml-2 h-6 w-6 shrink-0 opacity-60" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Digite número, nome ou regional..." className="h-12" />
-                      <CommandList>
-                        <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
-                        <CommandGroup>
-                          {filiaisList.map((f) => (
-                            <CommandItem
-                              key={f.numero}
-                              value={`${f.numero} ${f.label}`}
-                              onSelect={() => {
-                                setSelectedFilial(f);
-                                setOpenPopover(false);
-                              }}
-                            >
-                              <Check className={`mr-3 h-6 w-6 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
-                              {f.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                {!selectedFilial && (
-                  <p className="text-sm font-bold text-red-600 mt-2">
-                    Você deve selecionar uma filial antes de salvar!
-                  </p>
+      {/* GRID DE METAS (só aparece quando NÃO está editando perfil) */}
+      {!isEditingPerfil && (
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+          <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditingMetas} />
+          <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditingMetas} />
+          <CardItem title="Meta do Mês" value={formState.meta_mes} icon={<Target size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_mes", v)} color="bg-blue-500" isEditMode={isEditingMetas} />
+          <CardItem title="Vencido Atual" value={formState.vencido_atual} icon={<AlertTriangle size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("vencido_atual", v)} color="bg-yellow-500" isEditMode={isEditingMetas} />
+          <CardItem title="Meta Desafio" value={formState.meta_desafio} icon={<Target size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_desafio", v)} color="bg-green-500" isEditMode={isEditingMetas} />
+          {bonusPerdidoAtivado && (
+            <>
+              <CardItem title="Meta Perdido" value={formState.meta_perdido} icon={<AlertTriangle size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_perdido", v)} color="bg-red-500" isEditMode={isEditingMetas} />
+              <CardItem title="Rec. Perdido" value={formState.rec_perdido} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("rec_perdido", v)} color="bg-red-500" isEditMode={isEditingMetas} />
+            </>
+          )}
+          <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditingMetas} />
+          <Card className="shadow-sm bg-gray-500 bg-opacity-50">
+            <CardContent className="p-4 space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium">Dias</h3>
+                <span className="p-2 rounded-full bg-gray-500 text-white"><Target size={16} /></span>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Trabalhados</p>
+                {isEditingMetas ? (
+                  <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
+                ) : (
+                  <div className="text-xl font-bold">{formState.dias_trabalhados}</div>
                 )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+              <div>
+                <p className="text-xs text-muted-foreground">Restantes</p>
+                {isEditingMetas ? (
+                  <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
+                ) : (
+                  <div className="text-xl font-bold">{formState.dias_restantes}</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
-
-      {/* GRID DE METAS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditing} />
-        <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditing} />
-        <CardItem title="Meta do Mês" value={formState.meta_mes} icon={<Target size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_mes", v)} color="bg-blue-500" isEditMode={isEditing} />
-        <CardItem title="Vencido Atual" value={formState.vencido_atual} icon={<AlertTriangle size={16} />} isEditable={isEditing} onChange={(v) => handleChange("vencido_atual", v)} color="bg-yellow-500" isEditMode={isEditing} />
-        <CardItem title="Meta Desafio" value={formState.meta_desafio} icon={<Target size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_desafio", v)} color="bg-green-500" isEditMode={isEditing} />
-        {bonusPerdidoAtivado && (
-          <>
-            <CardItem title="Meta Perdido" value={formState.meta_perdido} icon={<AlertTriangle size={16} />} isEditable={isEditing} onChange={(v) => handleChange("meta_perdido", v)} color="bg-red-500" isEditMode={isEditing} />
-            <CardItem title="Rec. Perdido" value={formState.rec_perdido} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("rec_perdido", v)} color="bg-red-500" isEditMode={isEditing} />
-          </>
-        )}
-        <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditing} />
-        <Card className="shadow-sm bg-gray-500 bg-opacity-50">
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium">Dias</h3>
-              <span className="p-2 rounded-full bg-gray-500 text-white"><Target size={16} /></span>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Trabalhados</p>
-              {isEditing ? (
-                <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-              ) : (
-                <div className="text-xl font-bold">{formState.dias_trabalhados}</div>
-              )}
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Restantes</p>
-              {isEditing ? (
-                <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-              ) : (
-                <div className="text-xl font-bold">{formState.dias_restantes}</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };
