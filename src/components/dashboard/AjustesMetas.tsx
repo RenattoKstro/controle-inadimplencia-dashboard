@@ -23,6 +23,8 @@ import {
   Eye,
   EyeOff,
   User,
+  Phone,
+  Instagram,
 } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +41,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { InputMask } from "@react-input/mask";
 
 interface CardItemProps {
   title: string;
@@ -74,6 +77,8 @@ const AjustesMetas = ({
 
   // Nome do usuário
   const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
+  const [whatsapp, setWhatsapp] = useState(userData?.whatsapp || "");
+  const [instagram, setInstagram] = useState(userData?.instagram || "");
 
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
@@ -114,7 +119,7 @@ const AjustesMetas = ({
     fetchFiliais();
   }, []);
 
-  // Sincroniza filial
+  // Sincroniza filial selecionada
   useEffect(() => {
     if (userData?.filial && filiaisList.length > 0) {
       const found = filiaisList.find((f) => f.numero === userData.filial);
@@ -122,7 +127,7 @@ const AjustesMetas = ({
     }
   }, [userData?.filial, filiaisList]);
 
-  // Atualiza formState e nome
+  // Atualiza formState e campos
   useEffect(() => {
     setFormState((prev) => ({
       ...prev,
@@ -130,21 +135,21 @@ const AjustesMetas = ({
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
     }));
     setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
+    setWhatsapp(userData?.whatsapp || "");
+    setInstagram(userData?.instagram || "");
   }, [userData, diasRestantesCalculados]);
 
-  // SALVAR — OBRIGATÓRIO NA PRIMEIRA VEZ
   const handleSave = () => {
     if (!userData?.filial && !selectedFilial) {
-      alert(
-        "Você precisa selecionar uma filial antes de salvar pela primeira vez!\n\n" +
-        "⚠️ Atenção: Escolha com cuidado!\n" +
-        "Após salvar, somente o administrador pode alterar a filial."
-      );
+      alert("Você precisa selecionar uma filial antes de salvar pela primeira vez!\n\nAtenção: Escolha com cuidado!\nApós salvar, somente o administrador pode alterar a filial.");
       return;
     }
-
     if (!userData?.nome_usuario && !nomeUsuario.trim()) {
       alert("Você precisa informar seu nome antes de salvar pela primeira vez!");
+      return;
+    }
+    if (!userData?.whatsapp && !whatsapp.replace(/\D/g, "").trim()) {
+      alert("WhatsApp é obrigatório para continuar!");
       return;
     }
 
@@ -153,9 +158,14 @@ const AjustesMetas = ({
     if (selectedFilial && !userData?.filial) {
       dadosParaSalvar.filial = selectedFilial.numero;
     }
-
     if (nomeUsuario.trim() && !userData?.nome_usuario) {
       dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
+    }
+    if (whatsapp.replace(/\D/g, "").length >= 11) {
+      dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
+    }
+    if (instagram.trim()) {
+      dadosParaSalvar.instagram = instagram.trim().replace("@", "");
     }
 
     updateUserData(dadosParaSalvar);
@@ -170,6 +180,8 @@ const AjustesMetas = ({
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
     }));
     setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
+    setWhatsapp(userData?.whatsapp || "");
+    setInstagram(userData?.instagram || "");
     setIsEditing(false);
     setOpenPopover(false);
   };
@@ -277,7 +289,7 @@ const AjustesMetas = ({
         </div>
       </div>
 
-      {/* PRIMEIRA VEZ: NOME OBRIGATÓRIO */}
+      {/* NOME OBRIGATÓRIO */}
       {isEditing && !userData?.nome_usuario && (
         <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
           <CardContent className="pt-6">
@@ -302,7 +314,56 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* PRIMEIRA VEZ: FILIAL OBRIGATÓRIA */}
+      {/* WHATSAPP OBRIGATÓRIO */}
+      {isEditing && !userData?.whatsapp && (
+        <Card className="border-2 border-dashed border-green-400 bg-green-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <Phone className="h-10 w-10 text-green-600" />
+              <div className="flex-1 space-y-4">
+                <Label className="text-xl font-bold text-green-900">
+                  WhatsApp (obrigatório)
+                </Label>
+                <InputMask
+                  mask="(99) 9 9999-9999"
+                  replacement={{ _: /\d/ }}
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder="(99) 9 9999-9999"
+                  className="text-2xl font-bold text-center tracking-wider"
+                />
+                <p className="text-sm text-green-700 text-center">
+                  Número com DDD — será usado no ranking de filiais
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* INSTAGRAM OPCIONAL */}
+      {isEditing && (
+        <Card className="border-2 border-dashed border-pink-400 bg-pink-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <Instagram className="h-10 w-10 text-pink-600" />
+              <div className="flex-1 space-y-4">
+                <Label className="text-xl font-bold text-pink-900">
+                  Instagram (opcional)
+                </Label>
+                <Input
+                  value={instagram}
+                  onChange={(e) => setInstagram(e.target.value)}
+                  placeholder="@seu_perfil"
+                  className="text-2xl font-bold text-center tracking-wider"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* FILIAL OBRIGATÓRIA */}
       {isEditing && !userData?.filial && (
         <Card className="border-2 border-dashed border-blue-400 bg-blue-50">
           <CardContent className="pt-6">
@@ -354,7 +415,7 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* Grid de metas — SEM CARDS DE NOME E FILIAL */}
+      {/* GRID DE METAS */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
         <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditing} />
         <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditing} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditing} />
