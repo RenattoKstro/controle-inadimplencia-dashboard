@@ -4,8 +4,6 @@ import { DashboardProps } from "../DashboardLayout";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +39,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { InputMask } from "@react-input/mask";
 
 interface CardItemProps {
   title: string;
@@ -75,7 +72,7 @@ const AjustesMetas = ({
   const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
   const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
 
-  // Nome do usuário
+  // Dados do usuário
   const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
   const [whatsapp, setWhatsapp] = useState(userData?.whatsapp || "");
   const [instagram, setInstagram] = useState(userData?.instagram || "");
@@ -97,18 +94,13 @@ const AjustesMetas = ({
   // Carrega filiais
   useEffect(() => {
     const fetchFiliais = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("filiais")
         .select("idfilial, filial, regional")
         .eq("ativo", true)
         .order("idfilial");
 
-      if (error) {
-        console.error("Erro ao carregar filiais:", error);
-        return;
-      }
-
-      if (data && data.length > 0) {
+      if (data) {
         const formatted = data.map((f: any) => ({
           numero: f.idfilial,
           label: `${f.idfilial} - ${f.filial} (${f.regional || "Sem regional"})`,
@@ -127,7 +119,7 @@ const AjustesMetas = ({
     }
   }, [userData?.filial, filiaisList]);
 
-  // Atualiza formState e campos
+  // Atualiza todos os campos
   useEffect(() => {
     setFormState((prev) => ({
       ...prev,
@@ -139,6 +131,14 @@ const AjustesMetas = ({
     setInstagram(userData?.instagram || "");
   }, [userData, diasRestantesCalculados]);
 
+  // MÁSCARA DE WHATSAPP (SEM DEPENDÊNCIA EXTERNA)
+  const formatWhatsapp = (value: string) => {
+    const num = value.replace(/\D/g, "");
+    if (num.length <= 2) return num;
+    if (num.length <= 7) return `(${num.slice(0, 2)}) ${num.slice(2)}`;
+    return `(${num.slice(0, 2)}) ${num.slice(2, 7)}-${num.slice(7, 11)}`;
+  };
+
   const handleSave = () => {
     if (!userData?.filial && !selectedFilial) {
       alert("Você precisa selecionar uma filial antes de salvar pela primeira vez!\n\nAtenção: Escolha com cuidado!\nApós salvar, somente o administrador pode alterar a filial.");
@@ -149,7 +149,7 @@ const AjustesMetas = ({
       return;
     }
     if (!userData?.whatsapp && !whatsapp.replace(/\D/g, "").trim()) {
-      alert("WhatsApp é obrigatório para continuar!");
+      alert("WhatsApp é obrigatório!");
       return;
     }
 
@@ -314,7 +314,7 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* WHATSAPP OBRIGATÓRIO */}
+      {/* WHATSAPP OBRIGATÓRIO (SEM DEPENDÊNCIA EXTERNA) */}
       {isEditing && !userData?.whatsapp && (
         <Card className="border-2 border-dashed border-green-400 bg-green-50">
           <CardContent className="pt-6">
@@ -324,12 +324,11 @@ const AjustesMetas = ({
                 <Label className="text-xl font-bold text-green-900">
                   WhatsApp (obrigatório)
                 </Label>
-                <InputMask
-                  mask="(99) 9 9999-9999"
-                  replacement={{ _: /\d/ }}
+                <Input
                   value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder="(99) 9 9999-9999"
+                  onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
+                  placeholder="(99) 99999-9999"
+                  maxLength={15}
                   className="text-2xl font-bold text-center tracking-wider"
                 />
                 <p className="text-sm text-green-700 text-center">
