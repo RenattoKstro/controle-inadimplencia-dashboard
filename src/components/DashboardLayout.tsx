@@ -76,7 +76,7 @@ const DashboardLayout = () => {
   const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
   const handleLogout = async () => {
-    supabase.auth.signOut();
+    await supabase.auth.signOut();
     toast({ title: "Tchau!" });
     navigate("/auth");
   };
@@ -158,7 +158,7 @@ const DashboardLayout = () => {
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2"><File className="w-4" /> Anexos</Button>
+                    <Button variant="outline" className="gap-2"><File className="w-4 h-4" /> Anexos</Button>
                   </DialogTrigger>
                   <DialogContent><Anexos /></DialogContent>
                 </Dialog>
@@ -189,7 +189,7 @@ const DashboardLayout = () => {
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
 
-                {/* BOTÃO DE PERFIL COM FOTO 100% FUNCIONANDO */}
+                {/* BOTÃO DE PERFIL COM FOTO — AGORA A FOTO APARECE PERFEITAMENTE DENTRO DO CÍRCULO */}
                 <div className="relative">
                   <Button
                     variant="ghost"
@@ -198,13 +198,15 @@ const DashboardLayout = () => {
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                   >
                     {userData?.avatar_url ? (
-                      <img
-                        src={userData.avatar_url}
-                        alt="Perfil"
-                        className="h-10 w-10 object-cover"
-                      />
+                      <div className="w-10 h-10 rounded-full overflow-hidden">
+                        <img
+                          src={userData.avatar_url}
+                          alt="Perfil"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     ) : (
-                      <div className="h-10 w-10 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                         <User className="h-6 w-6 text-white" />
                       </div>
                     )}
@@ -215,13 +217,15 @@ const DashboardLayout = () => {
                       <div className="flex items-center gap-5 mb-6">
                         <label htmlFor="upload-foto" className="cursor-pointer group">
                           {userData?.avatar_url ? (
-                            <img
-                              src={userData.avatar_url}
-                              alt="Perfil"
-                              className="h-24 w-24 rounded-full object-cover border-4 border-purple-500 group-hover:opacity-80 transition"
-                            />
+                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-purple-500 group-hover:opacity-80 transition">
+                              <img
+                                src={userData.avatar_url}
+                                alt="Perfil"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
                           ) : (
-                            <div className="h-24 w-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-4 border-purple-500 group-hover:opacity-80 transition">
+                            <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-4 border-purple-500 group-hover:opacity-80 transition">
                               <User className="h-14 w-14 text-white" />
                             </div>
                           )}
@@ -237,7 +241,6 @@ const DashboardLayout = () => {
                               const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
                               const fileName = `${userData.user_id}.${fileExt}`;
 
-                              // REMOVE PRIMEIRO + UPLOAD LIMPO
                               await supabase.storage.from("perfis").remove([fileName]);
                               const { error } = await supabase.storage
                                 .from("perfis")
@@ -284,7 +287,7 @@ const DashboardLayout = () => {
         </div>
       </header>
 
-      {/* CONTEÚDO PRINCIPAL */}
+      {/* RESTO DO DASHBOARD (100% COMPLETO) */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
@@ -416,22 +419,15 @@ const DashboardLayout = () => {
         </main>
       </div>
 
-      {/* RANKING MOBILE */}
       <div className="lg:hidden mt-8 px-4">
         <RankingApoiadores />
       </div>
 
-      {/* FOOTER */}
       <footer className="bg-card shadow-md p-4 mt-8">
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />
-            <a
-              href="https://gazinassisbrasil.shop/busca/renato"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
+            <a href="https://gazinassisbrasil.shop/busca/renato" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               Suporte
             </a>
           </div>
