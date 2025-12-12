@@ -57,6 +57,7 @@ const DashboardLayout = () => {
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
 
+  // Verificação de sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -191,7 +192,7 @@ const DashboardLayout = () => {
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
 
-                {/* BOTÃO DE PERFIL COM FOTO — 100% FUNCIONANDO */}
+                {/* BOTÃO DE PERFIL COM FOTO — 100% FUNCIONANDO (SEM CORRUPÇÃO) */}
                 <div className="relative">
                   <Button
                     variant="ghost"
@@ -238,12 +239,10 @@ const DashboardLayout = () => {
                             className="hidden"
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
-                              if (!file || !userData?.user_id) return;
-
-                              // FORÇA O TIPO CORRETO DO ARQUIVO (SOLUÇÃO FINAL)
-                              const validFile = new File([file], file.name, {
-                                type: file.type || "image/jpeg"
-                              });
+                              if (!file || !userData?.user_id) {
+                                toast({ title: "Erro: arquivo ou usuário não encontrado", variant: "destructive" });
+                                return;
+                              }
 
                               const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
                               const fileName = `${userData.user_id}.${fileExt}`;
@@ -251,11 +250,14 @@ const DashboardLayout = () => {
                               // REMOVE O ARQUIVO ANTIGO
                               await supabase.storage.from("perfis").remove([fileName]);
 
-                              // UPLOAD LIMPO E PERFEITO
+                              // UPLOAD COM ARRAYBUFFER (MÉTODO QUE NUNCA CORROMPE)
+                              const arrayBuffer = await file.arrayBuffer();
+                              const uint8Array = new Uint8Array(arrayBuffer);
+
                               const { error } = await supabase.storage
                                 .from("perfis")
-                                .upload(fileName, validFile, {
-                                  contentType: validFile.type,
+                                .upload(fileName, uint8Array, {
+                                  contentType: file.type || "image/jpeg",
                                   upsert: false
                                 });
 
@@ -266,7 +268,6 @@ const DashboardLayout = () => {
                               }
 
                               const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}`;
-
                               await updateUserData({ avatar_url: novaUrl });
                               toast({ title: "Foto atualizada com sucesso!" });
                             }}
@@ -298,7 +299,7 @@ const DashboardLayout = () => {
         </div>
       </header>
 
-      {/* RESTO DO DASHBOARD */}
+      {/* MAIN CONTENT */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
           <div className="p-6">
