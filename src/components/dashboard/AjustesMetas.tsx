@@ -150,7 +150,8 @@ const AjustesMetas = ({
       if (nomeUsuario.trim()) dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
       if (whatsapp.replace(/\D/g, "").length >= 11) dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
       if (instagram.trim()) dadosParaSalvar.instagram = instagram.trim().replace("@", "");
-      if (selectedFilial && !userData?.filial) dadosParaSalvar.filial = selectedFilial.numero;
+      // FILIAL AGORA PODE SER ALTERADA SEMPRE (se quiser)
+      if (selectedFilial) dadosParaSalvar.filial = selectedFilial.numero;
     }
 
     if (Object.keys(dadosParaSalvar).length > 0) {
@@ -270,7 +271,7 @@ const AjustesMetas = ({
             </div>
           )}
 
-          {/* BOTÕES DE ROLE E SWITCHES — SÓ QUANDO NÃO ESTÁ EDITANDO */}
+          {/* BOTÕES DE ROLE E SWITCHES */}
           {!(isEditingMetas || isEditingPerfil) && (
             <>
               <div className="flex gap-2">
@@ -303,7 +304,7 @@ const AjustesMetas = ({
         </div>
       </div>
 
-      {/* EDIÇÃO DE PERFIL — SÓ APARECE QUANDO CLICA NO BOTÃO "i" */}
+      {/* EDIÇÃO DE PERFIL — APARECE QUANDO CLICA NO BOTÃO "i" */}
       {isEditingPerfil && (
         <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
           <CardContent className="pt-6 space-y-6">
@@ -351,46 +352,45 @@ const AjustesMetas = ({
               </div>
             </div>
 
-            {/* Filial (só uma vez) */}
-            {!userData?.filial && (
-              <div className="flex items-center gap-4">
-                <Store className="h-10 w-10 text-blue-600" />
-                <div className="flex-1">
-                  <Label className="text-xl font-bold text-blue-900">Filial</Label>
-                  <Popover open={openPopover} onOpenChange={setOpenPopover}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between h-14 text-lg">
-                        {selectedFilial ? selectedFilial.label : "Selecionar filial..."}
-                        <ChevronsUpDown className="ml-2 h-6 w-6"/>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
-                      <Command>
-                        <CommandInput placeholder="Buscar filial..." />
-                        <CommandList>
-                          <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
-                          <CommandGroup>
-                            {filiaisList.map(f => (
-                              <CommandItem
-                                key={f.numero}
-                                value={`${f.numero} ${f.label}`}
-                                onSelect={() => {
-                                  setSelectedFilial(f);
-                                  setOpenPopover(false);
-                                }}
-                              >
-                                <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
-                                {f.label}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+            {/* FILIAL — SEMPRE APARECE NO BOTÃO "i" */}
+            <div className="flex items-center gap-4">
+              <Store className="h-10 w-10 text-blue-600" />
+              <div className="flex-1">
+                <Label className="text-xl font-bold text-blue-900">Filial</Label>
+                <Popover open={openPopover} onOpenChange={setOpenPopover}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between h-14 text-lg">
+                      {selectedFilial ? selectedFilial.label : "Selecionar filial..."}
+                      <ChevronsUpDown className="ml-2 h-6 w-6"/>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Buscar filial..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
+                        <CommandGroup>
+                          {filiaisList.map(f => (
+                            <CommandItem
+                              key={f.numero}
+                              value={`${f.numero} ${f.label}`}
+                              onSelect={() => {
+                                setSelectedFilial(f);
+                                setOpenPopover(false);
+                              }}
+                            >
+                              <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
+                              {f.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <p className="text-sm text-gray-600 mt-1">Você pode alterar sua filial aqui</p>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       )}
