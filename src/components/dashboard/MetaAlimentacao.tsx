@@ -210,7 +210,7 @@ const MetaAlimentacao = ({
                   </p>
                 </div>
                 <div className="space-y-1 md:space-y-2">
-                  <p className="text-xs md:text-sm font-medium text-foreground whitespace-nowrap">Receber por dia até o dia 15</p>
+                  <p className="text-xs md:text-sm font-medium text-foreground whitespace-nowrap">Receber por dia</p>
                   <p className="text-sm md:text-lg font-semibold text-foreground">
                     {formataDinheiro(receberPorDiaAte15)}
                   </p>
