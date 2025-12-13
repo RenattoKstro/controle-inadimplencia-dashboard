@@ -139,7 +139,7 @@ const AjustesMetas = ({
       return;
     }
 
-    const dadosParaSalvar: any = { user_id: user.id }; // ← GARANTE O UID
+    const dadosParaSalvar: any = {};
 
     if (isEditingMetas) {
       Object.assign(dadosParaSalvar, formState);
@@ -151,16 +151,20 @@ const AjustesMetas = ({
       if (selectedFilial) dadosParaSalvar.filial = selectedFilial.numero;
     }
 
-    if (Object.keys(dadosParaSalvar).length > 1) { // mais que só user_id
+    if (Object.keys(dadosParaSalvar).length > 0) {
       const { error } = await supabase
         .from("user_dashboard")
-        .upsert(dadosParaSalvar, {
-          onConflict: "user_id" // ← ATUALIZA SE JÁ EXISTIR
+        .upsert({
+          user_id: user.id, // ← GARANTE O UID
+          ...dadosParaSalvar,
+        }, {
+          onConflict: "user_id", // ← CHAVE ÚNICA
+          ignoreDuplicates: false, // ← ATUALIZA SEM DUPLICAR
         });
 
       if (error) {
         console.error("Erro ao salvar:", error);
-        alert("Erro ao salvar ajustes");
+        alert("Erro ao salvar ajustes: " + error.message);
       } else {
         updateUserData(dadosParaSalvar); // recarrega os dados
       }
@@ -188,6 +192,8 @@ const AjustesMetas = ({
   const handleChange = (field: string, value: number | string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
+
+  // ... (o resto do código exatamente como você tem — CardItem, if (isLoading), return completo)
 
   const CardItem = ({
     title,
