@@ -13,10 +13,27 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "autoUpdate", // Já estava certo — mantém
+      injectRegister: "auto",
+
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        // Força cache busting em arquivos críticos
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.(js|css)$/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "assets",
+              expiration: {
+                maxEntries: 500,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
+              },
+            },
+          },
+        ],
       },
+
       manifest: {
         name: "Controle de Inadimplência",
         short_name: "Controle",
@@ -40,13 +57,20 @@ export default defineConfig(({ mode }) => ({
           },
         ],
       },
+
+      // ESSA É A MÁGICA: FORÇA ATUALIZAÇÃO AUTOMÁTICA
+      devOptions: {
+        enabled: false,
+      },
     }),
   ].filter(Boolean),
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
   optimizeDeps: {
     include: ["lucide-react"],
   },
