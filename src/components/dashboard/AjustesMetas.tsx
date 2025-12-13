@@ -69,14 +69,11 @@ const AjustesMetas = ({
   const [isEditingMetas, setIsEditingMetas] = useState(false);
   const [isEditingPerfil, setIsEditingPerfil] = useState(false);
   const [openPopover, setOpenPopover] = useState(false);
-
   const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
   const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
-
   const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
   const [whatsapp, setWhatsapp] = useState(userData?.whatsapp || "");
   const [instagram, setInstagram] = useState(userData?.instagram || "");
-
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
     abertura_dia: userData?.abertura_dia || 0,
@@ -105,7 +102,6 @@ const AjustesMetas = ({
         .select("idfilial, filial, regional")
         .eq("ativo", true)
         .order("idfilial");
-
       if (data) {
         const formatted = data.map((f: any) => ({
           numero: f.idfilial,
@@ -135,13 +131,19 @@ const AjustesMetas = ({
     setInstagram(userData?.instagram || "");
   }, [userData, diasRestantesCalculados]);
 
-  const handleSave = () => {
-    const dadosParaSalvar: any = {};
+  const handleSave = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Usuário não autenticado!");
+      return;
+    }
+
+    const dadosParaSalvar: any = { user_id: user.id }; // ← GARANTE O UID
 
     if (isEditingMetas) {
       Object.assign(dadosParaSalvar, formState);
     }
-
     if (isEditingPerfil) {
       if (nomeUsuario.trim()) dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
       if (whatsapp.replace(/\D/g, "").length >= 11) dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
@@ -149,8 +151,19 @@ const AjustesMetas = ({
       if (selectedFilial) dadosParaSalvar.filial = selectedFilial.numero;
     }
 
-    if (Object.keys(dadosParaSalvar).length > 0) {
-      updateUserData(dadosParaSalvar);
+    if (Object.keys(dadosParaSalvar).length > 1) { // mais que só user_id
+      const { error } = await supabase
+        .from("user_dashboard")
+        .upsert(dadosParaSalvar, {
+          onConflict: "user_id" // ← ATUALIZA SE JÁ EXISTIR
+        });
+
+      if (error) {
+        console.error("Erro ao salvar:", error);
+        alert("Erro ao salvar ajustes");
+      } else {
+        updateUserData(dadosParaSalvar); // recarrega os dados
+      }
     }
 
     setIsEditingMetas(false);
@@ -190,7 +203,6 @@ const AjustesMetas = ({
       formatAsCurrency
         ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
         : v.toString();
-
     return (
       <Card className={`shadow-sm hover:shadow transition-shadow ${color} bg-opacity-50`}>
         <CardContent className="p-4">
@@ -232,7 +244,6 @@ const AjustesMetas = ({
         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Ajustes de Metas
         </h2>
-
         <div className="flex flex-wrap items-center gap-3">
           {/* BOTÃO EDITAR METAS */}
           {!isEditingMetas && !isEditingPerfil && (
@@ -240,7 +251,6 @@ const AjustesMetas = ({
               Editar Metas
             </Button>
           )}
-
           {/* BOTÃO "Editar Informações" COM ÍCONE — SÓ APARECE QUANDO ESTÁ EDITANDO METAS */}
           {isEditingMetas && !isEditingPerfil && (
             <Button
@@ -252,7 +262,6 @@ const AjustesMetas = ({
               Editar Informações
             </Button>
           )}
-
           {/* BOTÕES SALVAR/CANCELAR */}
           {(isEditingMetas || isEditingPerfil) && (
             <div className="flex gap-2">
@@ -264,7 +273,6 @@ const AjustesMetas = ({
               </Button>
             </div>
           )}
-
           {/* BOTÕES DE ROLE E SWITCHES */}
           {!(isEditingMetas || isEditingPerfil) && (
             <>
@@ -315,7 +323,6 @@ const AjustesMetas = ({
                 />
               </div>
             </div>
-
             {/* WhatsApp */}
             <div className="flex items-center gap-4">
               <Phone className="h-10 w-10 text-green-600" />
@@ -330,7 +337,6 @@ const AjustesMetas = ({
                 />
               </div>
             </div>
-
             {/* Instagram (opcional) */}
             <div className="flex items-center gap-4">
               <Instagram className="h-10 w-10 text-pink-600" />
@@ -345,7 +351,6 @@ const AjustesMetas = ({
                 <p className="text-sm text-gray-600 mt-1">Se deixar em branco, não aparecerá no ranking</p>
               </div>
             </div>
-
             {/* Filial */}
             <div className="flex items-center gap-4">
               <Store className="h-10 w-10 text-blue-600" />
