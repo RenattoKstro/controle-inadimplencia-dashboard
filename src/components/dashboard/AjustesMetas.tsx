@@ -70,11 +70,9 @@ const AjustesMetas = ({
   const [isEditingPerfil, setIsEditingPerfil] = useState(false);
   const [openPopover, setOpenPopover] = useState(false);
 
-  // Filial
   const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
   const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
 
-  // Dados do usuário
   const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
   const [whatsapp, setWhatsapp] = useState(userData?.whatsapp || "");
   const [instagram, setInstagram] = useState(userData?.instagram || "");
@@ -93,7 +91,6 @@ const AjustesMetas = ({
     role: userData?.role || "líder",
   });
 
-  // Máscara simples de WhatsApp
   const formatWhatsapp = (value: string) => {
     const num = value.replace(/\D/g, "");
     if (num.length <= 2) return num;
@@ -101,7 +98,6 @@ const AjustesMetas = ({
     return `(${num.slice(0, 2)}) ${num.slice(2, 7)}-${num.slice(7, 11)}`;
   };
 
-  // Carrega filiais
   useEffect(() => {
     const fetchFiliais = async () => {
       const { data } = await supabase
@@ -150,7 +146,6 @@ const AjustesMetas = ({
       if (nomeUsuario.trim()) dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
       if (whatsapp.replace(/\D/g, "").length >= 11) dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
       if (instagram.trim()) dadosParaSalvar.instagram = instagram.trim().replace("@", "");
-      // FILIAL AGORA PODE SER ALTERADA SEMPRE (se quiser)
       if (selectedFilial) dadosParaSalvar.filial = selectedFilial.numero;
     }
 
@@ -246,16 +241,15 @@ const AjustesMetas = ({
             </Button>
           )}
 
-          {/* BOTÃO "i" — SÓ APARECE QUANDO ESTÁ EDITANDO METAS */}
+          {/* BOTÃO "Editar Informações" COM ÍCONE — SÓ APARECE QUANDO ESTÁ EDITANDO METAS */}
           {isEditingMetas && !isEditingPerfil && (
             <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              variant="outline"
+              className="gap-2 text-muted-foreground hover:text-foreground border-muted-foreground hover:border-foreground"
               onClick={() => setIsEditingPerfil(true)}
-              title="Editar nome, WhatsApp, Instagram e filial"
             >
-              <Info className="h-5 w-5" />
+              <Info className="h-4 w-4" />
+              Editar Informações
             </Button>
           )}
 
@@ -304,7 +298,7 @@ const AjustesMetas = ({
         </div>
       </div>
 
-      {/* EDIÇÃO DE PERFIL — APARECE QUANDO CLICA NO BOTÃO "i" */}
+      {/* EDIÇÃO DE PERFIL */}
       {isEditingPerfil && (
         <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
           <CardContent className="pt-6 space-y-6">
@@ -352,7 +346,7 @@ const AjustesMetas = ({
               </div>
             </div>
 
-            {/* FILIAL — SEMPRE APARECE NO BOTÃO "i" */}
+            {/* Filial */}
             <div className="flex items-center gap-4">
               <Store className="h-10 w-10 text-blue-600" />
               <div className="flex-1">
@@ -388,14 +382,13 @@ const AjustesMetas = ({
                     </Command>
                   </PopoverContent>
                 </Popover>
-                <p className="text-sm text-gray-600 mt-1">Você pode alterar sua filial aqui</p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* GRID DE METAS — SÓ APARECE QUANDO NÃO ESTÁ EDITANDO PERFIL */}
+      {/* GRID DE METAS */}
       {!isEditingPerfil && (
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
           <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditingMetas} />
