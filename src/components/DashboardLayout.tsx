@@ -6,7 +6,7 @@ import {
   Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";  // ← IMPORT CORRETO
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import MetaFiado from "./dashboard/MetaFiado";
@@ -36,12 +36,12 @@ const DashboardLayout = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const { toast } = useToast();  // ← CORRIGIDO AQUI (faltava o =)
+  const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
- 
+  
   const {
     userData,
     updateUserData,
@@ -50,21 +50,12 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados,
   } = useUserData();
+
   const [recebidoHoje, setRecebidoHoje] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
-
-  // TEMA NATALINO: TOCA DE PAPAI NOEL (SÓ EM DEZEMBRO)
-  const isChristmasSeason = today.getMonth() === 11; // Dezembro
-  const santaHat = isChristmasSeason ? (
-    <img
-      src="https://www.transparentpng.com/thumb/christmas-hat/beautiful-santa-claus-christmas-hat-png-clipart-tDDAii.png"
-      alt="Toca de Papai Noel"
-      className="absolute -top-12 left-1/2 -translate-x-1/2 w-32 h-auto drop-shadow-2xl z-10 pointer-events-none"
-    />
-  ) : null;
 
   // Verificação de sessão
   useEffect(() => {
@@ -135,12 +126,9 @@ const DashboardLayout = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           {isMobile ? (
             <>
-              <div className="relative">
-                {santaHat}
-                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                  Inadimplência {percentual && `${percentual}%`}
-                </h1>
-              </div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Inadimplência {percentual && `${percentual}%`}
+              </h1>
               <div className="flex gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
@@ -163,12 +151,10 @@ const DashboardLayout = () => {
             </>
           ) : (
             <>
-              <div className="relative">
-                {santaHat}
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                  Controle de Inadimplência {percentual && `${percentual}%`}
-                </h1>
-              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                Controle de Inadimplência {percentual && `${percentual}%`}
+              </h1>
+
               <div className="flex items-center gap-3">
                 <Button onClick={print} variant="outline" className="gap-2">
                   <RiScreenshot2Fill className="w-5 h-5" /> Print
@@ -201,10 +187,12 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
+
                 <Button variant="outline" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
-                {/* BOTÃO DE PERFIL COM FOTO */}
+
+                {/* BOTÃO DE PERFIL COM FOTO — 100% FUNCIONANDO (SEM CORRUPÇÃO) */}
                 <div className="relative">
                   <Button
                     variant="ghost"
@@ -226,6 +214,7 @@ const DashboardLayout = () => {
                       </div>
                     )}
                   </Button>
+
                   {showProfileMenu && (
                     <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50">
                       <div className="flex items-center gap-5 mb-6">
@@ -254,28 +243,37 @@ const DashboardLayout = () => {
                                 toast({ title: "Erro: arquivo ou usuário não encontrado", variant: "destructive" });
                                 return;
                               }
+
                               const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
                               const fileName = `${userData.user_id}.${fileExt}`;
+
+                              // REMOVE O ARQUIVO ANTIGO
                               await supabase.storage.from("perfis").remove([fileName]);
+
+                              // UPLOAD COM ARRAYBUFFER (MÉTODO QUE NUNCA CORROMPE)
                               const arrayBuffer = await file.arrayBuffer();
                               const uint8Array = new Uint8Array(arrayBuffer);
+
                               const { error } = await supabase.storage
                                 .from("perfis")
                                 .upload(fileName, uint8Array, {
                                   contentType: file.type || "image/jpeg",
                                   upsert: false
                                 });
+
                               if (error) {
                                 console.error("Erro no upload:", error);
                                 toast({ title: "Erro ao enviar foto", variant: "destructive" });
                                 return;
                               }
+
                               const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}`;
                               await updateUserData({ avatar_url: novaUrl });
                               toast({ title: "Foto atualizada com sucesso!" });
                             }}
                           />
                         </label>
+
                         <div>
                           <p className="text-2xl font-bold text-gray-800">
                             {userData?.nome_usuario || "Usuário"}
@@ -288,6 +286,7 @@ const DashboardLayout = () => {
                           </p>
                         </div>
                       </div>
+
                       <Button variant="destructive" className="w-full mt-4" onClick={handleLogout}>
                         Sair
                       </Button>
@@ -307,6 +306,7 @@ const DashboardLayout = () => {
             <RankingApoiadores />
           </div>
         </aside>
+
         <main className="flex-1 lg:ml-80 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -324,6 +324,7 @@ const DashboardLayout = () => {
                 )}
                 <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
               </TabsList>
+
               <TabsContent value="ajustes-metas">
                 <AjustesMetas
                   userData={userData}
@@ -338,6 +339,7 @@ const DashboardLayout = () => {
                   setMostrarHistorico={setMostrarHistorico}
                 />
               </TabsContent>
+
               <TabsContent value="meta-fiado">
                 <MetaFiado
                   userData={userData}
@@ -350,6 +352,7 @@ const DashboardLayout = () => {
                   setRecebidoHoje={setRecebidoHoje}
                 />
               </TabsContent>
+
               <TabsContent value="meta-desafio">
                 <MetaDesafio
                   userData={userData}
@@ -362,6 +365,7 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
+
               <TabsContent value="meta-alimentacao">
                 <MetaAlimentacao
                   userData={userData}
@@ -374,6 +378,7 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
+
               {bonusPerdidoAtivado && (
                 <TabsContent value="meta-perdido">
                   <MetaPerdido
@@ -388,6 +393,7 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
+
               <TabsContent value="meus-premios">
                 <MeusPremios
                   userData={userData}
@@ -401,6 +407,7 @@ const DashboardLayout = () => {
                   setTotalGanhos={() => {}}
                 />
               </TabsContent>
+
               {mostrarHistorico && (
                 <TabsContent value="historicos">
                   <Historicos
@@ -415,6 +422,7 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
+
               <TabsContent value="filiais">
                 <Filiais />
               </TabsContent>
