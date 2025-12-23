@@ -1,447 +1,462 @@
-// src/components/dashboard/AjustesMetas.tsx
-import { useState, useEffect } from "react";
-import { DashboardProps } from "../DashboardLayout";
+// src/pages/DashboardLayout.tsx
+import { useEffect, useState, useRef } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import {
-  Wallet,
-  Building,
-  AlertTriangle,
-  Target,
-  Store,
-  Check,
-  ChevronsUpDown,
-  Eye,
-  EyeOff,
-  User,
-  Phone,
-  Instagram,
-  Info,
+  Wallet, Trophy, Utensils, Gift, Sliders, Menu,
+  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut
 } from "lucide-react";
-import { CurrencyInput } from "@/components/ui/currency-input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useNavigate } from "react-router-dom";
+import MetaFiado from "./dashboard/MetaFiado";
+import MetaDesafio from "./dashboard/MetaDesafio";
+import MetaAlimentacao from "./dashboard/MetaAlimentacao";
+import MeusPremios from "./dashboard/MeusPremios";
+import AjustesMetas from "./dashboard/AjustesMetas";
+import Historicos from "./Historicos";
+import Filiais from "./dashboard/Filiais";
+import { useUserData } from "@/hooks/useUserData";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import RelatoriosSabium from "./RelatoriosSabium";
+import html2canvas from "html2canvas";
+import { FaWhatsapp } from "react-icons/fa";
+import { Moon, Sun } from "lucide-react";
+import { RiScreenshot2Fill } from "react-icons/ri";
+import { BiSolidReport } from "react-icons/bi";
+import Anexos from "./Anexos";
+import Apps from "./Apps";
+import MetaPerdido from "./dashboard/MetaPerdido";
+import RankingApoiadores from "@/components/RankingApoiadores";
 
-interface CardItemProps {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  isEditable?: boolean;
-  onChange?: (value: number) => void;
-  color?: string;
-  isEditMode?: boolean;
-  formatAsCurrency?: boolean;
-}
+const DashboardLayout = () => {
+  const [activeTab, setActiveTab] = useState("meta-fiado");
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mostrarHistorico, setMostrarHistorico] = useState(true);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { toast } from useToast();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
+ 
+  const {
+    userData,
+    updateUserData,
+    diasSemExpediente,
+    updateDiasSemExpediente,
+    isLoading,
+    diasRestantesCalculados,
+  } = useUserData();
+  const [recebidoHoje, setRecebidoHoje] = useState(0);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [showInstagramUsername, setShowInstagramUsername] = useState(false);
+  const today = new Date();
 
-const AjustesMetas = ({
-  userData,
-  updateUserData,
-  diasRestantesCalculados,
-  isLoading,
-  bonusPerdidoAtivado,
-  setBonusPerdidoAtivado,
-  mostrarHistorico,
-  setMostrarHistorico,
-}: DashboardProps & {
-  setBonusPerdidoAtivado: (value: boolean) => void;
-  mostrarHistorico: boolean;
-  setMostrarHistorico: (value: boolean) => void;
-}) => {
-  const [isEditingMetas, setIsEditingMetas] = useState(false);
-  const [isEditingPerfil, setIsEditingPerfil] = useState(false);
-  const [openPopover, setOpenPopover] = useState(false);
+  // TEMA NATALINO: TOCA DE PAPAI NOEL (SÓ EM DEZEMBRO)
+  const isChristmasSeason = today.getMonth() === 11; // Dezembro
+  const santaHat = isChristmasSeason ? (
+    <img
+      src="https://www.transparentpng.com/thumb/christmas-hat/beautiful-santa-claus-christmas-hat-png-clipart-tDDAii.png"
+      alt="Toca de Papai Noel"
+      className="absolute -top-12 left-1/2 -translate-x-1/2 w-32 h-auto drop-shadow-2xl z-10 pointer-events-none"
+    />
+  ) : null;
 
-  // Filial
-  const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
-  const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
-
-  // Dados do usuário
-  const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
-  const [whatsapp, setWhatsapp] = useState(userData?.whatsapp || "");
-  const [instagram, setInstagram] = useState(userData?.instagram || "");
-
-  const [formState, setFormState] = useState({
-    abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
-    abertura_dia: userData?.abertura_dia || 0,
-    meta_mes: userData?.meta_mes || 0,
-    vencido_atual: userData?.vencido_atual || 0,
-    dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
-    dias_trabalhados: userData?.dias_trabalhados || 0,
-    meta_desafio: userData?.meta_desafio || 0,
-    meta_perdido: userData?.meta_perdido || 0,
-    rec_perdido: userData?.rec_perdido || 0,
-    carteira_total: userData?.carteira_total || 0,
-    role: userData?.role || "líder",
-  });
-
-  // MÁSCARA DE WHATSAPP (SEM DEPENDÊNCIA EXTERNA)
-  const formatWhatsapp = (value: string) => {
-    const num = value.replace(/\D/g, "");
-    if (num.length <= 2) return num;
-    if (num.length <= 7) return `(${num.slice(0, 2)}) ${num.slice(2)}`;
-    return `(${num.slice(0, 2)}) ${num.slice(2, 7)}-${num.slice(7, 11)}`;
-  };
-
-  // Carrega filiais
   useEffect(() => {
-    const fetchFiliais = async () => {
-      const { data, error } = await supabase
-        .from("filiais")
-        .select("idfilial, filial, regional")
-        .eq("ativo", true)
-        .order("idfilial");
-
-      if (error) {
-        console.error("Erro ao carregar filiais:", error);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const formatted = data.map((f: any) => ({
-          numero: f.idfilial,
-          label: `${f.idfilial} - ${f.filial} (${f.regional || "Sem regional"})`,
-        }));
-        setFiliaisList(formatted);
+    const check = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        toast({ title: "Sessão expirada", variant: "destructive" });
+        await supabase.auth.signOut();
+        navigate("/auth");
       }
     };
-    fetchFiliais();
-  }, []);
+    check();
+    const id = setInterval(check, 10 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [navigate, toast]);
 
-  // Sincroniza filial selecionada
   useEffect(() => {
-    if (userData?.filial && filiaisList.length > 0) {
-      const found = filiaisList.find((f) => f.numero === userData.filial);
-      if (found) setSelectedFilial(found);
-    }
-  }, [userData?.filial, filiaisList]);
+    document.body.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
 
-  // Atualiza formState e campos
-  useEffect(() => {
-    setFormState((prev) => ({
-      ...prev,
-      ...userData,
-      dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
-    }));
-    setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
-    setWhatsapp(userData?.whatsapp || "");
-    setInstagram(userData?.instagram || "");
-  }, [userData, diasRestantesCalculados]);
+  const toggleDarkMode = () => setIsDarkMode(prev => !prev);
 
-  const handleSave = () => {
-    const dadosParaSalvar: any = {};
-
-    if (isEditingMetas) {
-      Object.assign(dadosParaSalvar, formState);
-    }
-
-    if (isEditingPerfil) {
-      if (nomeUsuario.trim()) dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
-      if (whatsapp.replace(/\D/g, "").length >= 11) dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
-      if (instagram.trim()) dadosParaSalvar.instagram = instagram.trim().replace("@", "");
-      if (selectedFilial) dadosParaSalvar.filial = selectedFilial.numero;
-    }
-
-    if (Object.keys(dadosParaSalvar).length > 0) {
-      updateUserData(dadosParaSalvar);
-    }
-
-    setIsEditingMetas(false);
-    setIsEditingPerfil(false);
-    setOpenPopover(false);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({ title: "Tchau!" });
+    navigate("/auth");
   };
 
-  const handleCancel = () => {
-    setFormState((prev) => ({
-      ...prev,
-      ...userData,
-      dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
-    }));
-    setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
-    setWhatsapp(userData?.whatsapp || "");
-    setInstagram(userData?.instagram || "");
-    setIsEditingMetas(false);
-    setIsEditingPerfil(false);
-    setOpenPopover(false);
+  const handleTabChange = (v: string) => {
+    setActiveTab(v);
+    if (isMobile) setSheetOpen(false);
   };
 
-  const handleChange = (field: string, value: number | string) => {
-    setFormState((prev) => ({ ...prev, [field]: value }));
+  const print = () => {
+    if (!contentRef.current) return;
+    html2canvas(document.body, { scale: 2, useCORS: true }).then(c => {
+      const a = document.createElement("a");
+      a.download = `dashboard_${today.toISOString().slice(0, 10)}.png`;
+      a.href = c.toDataURL();
+      a.click();
+    });
   };
 
-  const CardItem = ({
-    title,
-    value,
-    icon,
-    isEditable = false,
-    onChange,
-    color = "bg-blue-500",
-    isEditMode = false,
-    formatAsCurrency = true,
-  }: CardItemProps) => {
-    const formatValue = (v: number) =>
-      formatAsCurrency
-        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
-        : v.toString();
+  const instagram = () => {
+    setShowInstagramUsername(true);
+    setTimeout(() => setShowInstagramUsername(false), 2000);
+  };
 
+  const percentual = userData?.carteira_total > 0
+    ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
+    : null;
+
+  if (isLoading || !userData) {
     return (
-      <Card className={`shadow-sm hover:shadow transition-shadow ${color} bg-opacity-50`}>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-foreground">{title}</h3>
-            <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
-          </div>
-          {isEditable && isEditMode ? (
-            formatAsCurrency ? (
-              <CurrencyInput value={value} onValueChange={(v) => onChange?.(v || 0)} className="text-lg font-bold" />
-            ) : (
-              <Input type="number" value={value} onChange={(e) => onChange?.(parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-            )
-          ) : (
-            <div className="text-xl font-bold">{formatValue(value)}</div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-lg">Carregando dashboard...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* CABEÇALHO */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          Ajustes de Metas
-        </h2>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {/* BOTÃO EDITAR METAS */}
-          {!isEditingMetas && !isEditingPerfil && (
-            <Button variant="outline" onClick={() => setIsEditingMetas(true)} className="border-blue-300 text-blue-600">
-              Editar Metas
-            </Button>
-          )}
-
-          {/* BOTÃO "Editar Informações" COM ÍCONE — SÓ APARECE QUANDO ESTÁ EDITANDO METAS */}
-          {isEditingMetas && !isEditingPerfil && (
-            <Button
-              variant="outline"
-              className="gap-2 text-muted-foreground hover:text-foreground border-muted-foreground hover:border-foreground"
-              onClick={() => setIsEditingPerfil(true)}
-            >
-              <Info className="h-4 w-4" />
-              Editar Informações
-            </Button>
-          )}
-
-          {/* BOTÕES SALVAR/CANCELAR */}
-          {(isEditingMetas || isEditingPerfil) && (
-            <div className="flex gap-2">
-              <Button onClick={handleSave} className="bg-gradient-to-r from-blue-600 to-indigo-600">
-                Salvar
-              </Button>
-              <Button variant="outline" onClick={handleCancel}>
-                Cancelar
-              </Button>
-            </div>
-          )}
-
-          {/* BOTÕES DE ROLE E SWITCHES */}
-          {!(isEditingMetas || isEditingPerfil) && (
+    <div
+      className={`min-h-screen ${isDarkMode ? "bg-background dark" : "bg-gradient-to-br from-slate-50 to-slate-100"}`}
+      ref={contentRef}
+    >
+      {/* HEADER */}
+      <header className="bg-card shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          {isMobile ? (
             <>
+              <div className="relative">
+                {santaHat}
+                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                  Inadimplência {percentual && `${percentual}%`}
+                </h1>
+              </div>
               <div className="flex gap-2">
-                <Button
-                  variant={formState.role === "líder" ? "default" : "outline"}
-                  onClick={() => updateUserData({ role: "líder" })}
-                >
-                  {formState.role === "líder" ? "Líder" : "Op. Líder"}
-                </Button>
-                <Button
-                  variant={formState.role === "auxiliar" ? "default" : "outline"}
-                  onClick={() => updateUserData({ role: "auxiliar" })}
-                >
-                  {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon"><Menu /></Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-80">
+                    <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
+                    <Apps />
+                    <div className="py-4 border-t">
+                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                        Sair
+                      </Button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+                  {isDarkMode ? <Sun /> : <Moon />}
                 </Button>
               </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
-                <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
-                  {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  Histórico
-                </Label>
+            </>
+          ) : (
+            <>
+              <div className="relative">
+                {santaHat}
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+                  Controle de Inadimplência {percentual && `${percentual}%`}
+                </h1>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
-                <Label>Ativar Meta Perdido</Label>
+              <div className="flex items-center gap-3">
+                <Button onClick={print} variant="outline" className="gap-2">
+                  <RiScreenshot2Fill className="w-5 h-5" /> Print
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2"><File className="w-4 h-4" /> Anexos</Button>
+                  </DialogTrigger>
+                  <DialogContent><Anexos /></DialogContent>
+                </Dialog>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
+                </Dialog>
+                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
+                  <Calendar className="h-4 w-4" /> {today.toLocaleDateString("pt-BR")}
+                </Button>
+                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-80">
+                    <Apps />
+                    <div className="mt-8">
+                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
+                        Sair
+                      </Button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </Button>
+                {/* BOTÃO DE PERFIL COM FOTO */}
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full overflow-hidden border-2 border-purple-500 hover:border-purple-600 transition-all"
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  >
+                    {userData?.avatar_url ? (
+                      <div className="w-10 h-10 rounded-full overflow-hidden">
+                        <img
+                          src={userData.avatar_url}
+                          alt="Perfil"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                        <User className="h-6 w-6 text-white" />
+                      </div>
+                    )}
+                  </Button>
+                  {showProfileMenu && (
+                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50">
+                      <div className="flex items-center gap-5 mb-6">
+                        <label htmlFor="upload-foto" className="cursor-pointer group">
+                          {userData?.avatar_url ? (
+                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-purple-500 group-hover:opacity-80 transition">
+                              <img
+                                src={userData.avatar_url}
+                                alt="Perfil"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center border-4 border-purple-500 group-hover:opacity-80 transition">
+                              <User className="h-14 w-14 text-white" />
+                            </div>
+                          )}
+                          <input
+                            id="upload-foto"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file || !userData?.user_id) {
+                                toast({ title: "Erro: arquivo ou usuário não encontrado", variant: "destructive" });
+                                return;
+                              }
+                              const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+                              const fileName = `${userData.user_id}.${fileExt}`;
+                              await supabase.storage.from("perfis").remove([fileName]);
+                              const arrayBuffer = await file.arrayBuffer();
+                              const uint8Array = new Uint8Array(arrayBuffer);
+                              const { error } = await supabase.storage
+                                .from("perfis")
+                                .upload(fileName, uint8Array, {
+                                  contentType: file.type || "image/jpeg",
+                                  upsert: false
+                                });
+                              if (error) {
+                                console.error("Erro no upload:", error);
+                                toast({ title: "Erro ao enviar foto", variant: "destructive" });
+                                return;
+                              }
+                              const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}`;
+                              await updateUserData({ avatar_url: novaUrl });
+                              toast({ title: "Foto atualizada com sucesso!" });
+                            }}
+                          />
+                        </label>
+                        <div>
+                          <p className="text-2xl font-bold text-gray-800">
+                            {userData?.nome_usuario || "Usuário"}
+                          </p>
+                          <p className="text-lg text-purple-600 font-medium">
+                            Filial {String(userData?.filial || "00000").padStart(5, "0")}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-2">
+                            Clique na foto para alterar
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="destructive" className="w-full mt-4" onClick={handleLogout}>
+                        Sair
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
         </div>
+      </header>
+
+      {/* MAIN CONTENT */}
+      <div className="flex flex-col lg:flex-row min-h-screen">
+        <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
+          <div className="p-6">
+            <RankingApoiadores />
+          </div>
+        </aside>
+        <main className="flex-1 lg:ml-80 pt-6 pb-20">
+          <div className="max-w-5xl mx-auto px-4">
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 w-full p-1 bg-card rounded-xl mb-6 gap-1">
+                <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm">Ajustes</TabsTrigger>
+                <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm">Fiado</TabsTrigger>
+                <TabsTrigger value="meta-desafio" className="gap-1 text-xs sm:text-sm">Desafio</TabsTrigger>
+                <TabsTrigger value="meta-alimentacao" className="gap-1 text-xs sm:text-sm">Alimentação</TabsTrigger>
+                {bonusPerdidoAtivado && (
+                  <TabsTrigger value="meta-perdido" className="gap-1 text-xs sm:text-sm">Perdido</TabsTrigger>
+                )}
+                <TabsTrigger value="meus-premios" className="gap-1 text-xs sm:text-sm">Prêmios</TabsTrigger>
+                {mostrarHistorico && (
+                  <TabsTrigger value="historicos" className="gap-1 text-xs sm:text-sm">Histórico</TabsTrigger>
+                )}
+                <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="ajustes-metas">
+                <AjustesMetas
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+                  mostrarHistorico={mostrarHistorico}
+                  setMostrarHistorico={setMostrarHistorico}
+                />
+              </TabsContent>
+
+              <TabsContent value="meta-fiado">
+                <MetaFiado
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={setRecebidoHoje}
+                />
+              </TabsContent>
+
+              <TabsContent value="meta-desafio">
+                <MetaDesafio
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={() => {}}
+                />
+              </TabsContent>
+
+              <TabsContent value="meta-alimentacao">
+                <MetaAlimentacao
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={() => {}}
+                />
+              </TabsContent>
+
+              {bonusPerdidoAtivado && (
+                <TabsContent value="meta-perdido">
+                  <MetaPerdido
+                    userData={userData}
+                    updateUserData={updateUserData}
+                    diasSemExpediente={diasSemExpediente}
+                    updateDiasSemExpediente={updateDiasSemExpediente}
+                    diasRestantesCalculados={diasRestantesCalculados}
+                    isLoading={isLoading}
+                    bonusPerdidoAtivado={bonusPerdidoAtivado}
+                    setRecebidoHoje={() => {}}
+                  />
+                </TabsContent>
+              )}
+
+              <TabsContent value="meus-premios">
+                <MeusPremios
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setBonusPerdidoAtivado={setBonusPerdidoAtivado}
+                  setTotalGanhos={() => {}}
+                />
+              </TabsContent>
+
+              {mostrarHistorico && (
+                <TabsContent value="historicos">
+                  <Historicos
+                    userData={userData}
+                    updateUserData={updateUserData}
+                    diasSemExpediente={diasSemExpediente}
+                    updateDiasSemExpediente={updateDiasSemExpediente}
+                    diasRestantesCalculados={diasRestantesCalculados}
+                    isLoading={isLoading}
+                    bonusPerdidoAtivado={bonusPerdidoAtivado}
+                    recebido={recebidoHoje}
+                  />
+                </TabsContent>
+              )}
+
+              <TabsContent value="filiais">
+                <Filiais />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </main>
       </div>
 
-      {/* EDIÇÃO DE PERFIL — SÓ APARECE QUANDO CLICA NO "Editar Informações" */}
-      {isEditingPerfil && (
-        <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
-          <CardContent className="pt-6 space-y-6">
-            {/* Nome */}
-            <div className="flex items-center gap-4">
-              <User className="h-10 w-10 text-purple-600" />
-              <div className="flex-1">
-                <Label className="text-xl font-bold text-purple-900">Nome completo</Label>
-                <Input
-                  value={nomeUsuario}
-                  onChange={(e) => setNomeUsuario(e.target.value.toUpperCase())}
-                  placeholder="SEU NOME COMPLETO"
-                  className="text-2xl font-bold text-center"
-                />
-              </div>
-            </div>
+      <div className="lg:hidden mt-8 px-4">
+        <RankingApoiadores />
+      </div>
 
-            {/* WhatsApp */}
-            <div className="flex items-center gap-4">
-              <Phone className="h-10 w-10 text-green-600" />
-              <div className="flex-1">
-                <Label className="text-xl font-bold text-green-900">WhatsApp (obrigatório)</Label>
-                <Input
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
-                  placeholder="(99) 99999-9999"
-                  maxLength={15}
-                  className="text-2xl font-bold text-center"
-                />
-              </div>
-            </div>
-
-            {/* Instagram (opcional) */}
-            <div className="flex items-center gap-4">
-              <Instagram className="h-10 w-10 text-pink-600" />
-              <div className="flex-1">
-                <Label className="text-xl font-bold text-pink-900">Instagram (opcional)</Label>
-                <Input
-                  value={instagram}
-                  onChange={(e) => setInstagram(e.target.value)}
-                  placeholder="@seu_perfil"
-                  className="text-2xl font-bold text-center"
-                />
-                <p className="text-sm text-gray-600 mt-1">Se deixar em branco, não aparecerá no ranking</p>
-              </div>
-            </div>
-
-            {/* Filial */}
-            <div className="flex items-center gap-4">
-              <Store className="h-10 w-10 text-blue-600" />
-              <div className="flex-1">
-                <Label className="text-xl font-bold text-blue-900">Filial</Label>
-                <Popover open={openPopover} onOpenChange={setOpenPopover}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between h-14 text-lg">
-                      {selectedFilial ? selectedFilial.label : "Selecionar filial..."}
-                      <ChevronsUpDown className="ml-2 h-6 w-6"/>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Buscar filial..." />
-                      <CommandList>
-                        <CommandEmpty>Nenhuma filial encontrada.</CommandEmpty>
-                        <CommandGroup>
-                          {filiaisList.map(f => (
-                            <CommandItem
-                              key={f.numero}
-                              value={`${f.numero} ${f.label}`}
-                              onSelect={() => {
-                                setSelectedFilial(f);
-                                setOpenPopover(false);
-                              }}
-                            >
-                              <Check className={`mr-2 h-5 w-5 ${selectedFilial?.numero === f.numero ? "opacity-100" : "opacity-0"}`} />
-                              {f.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* GRID DE METAS — SÓ APARECE QUANDO NÃO ESTÁ EDITANDO PERFIL */}
-      {!isEditingPerfil && (
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditingMetas} />
-          <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditingMetas} />
-          <CardItem title="Meta do Mês" value={formState.meta_mes} icon={<Target size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_mes", v)} color="bg-blue-500" isEditMode={isEditingMetas} />
-          <CardItem title="Vencido Atual" value={formState.vencido_atual} icon={<AlertTriangle size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("vencido_atual", v)} color="bg-yellow-500" isEditMode={isEditingMetas} />
-          <CardItem title="Meta Desafio" value={formState.meta_desafio} icon={<Target size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_desafio", v)} color="bg-green-500" isEditMode={isEditingMetas} />
-          {bonusPerdidoAtivado && (
-            <>
-              <CardItem title="Meta Perdido" value={formState.meta_perdido} icon={<AlertTriangle size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_perdido", v)} color="bg-red-500" isEditMode={isEditingMetas} />
-              <CardItem title="Rec. Perdido" value={formState.rec_perdido} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("rec_perdido", v)} color="bg-red-500" isEditMode={isEditingMetas} />
-            </>
+      <footer className="bg-card shadow-md p-4 mt-8">
+        <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <FaWhatsapp className="text-green-600" />
+            <a
+              href="https://gazinassisbrasil.shop/busca/renato"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Suporte
+            </a>
+          </div>
+          <Instagram className="text-pink-600 cursor-pointer" onClick={instagram} />
+          {showInstagramUsername && (
+            <span className="text-pink-600 text-xs bg-card px-2 py-1 rounded shadow">
+              @renato_alme1da
+            </span>
           )}
-          <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditingMetas} />
-          <Card className="shadow-sm bg-gray-500 bg-opacity-50">
-            <CardContent className="p-4 space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium">Dias</h3>
-                <span className="p-2 rounded-full bg-gray-500 text-white"><Target size={16} /></span>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Trabalhados</p>
-                {isEditingMetas ? (
-                  <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-                ) : (
-                  <div className="text-xl font-bold">{formState.dias_trabalhados}</div>
-                )}
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Restantes</p>
-                {isEditingMetas ? (
-                  <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-                ) : (
-                  <div className="text-xl font-bold">{formState.dias_restantes}</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
-      )}
+      </footer>
     </div>
   );
 };
 
-export default AjustesMetas;
+export default DashboardLayout;
