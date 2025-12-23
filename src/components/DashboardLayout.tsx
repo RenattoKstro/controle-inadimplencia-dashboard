@@ -6,7 +6,7 @@ import {
   Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";  // ← IMPORT CORRETO
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import MetaFiado from "./dashboard/MetaFiado";
@@ -36,7 +36,7 @@ const DashboardLayout = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const { toast } from useToast();
+  const { toast } = useToast();  // ← CORRIGIDO AQUI (faltava o =)
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -66,6 +66,7 @@ const DashboardLayout = () => {
     />
   ) : null;
 
+  // Verificação de sessão
   useEffect(() => {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
@@ -323,7 +324,6 @@ const DashboardLayout = () => {
                 )}
                 <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
               </TabsList>
-
               <TabsContent value="ajustes-metas">
                 <AjustesMetas
                   userData={userData}
@@ -338,7 +338,6 @@ const DashboardLayout = () => {
                   setMostrarHistorico={setMostrarHistorico}
                 />
               </TabsContent>
-
               <TabsContent value="meta-fiado">
                 <MetaFiado
                   userData={userData}
@@ -351,7 +350,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={setRecebidoHoje}
                 />
               </TabsContent>
-
               <TabsContent value="meta-desafio">
                 <MetaDesafio
                   userData={userData}
@@ -364,7 +362,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
-
               <TabsContent value="meta-alimentacao">
                 <MetaAlimentacao
                   userData={userData}
@@ -377,7 +374,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
-
               {bonusPerdidoAtivado && (
                 <TabsContent value="meta-perdido">
                   <MetaPerdido
@@ -392,7 +388,6 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
-
               <TabsContent value="meus-premios">
                 <MeusPremios
                   userData={userData}
@@ -406,7 +401,6 @@ const DashboardLayout = () => {
                   setTotalGanhos={() => {}}
                 />
               </TabsContent>
-
               {mostrarHistorico && (
                 <TabsContent value="historicos">
                   <Historicos
@@ -421,7 +415,6 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
-
               <TabsContent value="filiais">
                 <Filiais />
               </TabsContent>
