@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trophy, Zap, Store, Phone, Instagram } from "lucide-react";
+import { Trophy, Zap, Store, Phone, Instagram, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   HoverCard,
@@ -74,6 +74,14 @@ const Filiais = () => {
     return <p className="text-center py-20 text-xl">Carregando Filiais %...</p>;
   }
 
+  // FUNÇÃO PARA GERAR INICIAIS DO NOME
+  const getInitials = (nome: string | null | undefined): string => {
+    if (!nome) return "U";
+    const names = nome.trim().split(" ");
+    if (names.length === 1) return names[0].slice(0, 2).toUpperCase();
+    return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -139,6 +147,7 @@ const Filiais = () => {
             ) : (
               dadosFiltrados.map((f, i) => {
                 const user = f.usuario_principal;
+                const initials = getInitials(user?.nome_usuario);
 
                 return (
                   <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
@@ -156,29 +165,42 @@ const Filiais = () => {
                         <HoverCard openDelay={200}>
                           <HoverCardTrigger asChild>
                             <div className="cursor-pointer">
-                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500">
-                                <img
-                                  src={user?.avatar_url || "https://via.placeholder.com/40/8b5cf6/ffffff?text=U"}
-                                  alt="Perfil"
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.src = "https://via.placeholder.com/40/8b5cf6/ffffff?text=U";
-                                  }}
-                                />
+                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500 flex items-center justify-center">
+                                {user?.avatar_url ? (
+                                  <img
+                                    src={user.avatar_url}
+                                    alt="Perfil"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                      e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                                    }}
+                                  />
+                                ) : null}
+                                {/* AVATAR PADRÃO COM INICIAIS OU ÍCONE */}
+                                <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm ${user?.avatar_url ? "hidden" : ""}`}>
+                                  {initials !== "U" ? initials : <User className="h-6 w-6" />}
+                                </div>
                               </div>
                             </div>
                           </HoverCardTrigger>
                           <HoverCardContent className="w-80">
                             <div className="flex items-center gap-4">
-                              <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500">
-                                <img
-                                  src={user?.avatar_url || "https://via.placeholder.com/64/8b5cf6/ffffff?text=U"}
-                                  alt="Perfil"
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.src = "https://via.placeholder.com/64/8b5cf6/ffffff?text=U";
-                                  }}
-                                />
+                              <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
+                                {user?.avatar_url ? (
+                                  <img
+                                    src={user.avatar_url}
+                                    alt="Perfil"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                      e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                                    }}
+                                  />
+                                ) : null}
+                                <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-2xl ${user?.avatar_url ? "hidden" : ""}`}>
+                                  {initials !== "U" ? initials : <User className="h-10 w-10" />}
+                                </div>
                               </div>
                               <div>
                                 <p className="font-bold text-lg">{user?.nome_usuario || "Usuário"}</p>
