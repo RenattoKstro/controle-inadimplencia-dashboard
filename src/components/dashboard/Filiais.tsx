@@ -82,11 +82,20 @@ const Filiais = () => {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
   };
 
-  // FUNÇÃO PARA DEFINIR COR DO PERCENTUAL FIADO
-  const getFiadoColor = (pct: number) => {
+  // FUNÇÃO PARA DEFINIR COR DO PERCENTUAL (FIADO E DESAFIO)
+  const getPercentColor = (pct: number) => {
     if (pct >= 100) return "text-green-600 font-bold";
-    if (pct >= 90) return "text-yellow-600 font-bold";
-    return "text-red-600 font-bold";
+    if (pct >= 94) return "text-yellow-600 font-bold";
+    if (pct >= 90) return "text-red-600 font-bold";
+    return "text-foreground"; // preto/padrão abaixo de 90%
+  };
+
+  // FUNÇÃO PARA DEFINIR COR DA BARRA DE PROGRESSO
+  const getProgressColor = (pct: number) => {
+    if (pct >= 100) return "bg-green-500";
+    if (pct >= 94) return "bg-yellow-500";
+    if (pct >= 90) return "bg-red-500";
+    return "bg-gray-400"; // cinza abaixo de 90%
   };
 
   return (
@@ -244,30 +253,31 @@ const Filiais = () => {
                         </div>
                       </div>
                     </td>
+                    {/* META FIADO */}
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        {/* PERCENTUAL COM COR DINÂMICA */}
-                        <p className={`text-lg ${getFiadoColor(f.pct_fiado)}`}>
+                        <p className={`text-lg ${getPercentColor(f.pct_fiado)}`}>
                           {f.pct_fiado.toFixed(2)}%
                         </p>
                         <Progress
                           value={f.pct_fiado}
                           className="h-3"
-                          indicatorClassName={
-                            f.pct_fiado >= 100 ? "bg-green-500" :
-                            f.pct_fiado >= 90 ? "bg-yellow-500" :
-                            "bg-red-500"
-                          }
+                          indicatorClassName={getProgressColor(f.pct_fiado)}
                         />
                       </div>
                     </td>
+                    {/* META DESAFIO */}
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        <p className="font-bold text-lg flex items-center justify-center gap-1">
+                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(f.pct_desafio)}`}>
                           <Zap className="h-4 w-4 text-yellow-500" />
                           {f.pct_desafio.toFixed(2)}%
                         </p>
-                        <Progress value={f.pct_desafio} className="h-3" indicatorClassName="bg-gradient-to-r from-yellow-400 to-orange-500" />
+                        <Progress
+                          value={f.pct_desafio}
+                          className="h-3"
+                          indicatorClassName={getProgressColor(f.pct_desafio)}
+                        />
                       </div>
                     </td>
                   </tr>
