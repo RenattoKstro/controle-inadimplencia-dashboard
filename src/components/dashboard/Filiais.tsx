@@ -82,6 +82,13 @@ const Filiais = () => {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
   };
 
+  // FUNÇÃO PARA DEFINIR COR DO PERCENTUAL FIADO
+  const getFiadoColor = (pct: number) => {
+    if (pct >= 100) return "text-green-600 font-bold";
+    if (pct >= 90) return "text-yellow-600 font-bold";
+    return "text-red-600 font-bold";
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -177,7 +184,6 @@ const Filiais = () => {
                                     }}
                                   />
                                 ) : null}
-                                {/* AVATAR PADRÃO COM INICIAIS OU ÍCONE */}
                                 <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm ${user?.avatar_url ? "hidden" : ""}`}>
                                   {initials !== "U" ? initials : <User className="h-6 w-6" />}
                                 </div>
@@ -240,11 +246,18 @@ const Filiais = () => {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        <p className="font-bold text-lg">{f.pct_fiado.toFixed(2)}%</p>
+                        {/* PERCENTUAL COM COR DINÂMICA */}
+                        <p className={`text-lg ${getFiadoColor(f.pct_fiado)}`}>
+                          {f.pct_fiado.toFixed(2)}%
+                        </p>
                         <Progress
                           value={f.pct_fiado}
                           className="h-3"
-                          indicatorClassName={f.pct_fiado >= 100 ? "bg-green-500" : f.pct_fiado >= 95 ? "bg-yellow-500" : "bg-red-500"}
+                          indicatorClassName={
+                            f.pct_fiado >= 100 ? "bg-green-500" :
+                            f.pct_fiado >= 90 ? "bg-yellow-500" :
+                            "bg-red-500"
+                          }
                         />
                       </div>
                     </td>
