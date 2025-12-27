@@ -131,16 +131,40 @@ const AjustesMetas = ({
     setInstagram(userData?.instagram || "");
   }, [userData, diasRestantesCalculados]);
 
+  // NOVA FUNÇÃO: CLICAR EM "EDITAR METAS" FORÇA PERFIL SE FALTAR NOME OU FILIAL
+  const handleEditarMetas = () => {
+    if (!userData?.nome_usuario || !userData?.filial) {
+      setIsEditingPerfil(true);
+      alert("Antes de editar as metas, você precisa preencher seu nome e selecionar a filial!");
+    } else {
+      setIsEditingMetas(true);
+    }
+  };
+
   const handleSave = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-
     if (!user) {
       alert("Usuário não autenticado!");
       return;
     }
 
-    const dadosParaSalvar: any = {};
+    // VALIDAÇÃO OBRIGATÓRIA NO PERFIL
+    if (isEditingPerfil) {
+      if (!nomeUsuario.trim()) {
+        alert("O nome é obrigatório!");
+        return;
+      }
+      if (whatsapp.replace(/\D/g, "").length < 11) {
+        alert("WhatsApp válido é obrigatório (11 dígitos)!");
+        return;
+      }
+      if (!selectedFilial && !userData?.filial) {
+        alert("Você deve selecionar uma filial!");
+        return;
+      }
+    }
 
+    const dadosParaSalvar: any = {};
     if (isEditingMetas) {
       Object.assign(dadosParaSalvar, formState);
     }
@@ -155,18 +179,18 @@ const AjustesMetas = ({
       const { error } = await supabase
         .from("user_dashboard")
         .upsert({
-          user_id: user.id, // ← GARANTE O UID
+          user_id: user.id,
           ...dadosParaSalvar,
         }, {
-          onConflict: "user_id", // ← CHAVE ÚNICA
-          ignoreDuplicates: false, // ← ATUALIZA SEM DUPLICAR
+          onConflict: "user_id",
+          ignoreDuplicates: false,
         });
 
       if (error) {
         console.error("Erro ao salvar:", error);
         alert("Erro ao salvar ajustes: " + error.message);
       } else {
-        updateUserData(dadosParaSalvar); // recarrega os dados
+        updateUserData(dadosParaSalvar);
       }
     }
 
@@ -192,8 +216,6 @@ const AjustesMetas = ({
   const handleChange = (field: string, value: number | string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
-
-  // ... (o resto do código exatamente como você tem — CardItem, if (isLoading), return completo)
 
   const CardItem = ({
     title,
@@ -251,13 +273,13 @@ const AjustesMetas = ({
           Ajustes de Metas
         </h2>
         <div className="flex flex-wrap items-center gap-3">
-          {/* BOTÃO EDITAR METAS */}
+          {/* BOTÃO EDITAR METAS — AGORA COM FUNÇÃO ESPECIAL */}
           {!isEditingMetas && !isEditingPerfil && (
-            <Button variant="outline" onClick={() => setIsEditingMetas(true)} className="border-blue-300 text-blue-600">
+            <Button variant="outline" onClick={handleEditarMetas} className="border-blue-300 text-blue-600">
               Editar Metas
             </Button>
           )}
-          {/* BOTÃO "Editar Informações" COM ÍCONE — SÓ APARECE QUANDO ESTÁ EDITANDO METAS */}
+          {/* BOTÃO "Editar Informações" — SÓ APARECE QUANDO ESTÁ EDITANDO METAS */}
           {isEditingMetas && !isEditingPerfil && (
             <Button
               variant="outline"
@@ -312,7 +334,7 @@ const AjustesMetas = ({
         </div>
       </div>
 
-      {/* EDIÇÃO DE PERFIL */}
+      {/* EDIÇÃO DE PERFIL — FORÇADA NA PRIMEIRA VEZ */}
       {isEditingPerfil && (
         <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
           <CardContent className="pt-6 space-y-6">
@@ -399,7 +421,7 @@ const AjustesMetas = ({
         </Card>
       )}
 
-      {/* GRID DE METAS */}
+      {/* GRID DE METAS — SÓ MOSTRA QUANDO NÃO ESTÁ FORÇADO NO PERFIL */}
       {!isEditingPerfil && (
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
           <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditingMetas} />
