@@ -1,321 +1,334 @@
-// src/components/dashboard/Filiais.tsx
 import { useEffect, useState } from "react";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Trophy, Zap, Store, Phone, Instagram, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { DashboardProps } from "../DashboardLayout";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Calculator, Building, Wallet, ArrowDown, Check, Target, Handshake } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-interface RankingFilial {
-  idfilial: number;
-  filial: string;
-  regional: string;
-  total_vencido: number;
-  total_meta_fiado: number;
-  total_meta_desafio: number;
-  pct_fiado: number;
-  pct_desafio: number;
-  total_usuarios: number;
-  total_abertura_vencido_mes: number; // para calcular recebidos e a receber
-  usuario_principal: {
-    user_id: string;
-    nome_usuario: string;
-    avatar_url: string;
-    whatsapp: string;
-    instagram: string;
-  } | null;
-}
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
 
-const Filiais = () => {
-  const [ranking, setRanking] = useState<RankingFilial[]>([]);
-  const [regionais, setRegionais] = useState<string[]>([]);
-  const [filtroRegional, setFiltroRegional] = useState<string>("todas");
-  const [ocultarZeradas, setOcultarZeradas] = useState(true);
-  const [loading, setLoading] = useState(true);
+const CardItem = ({
+  title,
+  value,
+  icon,
+  color = "bg-blue-500",
+  showProgress = false,
+  progressValue = 0,
+}: {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  color?: string;
+  showProgress?: boolean;
+  progressValue?: number;
+}) => {
+  return (
+    <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${color} bg-opacity-50`}>
+      <CardContent className="p-4 md:p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-foreground">{title}</h3>
+          <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
+          {showProgress && (
+            <div className="text-lg font-bold text-red-600">
+              {progressValue.toFixed(2)}%
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
-  useEffect(() => {
-    const fetchRanking = async () => {
-      const { data, error } = await supabase
-        .from("vw_ranking_filiais")
-        .select("*");
+const ProgressCard = ({ title, current, target, icon, userData }: {
+  title: string;
+  current: number;
+  target: number;
+  icon: React.ReactNode;
+  userData: any;
+}) => {
+  const isMobile = useIsMobile();
 
-      if (!error && data) {
-        const lista = data as RankingFilial[];
-        const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
-        setRegionais(regs);
-        setRanking(lista);
-      }
-      setLoading(false);
-    };
-
-    fetchRanking();
-    const interval = setInterval(fetchRanking, 30_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  let dadosFiltrados = ranking;
-
-  if (filtroRegional !== "todas") {
-    dadosFiltrados = dadosFiltrados.filter(f => (f.regional || "Sem regional") === filtroRegional);
+  let percentageComplete = 0;
+  if (userData.vencido_atual > 0) {
+    percentageComplete = (userData.meta_mes / userData.vencido_atual) * 100;
+  } else {
+    console.log(`[MetaFiado] Meta Fiado - Vencido Atual é zero ou negativo: ${userData.vencido_atual}`);
   }
+  percentageComplete = Math.max(0, percentageComplete);
 
-  if (ocultarZeradas) {
-    dadosFiltrados = dadosFiltrados.filter(f =>
-      f.total_meta_fiado > 0 || f.total_meta_desafio > 0
-    );
-  }
+  const percentuaisAlvo = [94, 96, 98, 99, 100, 101, 103, 105];
+  const valoresRestantes = percentuaisAlvo.map((percentual) => {
+    const vencidoNecessario = userData.meta_mes / (percentual / 100);
+    let diferenca = userData.vencido_atual - vencidoNecessario;
+    const atingido = percentageComplete >= percentual;
+    diferenca = atingido ? Math.abs(diferenca) : -Math.abs(diferenca);
+    return { percentual, diferenca, atingido };
+  });
 
-  if (loading) {
-    return <p className="text-center py-20 text-xl">Carregando Filiais %...</p>;
-  }
-
-  // FUNÇÃO PARA GERAR INICIAIS DO NOME
-  const getInitials = (nome: string | null | undefined): string => {
-    if (!nome) return "U";
-    const names = nome.trim().split(" ");
-    if (names.length === 1) return names[0].slice(0, 2).toUpperCase();
-    return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
-  };
-
-  // FUNÇÃO PARA DEFINIR COR DO PERCENTUAL (FIADO E DESAFIO)
-  const getPercentColor = (pct: number) => {
-    if (pct >= 100) return "text-green-600 font-bold";
-    if (pct >= 94) return "text-yellow-600 font-bold";
-    if (pct >= 90) return "text-red-600 font-bold";
-    return "text-foreground"; // preto/padrão abaixo de 90%
-  };
-
-  // FUNÇÃO PARA DEFINIR COR DA BARRA DE PROGRESSO
-  const getProgressColor = (pct: number) => {
-    if (pct >= 100) return "bg-green-500";
-    if (pct >= 94) return "bg-yellow-500";
-    if (pct >= 90) return "bg-red-500";
-    return "bg-gray-400"; // cinza abaixo de 90%
-  };
-
-  // CÁLCULO DE RECEBIDO E A RECEBER (IGUAL AO META FIADO)
-  const calcularRecebidoMeta = (f: RankingFilial) => {
-    const abertura = f.total_abertura_vencido_mes || 0;
-    const vencidoAtual = f.total_vencido || 0;
-    const metaMes = f.total_meta_fiado || 0;
-
-    const recebidosMes = abertura - vencidoAtual;
-    const aReceber = abertura - metaMes;
-
-    const format = (n: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
-
-    return `${format(recebidosMes)} / ${format(aReceber)}`;
+  const getProgressStyle = (value: number) => {
+    if (value < 94) return { background: "#ff0000" };
+    if (value < 100) return { background: "#facc15" };
+    return { background: "#22c55e" };
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Filiais %
+    <Card
+      className={`shadow-sm hover:shadow-md transition-shadow duration-200 bg-blue-500 bg-opacity-10 ${
+        isMobile ? "col-span-1" : "col-span-1 md:col-span-3"
+      }`}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex flex-col items-center gap-2">
+          <CardTitle className="text-lg md:text-xl flex items-center gap-2">
+            {icon}
+            {title}
+          </CardTitle>
+          <div className="text-xl md:text-2xl font-bold text-foreground">
+            {percentageComplete.toFixed(2)}% concluído
+          </div>
+        </div>
+        <CardDescription className="text-sm mt-1 text-center text-foreground">
+          <div className="flex flex-col md:flex-row md:gap-4 justify-center">
+            <span>Meta: {formatCurrency(target)}</span>
+            <span>Atual: {formatCurrency(current)}</span>
+          </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <div
+            className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative"
+            style={{ boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)" }}
+          >
+            <div
+              className="h-full rounded-l-full transition-all duration-1000 ease-out"
+              style={{
+                width: `${Math.min(percentageComplete, 105)}%`,
+                ...getProgressStyle(percentageComplete),
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+              }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4 mt-2 justify-center">
+            {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
+              <div key={percentual} className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    "text-sm md:text-base font-medium",
+                    atingido ? "text-green-600" : "text-red-600"
+                  )}
+                >
+                  {percentual}%: {formatCurrency(diferenca)}
+                </div>
+                {index < valoresRestantes.length - 1 && <span className="text-gray-400">|</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHoje, diasSemExpediente }: DashboardProps) => {
+  const isMobile = useIsMobile();
+
+  const aReceber = userData.abertura_vencido_mes - userData.meta_mes || 0;
+  const faltaReceberMes = Math.max(0, (userData.vencido_atual || 0) - (userData.meta_mes || 0));
+  const recebidosMes = (userData.abertura_vencido_mes || 0) - (userData.vencido_atual || 0);
+  const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - (userData.vencido_atual || 0)).toFixed(2)));
+
+  const calculateTotalWorkDays = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    let totalDays = 0;
+    for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek !== 0 && !diasSemExpediente?.some(date => date.toDateString() === d.toDateString())) {
+        totalDays++;
+      }
+    }
+    return totalDays;
+  };
+
+  const calculateWorkedDays = () => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    let workedDays = 0;
+    for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay();
+      if (dayOfWeek !== 0 && !diasSemExpediente?.some(date => date.toDateString() === d.toDateString())) {
+        workedDays++;
+      }
+    }
+    if (today.getDay() === 0) workedDays--; // Remove domingo se for o dia atual
+    return workedDays;
+  };
+
+  const diasUteisRestantes = userData.dias_restantes || diasRestantesCalculados || 0;
+  const totalWorkDaysInMonth = calculateTotalWorkDays(); // Dinâmico agora
+  const diasUteisTrabalhados = userData.dias_trabalhados || calculateWorkedDays(); // Usa userData se disponível
+  const valorPorDia = aReceber > 0 && totalWorkDaysInMonth > 0 ? aReceber / totalWorkDaysInMonth : 0;
+  const valorEsperadoAcumulado = diasUteisTrabalhados > 0 ? valorPorDia * diasUteisTrabalhados : 0;
+  const gap = recebidosMes - valorEsperadoAcumulado;
+  const receberPorDia = diasUteisRestantes > 0 ? faltaReceberMes / diasUteisRestantes : 0;
+  const progressoDiario = receberPorDia > 0 ? (recebidoHoje / receberPorDia) * 100 : 0;
+  const faltaParaMetaDiaria = Math.max(0, receberPorDia - recebidoHoje);
+
+  // Nova função para calcular os dias acima da meta
+  const calcularDiasAcimaDaMeta = (): number => {
+    if (valorPorDia <= 0) return 0;
+    const diasAcima = gap > 0 ? Math.floor(gap / valorPorDia) : 0;
+    return diasAcima;
+  };
+
+  const diasAcimaDaMeta = calcularDiasAcimaDaMeta();
+
+  useEffect(() => {
+    if (setRecebidoHoje) {
+      setRecebidoHoje(recebidoHoje);
+    }
+  }, [recebidoHoje, setRecebidoHoje]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-1/4" />
+        </div>
+        <div
+          className={`grid grid-cols-1 ${
+            isMobile ? "" : "md:grid-cols-2 lg:grid-cols-3"
+          } gap-4`}
+        >
+          {[...Array(isMobile ? 4 : 8)].map((_, i) => (
+            <Card key={i} className="shadow-sm">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+                <Skeleton className="h-8 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl md:text-2xl font-bold text-red-600 flex items-center gap-2">
+          <Handshake className="h-5 w-5 text-red-600" />
+          Meta Fiado
         </h2>
-        <p className="text-muted-foreground mt-2">
-          {dadosFiltrados.length} filiais • Atualizado a cada 30s
-        </p>
       </div>
-
-      {/* FILTROS */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-        <div className="w-full max-w-xs">
-          <Select value={filtroRegional} onValueChange={setFiltroRegional}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todas as regionais" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todas">Todas as regionais</SelectItem>
-              {regionais.map(reg => (
-                <SelectItem key={reg} value={reg}>{reg}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-lg shadow border">
-          <Switch
-            id="ocultar-zeradas"
-            checked={ocultarZeradas}
-            onCheckedChange={setOcultarZeradas}
-          />
-          <Label htmlFor="ocultar-zeradas" className="cursor-pointer font-medium">
-            Ocultar filiais zeradas
-          </Label>
-        </div>
-      </div>
-
-      {/* TABELA COM NOVA COLUNA */}
-      <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
-            <tr>
-              <th className="px-4 py-2">#</th>
-              <th className="px-4 py-2">Filial</th>
-              <th className="px-4 py-2 text-center">Recebido / A Receber</th>
-              <th className="px-4 py-2 text-center">Meta Fiado</th>
-              <th className="px-4 py-2 text-center">Meta Desafio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dadosFiltrados.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-16 text-gray-500">
-                  <Store className="h-20 w-20 mx-auto mb-4" />
-                  <p className="text-xl">
-                    {ocultarZeradas
-                      ? "Nenhuma filial com meta ativa."
-                      : "Nenhuma filial cadastrada."}
-                  </p>
-                </td>
-              </tr>
-            ) : (
-              dadosFiltrados.map((f, i) => {
-                const user = f.usuario_principal;
-                const initials = getInitials(user?.nome_usuario);
-
-                return (
-                  <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {i < 3 && (
-                          <Trophy className={`h-5 w-5 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
-                        )}
-                        <span className="font-bold">{i + 1}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <HoverCard openDelay={200}>
-                          <HoverCardTrigger asChild>
-                            <div className="cursor-pointer">
-                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500 flex items-center justify-center">
-                                {user?.avatar_url ? (
-                                  <img
-                                    src={user.avatar_url}
-                                    alt="Perfil"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                      e.currentTarget.nextElementSibling?.classList.remove("hidden");
-                                    }}
-                                  />
-                                ) : null}
-                                <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm ${user?.avatar_url ? "hidden" : ""}`}>
-                                  {initials !== "U" ? initials : <User className="h-6 w-6" />}
-                                </div>
-                              </div>
-                            </div>
-                          </HoverCardTrigger>
-                          <HoverCardContent className="w-80">
-                            <div className="flex items-center gap-4">
-                              <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
-                                {user?.avatar_url ? (
-                                  <img
-                                    src={user.avatar_url}
-                                    alt="Perfil"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                      e.currentTarget.nextElementSibling?.classList.remove("hidden");
-                                    }}
-                                  />
-                                ) : null}
-                                <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-2xl ${user?.avatar_url ? "hidden" : ""}`}>
-                                  {initials !== "U" ? initials : <User className="h-10 w-10" />}
-                                </div>
-                              </div>
-                              <div>
-                                <p className="font-bold text-lg">{user?.nome_usuario || "Usuário"}</p>
-                                <p className="text-sm text-muted-foreground">Filial {f.filial}</p>
-                              </div>
-                            </div>
-                            <div className="mt-4 space-y-2">
-                              {user?.whatsapp && (
-                                <a
-                                  href={`https://wa.me/55${user.whatsapp}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 text-green-600 hover:underline"
-                                >
-                                  <Phone className="h-4 w-4" /> WhatsApp
-                                </a>
-                              )}
-                              {user?.instagram && (
-                                <a
-                                  href={`https://instagram.com/${user.instagram.replace("@", "")}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 text-pink-600 hover:underline"
-                                >
-                                  <Instagram className="h-4 w-4" /> Instagram
-                                </a>
-                              )}
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                        <div>
-                          <p className="font-medium">{f.filial}</p>
-                          <p className="text-xs text-gray-600">{f.regional}</p>
-                        </div>
-                      </div>
-                    </td>
-                    {/* NOVA COLUNA: RECEBIDO / A RECEBER */}
-                    <td className="px-4 py-3 text-center">
-                      <div className="space-y-1">
-                        <p className="font-bold text-sm">
-                          {calcularRecebidoMeta(f)}
-                        </p>
-                        <Progress
-                          value={f.total_abertura_vencido_mes > 0 ? ((f.total_abertura_vencido_mes - f.total_vencido) / f.total_abertura_vencido_mes) * 100 : 0}
-                          className="h-3"
-                          indicatorClassName="bg-blue-500"
-                        />
-                      </div>
-                    </td>
-                    {/* META FIADO */}
-                    <td className="px-4 py-3 text-center">
-                      <div className="space-y-1">
-                        <p className={`text-lg ${getPercentColor(f.pct_fiado)}`}>
-                          {f.pct_fiado.toFixed(2)}%
-                        </p>
-                        <Progress
-                          value={f.pct_fiado}
-                          className="h-3"
-                          indicatorClassName={getProgressColor(f.pct_fiado)}
-                        />
-                      </div>
-                    </td>
-                    {/* META DESAFIO */}
-                    <td className="px-4 py-3 text-center">
-                      <div className="space-y-1">
-                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(f.pct_desafio)}`}>
-                          <Zap className="h-4 w-4 text-yellow-500" />
-                          {f.pct_desafio.toFixed(2)}%
-                        </p>
-                        <Progress
-                          value={f.pct_desafio}
-                          className="h-3"
-                          indicatorClassName={getProgressColor(f.pct_desafio)}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+      <div
+        className={`grid grid-cols-1 ${isMobile ? "gap-3" : "md:grid-cols-3 gap-4"}`}
+      >
+        <ProgressCard
+          title="Progresso da Meta Mensal"
+          current={userData.vencido_atual || 0}
+          target={userData.meta_mes || 0}
+          icon={<Target className="h-5 w-5 text-blue-500" />}
+          userData={userData}
+        />
+        <CardItem
+          title="A Receber"
+          value={aReceber}
+          icon={<ArrowDown size={16} />}
+          color="bg-cyan-500"
+        />
+        <CardItem
+          title="Falta Receber/Mês"
+          value={faltaReceberMes}
+          icon={<ArrowDown size={16} />}
+          color="bg-red-500"
+        />
+        <CardItem
+          title="Recebido Mês"
+          value={recebidosMes}
+          icon={<Check size={16} />}
+          color="bg-green-500"
+        />
+        <CardItem
+          title="Recebido Hoje"
+          value={recebidoHoje}
+          icon={<Building size={16} />}
+          color="bg-green-500"
+          showProgress={true}
+          progressValue={progressoDiario}
+        />
+        <CardItem
+          title="Receber por Dia"
+          value={receberPorDia}
+          icon={<Calculator size={16} />}
+          color="bg-orange-500"
+        />
+        <CardItem
+          title="Falta para Meta Diária"
+          value={faltaParaMetaDiaria}
+          icon={<Target size={16} />}
+          color="bg-yellow-500"
+        />
+        <Card
+          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
+        >
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
+              <span
+                className={`p-2 rounded-full ${gap >= 0 ? "bg-green-500" : "bg-red-500"} text-white`}
+              >
+                <Wallet size={16} />
+              </span>
+            </div>
+            <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(gap)}</div>
+            <div className="mt-2 text-sm text-foreground">
+              {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
+            </div>
+            <div className="mt-1 text-xs text-foreground">
+              Dias úteis trabalhados: {diasUteisTrabalhados}
+            </div>
+            <div className="mt-1 text-xs text-foreground">
+              Dias úteis restantes: {diasUteisRestantes}
+            </div>
+            {gap > 0 && (
+              <div className="mt-1 text-xs text-foreground">
+                Dias acima da meta: {diasAcimaDaMeta}
+              </div>
             )}
-          </tbody>
-        </table>
+            <div className="mt-1 text-xs text-foreground">
+              Valor esperado acumulado: {formatCurrency(valorEsperadoAcumulado)}
+            </div>
+            <div className="mt-1 text-xs text-foreground">
+              Recebido no mês: {formatCurrency(recebidosMes)}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
 
-export default Filiais;
+export default MetaFiado;
