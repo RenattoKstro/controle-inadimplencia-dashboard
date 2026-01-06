@@ -22,6 +22,7 @@ interface RankingFilial {
   pct_fiado: number;
   pct_desafio: number;
   total_usuarios: number;
+  total_abertura_vencido_mes: number; // para calcular recebidos e a receber
   usuario_principal: {
     user_id: string;
     nome_usuario: string;
@@ -98,6 +99,20 @@ const Filiais = () => {
     return "bg-gray-400"; // cinza abaixo de 90%
   };
 
+  // CÁLCULO DE RECEBIDO E A RECEBER (IGUAL AO META FIADO)
+  const calcularRecebidoMeta = (f: RankingFilial) => {
+    const abertura = f.total_abertura_vencido_mes || 0;
+    const vencidoAtual = f.total_vencido || 0;
+    const metaMes = f.total_meta_fiado || 0;
+
+    const recebidosMes = abertura - vencidoAtual;
+    const aReceber = abertura - metaMes;
+
+    const format = (n: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
+
+    return `${format(recebidosMes)} / ${format(aReceber)}`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -137,13 +152,14 @@ const Filiais = () => {
         </div>
       </div>
 
-      {/* TABELA */}
+      {/* TABELA COM NOVA COLUNA */}
       <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
             <tr>
               <th className="px-4 py-2">#</th>
               <th className="px-4 py-2">Filial</th>
+              <th className="px-4 py-2 text-center">Recebido / A Receber</th>
               <th className="px-4 py-2 text-center">Meta Fiado</th>
               <th className="px-4 py-2 text-center">Meta Desafio</th>
             </tr>
@@ -151,7 +167,7 @@ const Filiais = () => {
           <tbody>
             {dadosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-16 text-gray-500">
+                <td colSpan={5} className="text-center py-16 text-gray-500">
                   <Store className="h-20 w-20 mx-auto mb-4" />
                   <p className="text-xl">
                     {ocultarZeradas
@@ -177,7 +193,6 @@ const Filiais = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        {/* FOTO + HOVERCARD */}
                         <HoverCard openDelay={200}>
                           <HoverCardTrigger asChild>
                             <div className="cursor-pointer">
@@ -246,11 +261,23 @@ const Filiais = () => {
                             </div>
                           </HoverCardContent>
                         </HoverCard>
-
                         <div>
                           <p className="font-medium">{f.filial}</p>
                           <p className="text-xs text-gray-600">{f.regional}</p>
                         </div>
+                      </div>
+                    </td>
+                    {/* NOVA COLUNA: RECEBIDO / A RECEBER */}
+                    <td className="px-4 py-3 text-center">
+                      <div className="space-y-1">
+                        <p className="font-bold text-sm">
+                          {calcularRecebidoMeta(f)}
+                        </p>
+                        <Progress
+                          value={f.total_abertura_vencido_mes > 0 ? ((f.total_abertura_vencido_mes - f.total_vencido) / f.total_abertura_vencido_mes) * 100 : 0}
+                          className="h-3"
+                          indicatorClassName="bg-blue-500"
+                        />
                       </div>
                     </td>
                     {/* META FIADO */}
