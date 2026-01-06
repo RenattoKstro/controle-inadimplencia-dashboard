@@ -22,7 +22,7 @@ interface RankingFilial {
   pct_fiado: number;
   pct_desafio: number;
   total_usuarios: number;
-  total_abertura_vencido_mes: number; // para calcular recebidos e a receber
+  total_abertura_vencido_mes: number;
   usuario_principal: {
     user_id: string;
     nome_usuario: string;
@@ -75,7 +75,6 @@ const Filiais = () => {
     return <p className="text-center py-20 text-xl">Carregando Filiais %...</p>;
   }
 
-  // FUNÇÃO PARA GERAR INICIAIS DO NOME
   const getInitials = (nome: string | null | undefined): string => {
     if (!nome) return "U";
     const names = nome.trim().split(" ");
@@ -83,23 +82,20 @@ const Filiais = () => {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
   };
 
-  // FUNÇÃO PARA DEFINIR COR DO PERCENTUAL (FIADO E DESAFIO)
   const getPercentColor = (pct: number) => {
     if (pct >= 100) return "text-green-600 font-bold";
     if (pct >= 94) return "text-yellow-600 font-bold";
     if (pct >= 90) return "text-red-600 font-bold";
-    return "text-foreground"; // preto/padrão abaixo de 90%
+    return "text-foreground";
   };
 
-  // FUNÇÃO PARA DEFINIR COR DA BARRA DE PROGRESSO
   const getProgressColor = (pct: number) => {
     if (pct >= 100) return "bg-green-500";
     if (pct >= 94) return "bg-yellow-500";
     if (pct >= 90) return "bg-red-500";
-    return "bg-gray-400"; // cinza abaixo de 90%
+    return "bg-gray-400";
   };
 
-  // CÁLCULO DE RECEBIDO E A RECEBER (IGUAL AO META FIADO)
   const calcularRecebidoMeta = (f: RankingFilial) => {
     const abertura = f.total_abertura_vencido_mes || 0;
     const vencidoAtual = f.total_vencido || 0;
@@ -152,7 +148,7 @@ const Filiais = () => {
         </div>
       </div>
 
-      {/* TABELA COM NOVA COLUNA */}
+      {/* TABELA */}
       <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
@@ -267,18 +263,11 @@ const Filiais = () => {
                         </div>
                       </div>
                     </td>
-                    {/* NOVA COLUNA: RECEBIDO / A RECEBER */}
+                    {/* COLUNA RECEBIDO / A RECEBER — SEM BARRA DE PROGRESSO */}
                     <td className="px-4 py-3 text-center">
-                      <div className="space-y-1">
-                        <p className="font-bold text-sm">
-                          {calcularRecebidoMeta(f)}
-                        </p>
-                        <Progress
-                          value={f.total_abertura_vencido_mes > 0 ? ((f.total_abertura_vencido_mes - f.total_vencido) / f.total_abertura_vencido_mes) * 100 : 0}
-                          className="h-3"
-                          indicatorClassName="bg-blue-500"
-                        />
-                      </div>
+                      <p className="font-bold text-sm">
+                        {calcularRecebidoMeta(f)}
+                      </p>
                     </td>
                     {/* META FIADO */}
                     <td className="px-4 py-3 text-center">
