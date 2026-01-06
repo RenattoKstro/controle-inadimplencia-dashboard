@@ -22,6 +22,7 @@ interface RankingFilial {
   pct_fiado: number;
   pct_desafio: number;
   total_usuarios: number;
+  total_abertura_vencido_mes: number;
   usuario_principal: {
     user_id: string;
     nome_usuario: string;
@@ -74,7 +75,6 @@ const Filiais = () => {
     return <p className="text-center py-20 text-xl">Carregando Filiais %...</p>;
   }
 
-  // FUNÇÃO PARA GERAR INICIAIS DO NOME
   const getInitials = (nome: string | null | undefined): string => {
     if (!nome) return "U";
     const names = nome.trim().split(" ");
@@ -82,20 +82,31 @@ const Filiais = () => {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
   };
 
-  // FUNÇÃO PARA DEFINIR COR DO PERCENTUAL (FIADO E DESAFIO)
   const getPercentColor = (pct: number) => {
     if (pct >= 100) return "text-green-600 font-bold";
     if (pct >= 94) return "text-yellow-600 font-bold";
     if (pct >= 90) return "text-red-600 font-bold";
-    return "text-foreground"; // preto/padrão abaixo de 90%
+    return "text-foreground";
   };
 
-  // FUNÇÃO PARA DEFINIR COR DA BARRA DE PROGRESSO
   const getProgressColor = (pct: number) => {
     if (pct >= 100) return "bg-green-500";
     if (pct >= 94) return "bg-yellow-500";
     if (pct >= 90) return "bg-red-500";
-    return "bg-gray-400"; // cinza abaixo de 90%
+    return "bg-gray-400";
+  };
+
+  const calcularRecebidoMeta = (f: RankingFilial) => {
+    const abertura = f.total_abertura_vencido_mes || 0;
+    const vencidoAtual = f.total_vencido || 0;
+    const metaMes = f.total_meta_fiado || 0;
+
+    const recebidosMes = abertura - vencidoAtual;
+    const aReceber = abertura - metaMes;
+
+    const format = (n: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
+
+    return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
   return (
@@ -144,6 +155,7 @@ const Filiais = () => {
             <tr>
               <th className="px-4 py-2">#</th>
               <th className="px-4 py-2">Filial</th>
+              <th className="px-4 py-2 text-center">Recebido / A Receber</th>
               <th className="px-4 py-2 text-center">Meta Fiado</th>
               <th className="px-4 py-2 text-center">Meta Desafio</th>
             </tr>
@@ -151,7 +163,7 @@ const Filiais = () => {
           <tbody>
             {dadosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-16 text-gray-500">
+                <td colSpan={5} className="text-center py-16 text-gray-500">
                   <Store className="h-20 w-20 mx-auto mb-4" />
                   <p className="text-xl">
                     {ocultarZeradas
@@ -177,7 +189,6 @@ const Filiais = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        {/* FOTO + HOVERCARD */}
                         <HoverCard openDelay={200}>
                           <HoverCardTrigger asChild>
                             <div className="cursor-pointer">
@@ -246,12 +257,17 @@ const Filiais = () => {
                             </div>
                           </HoverCardContent>
                         </HoverCard>
-
                         <div>
                           <p className="font-medium">{f.filial}</p>
                           <p className="text-xs text-gray-600">{f.regional}</p>
                         </div>
                       </div>
+                    </td>
+                    {/* COLUNA RECEBIDO / A RECEBER — SEM BARRA DE PROGRESSO */}
+                    <td className="px-4 py-3 text-center">
+                      <p className="font-bold text-sm">
+                        {calcularRecebidoMeta(f)}
+                      </p>
                     </td>
                     {/* META FIADO */}
                     <td className="px-4 py-3 text-center">
