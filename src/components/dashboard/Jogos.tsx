@@ -25,7 +25,7 @@ const TicTacToe = ({ userId }: { userId: string }) => {
         .eq("game_name", "tic_tac_toe")
         .single();
 
-      if (error && error.code !== "PGRST116") { // PGRST116 = no rows
+      if (error && error.code !== "PGRST116") {
         console.error("Erro ao carregar score:", error);
       }
       setScore(data?.score ?? 0);
@@ -56,7 +56,6 @@ const TicTacToe = ({ userId }: { userId: string }) => {
       return;
     }
 
-    // IA joga após 500ms
     setTimeout(() => {
       const iaMove = getBestMove(newBoard);
       if (iaMove !== null) {
@@ -140,7 +139,7 @@ const TicTacToe = ({ userId }: { userId: string }) => {
     setWinner(null);
   };
 
-  if (score === null) return <p className="text-center text-xl">Carregando pontuação...</p>;
+  if (score === null) return <p className="text-center text-xl py-10">Carregando pontuação...</p>;
 
   return (
     <div className="space-y-6 text-center">
@@ -168,7 +167,7 @@ const TicTacToe = ({ userId }: { userId: string }) => {
   );
 };
 
-// 2048
+// 2048 - Correção completa do bug de save prematuro e NaN
 const TwentyFortyEight = ({ userId }: { userId: string }) => {
   const [board, setBoard] = useState<number[][]>(Array(4).fill(0).map(() => Array(4).fill(0)));
   const [score, setScore] = useState(0);
@@ -186,7 +185,9 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
         .eq("game_name", "2048")
         .single();
 
-      if (error && error.code !== "PGRST116") console.error("Erro:", error);
+      if (error && error.code !== "PGRST116") {
+        console.error("Erro ao carregar recorde:", error);
+      }
       setBestScore(data?.score ?? 0);
     };
     loadBest();
@@ -194,16 +195,20 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
   }, [userId]);
 
   const saveScore = async (newScore: number) => {
-    if (!userId || newScore <= (bestScore ?? 0)) return;
+    if (!userId || newScore <= (bestScore ?? 0)) return; // Só salva se realmente for maior
+
     setBestScore(newScore);
     setIsNewRecord(true);
+
     const { error } = await supabase.from("user_scores").upsert({
       user_id: userId,
       game_name: "2048",
       score: newScore,
     });
-    if (error) console.error("Erro ao salvar:", error);
-    else {
+
+    if (error) {
+      console.error("Erro ao salvar recorde:", error);
+    } else {
       toast({ title: "Novo Recorde! 🔥", description: `Sua melhor agora é ${newScore} pontos` });
       setTimeout(() => setIsNewRecord(false), 3000);
     }
@@ -232,19 +237,24 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
   };
 
   const slide = (row: number[]) => {
-    let arr = row.filter(v => v);
-    let newScore = score;
+    let arr = row.filter(v => v !== 0);
+    let addedScore = 0;
+
     for (let i = 0; i < arr.length - 1; i++) {
       if (arr[i] === arr[i + 1]) {
         arr[i] *= 2;
-        newScore += arr[i];
+        addedScore += arr[i];
         arr.splice(i + 1, 1);
         i--;
       }
     }
+
     while (arr.length < 4) arr.push(0);
+
+    const newScore = score + addedScore;
     setScore(newScore);
-    saveScore(newScore);
+    saveScore(newScore); // Só salva se for maior que o recorde (verificação dentro da função)
+
     return arr;
   };
 
@@ -280,7 +290,7 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
     setBoard(newBoard);
 
     if (isGameOver(newBoard)) {
-      toast({ title: "Game Over!", description: `Pontuação: ${score}` });
+      toast({ title: "Game Over!", description: `Pontuação final: ${score}` });
     }
   };
 
@@ -306,7 +316,7 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
     return () => window.removeEventListener("keydown", handleKey);
   }, [board]);
 
-  if (bestScore === null) return <p className="text-center">Carregando pontuação...</p>;
+  if (bestScore === null) return <p className="text-center text-xl py-10">Carregando pontuação...</p>;
 
   return (
     <div className="space-y-6 text-center">
