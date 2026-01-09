@@ -12,29 +12,35 @@ const TicTacToe = ({ userId }: { userId: string }) => {
   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true); // Jogador = X, IA = O
   const [winner, setWinner] = useState<string | null>(null);
-  const [score, setScore] = useState(0); // Vitórias do jogador
+  const [score, setScore] = useState<number | null>(null); // null = carregando
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchScore();
+    if (!userId) return;
+    const loadScore = async () => {
+      const { data, error } = await supabase
+        .from("user_scores")
+        .select("score")
+        .eq("user_id", userId)
+        .eq("game_name", "tic_tac_toe")
+        .single();
+
+      if (error && error.code !== "PGRST116") { // PGRST116 = no rows
+        console.error("Erro ao carregar score:", error);
+      }
+      setScore(data?.score ?? 0);
+    };
+    loadScore();
   }, [userId]);
 
-  const fetchScore = async () => {
-    const { data } = await supabase
-      .from("user_scores")
-      .select("score")
-      .eq("user_id", userId)
-      .eq("game_name", "tic_tac_toe")
-      .single();
-    setScore(data?.score || 0);
-  };
-
   const saveScore = async (newScore: number) => {
-    await supabase.from("user_scores").upsert({
+    if (!userId) return;
+    const { error } = await supabase.from("user_scores").upsert({
       user_id: userId,
       game_name: "tic_tac_toe",
       score: newScore,
     });
+    if (error) console.error("Erro ao salvar score:", error);
   };
 
   const handleClick = (index: number) => {
@@ -117,7 +123,7 @@ const TicTacToe = ({ userId }: { userId: string }) => {
   const handleGameEnd = (win: string) => {
     setWinner(win);
     if (win === "X") {
-      const newScore = score + 1;
+      const newScore = (score ?? 0) + 1;
       setScore(newScore);
       saveScore(newScore);
       toast({ title: "Você venceu!", description: `Vitórias: ${newScore}` });
@@ -133,6 +139,8 @@ const TicTacToe = ({ userId }: { userId: string }) => {
     setIsXNext(true);
     setWinner(null);
   };
+
+  if (score === null) return <p className="text-center text-xl">Carregando pontuação...</p>;
 
   return (
     <div className="space-y-6 text-center">
@@ -164,35 +172,39 @@ const TicTacToe = ({ userId }: { userId: string }) => {
 const TwentyFortyEight = ({ userId }: { userId: string }) => {
   const [board, setBoard] = useState<number[][]>(Array(4).fill(0).map(() => Array(4).fill(0)));
   const [score, setScore] = useState(0);
-  const [bestScore, setBestScore] = useState(0);
+  const [bestScore, setBestScore] = useState<number | null>(null);
   const [isNewRecord, setIsNewRecord] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!userId) return;
+    const loadBest = async () => {
+      const { data, error } = await supabase
+        .from("user_scores")
+        .select("score")
+        .eq("user_id", userId)
+        .eq("game_name", "2048")
+        .single();
+
+      if (error && error.code !== "PGRST116") console.error("Erro:", error);
+      setBestScore(data?.score ?? 0);
+    };
+    loadBest();
     initBoard();
-    fetchScore();
   }, [userId]);
 
-  const fetchScore = async () => {
-    const { data } = await supabase
-      .from("user_scores")
-      .select("score")
-      .eq("user_id", userId)
-      .eq("game_name", "2048")
-      .single();
-    setBestScore(data?.score || 0);
-  };
-
   const saveScore = async (newScore: number) => {
-    if (newScore > bestScore) {
-      setBestScore(newScore);
-      setIsNewRecord(true);
-      await supabase.from("user_scores").upsert({
-        user_id: userId,
-        game_name: "2048",
-        score: newScore,
-      });
-      toast({ title: "Novo Recorde! 🔥", description: `Você bateu seu melhor: ${newScore} pontos` });
+    if (!userId || newScore <= (bestScore ?? 0)) return;
+    setBestScore(newScore);
+    setIsNewRecord(true);
+    const { error } = await supabase.from("user_scores").upsert({
+      user_id: userId,
+      game_name: "2048",
+      score: newScore,
+    });
+    if (error) console.error("Erro ao salvar:", error);
+    else {
+      toast({ title: "Novo Recorde! 🔥", description: `Sua melhor agora é ${newScore} pontos` });
       setTimeout(() => setIsNewRecord(false), 3000);
     }
   };
@@ -294,6 +306,8 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
     return () => window.removeEventListener("keydown", handleKey);
   }, [board]);
 
+  if (bestScore === null) return <p className="text-center">Carregando pontuação...</p>;
+
   return (
     <div className="space-y-6 text-center">
       <h3 className="text-3xl font-bold">2048</h3>
@@ -332,8 +346,12 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
 
 // Componente principal: Jogos
 const Jogos = () => {
-  const { userData } = useUserData();
+  const { userData, isLoading: userLoading } = useUserData();
   const userId = userData?.user_id || "";
+
+  if (userLoading || !userId) {
+    return <p className="text-center text-xl py-10">Carregando usuário...</p>;
+  }
 
   return (
     <div className="space-y-8 p-4">
