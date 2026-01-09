@@ -37,6 +37,34 @@ const TicTacToe = ({ userId }: { userId: string }) => {
     });
   };
 
+  const handleClick = (index: number) => {
+    if (board[index] || winner || !isXNext) return;
+    const newBoard = [...board];
+    newBoard[index] = "X";
+    setBoard(newBoard);
+    setIsXNext(false);
+
+    const newWinner = calculateWinner(newBoard);
+    if (newWinner) {
+      handleGameEnd(newWinner);
+      return;
+    }
+
+    // IA joga após 500ms
+    setTimeout(() => {
+      const iaMove = getBestMove(newBoard);
+      if (iaMove !== null) {
+        const iaBoard = [...newBoard];
+        iaBoard[iaMove] = "O";
+        setBoard(iaBoard);
+        setIsXNext(true);
+
+        const iaWinner = calculateWinner(iaBoard);
+        if (iaWinner) handleGameEnd(iaWinner);
+      }
+    }, 500);
+  };
+
   const calculateWinner = (squares: (string | null)[]) => {
     const lines = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -52,36 +80,7 @@ const TicTacToe = ({ userId }: { userId: string }) => {
     return null;
   };
 
-  const handleClick = (index: number) => {
-    if (board[index] || winner || !isXNext) return; // Só joga se for turno do X (jogador)
-    const newBoard = [...board];
-    newBoard[index] = "X";
-    setBoard(newBoard);
-    setIsXNext(false);
-
-    const newWinner = calculateWinner(newBoard);
-    if (newWinner) {
-      handleGameEnd(newWinner);
-      return;
-    }
-
-    // Turno da IA (O)
-    setTimeout(() => {
-      const iaMove = getBestMove(newBoard);
-      if (iaMove !== null) {
-        const iaBoard = [...newBoard];
-        iaBoard[iaMove] = "O";
-        setBoard(iaBoard);
-        setIsXNext(true);
-
-        const iaWinner = calculateWinner(iaBoard);
-        if (iaWinner) handleGameEnd(iaWinner);
-      }
-    }, 500);
-  };
-
   const getBestMove = (board: (string | null)[]) => {
-    // IA simples: tenta ganhar, bloquear ou centro
     const lines = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8],
       [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -95,26 +94,22 @@ const TicTacToe = ({ userId }: { userId: string }) => {
       if (board[b] === "O" && board[c] === "O" && board[a] === null) return a;
     }
 
-    // 2. Bloquear vitória do jogador
+    // 2. Bloquear jogador
     for (const [a, b, c] of lines) {
       if (board[a] === "X" && board[b] === "X" && board[c] === null) return c;
       if (board[a] === "X" && board[c] === "X" && board[b] === null) return b;
       if (board[b] === "X" && board[c] === "X" && board[a] === null) return a;
     }
 
-    // 3. Centro livre
+    // 3. Centro
     if (board[4] === null) return 4;
 
-    // 4. Canto livre
+    // 4. Canto
     const corners = [0, 2, 6, 8];
-    for (const corner of corners) {
-      if (board[corner] === null) return corner;
-    }
+    for (const corner of corners) if (board[corner] === null) return corner;
 
     // 5. Qualquer livre
-    for (let i = 0; i < 9; i++) {
-      if (board[i] === null) return i;
-    }
+    for (let i = 0; i < 9; i++) if (board[i] === null) return i;
 
     return null;
   };
@@ -129,7 +124,7 @@ const TicTacToe = ({ userId }: { userId: string }) => {
     } else if (win === "draw") {
       toast({ title: "Empate!" });
     } else {
-      toast({ title: "Você perdeu!" });
+      toast({ title: "IA venceu!" });
     }
   };
 
@@ -141,7 +136,7 @@ const TicTacToe = ({ userId }: { userId: string }) => {
 
   return (
     <div className="space-y-6 text-center">
-      <h3 className="text-3xl font-bold">Tic Tac Toe (contra IA)</h3>
+      <h3 className="text-3xl font-bold">Tic Tac Toe (vs IA)</h3>
       <p className="text-xl">Suas vitórias: <span className="font-bold text-green-600">{score}</span></p>
       <div className="grid grid-cols-3 gap-1 mx-auto w-fit">
         {board.map((val, i) => (
@@ -170,6 +165,7 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
   const [board, setBoard] = useState<number[][]>(Array(4).fill(0).map(() => Array(4).fill(0)));
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(0);
+  const [isNewRecord, setIsNewRecord] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -190,12 +186,14 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
   const saveScore = async (newScore: number) => {
     if (newScore > bestScore) {
       setBestScore(newScore);
+      setIsNewRecord(true);
       await supabase.from("user_scores").upsert({
         user_id: userId,
         game_name: "2048",
         score: newScore,
       });
-      toast({ title: "Novo recorde!", description: newScore.toString() });
+      toast({ title: "Novo Recorde! 🔥", description: `Você bateu seu melhor: ${newScore} pontos` });
+      setTimeout(() => setIsNewRecord(false), 3000);
     }
   };
 
@@ -205,6 +203,7 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
     addRandomTile(newBoard);
     setBoard(newBoard);
     setScore(0);
+    setIsNewRecord(false);
   };
 
   const addRandomTile = (b: number[][]) => {
@@ -298,13 +297,25 @@ const TwentyFortyEight = ({ userId }: { userId: string }) => {
   return (
     <div className="space-y-6 text-center">
       <h3 className="text-3xl font-bold">2048</h3>
-      <p className="text-xl">Pontuação: <span className="font-bold text-green-600">{score}</span> | Melhor: {bestScore}</p>
+      <div className="flex justify-center gap-8">
+        <p className="text-xl">
+          Atual: <span className="font-bold text-green-600">{score}</span>
+        </p>
+        <p className="text-xl">
+          Recorde: <span className="font-bold text-purple-600">{bestScore}</span>
+          {isNewRecord && <span className="ml-2 text-yellow-400 animate-pulse">Novo! 🔥</span>}
+        </p>
+      </div>
       <div className="grid grid-cols-4 gap-2 w-80 mx-auto">
         {board.flat().map((val, i) => (
           <div
             key={i}
             className={`w-20 h-20 flex items-center justify-center text-3xl font-bold rounded-lg ${
-              val === 0 ? "bg-gray-200" : val <= 8 ? "bg-gray-300" : val <= 32 ? "bg-orange-300" : val <= 128 ? "bg-orange-500 text-white" : "bg-red-500 text-white"
+              val === 0 ? "bg-gray-200" :
+              val <= 8 ? "bg-gray-300" :
+              val <= 32 ? "bg-orange-300" :
+              val <= 128 ? "bg-orange-500 text-white" :
+              "bg-red-500 text-white"
             }`}
           >
             {val || ""}
