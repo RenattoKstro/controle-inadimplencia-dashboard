@@ -16,7 +16,7 @@ import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
 import Filiais from "./dashboard/Filiais";
-import Apoiadores from "./dashboard/Apoiadores"; // ← NOVO COMPONENTE
+import RankingApoiadores from "@/components/RankingApoiadores"; // ← IMPORT MANTIDO
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -188,7 +188,7 @@ const DashboardLayout = () => {
                 <Button variant="outline" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
-                {/* BOTÃO DE PERFIL COM FOTO — 100% FUNCIONANDO (SEM CORRUPÇÃO) */}
+                {/* BOTÃO DE PERFIL COM FOTO */}
                 <div className="relative">
                   <Button
                     variant="ghost"
@@ -284,12 +284,13 @@ const DashboardLayout = () => {
         </div>
       </header>
 
-      {/* MAIN CONTENT — SEM SIDEBAR DE APOIADORES */}
+      {/* MAIN CONTENT */}
       <div className="flex flex-col lg:flex-row min-h-screen">
+        {/* REMOVIDO O ASIDE COM RANKING */}
         <main className="flex-1 lg:ml-0 pt-6 pb-20"> {/* lg:ml-0 porque não tem sidebar */}
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              {/* TAB LIST COM NOVA GUIA "APOIADORES" */}
+              {/* TAB LIST COM NOVA GUIA */}
               <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-9 w-full p-1 bg-card rounded-xl mb-6 gap-1">
                 <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm">Ajustes</TabsTrigger>
                 <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm">Fiado</TabsTrigger>
@@ -303,7 +304,7 @@ const DashboardLayout = () => {
                   <TabsTrigger value="historicos" className="gap-1 text-xs sm:text-sm">Histórico</TabsTrigger>
                 )}
                 <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
-                <TabsTrigger value="apoiadores" className="gap-1 text-xs sm:text-sm">Apoiadores</TabsTrigger> {/* ← NOVA */}
+                <TabsTrigger value="apoiadores" className="gap-1 text-xs sm:text-sm">Apoiadores</TabsTrigger>
               </TabsList>
 
               <TabsContent value="ajustes-metas">
@@ -402,7 +403,19 @@ const DashboardLayout = () => {
               </TabsContent>
               {/* NOVA GUIA APOIADORES */}
               <TabsContent value="apoiadores">
-                <Apoiadores />
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                      Ranking de Apoiadores
+                    </h2>
+                    <p className="text-muted-foreground mt-4 text-lg">
+                      Os maiores apoiadores do mês • Atualizado a cada 30s
+                    </p>
+                  </div>
+                  <div className="max-w-5xl mx-auto px-4">
+                    <RankingApoiadores />
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
