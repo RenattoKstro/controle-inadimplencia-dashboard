@@ -16,6 +16,7 @@ import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
 import Filiais from "./dashboard/Filiais";
+import RankingApoiadores from "@/components/RankingApoiadores"; // ← IMPORT MANTIDO
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,7 +30,6 @@ import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
-import RankingApoiadores from "@/components/RankingApoiadores";
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
@@ -41,7 +41,7 @@ const DashboardLayout = () => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
-  
+ 
   const {
     userData,
     updateUserData,
@@ -50,7 +50,6 @@ const DashboardLayout = () => {
     isLoading,
     diasRestantesCalculados,
   } = useUserData();
-
   const [recebidoHoje, setRecebidoHoje] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -154,7 +153,6 @@ const DashboardLayout = () => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
                 Controle de Inadimplência {percentual && `${percentual}%`}
               </h1>
-
               <div className="flex items-center gap-3">
                 <Button onClick={print} variant="outline" className="gap-2">
                   <RiScreenshot2Fill className="w-5 h-5" /> Print
@@ -187,12 +185,10 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-
                 <Button variant="outline" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
-
-                {/* BOTÃO DE PERFIL COM FOTO — 100% FUNCIONANDO (SEM CORRUPÇÃO) */}
+                {/* BOTÃO DE PERFIL COM FOTO */}
                 <div className="relative">
                   <Button
                     variant="ghost"
@@ -214,7 +210,6 @@ const DashboardLayout = () => {
                       </div>
                     )}
                   </Button>
-
                   {showProfileMenu && (
                     <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50">
                       <div className="flex items-center gap-5 mb-6">
@@ -243,37 +238,28 @@ const DashboardLayout = () => {
                                 toast({ title: "Erro: arquivo ou usuário não encontrado", variant: "destructive" });
                                 return;
                               }
-
                               const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
                               const fileName = `${userData.user_id}.${fileExt}`;
-
-                              // REMOVE O ARQUIVO ANTIGO
                               await supabase.storage.from("perfis").remove([fileName]);
-
-                              // UPLOAD COM ARRAYBUFFER (MÉTODO QUE NUNCA CORROMPE)
                               const arrayBuffer = await file.arrayBuffer();
                               const uint8Array = new Uint8Array(arrayBuffer);
-
                               const { error } = await supabase.storage
                                 .from("perfis")
                                 .upload(fileName, uint8Array, {
                                   contentType: file.type || "image/jpeg",
                                   upsert: false
                                 });
-
                               if (error) {
                                 console.error("Erro no upload:", error);
                                 toast({ title: "Erro ao enviar foto", variant: "destructive" });
                                 return;
                               }
-
                               const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}`;
                               await updateUserData({ avatar_url: novaUrl });
                               toast({ title: "Foto atualizada com sucesso!" });
                             }}
                           />
                         </label>
-
                         <div>
                           <p className="text-2xl font-bold text-gray-800">
                             {userData?.nome_usuario || "Usuário"}
@@ -286,7 +272,6 @@ const DashboardLayout = () => {
                           </p>
                         </div>
                       </div>
-
                       <Button variant="destructive" className="w-full mt-4" onClick={handleLogout}>
                         Sair
                       </Button>
@@ -301,16 +286,12 @@ const DashboardLayout = () => {
 
       {/* MAIN CONTENT */}
       <div className="flex flex-col lg:flex-row min-h-screen">
-        <aside className="hidden lg:block w-80 bg-gradient-to-b from-purple-50 to-pink-50 border-r-4 border-purple-300 fixed left-0 top-20 bottom-0 overflow-y-auto z-30">
-          <div className="p-6">
-            <RankingApoiadores />
-          </div>
-        </aside>
-
-        <main className="flex-1 lg:ml-80 pt-6 pb-20">
+        {/* REMOVIDO O ASIDE COM RANKING */}
+        <main className="flex-1 lg:ml-0 pt-6 pb-20"> {/* lg:ml-0 porque não tem sidebar */}
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 w-full p-1 bg-card rounded-xl mb-6 gap-1">
+              {/* TAB LIST COM NOVA GUIA */}
+              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-9 w-full p-1 bg-card rounded-xl mb-6 gap-1">
                 <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm">Ajustes</TabsTrigger>
                 <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm">Fiado</TabsTrigger>
                 <TabsTrigger value="meta-desafio" className="gap-1 text-xs sm:text-sm">Desafio</TabsTrigger>
@@ -323,6 +304,7 @@ const DashboardLayout = () => {
                   <TabsTrigger value="historicos" className="gap-1 text-xs sm:text-sm">Histórico</TabsTrigger>
                 )}
                 <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
+                <TabsTrigger value="apoiadores" className="gap-1 text-xs sm:text-sm">Apoiadores</TabsTrigger>
               </TabsList>
 
               <TabsContent value="ajustes-metas">
@@ -339,7 +321,6 @@ const DashboardLayout = () => {
                   setMostrarHistorico={setMostrarHistorico}
                 />
               </TabsContent>
-
               <TabsContent value="meta-fiado">
                 <MetaFiado
                   userData={userData}
@@ -352,7 +333,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={setRecebidoHoje}
                 />
               </TabsContent>
-
               <TabsContent value="meta-desafio">
                 <MetaDesafio
                   userData={userData}
@@ -365,7 +345,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
-
               <TabsContent value="meta-alimentacao">
                 <MetaAlimentacao
                   userData={userData}
@@ -378,7 +357,6 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
-
               {bonusPerdidoAtivado && (
                 <TabsContent value="meta-perdido">
                   <MetaPerdido
@@ -393,7 +371,6 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
-
               <TabsContent value="meus-premios">
                 <MeusPremios
                   userData={userData}
@@ -407,7 +384,6 @@ const DashboardLayout = () => {
                   setTotalGanhos={() => {}}
                 />
               </TabsContent>
-
               {mostrarHistorico && (
                 <TabsContent value="historicos">
                   <Historicos
@@ -422,19 +398,31 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
-
               <TabsContent value="filiais">
                 <Filiais />
+              </TabsContent>
+              {/* NOVA GUIA APOIADORES */}
+              <TabsContent value="apoiadores">
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                      Ranking de Apoiadores
+                    </h2>
+                    <p className="text-muted-foreground mt-4 text-lg">
+                      Os maiores apoiadores do mês • Atualizado a cada 30s
+                    </p>
+                  </div>
+                  <div className="max-w-5xl mx-auto px-4">
+                    <RankingApoiadores />
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
         </main>
       </div>
 
-      <div className="lg:hidden mt-8 px-4">
-        <RankingApoiadores />
-      </div>
-
+      {/* FOOTER */}
       <footer className="bg-card shadow-md p-4 mt-8">
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">

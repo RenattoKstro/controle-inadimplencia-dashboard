@@ -20,18 +20,28 @@ export default function RankingApoiadores() {
 
   const fetchRanking = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("apoiadores")
-      .select("id, nome, filial, valor, mostrar_valor")
-      .order("valor", { ascending: false })
-      .limit(10);
-    setApoiadores(data || []);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from("apoiadores")
+        .select("id, nome, filial, valor, mostrar_valor")
+        .order("valor", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error("Erro ao buscar apoiadores:", error);
+      } else {
+        setApoiadores(data || []);
+      }
+    } catch (err) {
+      console.error("Exceção ao buscar apoiadores:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchRanking();
-    const interval = setInterval(fetchRanking, 30000);
+    const interval = setInterval(fetchRanking, 30000); // atualiza a cada 30 segundos
     return () => clearInterval(interval);
   }, []);
 
@@ -45,8 +55,11 @@ export default function RankingApoiadores() {
 
   return (
     <div className="relative p-3 sm:p-4">
+      {/* Fundo escuro com efeito de sombra */}
       <div className="absolute inset-0 rounded-2xl sm:rounded-3xl bg-black/90 border border-white/10 shadow-2xl" />
+      
       <div className="relative z-10">
+        {/* Botões Apoiar + Refresh */}
         <div className="flex justify-between items-center mb-4">
           <Dialog>
             <DialogTrigger asChild>
@@ -66,15 +79,18 @@ export default function RankingApoiadores() {
             size="icon"
             onClick={fetchRanking}
             className="w-8 h-8 sm:w-9 sm:h-9 bg-gray-700 hover:bg-gray-600 rounded-full shadow-lg"
+            disabled={loading}
           >
             <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-white ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
 
+        {/* Título */}
         <h2 className="text-lg sm:text-xl font-black text-white text-center mb-4">
           Ranking de Apoiadores
         </h2>
 
+        {/* Conteúdo */}
         {loading ? (
           <p className="text-center text-white text-sm">Carregando...</p>
         ) : apoiadores.length === 0 ? (
