@@ -419,6 +419,9 @@ const DashboardLayout = () => {
                   </div>
                 </div>
               </TabsContent>
+              <TabsContent value="jogos">
+  <Jogos />
+</TabsContent>
             </Tabs>
           </div>
         </main>
