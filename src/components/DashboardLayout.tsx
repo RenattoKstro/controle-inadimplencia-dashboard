@@ -30,6 +30,7 @@ import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
+import Jogos from "./dashboard/Jogos";
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
@@ -305,6 +306,7 @@ const DashboardLayout = () => {
                 )}
                 <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
                 <TabsTrigger value="apoiadores" className="gap-1 text-xs sm:text-sm">Apoiadores</TabsTrigger>
+                <TabsTrigger value="jogos" className="gap-1 text-xs sm:text-sm">Jogos</TabsTrigger>
               </TabsList>
 
               <TabsContent value="ajustes-metas">
