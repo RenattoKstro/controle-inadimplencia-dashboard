@@ -1,4 +1,3 @@
-// src/components/jogos/TwentyFortyEight.tsx
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,12 +10,13 @@ const SIZE = 4;
 
 const TwentyFortyEight = () => {
   const { userData } = useUserData();
-  const userId = userData?.user_id || "";
+  const userId = userData?.user_id;
   const { toast } = useToast();
 
   const [board, setBoard] = useState<number[][]>(
     Array.from({ length: SIZE }, () => Array(SIZE).fill(0))
   );
+
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState<number | null>(null);
   const [isNewRecord, setIsNewRecord] = useState(false);
@@ -43,26 +43,43 @@ const TwentyFortyEight = () => {
   }, [userId]);
 
   /* =====================
-     SCORE SAVE (CORRIGIDO)
+     SAVE SCORE (EFFECT)
   ====================== */
-  const saveScore = async (newScore: number) => {
+  useEffect(() => {
     if (!userId) return;
+    if (bestScore === null) return;
+    if (score <= bestScore) return;
 
-    await supabase.from("user_scores").upsert({
-      user_id: userId,
-      game_name: "2048",
-      score: newScore,
-    });
+    saveScore(score);
+  }, [score, bestScore, userId]);
 
-    setBestScore(newScore);
-    setIsNewRecord(true);
+  const saveScore = async (newScore: number) => {
+    const { error } = await supabase
+      .from("user_scores")
+      .upsert(
+        {
+          user_id: userId,
+          game_name: "2048",
+          score: newScore,
+        },
+        {
+          onConflict: "user_id,game_name",
+        }
+      );
 
-    toast({
-      title: "🔥 Novo Recorde!",
-      description: `Sua melhor pontuação agora é ${newScore}`,
-    });
+    if (!error) {
+      setBestScore(newScore);
+      setIsNewRecord(true);
 
-    setTimeout(() => setIsNewRecord(false), 3000);
+      toast({
+        title: "🔥 Novo Recorde!",
+        description: `Sua melhor pontuação agora é ${newScore}`,
+      });
+
+      setTimeout(() => setIsNewRecord(false), 3000);
+    } else {
+      console.error("Erro ao salvar score:", error);
+    }
   };
 
   /* =====================
@@ -97,7 +114,7 @@ const TwentyFortyEight = () => {
   };
 
   /* =====================
-     SLIDE (PURE FUNCTION)
+     SLIDE
   ====================== */
   const slide = (row: number[]) => {
     const arr = row.filter(v => v !== 0);
@@ -117,7 +134,7 @@ const TwentyFortyEight = () => {
   };
 
   /* =====================
-     GAME OVER CHECK
+     GAME OVER
   ====================== */
   const isGameOver = (b: number[][]) => {
     for (let i = 0; i < SIZE; i++) {
@@ -131,7 +148,7 @@ const TwentyFortyEight = () => {
   };
 
   /* =====================
-     MOVE LOGIC (CORRIGIDO)
+     MOVE LOGIC
   ====================== */
   const move = useCallback(
     (dir: Direction) => {
@@ -140,20 +157,24 @@ const TwentyFortyEight = () => {
 
       const newBoard = board.map(row => [...row]);
 
+      const handleRow = (row: number[]) => {
+        const { row: slid, gained } = slide(row);
+        gainedTotal += gained;
+        return slid;
+      };
+
       if (dir === "left" || dir === "right") {
         for (let r = 0; r < SIZE; r++) {
           const original = [...newBoard[r]];
           const working =
             dir === "right" ? [...original].reverse() : original;
 
-          const { row, gained } = slide(working);
+          const result = handleRow(working);
           const finalRow =
-            dir === "right" ? [...row].reverse() : row;
+            dir === "right" ? [...result].reverse() : result;
 
           if (finalRow.join() !== original.join()) moved = true;
-
           newBoard[r] = finalRow;
-          gainedTotal += gained;
         }
       }
 
@@ -163,17 +184,15 @@ const TwentyFortyEight = () => {
           const working =
             dir === "down" ? [...original].reverse() : original;
 
-          const { row, gained } = slide(working);
+          const result = handleRow(working);
           const finalCol =
-            dir === "down" ? [...row].reverse() : row;
+            dir === "down" ? [...result].reverse() : result;
 
           if (finalCol.join() !== original.join()) moved = true;
 
           for (let r = 0; r < SIZE; r++) {
             newBoard[r][c] = finalCol[r];
           }
-
-          gainedTotal += gained;
         }
       }
 
@@ -181,16 +200,7 @@ const TwentyFortyEight = () => {
 
       addRandomTile(newBoard);
       setBoard(newBoard);
-
-      setScore(prev => {
-        const newScore = prev + gainedTotal;
-
-        if (newScore > (bestScore ?? 0)) {
-          saveScore(newScore);
-        }
-
-        return newScore;
-      });
+      setScore(prev => prev + gainedTotal);
 
       if (isGameOver(newBoard)) {
         toast({
@@ -199,11 +209,11 @@ const TwentyFortyEight = () => {
         });
       }
     },
-    [board, bestScore, score]
+    [board, score]
   );
 
   /* =====================
-     KEYBOARD CONTROLS
+     KEYBOARD
   ====================== */
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -225,7 +235,7 @@ const TwentyFortyEight = () => {
   }, [move]);
 
   if (bestScore === null) {
-    return <p className="text-center text-xl py-10">Carregando...</p>;
+    return <p className="text-center py-10">Carregando...</p>;
   }
 
   return (
@@ -239,11 +249,7 @@ const TwentyFortyEight = () => {
         <p className="text-xl">
           Recorde:{" "}
           <span className="font-bold text-purple-600">{bestScore}</span>
-          {isNewRecord && (
-            <span className="ml-2 text-yellow-400 animate-pulse">
-              Novo! 🔥
-            </span>
-          )}
+          {isNewRecord && <span className="ml-2">🔥</span>}
         </p>
       </div>
 
@@ -269,10 +275,6 @@ const TwentyFortyEight = () => {
       </div>
 
       <Button onClick={initBoard}>Reiniciar</Button>
-
-      <p className="text-sm text-muted-foreground">
-        Use as setas do teclado
-      </p>
     </div>
   );
 };
