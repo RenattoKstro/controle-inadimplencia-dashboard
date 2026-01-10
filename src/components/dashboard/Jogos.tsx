@@ -26,7 +26,7 @@ const Jogos = () => {
               <CardContent className="p-0">
                 <div className="relative">
                   <img
-                    src="https://static.vecteezy.com/system/resources/previews/067/568/840/non_2x/tic-tac-toe-icon-sign-set-simple-thin-line-flat-symbol-cross-and-tick-kids-game-in-black-o-x-game-symbol-illustration-vector.jpg"
+                    src="https://upload.wikimedia.org/wikipedia/commons/3/32/Tic_tac_toe.svg"
                     alt="Tic Tac Toe"
                     className="w-full h-48 object-cover"
                   />
@@ -55,7 +55,7 @@ const Jogos = () => {
               <CardContent className="p-0">
                 <div className="relative">
                   <img
-                    src="https://www.shutterstock.com/image-vector/mobile-game-icons-set-gui-260nw-2196771105.jpg"
+                    src="https://upload.wikimedia.org/wikipedia/commons/2/28/2048_finished_game.png"
                     alt="2048"
                     className="w-full h-48 object-cover"
                   />
