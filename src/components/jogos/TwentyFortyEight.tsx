@@ -49,29 +49,42 @@ const TwentyFortyEight = () => {
   /* =====================
      SAVE SCORE (GAME OVER)
   ====================== */
-  const saveScore = async () => {
-    if (!playerName) return;
-
-    const { error } = await supabase.from("user_scores").insert({
-      player_name: playerName,
-      score,
-      game_name: "2048",
+ const saveScore = async () => {
+  if (!playerName.trim()) {
+    toast({
+      title: "Nome obrigatório",
+      description: "Digite um nome para aparecer no ranking",
+      variant: "destructive",
     });
+    return;
+  }
 
-    if (!error) {
-      toast({
-        title: "🏆 Pontuação salva!",
-        description: "Seu score entrou no ranking",
-      });
+  const { error } = await supabase.from("user_scores").insert({
+    player_name: playerName.trim(),
+    score,
+    game_name: "2048",
+  });
 
-      setShowModal(false);
-      setPlayerName("");
-      setGameOver(false);
-      loadRanking();
-      initBoard();
-    }
-  };
+  if (error) {
+    console.error("Erro ao salvar score:", error);
+    toast({
+      title: "Erro ao salvar",
+      description: error.message,
+      variant: "destructive",
+    });
+    return;
+  }
 
+  toast({
+    title: "🏆 Pontuação salva!",
+    description: "Você entrou no ranking",
+  });
+
+  setShowModal(false);
+  setPlayerName("");
+  loadRanking();
+  initBoard();
+};
   /* =====================
      TILE STYLE
   ====================== */
