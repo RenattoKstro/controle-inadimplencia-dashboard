@@ -33,60 +33,63 @@ const TwentyFortyEight = () => {
   }, []);
 
   /* =====================
-     RANKING
+     LOAD RANKING (CORRETO)
   ====================== */
   const loadRanking = async () => {
-    const { data } = await supabase
-      .from("user_scores")
+    const { data, error } = await supabase
+      .from("game_rankings")
       .select("player_name, score")
       .eq("game_name", "2048")
       .order("score", { ascending: false })
       .limit(10);
 
-    setRanking(data ?? []);
+    if (!error && data) {
+      setRanking(data);
+    }
   };
 
   /* =====================
      SAVE SCORE (GAME OVER)
   ====================== */
- const saveScore = async () => {
-  if (!playerName.trim()) {
-    toast({
-      title: "Nome obrigatório",
-      description: "Digite um nome para aparecer no ranking",
-      variant: "destructive",
+  const saveScore = async () => {
+    if (!playerName.trim()) {
+      toast({
+        title: "Nome obrigatório",
+        description: "Digite um nome para aparecer no ranking",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { error } = await supabase.from("game_rankings").insert({
+      player_name: playerName.trim(),
+      score,
+      game_name: "2048",
     });
-    return;
-  }
 
-  const { error } = await supabase.from("user_scores").insert({
-    player_name: playerName.trim(),
-    score,
-    game_name: "2048",
-  });
+    if (error) {
+      console.error(error);
+      toast({
+        title: "Erro ao salvar",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
 
-  if (error) {
-    console.error("Erro ao salvar score:", error);
     toast({
-      title: "Erro ao salvar",
-      description: error.message,
-      variant: "destructive",
+      title: "🏆 Pontuação salva!",
+      description: "Você entrou no ranking",
     });
-    return;
-  }
 
-  toast({
-    title: "🏆 Pontuação salva!",
-    description: "Você entrou no ranking",
-  });
+    setShowModal(false);
+    setPlayerName("");
+    loadRanking();
+    initBoard();
+  };
 
-  setShowModal(false);
-  setPlayerName("");
-  loadRanking();
-  initBoard();
-};
   /* =====================
-     TILE STYLE
+     TILE STYLE (CORES)
   ====================== */
   const tileStyle = (val: number) => {
     if (val === 0) return "bg-gray-200";
