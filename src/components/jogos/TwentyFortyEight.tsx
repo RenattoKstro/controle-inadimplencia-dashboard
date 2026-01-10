@@ -43,19 +43,19 @@ const TwentyFortyEight = () => {
   }, [userId]);
 
   /* =====================
-     SCORE SAVE
+     SCORE SAVE (CORRIGIDO)
   ====================== */
   const saveScore = async (newScore: number) => {
-    if (!userId || newScore <= (bestScore ?? 0)) return;
-
-    setBestScore(newScore);
-    setIsNewRecord(true);
+    if (!userId) return;
 
     await supabase.from("user_scores").upsert({
       user_id: userId,
       game_name: "2048",
       score: newScore,
     });
+
+    setBestScore(newScore);
+    setIsNewRecord(true);
 
     toast({
       title: "🔥 Novo Recorde!",
@@ -131,7 +131,7 @@ const TwentyFortyEight = () => {
   };
 
   /* =====================
-     MOVE LOGIC
+     MOVE LOGIC (CORRIGIDO)
   ====================== */
   const move = useCallback(
     (dir: Direction) => {
@@ -184,7 +184,11 @@ const TwentyFortyEight = () => {
 
       setScore(prev => {
         const newScore = prev + gainedTotal;
-        saveScore(newScore);
+
+        if (newScore > (bestScore ?? 0)) {
+          saveScore(newScore);
+        }
+
         return newScore;
       });
 
@@ -195,7 +199,7 @@ const TwentyFortyEight = () => {
         });
       }
     },
-    [board, score, bestScore]
+    [board, bestScore, score]
   );
 
   /* =====================
