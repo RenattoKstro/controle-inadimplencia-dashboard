@@ -2,115 +2,78 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useUserData } from "@/hooks/useUserData";
 
 type Direction = "left" | "right" | "up" | "down";
 const SIZE = 4;
 
 type RankingItem = {
-  nome_usuario: string;
+  player_name: string;
   score: number;
 };
 
 const TwentyFortyEight = () => {
-  const { userData } = useUserData();
-  const userId = userData?.user_id;
   const { toast } = useToast();
 
   const [board, setBoard] = useState<number[][]>(
     Array.from({ length: SIZE }, () => Array(SIZE).fill(0))
   );
   const [score, setScore] = useState(0);
-  const [bestScore, setBestScore] = useState<number | null>(null);
-  const [isNewRecord, setIsNewRecord] = useState(false);
   const [ranking, setRanking] = useState<RankingItem[]>([]);
+  const [gameOver, setGameOver] = useState(false);
+
+  const [showModal, setShowModal] = useState(false);
+  const [playerName, setPlayerName] = useState("");
 
   /* =====================
-     LOAD BEST + RANKING
+     INIT
   ====================== */
   useEffect(() => {
-    if (!userId) return;
-
-    const loadBest = async () => {
-      const { data } = await supabase
-        .from("user_scores")
-        .select("score")
-        .eq("user_id", userId)
-        .eq("game_name", "2048")
-        .single();
-
-      setBestScore(data?.score ?? 0);
-    };
-
-    loadBest();
-    loadRanking();
     initBoard();
-  }, [userId]);
+    loadRanking();
+  }, []);
 
+  /* =====================
+     RANKING
+  ====================== */
   const loadRanking = async () => {
     const { data } = await supabase
       .from("user_scores")
-      .select(
-        `
-        score,
-        user_dashboard (
-          nome_usuario
-        )
-      `
-      )
+      .select("player_name, score")
       .eq("game_name", "2048")
       .order("score", { ascending: false })
       .limit(10);
 
-    if (data) {
-      setRanking(
-        data.map((r: any) => ({
-          score: r.score,
-          nome_usuario: r.user_dashboard?.nome_usuario ?? "Anônimo",
-        }))
-      );
-    }
+    setRanking(data ?? []);
   };
 
   /* =====================
-     SAVE SCORE
+     SAVE SCORE (GAME OVER)
   ====================== */
-  useEffect(() => {
-    if (!userId) return;
-    if (bestScore === null) return;
-    if (score <= bestScore) return;
+  const saveScore = async () => {
+    if (!playerName) return;
 
-    saveScore(score);
-  }, [score]);
-
-  const saveScore = async (newScore: number) => {
-    const { error } = await supabase
-      .from("user_scores")
-      .upsert(
-        {
-          user_id: userId,
-          game_name: "2048",
-          score: newScore,
-        },
-        { onConflict: "user_id,game_name" }
-      );
+    const { error } = await supabase.from("user_scores").insert({
+      player_name: playerName,
+      score,
+      game_name: "2048",
+    });
 
     if (!error) {
-      setBestScore(newScore);
-      setIsNewRecord(true);
-      loadRanking();
-
       toast({
-        title: "🔥 Novo Recorde!",
-        description: `Sua melhor pontuação agora é ${newScore}`,
+        title: "🏆 Pontuação salva!",
+        description: "Seu score entrou no ranking",
       });
 
-      setTimeout(() => setIsNewRecord(false), 3000);
+      setShowModal(false);
+      setPlayerName("");
+      setGameOver(false);
+      loadRanking();
+      initBoard();
     }
   };
 
   /* =====================
-     TILE STYLE (CORES)
+     TILE STYLE
   ====================== */
   const tileStyle = (val: number) => {
     if (val === 0) return "bg-gray-200";
@@ -146,7 +109,7 @@ const TwentyFortyEight = () => {
     addRandomTile(b);
     setBoard(b);
     setScore(0);
-    setIsNewRecord(false);
+    setGameOver(false);
   };
 
   /* =====================
@@ -155,6 +118,7 @@ const TwentyFortyEight = () => {
   const slide = (row: number[]) => {
     const arr = row.filter(v => v !== 0);
     let gained = 0;
+
     for (let i = 0; i < arr.length - 1; i++) {
       if (arr[i] === arr[i + 1]) {
         arr[i] *= 2;
@@ -162,8 +126,23 @@ const TwentyFortyEight = () => {
         arr.splice(i + 1, 1);
       }
     }
+
     while (arr.length < SIZE) arr.push(0);
     return { row: arr, gained };
+  };
+
+  /* =====================
+     GAME OVER CHECK
+  ====================== */
+  const checkGameOver = (b: number[][]) => {
+    for (let i = 0; i < SIZE; i++) {
+      for (let j = 0; j < SIZE; j++) {
+        if (b[i][j] === 0) return false;
+        if (j < 3 && b[i][j] === b[i][j + 1]) return false;
+        if (i < 3 && b[i][j] === b[i + 1][j]) return false;
+      }
+    }
+    return true;
   };
 
   /* =====================
@@ -171,6 +150,8 @@ const TwentyFortyEight = () => {
   ====================== */
   const move = useCallback(
     (dir: Direction) => {
+      if (gameOver) return;
+
       let moved = false;
       let gained = 0;
       const newBoard = board.map(r => [...r]);
@@ -202,11 +183,17 @@ const TwentyFortyEight = () => {
       }
 
       if (!moved) return;
+
       addRandomTile(newBoard);
       setBoard(newBoard);
       setScore(s => s + gained);
+
+      if (checkGameOver(newBoard)) {
+        setGameOver(true);
+        setShowModal(true);
+      }
     },
-    [board]
+    [board, gameOver]
   );
 
   /* =====================
@@ -229,51 +216,68 @@ const TwentyFortyEight = () => {
     return () => window.removeEventListener("keydown", h);
   }, [move]);
 
-  if (bestScore === null) return <p>Carregando...</p>;
-
   return (
-    <div className="flex gap-10 justify-center">
-      {/* GAME */}
-      <div className="space-y-6 text-center">
-        <h3 className="text-3xl font-bold">2048</h3>
+    <>
+      <div className="flex gap-10 justify-center">
+        {/* GAME */}
+        <div className="space-y-6 text-center">
+          <h3 className="text-3xl font-bold">2048</h3>
+          <p>Pontuação: <b>{score}</b></p>
 
-        <div className="flex justify-center gap-6">
-          <p>Atual: <b>{score}</b></p>
-          <p>Recorde: <b>{bestScore}</b>{isNewRecord && " 🔥"}</p>
+          <div className="grid grid-cols-4 gap-2 w-80 mx-auto">
+            {board.flat().map((v, i) => (
+              <div
+                key={i}
+                className={`w-20 h-20 flex items-center justify-center font-bold rounded-lg transition-all ${tileStyle(v)}`}
+              >
+                {v || ""}
+              </div>
+            ))}
+          </div>
+
+          <Button onClick={initBoard}>Reiniciar</Button>
         </div>
 
-        <div className="grid grid-cols-4 gap-2 w-80 mx-auto">
-          {board.flat().map((v, i) => (
-            <div
-              key={i}
-              className={`w-20 h-20 flex items-center justify-center font-bold rounded-lg transition-all ${tileStyle(v)}`}
-            >
-              {v || ""}
-            </div>
-          ))}
+        {/* RANKING */}
+        <div className="w-64">
+          <h4 className="text-xl font-bold mb-3">🏆 Ranking</h4>
+          <ul className="space-y-2">
+            {ranking.map((r, i) => (
+              <li key={i} className="flex justify-between">
+                <span>
+                  {i === 0 && "🥇"}
+                  {i === 1 && "🥈"}
+                  {i === 2 && "🥉"}
+                  {i > 2 && `#${i + 1}`} {r.player_name}
+                </span>
+                <b>{r.score}</b>
+              </li>
+            ))}
+          </ul>
         </div>
-
-        <Button onClick={initBoard}>Reiniciar</Button>
       </div>
 
-      {/* RANKING */}
-      <div className="w-64">
-        <h4 className="text-xl font-bold mb-3">🏆 Ranking</h4>
-        <ul className="space-y-2">
-          {ranking.map((r, i) => (
-            <li key={i} className="flex justify-between">
-              <span>
-                {i === 0 && "🥇"}
-                {i === 1 && "🥈"}
-                {i === 2 && "🥉"}
-                {i > 2 && `#${i + 1}`} {r.nome_usuario}
-              </span>
-              <b>{r.score}</b>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+      {/* MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-80 space-y-4 text-center">
+            <h4 className="text-xl font-bold">Game Over</h4>
+            <p>Sua pontuação: <b>{score}</b></p>
+
+            <input
+              className="w-full border rounded px-3 py-2"
+              placeholder="Seu nome no ranking"
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value)}
+            />
+
+            <Button className="w-full" onClick={saveScore}>
+              Salvar Pontuação
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
