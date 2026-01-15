@@ -5,39 +5,62 @@ const ROWS = 25;
 const COLS = 20;
 
 const WORD_POOL = [
- "VENDAS",
-  "LUCRO",
-  "META",
-  "CREDIARIO",
-  "JUROS",
-  "RECEBIMENTO",
-  "CAIXA",
-  "ESTOQUE",
-  "CLIENTE",
-  "PROMOCAO",
-  "DESCONTO",
-  "PARCELAMENTO",
-  "BOLETO",
-  "PIX",
-  "CARTAO",
-  "GARANTIA",
-  "SEGURO",
-  "CONSORCIO",
-  "LOJA",
-  "VAREJO",
-  "MARGEM",
-  "COMISSAO",
-  "FATURAMENTO",
-  "PRECO",
-  "VENDEDOR",
-  "GATILHO",
-  "ATENDIMENTO",
-  "EMPRESTIMO",
-  "CCG",
-  "SIGA",
-  "SABIUM",
-  "ASSISTENCIA",
-  "GAZIN".toUpperCase(),
+"VENDAS",
+"LUCRO",
+"META",
+"CREDIARIO",
+"JUROS",
+"RECEBIMENTO",
+"CAIXA",
+"ESTOQUE",
+"CLIENTE",
+"PROMOCAO",
+"DESCONTO",
+"PARCELAMENTO",
+"BOLETO",
+"PIX",
+"CARTAO",
+"GARANTIA",
+"SEGURO",
+"CONSORCIO",
+"LOJA",
+"VAREJO",
+"MARGEM",
+"COMISSAO",
+"FATURAMENTO",
+"PRECO",
+"VENDEDOR",
+"GATILHO",
+"ATENDIMENTO",
+"EMPRESTIMO",
+"CCG",
+"SIGA",
+"SABIUM",
+"ASSISTENCIA",
+"GAZIN",
+"INADIMPLENCIA",
+"NEGOCIACAO",
+"PROSPECCAO",
+"FIDELIZACAO",
+"ESTORNO",
+"LIQUIDACAO",
+"ORCAMENTO",
+"FORNECEDOR",
+"LOGISTICA",
+"INVENTARIO",
+"COBRANCA",
+"ANTECIPACAO",
+"POSVENDA",
+"DNA",
+"ENTREGAS",
+"TV GAZIN",
+"MONTAGENS",
+"FILIAL",
+"AUDITORIA",
+"RENEGOCIAÇÃO",
+"ROBOZIN",
+"ABATEDORES",
+ 
 ];
 
 type Cell = {
@@ -55,6 +78,9 @@ const CacaPalavras = () => {
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [path, setPath] = useState<[number, number][]>([]);
+  const [gameOver, setGameOver] = useState(false);
+
+  const [playerName, setPlayerName] = useState("");
 
   useEffect(() => {
     startGame();
@@ -89,6 +115,8 @@ const CacaPalavras = () => {
     setGrid(emptyGrid);
     setWords(selectedWords);
     setFoundWords([]);
+    setGameOver(false);
+    setPlayerName("");
   };
 
   /* =========================
@@ -142,7 +170,6 @@ const CacaPalavras = () => {
      SELECTION
   ========================= */
   const startSelect = (r: number, c: number) => {
-    clearTemp();
     setSelecting(true);
     setPath([[r, c]]);
     mark([[r, c]]);
@@ -181,7 +208,15 @@ const CacaPalavras = () => {
 
     if (found) {
       const w = words.includes(word) ? word : reversed;
-      setFoundWords(f => [...f, w]);
+
+      if (!foundWords.includes(w)) {
+        const newFound = [...foundWords, w];
+        setFoundWords(newFound);
+
+        if (newFound.length === words.length) {
+          setGameOver(true);
+        }
+      }
 
       setGrid(g =>
         g.map((row, r) =>
@@ -216,11 +251,13 @@ const CacaPalavras = () => {
     );
   };
 
+  const score = foundWords.length * 100;
+
   /* =========================
      RENDER
   ========================= */
   return (
-    <div className="space-y-6">
+    <>
       <div className="flex gap-6">
         {/* GRID */}
         <div className="max-h-[75vh] overflow-y-auto border rounded-lg p-2">
@@ -265,13 +302,30 @@ const CacaPalavras = () => {
               </li>
             ))}
           </ul>
-
-          <Button className="mt-6 w-full" onClick={startGame}>
-            Nova Rodada
-          </Button>
         </div>
       </div>
-    </div>
+
+      {/* GAME OVER MODAL */}
+      {gameOver && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96 space-y-4 text-center">
+            <h3 className="text-2xl font-bold">🎉 Jogo Finalizado!</h3>
+            <p>Pontuação: <b>{score}</b></p>
+
+            <input
+              className="w-full border rounded px-3 py-2"
+              placeholder="Seu nome no ranking"
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value)}
+            />
+
+            <Button className="w-full" onClick={startGame}>
+              Nova Rodada
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
