@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const GRID_SIZE = 25;
-const WORDS_PER_GAME = 20;
 
-const ALL_WORDS = [
+/* =====================
+   PALAVRAS – VAREJO
+===================== */
+const WORDS = [
   "VENDAS",
   "LUCRO",
   "META",
@@ -37,24 +39,22 @@ const ALL_WORDS = [
   "SIGA",
   "SABIUM",
   "ASSISTENCIA",
-  "GAZIN".toUpperCase(),
+  "Gazin".toUpperCase(),
 ];
 
 type Cell = {
   letter: string;
-  selected: boolean;
   found: boolean;
 };
 
-const randomLetter = () =>
-  String.fromCharCode(65 + Math.floor(Math.random() * 26));
-
-const WordSearch = () => {
+/* =====================
+   COMPONENT
+===================== */
+const CacaPalavras = () => {
   const [grid, setGrid] = useState<Cell[][]>([]);
+  const [selected, setSelected] = useState<{ r: number; c: number }[]>([]);
   const [words, setWords] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
-  const [currentSelection, setCurrentSelection] = useState<[number, number][]>([]);
-  const [score, setScore] = useState(0);
 
   /* =====================
      INIT GAME
@@ -64,191 +64,190 @@ const WordSearch = () => {
   }, []);
 
   const startGame = () => {
-    const selectedWords = shuffle([...ALL_WORDS]).slice(0, WORDS_PER_GAME);
-    const emptyGrid = Array.from({ length: GRID_SIZE }, () =>
+    const chosen = shuffle([...WORDS]).slice(0, 20);
+    setWords(chosen);
+    setFoundWords([]);
+    setSelected([]);
+    setGrid(generateGrid(chosen));
+  };
+
+  /* =====================
+     GRID GENERATOR
+  ====================== */
+  const generateGrid = (words: string[]) => {
+    const grid: Cell[][] = Array.from({ length: GRID_SIZE }, () =>
       Array.from({ length: GRID_SIZE }, () => ({
         letter: "",
-        selected: false,
         found: false,
       }))
     );
 
-    selectedWords.forEach(word => placeWord(emptyGrid, word));
-    fillEmpty(emptyGrid);
+    words.forEach(word => placeWord(grid, word));
 
-    setGrid(emptyGrid);
-    setWords(selectedWords);
-    setFoundWords([]);
-    setScore(0);
-    setCurrentSelection([]);
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (!grid[r][c].letter) {
+          grid[r][c].letter = randomLetter();
+        }
+      }
+    }
+
+    return grid;
   };
 
-  /* =====================
-     GRID HELPERS
-  ====================== */
-  const placeWord = (g: Cell[][], word: string) => {
+  const placeWord = (grid: Cell[][], word: string) => {
     const directions = [
-      [0, 1],   // →
-      [1, 0],   // ↓
-      [1, 1],   // ↘
-      [-1, 1],  // ↗
+      [0, 1],
+      [1, 0],
+      [1, 1],
     ];
 
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const dir = directions[Math.floor(Math.random() * directions.length)];
+    for (let tries = 0; tries < 100; tries++) {
+      const [dr, dc] =
+        directions[Math.floor(Math.random() * directions.length)];
       const row = Math.floor(Math.random() * GRID_SIZE);
       const col = Math.floor(Math.random() * GRID_SIZE);
 
-      let fits = true;
-      for (let i = 0; i < word.length; i++) {
-        const r = row + dir[0] * i;
-        const c = col + dir[1] * i;
-        if (
-          r < 0 ||
-          c < 0 ||
-          r >= GRID_SIZE ||
-          c >= GRID_SIZE ||
-          (g[r][c].letter && g[r][c].letter !== word[i])
-        ) {
-          fits = false;
-          break;
-        }
-      }
-
-      if (fits) {
+      if (canPlace(grid, word, row, col, dr, dc)) {
         for (let i = 0; i < word.length; i++) {
-          const r = row + dir[0] * i;
-          const c = col + dir[1] * i;
-          g[r][c].letter = word[i];
+          grid[row + dr * i][col + dc * i].letter = word[i];
         }
         return;
       }
     }
   };
 
-  const fillEmpty = (g: Cell[][]) => {
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        if (!g[r][c].letter) {
-          g[r][c].letter = randomLetter();
-        }
+  const canPlace = (
+    grid: Cell[][],
+    word: string,
+    row: number,
+    col: number,
+    dr: number,
+    dc: number
+  ) => {
+    for (let i = 0; i < word.length; i++) {
+      const r = row + dr * i;
+      const c = col + dc * i;
+      if (
+        r < 0 ||
+        c < 0 ||
+        r >= GRID_SIZE ||
+        c >= GRID_SIZE ||
+        (grid[r][c].letter && grid[r][c].letter !== word[i])
+      ) {
+        return false;
       }
     }
+    return true;
   };
 
   /* =====================
-     SELECTION
+     CLICK CELL
   ====================== */
-  const toggleCell = (r: number, c: number) => {
-    if (grid[r][c].found) return;
+  const toggleSelect = (r: number, c: number) => {
+    const exists = selected.find(p => p.r === r && p.c === c);
+    const newSel = exists
+      ? selected.filter(p => !(p.r === r && p.c === c))
+      : [...selected, { r, c }];
 
-    const key: [number, number] = [r, c];
-    let newSel = [...currentSelection];
-
-    if (newSel.find(p => p[0] === r && p[1] === c)) {
-      newSel = newSel.filter(p => !(p[0] === r && p[1] === c));
-    } else {
-      newSel.push(key);
-    }
-
-    setCurrentSelection(newSel);
-    updateSelection(newSel);
+    setSelected(newSel);
+    checkWord(newSel);
   };
 
-  const updateSelection = (sel: [number, number][]) => {
-    const text = sel.map(([r, c]) => grid[r][c].letter).join("");
-
-    if (words.includes(text) && !foundWords.includes(text)) {
-      const newGrid = grid.map(row =>
-        row.map(cell => ({ ...cell }))
-      );
-
-      sel.forEach(([r, c]) => {
-        newGrid[r][c].found = true;
-        newGrid[r][c].selected = false;
-      });
-
-      setGrid(newGrid);
-      setFoundWords([...foundWords, text]);
-      setScore(s => s + text.length * 10);
-      setCurrentSelection([]);
-    } else {
-      const newGrid = grid.map((row, ri) =>
-        row.map((cell, ci) => ({
-          ...cell,
-          selected: sel.some(p => p[0] === ri && p[1] === ci),
-        }))
-      );
-      setGrid(newGrid);
+  const checkWord = (sel: { r: number; c: number }[]) => {
+    const word = sel.map(p => grid[p.r][p.c].letter).join("");
+    if (words.includes(word) && !foundWords.includes(word)) {
+      setFoundWords([...foundWords, word]);
+      markFound(sel);
+      setSelected([]);
     }
+  };
+
+  const markFound = (sel: { r: number; c: number }[]) => {
+    setGrid(prev =>
+      prev.map((row, r) =>
+        row.map((cell, c) => {
+          if (sel.find(p => p.r === r && p.c === c)) {
+            return { ...cell, found: true };
+          }
+          return cell;
+        })
+      )
+    );
   };
 
   /* =====================
      UTILS
   ====================== */
-  const shuffle = (arr: string[]) =>
-    arr.sort(() => Math.random() - 0.5);
+  const randomLetter = () =>
+    String.fromCharCode(65 + Math.floor(Math.random() * 26));
+
+  const shuffle = (arr: string[]) => arr.sort(() => Math.random() - 0.5);
 
   /* =====================
      RENDER
   ====================== */
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-3xl font-bold">🔤 Caça-Palavras</h3>
-        <div className="text-xl font-bold text-green-600">
-          Pontos: {score}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-25 gap-1 text-sm select-none">
+    <div className="flex gap-8">
+      {/* GRID */}
+      <div
+        className="grid gap-1 select-none"
+        style={{
+          gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))`,
+        }}
+      >
         {grid.map((row, r) =>
-          row.map((cell, c) => (
-            <div
-              key={`${r}-${c}`}
-              onClick={() => toggleCell(r, c)}
-              className={`w-7 h-7 flex items-center justify-center rounded cursor-pointer font-bold
-                ${
-                  cell.found
-                    ? "bg-green-500 text-white"
-                    : cell.selected
-                    ? "bg-blue-400 text-white"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
-            >
-              {cell.letter}
-            </div>
-          ))
+          row.map((cell, c) => {
+            const isSel = selected.find(p => p.r === r && p.c === c);
+            return (
+              <div
+                key={`${r}-${c}`}
+                onClick={() => toggleSelect(r, c)}
+                className={`
+                  w-7 h-7 md:w-8 md:h-8
+                  flex items-center justify-center
+                  font-bold text-sm
+                  cursor-pointer rounded
+                  ${
+                    cell.found
+                      ? "bg-green-500 text-white"
+                      : isSel
+                      ? "bg-blue-400 text-white"
+                      : "bg-gray-200"
+                  }
+                `}
+              >
+                {cell.letter}
+              </div>
+            );
+          })
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <h4 className="font-bold mb-2">📋 Palavras</h4>
-          <ul className="grid grid-cols-2 gap-1 text-sm">
-            {words.map(w => (
-              <li
-                key={w}
-                className={
-                  foundWords.includes(w)
-                    ? "line-through text-green-600 font-bold"
-                    : ""
-                }
-              >
-                {w}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* WORD LIST */}
+      <div className="w-60 space-y-3">
+        <h4 className="text-xl font-bold">🔎 Palavras</h4>
+        <ul className="space-y-1">
+          {words.map(w => (
+            <li
+              key={w}
+              className={
+                foundWords.includes(w)
+                  ? "line-through text-green-600 font-bold"
+                  : ""
+              }
+            >
+              {w}
+            </li>
+          ))}
+        </ul>
 
-        <div className="flex items-end">
-          <Button className="w-full" onClick={startGame}>
-            🔄 Nova Rodada
-          </Button>
-        </div>
+        <Button className="mt-4 w-full" onClick={startGame}>
+          Nova Rodada
+        </Button>
       </div>
     </div>
   );
 };
 
-export default WordSearch;
+export default CacaPalavras;
