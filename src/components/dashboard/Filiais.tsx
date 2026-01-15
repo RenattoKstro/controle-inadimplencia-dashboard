@@ -115,25 +115,32 @@ const Filiais = () => {
   };
 
   // Função para calcular "Atualizado há X min"
-  // Função corrigida para calcular "Atualizado há X min" (com timezone UTC)
-const getUpdatedText = (updatedAt: string | null) => {
+  const getUpdatedText = (updatedAt: string | null) => {
   if (!updatedAt) return "Nunca atualizado";
 
-  // Converte o timestamp do banco (UTC) para Date
-  const updatedDate = new Date(updatedAt + 'Z'); // força UTC
-  const currentDate = new Date(); // data atual do navegador
+  // Remove o timezone do final se existir (+00) e força UTC
+  let cleanDate = updatedAt;
+  if (cleanDate.includes('+')) {
+    cleanDate = cleanDate.split('+')[0]; // remove +00
+  }
+  const updatedDate = new Date(cleanDate + 'Z'); // força UTC
 
-  // Calcula diferença em milissegundos
+  // Verifica se a data é válida
+  if (isNaN(updatedDate.getTime())) {
+    return "Data inválida";
+  }
+
+  const currentDate = new Date();
   const diffMs = currentDate.getTime() - updatedDate.getTime();
 
-  // Se diferença negativa (timezone bug) → trata como recente
+  // Se diferença negativa (timezone bug ou data futura) → trata como recente
   if (diffMs < 0) {
     return "Atualizado recentemente";
   }
 
   const diffMin = Math.floor(diffMs / 60000);
 
-  if (diffMin < 2) return "Atualizado agora"; // margem de 2 min para evitar travar
+  if (diffMin < 2) return "Atualizado agora"; // margem de 2 min
   if (diffMin === 1) return "Atualizado há 1 min";
   if (diffMin < 60) return `Atualizado há ${diffMin} min`;
   
