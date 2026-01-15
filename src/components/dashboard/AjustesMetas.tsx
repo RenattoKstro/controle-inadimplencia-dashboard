@@ -175,6 +175,9 @@ const AjustesMetas = ({
       if (selectedFilial) dadosParaSalvar.filial = selectedFilial.numero;
     }
 
+    // FORÇA ATUALIZAÇÃO DO updated_at SEMPRE QUE SALVAR (ESSA É A LINHA QUE RESOLVE O CONTADOR TRAVADO)
+    dadosParaSalvar.updated_at = new Date().toISOString();
+
     if (Object.keys(dadosParaSalvar).length > 0) {
       const { error } = await supabase
         .from("user_dashboard")
