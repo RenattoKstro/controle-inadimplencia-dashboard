@@ -116,17 +116,21 @@ const Filiais = () => {
 
   // Função para calcular "Atualizado há X min"
   const getUpdatedText = (updatedAt: string | null) => {
-    if (!updatedAt) return "Nunca atualizado";
-    const updatedDate = new Date(updatedAt);
-    const diffMs = now.getTime() - updatedDate.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
+  if (!updatedAt) return "Nunca atualizado";
 
-    if (diffMin < 1) return "Atualizado agora";
-    if (diffMin === 1) return "Atualizado há 1 min";
-    if (diffMin < 60) return `Atualizado há ${diffMin} min`;
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffHr === 1) return "Atualizado há 1 hora";
-    return `Atualizado há ${diffHr} horas`;
+  const updatedDate = new Date(updatedAt);
+  const diffMs = now.getTime() - updatedDate.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+
+  if (diffMin < 1) return "Atualizado agora"; // só se for MUITO recente
+  if (diffMin === 1) return "Atualizado há 1 min";
+  if (diffMin < 60) return `Atualizado há ${diffMin} min`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr === 1) return "Atualizado há 1 hora";
+  if (diffHr < 24) return `Atualizado há ${diffHr} horas`;
+  const diffDays = Math.floor(diffHr / 24);
+  if (diffDays === 1) return "Atualizado há 1 dia";
+  return `Atualizado há ${diffDays} dias`;
   };
 
   return (
