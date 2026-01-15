@@ -1,11 +1,44 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 
-const GRID_SIZE = 10;
+const GRID_SIZE = 25;
+const WORDS_PER_GAME = 20;
 
-const WORDS = ["REACT", "JOGO", "SCORE", "RANK", "SUPABASE"];
+const ALL_WORDS = [
+  "VENDAS",
+  "LUCRO",
+  "META",
+  "CREDIARIO",
+  "JUROS",
+  "RECEBIMENTO",
+  "CAIXA",
+  "ESTOQUE",
+  "CLIENTE",
+  "PROMOCAO",
+  "DESCONTO",
+  "PARCELAMENTO",
+  "BOLETO",
+  "PIX",
+  "CARTAO",
+  "GARANTIA",
+  "SEGURO",
+  "CONSORCIO",
+  "LOJA",
+  "VAREJO",
+  "MARGEM",
+  "COMISSAO",
+  "FATURAMENTO",
+  "PRECO",
+  "VENDEDOR",
+  "GATILHO",
+  "ATENDIMENTO",
+  "EMPRESTIMO",
+  "CCG",
+  "SIGA",
+  "SABIUM",
+  "ASSISTENCIA",
+  "GAZIN".toUpperCase(),
+];
 
 type Cell = {
   letter: string;
@@ -13,246 +46,208 @@ type Cell = {
   found: boolean;
 };
 
-type RankingItem = {
-  player_name: string;
-  score: number;
-};
+const randomLetter = () =>
+  String.fromCharCode(65 + Math.floor(Math.random() * 26));
 
 const WordSearch = () => {
-  const { toast } = useToast();
-
   const [grid, setGrid] = useState<Cell[][]>([]);
-  const [selectedWord, setSelectedWord] = useState("");
+  const [words, setWords] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
+  const [currentSelection, setCurrentSelection] = useState<[number, number][]>([]);
   const [score, setScore] = useState(0);
 
-  const [ranking, setRanking] = useState<RankingItem[]>([]);
-  const [showModal, setShowModal] = useState(false);
-  const [playerName, setPlayerName] = useState("");
-
   /* =====================
-     INIT
+     INIT GAME
   ====================== */
   useEffect(() => {
-    initGrid();
-    loadRanking();
+    startGame();
   }, []);
 
-  /* =====================
-     GRID
-  ====================== */
-  const initGrid = () => {
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const g: Cell[][] = Array.from({ length: GRID_SIZE }, () =>
+  const startGame = () => {
+    const selectedWords = shuffle([...ALL_WORDS]).slice(0, WORDS_PER_GAME);
+    const emptyGrid = Array.from({ length: GRID_SIZE }, () =>
       Array.from({ length: GRID_SIZE }, () => ({
-        letter: letters[Math.floor(Math.random() * letters.length)],
+        letter: "",
         selected: false,
         found: false,
       }))
     );
 
-    // Coloca palavras na horizontal
-    WORDS.forEach(word => {
-      const row = Math.floor(Math.random() * GRID_SIZE);
-      const col = Math.floor(Math.random() * (GRID_SIZE - word.length));
+    selectedWords.forEach(word => placeWord(emptyGrid, word));
+    fillEmpty(emptyGrid);
 
-      for (let i = 0; i < word.length; i++) {
-        g[row][col + i].letter = word[i];
-      }
-    });
-
-    setGrid(g);
-    setScore(0);
+    setGrid(emptyGrid);
+    setWords(selectedWords);
     setFoundWords([]);
+    setScore(0);
+    setCurrentSelection([]);
   };
 
   /* =====================
-     CLICK LETTER
+     GRID HELPERS
   ====================== */
-  const clickCell = (r: number, c: number) => {
+  const placeWord = (g: Cell[][], word: string) => {
+    const directions = [
+      [0, 1],   // →
+      [1, 0],   // ↓
+      [1, 1],   // ↘
+      [-1, 1],  // ↗
+    ];
+
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const dir = directions[Math.floor(Math.random() * directions.length)];
+      const row = Math.floor(Math.random() * GRID_SIZE);
+      const col = Math.floor(Math.random() * GRID_SIZE);
+
+      let fits = true;
+      for (let i = 0; i < word.length; i++) {
+        const r = row + dir[0] * i;
+        const c = col + dir[1] * i;
+        if (
+          r < 0 ||
+          c < 0 ||
+          r >= GRID_SIZE ||
+          c >= GRID_SIZE ||
+          (g[r][c].letter && g[r][c].letter !== word[i])
+        ) {
+          fits = false;
+          break;
+        }
+      }
+
+      if (fits) {
+        for (let i = 0; i < word.length; i++) {
+          const r = row + dir[0] * i;
+          const c = col + dir[1] * i;
+          g[r][c].letter = word[i];
+        }
+        return;
+      }
+    }
+  };
+
+  const fillEmpty = (g: Cell[][]) => {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (!g[r][c].letter) {
+          g[r][c].letter = randomLetter();
+        }
+      }
+    }
+  };
+
+  /* =====================
+     SELECTION
+  ====================== */
+  const toggleCell = (r: number, c: number) => {
     if (grid[r][c].found) return;
 
-    const g = grid.map(row => row.map(cell => ({ ...cell })));
-    g[r][c].selected = !g[r][c].selected;
-    setGrid(g);
+    const key: [number, number] = [r, c];
+    let newSel = [...currentSelection];
 
-    const word = g
-      .flat()
-      .filter(c => c.selected)
-      .map(c => c.letter)
-      .join("");
+    if (newSel.find(p => p[0] === r && p[1] === c)) {
+      newSel = newSel.filter(p => !(p[0] === r && p[1] === c));
+    } else {
+      newSel.push(key);
+    }
 
-    setSelectedWord(word);
+    setCurrentSelection(newSel);
+    updateSelection(newSel);
   };
 
-  /* =====================
-     CHECK WORD
-  ====================== */
-  useEffect(() => {
-    if (!selectedWord) return;
+  const updateSelection = (sel: [number, number][]) => {
+    const text = sel.map(([r, c]) => grid[r][c].letter).join("");
 
-    if (WORDS.includes(selectedWord) && !foundWords.includes(selectedWord)) {
-      toast({
-        title: "🎉 Palavra encontrada!",
-        description: selectedWord,
-      });
-
-      setScore(s => s + selectedWord.length * 10);
-      setFoundWords(f => [...f, selectedWord]);
-
-      const g = grid.map(row =>
-        row.map(cell =>
-          cell.selected
-            ? { ...cell, selected: false, found: true }
-            : cell
-        )
+    if (words.includes(text) && !foundWords.includes(text)) {
+      const newGrid = grid.map(row =>
+        row.map(cell => ({ ...cell }))
       );
 
-      setGrid(g);
-      setSelectedWord("");
-    }
-  }, [selectedWord]);
-
-  /* =====================
-     GAME OVER
-  ====================== */
-  useEffect(() => {
-    if (foundWords.length === WORDS.length && WORDS.length > 0) {
-      setShowModal(true);
-    }
-  }, [foundWords]);
-
-  /* =====================
-     SAVE SCORE
-  ====================== */
-  const saveScore = async () => {
-    if (!playerName.trim()) {
-      toast({
-        title: "Nome obrigatório",
-        variant: "destructive",
+      sel.forEach(([r, c]) => {
+        newGrid[r][c].found = true;
+        newGrid[r][c].selected = false;
       });
-      return;
+
+      setGrid(newGrid);
+      setFoundWords([...foundWords, text]);
+      setScore(s => s + text.length * 10);
+      setCurrentSelection([]);
+    } else {
+      const newGrid = grid.map((row, ri) =>
+        row.map((cell, ci) => ({
+          ...cell,
+          selected: sel.some(p => p[0] === ri && p[1] === ci),
+        }))
+      );
+      setGrid(newGrid);
     }
-
-    const { error } = await supabase.from("games_rankings").insert({
-      game_name: "word_search",
-      player_name: playerName.trim(),
-      score,
-    });
-
-    if (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: error.message,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "🏆 Pontuação salva!",
-    });
-
-    setShowModal(false);
-    setPlayerName("");
-    loadRanking();
-    initGrid();
   };
 
   /* =====================
-     RANKING
+     UTILS
   ====================== */
-  const loadRanking = async () => {
-    const { data } = await supabase
-      .from("games_rankings")
-      .select("player_name, score")
-      .eq("game_name", "word_search")
-      .order("score", { ascending: false })
-      .limit(10);
+  const shuffle = (arr: string[]) =>
+    arr.sort(() => Math.random() - 0.5);
 
-    setRanking(data ?? []);
-  };
-
+  /* =====================
+     RENDER
+  ====================== */
   return (
-    <>
-      <div className="flex gap-10 justify-center">
-        {/* GAME */}
-        <div className="space-y-4 text-center">
-          <h3 className="text-3xl font-bold">🔤 Caça-Palavras</h3>
-          <p>Pontuação: <b>{score}</b></p>
-
-          <div className="grid grid-cols-10 gap-1 mx-auto">
-            {grid.map((row, r) =>
-              row.map((cell, c) => (
-                <div
-                  key={`${r}-${c}`}
-                  onClick={() => clickCell(r, c)}
-                  className={`
-                    w-8 h-8 flex items-center justify-center
-                    font-bold cursor-pointer rounded
-                    ${cell.found ? "bg-green-500 text-white" :
-                      cell.selected ? "bg-blue-400 text-white" :
-                      "bg-gray-200"}
-                  `}
-                >
-                  {cell.letter}
-                </div>
-              ))
-            )}
-          </div>
-
-          <div>
-            <h4 className="font-bold">Palavras:</h4>
-            <div className="flex gap-2 justify-center flex-wrap">
-              {WORDS.map(w => (
-                <span
-                  key={w}
-                  className={foundWords.includes(w) ? "line-through text-green-600" : ""}
-                >
-                  {w}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <Button onClick={initGrid}>Reiniciar</Button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-3xl font-bold">🔤 Caça-Palavras</h3>
+        <div className="text-xl font-bold text-green-600">
+          Pontos: {score}
         </div>
+      </div>
 
-        {/* RANKING */}
-        <div className="w-64">
-          <h4 className="text-xl font-bold mb-3">🏆 Ranking</h4>
-          <ul className="space-y-2">
-            {ranking.map((r, i) => (
-              <li key={i} className="flex justify-between">
-                <span>{i + 1}. {r.player_name}</span>
-                <b>{r.score}</b>
+      <div className="grid grid-cols-25 gap-1 text-sm select-none">
+        {grid.map((row, r) =>
+          row.map((cell, c) => (
+            <div
+              key={`${r}-${c}`}
+              onClick={() => toggleCell(r, c)}
+              className={`w-7 h-7 flex items-center justify-center rounded cursor-pointer font-bold
+                ${
+                  cell.found
+                    ? "bg-green-500 text-white"
+                    : cell.selected
+                    ? "bg-blue-400 text-white"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
+            >
+              {cell.letter}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <h4 className="font-bold mb-2">📋 Palavras</h4>
+          <ul className="grid grid-cols-2 gap-1 text-sm">
+            {words.map(w => (
+              <li
+                key={w}
+                className={
+                  foundWords.includes(w)
+                    ? "line-through text-green-600 font-bold"
+                    : ""
+                }
+              >
+                {w}
               </li>
             ))}
           </ul>
         </div>
-      </div>
 
-      {/* MODAL */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-80 space-y-4 text-center">
-            <h4 className="text-xl font-bold">🎉 Fim de Jogo</h4>
-            <p>Sua pontuação: <b>{score}</b></p>
-
-            <input
-              className="w-full border rounded px-3 py-2"
-              placeholder="Seu nome no ranking"
-              value={playerName}
-              onChange={e => setPlayerName(e.target.value)}
-            />
-
-            <Button className="w-full" onClick={saveScore}>
-              Salvar Pontuação
-            </Button>
-          </div>
+        <div className="flex items-end">
+          <Button className="w-full" onClick={startGame}>
+            🔄 Nova Rodada
+          </Button>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 };
 
