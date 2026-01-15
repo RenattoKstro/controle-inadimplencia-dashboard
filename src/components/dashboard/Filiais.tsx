@@ -114,20 +114,17 @@ const Filiais = () => {
     return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
-  // Função corrigida e robusta para evitar NaN e tratar timezone/formato
+  // Função robusta e corrigida para calcular "Atualizado há X min"
   const getUpdatedText = (updatedAt: string | null) => {
     if (!updatedAt) return "Nunca atualizado";
 
-    // Limpa o timestamp: remove milissegundos e timezone
-    let cleanTs = updatedAt.split('.')[0]; // remove .384 ou .674422
-    if (cleanTs.includes('+')) {
-      cleanTs = cleanTs.split('+')[0]; // remove +00
-    }
-
-    // Força UTC
-    const updatedDate = new Date(cleanTs + 'Z');
+    // Remove milissegundos e timezone
+    const cleanTs = updatedAt.replace(/\.\d+/, '').replace(/(\+|\-)\d+/, '');
     
-    // Se a data não for válida → evita NaN
+    // Cria Date forçando UTC
+    const updatedDate = new Date(cleanTs + 'Z');
+
+    // Verifica se data é válida
     if (isNaN(updatedDate.getTime())) {
       console.warn("Timestamp inválido:", updatedAt);
       return "Data inválida";
@@ -136,12 +133,12 @@ const Filiais = () => {
     const currentDate = new Date();
     const diffMs = currentDate.getTime() - updatedDate.getTime();
 
-    // Diferença negativa (data futura ou bug) → recente
+    // Se negativo (data futura ou erro de timezone) → recente
     if (diffMs < 0) return "Atualizado recentemente";
 
     const diffMin = Math.floor(diffMs / 60000);
 
-    if (diffMin < 2) return "Atualizado agora";
+    if (diffMin <= 5) return "Atualizado agora"; // margem maior para atrasos de fetch
     if (diffMin === 1) return "Atualizado há 1 min";
     if (diffMin < 60) return `Atualizado há ${diffMin} min`;
 
@@ -258,6 +255,7 @@ const Filiais = () => {
                               </div>
                             </HoverCardTrigger>
                             <HoverCardContent className="w-80">
+                              {/* Seu conteúdo do hover original aqui */}
                               <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
                                   {user?.avatar_url ? (
