@@ -3,10 +3,7 @@ import { Button } from "@/components/ui/button";
 
 const GRID_SIZE = 25;
 
-/* =====================
-   PALAVRAS – VAREJO
-===================== */
-const WORDS = [
+const WORD_POOL = [
   "VENDAS",
   "LUCRO",
   "META",
@@ -39,212 +36,244 @@ const WORDS = [
   "SIGA",
   "SABIUM",
   "ASSISTENCIA",
-  "Gazin".toUpperCase(),
+  "GAZIN".toUpperCase(),
 ];
 
 type Cell = {
   letter: string;
+  selected: boolean;
   found: boolean;
 };
 
-/* =====================
-   COMPONENT
-===================== */
+const randomLetter = () =>
+  String.fromCharCode(65 + Math.floor(Math.random() * 26));
+
 const CacaPalavras = () => {
   const [grid, setGrid] = useState<Cell[][]>([]);
-  const [selected, setSelected] = useState<{ r: number; c: number }[]>([]);
   const [words, setWords] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
+  const [selecting, setSelecting] = useState(false);
+  const [path, setPath] = useState<[number, number][]>([]);
 
-  /* =====================
-     INIT GAME
-  ====================== */
+  /* =========================
+     INIT
+  ========================= */
   useEffect(() => {
     startGame();
   }, []);
 
   const startGame = () => {
-    const chosen = shuffle([...WORDS]).slice(0, 20);
-    setWords(chosen);
-    setFoundWords([]);
-    setSelected([]);
-    setGrid(generateGrid(chosen));
-  };
+    const selectedWords = [...WORD_POOL]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 20);
 
-  /* =====================
-     GRID GENERATOR
-  ====================== */
-  const generateGrid = (words: string[]) => {
-    const grid: Cell[][] = Array.from({ length: GRID_SIZE }, () =>
+    const emptyGrid: Cell[][] = Array.from({ length: GRID_SIZE }, () =>
       Array.from({ length: GRID_SIZE }, () => ({
         letter: "",
+        selected: false,
         found: false,
       }))
     );
 
-    words.forEach(word => placeWord(grid, word));
+    placeWords(emptyGrid, selectedWords);
 
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        if (!grid[r][c].letter) {
-          grid[r][c].letter = randomLetter();
+    for (let i = 0; i < GRID_SIZE; i++) {
+      for (let j = 0; j < GRID_SIZE; j++) {
+        if (!emptyGrid[i][j].letter) {
+          emptyGrid[i][j].letter = randomLetter();
         }
       }
     }
 
-    return grid;
+    setGrid(emptyGrid);
+    setWords(selectedWords);
+    setFoundWords([]);
   };
 
-  const placeWord = (grid: Cell[][], word: string) => {
-    const directions = [
-      [0, 1],
-      [1, 0],
-      [1, 1],
-    ];
+  /* =========================
+     PLACE WORDS (H / V)
+  ========================= */
+  const placeWords = (g: Cell[][], list: string[]) => {
+    list.forEach(word => {
+      let placed = false;
 
-    for (let tries = 0; tries < 100; tries++) {
-      const [dr, dc] =
-        directions[Math.floor(Math.random() * directions.length)];
-      const row = Math.floor(Math.random() * GRID_SIZE);
-      const col = Math.floor(Math.random() * GRID_SIZE);
+      while (!placed) {
+        const horizontal = Math.random() > 0.5;
+        const row = Math.floor(Math.random() * GRID_SIZE);
+        const col = Math.floor(Math.random() * GRID_SIZE);
 
-      if (canPlace(grid, word, row, col, dr, dc)) {
-        for (let i = 0; i < word.length; i++) {
-          grid[row + dr * i][col + dc * i].letter = word[i];
-        }
-        return;
-      }
-    }
-  };
-
-  const canPlace = (
-    grid: Cell[][],
-    word: string,
-    row: number,
-    col: number,
-    dr: number,
-    dc: number
-  ) => {
-    for (let i = 0; i < word.length; i++) {
-      const r = row + dr * i;
-      const c = col + dc * i;
-      if (
-        r < 0 ||
-        c < 0 ||
-        r >= GRID_SIZE ||
-        c >= GRID_SIZE ||
-        (grid[r][c].letter && grid[r][c].letter !== word[i])
-      ) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  /* =====================
-     CLICK CELL
-  ====================== */
-  const toggleSelect = (r: number, c: number) => {
-    const exists = selected.find(p => p.r === r && p.c === c);
-    const newSel = exists
-      ? selected.filter(p => !(p.r === r && p.c === c))
-      : [...selected, { r, c }];
-
-    setSelected(newSel);
-    checkWord(newSel);
-  };
-
-  const checkWord = (sel: { r: number; c: number }[]) => {
-    const word = sel.map(p => grid[p.r][p.c].letter).join("");
-    if (words.includes(word) && !foundWords.includes(word)) {
-      setFoundWords([...foundWords, word]);
-      markFound(sel);
-      setSelected([]);
-    }
-  };
-
-  const markFound = (sel: { r: number; c: number }[]) => {
-    setGrid(prev =>
-      prev.map((row, r) =>
-        row.map((cell, c) => {
-          if (sel.find(p => p.r === r && p.c === c)) {
-            return { ...cell, found: true };
+        if (horizontal && col + word.length <= GRID_SIZE) {
+          let ok = true;
+          for (let i = 0; i < word.length; i++) {
+            if (g[row][col + i].letter && g[row][col + i].letter !== word[i]) {
+              ok = false;
+              break;
+            }
           }
-          return cell;
-        })
+          if (ok) {
+            for (let i = 0; i < word.length; i++) {
+              g[row][col + i].letter = word[i];
+            }
+            placed = true;
+          }
+        }
+
+        if (!horizontal && row + word.length <= GRID_SIZE) {
+          let ok = true;
+          for (let i = 0; i < word.length; i++) {
+            if (g[row + i][col].letter && g[row + i][col].letter !== word[i]) {
+              ok = false;
+              break;
+            }
+          }
+          if (ok) {
+            for (let i = 0; i < word.length; i++) {
+              g[row + i][col].letter = word[i];
+            }
+            placed = true;
+          }
+        }
+      }
+    });
+  };
+
+  /* =========================
+     SELECTION
+  ========================= */
+  const startSelect = (r: number, c: number) => {
+    clearTempSelection();
+    setSelecting(true);
+    setPath([[r, c]]);
+    markSelected([[r, c]]);
+  };
+
+  const enterCell = (r: number, c: number) => {
+    if (!selecting) return;
+
+    const [sr, sc] = path[0];
+
+    // only straight lines
+    if (r !== sr && c !== sc) return;
+
+    const newPath: [number, number][] = [];
+
+    if (r === sr) {
+      const min = Math.min(sc, c);
+      const max = Math.max(sc, c);
+      for (let i = min; i <= max; i++) newPath.push([r, i]);
+    } else {
+      const min = Math.min(sr, r);
+      const max = Math.max(sr, r);
+      for (let i = min; i <= max; i++) newPath.push([i, c]);
+    }
+
+    setPath(newPath);
+    markSelected(newPath);
+  };
+
+  const endSelect = () => {
+    setSelecting(false);
+
+    const word = path.map(([r, c]) => grid[r][c].letter).join("");
+    const reversed = word.split("").reverse().join("");
+
+    const found =
+      words.includes(word) || words.includes(reversed);
+
+    if (found) {
+      const w = words.includes(word) ? word : reversed;
+      setFoundWords(f => [...f, w]);
+
+      setGrid(g =>
+        g.map((row, r) =>
+          row.map((cell, c) => {
+            if (path.some(p => p[0] === r && p[1] === c)) {
+              return { ...cell, found: true, selected: false };
+            }
+            return cell;
+          })
+        )
+      );
+    } else {
+      clearTempSelection();
+    }
+
+    setPath([]);
+  };
+
+  const markSelected = (cells: [number, number][]) => {
+    setGrid(g =>
+      g.map((row, r) =>
+        row.map((cell, c) => ({
+          ...cell,
+          selected: cells.some(p => p[0] === r && p[1] === c),
+        }))
       )
     );
   };
 
-  /* =====================
-     UTILS
-  ====================== */
-  const randomLetter = () =>
-    String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  const clearTempSelection = () => {
+    setGrid(g =>
+      g.map(row =>
+        row.map(cell => ({ ...cell, selected: false }))
+      )
+    );
+  };
 
-  const shuffle = (arr: string[]) => arr.sort(() => Math.random() - 0.5);
-
-  /* =====================
+  /* =========================
      RENDER
-  ====================== */
+  ========================= */
   return (
-    <div className="flex gap-8">
-      {/* GRID */}
-      <div
-        className="grid gap-1 select-none"
-        style={{
-          gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))`,
-        }}
-      >
-        {grid.map((row, r) =>
-          row.map((cell, c) => {
-            const isSel = selected.find(p => p.r === r && p.c === c);
-            return (
-              <div
-                key={`${r}-${c}`}
-                onClick={() => toggleSelect(r, c)}
-                className={`
-                  w-7 h-7 md:w-8 md:h-8
-                  flex items-center justify-center
-                  font-bold text-sm
-                  cursor-pointer rounded
-                  ${
-                    cell.found
-                      ? "bg-green-500 text-white"
-                      : isSel
-                      ? "bg-blue-400 text-white"
-                      : "bg-gray-200"
-                  }
-                `}
-              >
-                {cell.letter}
-              </div>
-            );
-          })
-        )}
-      </div>
+    <div className="space-y-6">
+      <div className="flex gap-6">
+        {/* GRID */}
+        <div className="max-h-[75vh] overflow-y-auto border rounded-lg p-2">
+          <div
+            className="grid gap-1"
+            style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 2rem)` }}
+          >
+            {grid.map((row, r) =>
+              row.map((cell, c) => (
+                <div
+                  key={`${r}-${c}`}
+                  onMouseDown={() => startSelect(r, c)}
+                  onMouseEnter={() => enterCell(r, c)}
+                  onMouseUp={endSelect}
+                  className={`w-8 h-8 flex items-center justify-center text-sm font-bold rounded cursor-pointer select-none
+                    ${cell.found ? "bg-green-500 text-white" : ""}
+                    ${cell.selected ? "bg-blue-400 text-white" : ""}
+                    ${!cell.selected && !cell.found ? "bg-gray-100" : ""}
+                  `}
+                >
+                  {cell.letter}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
 
-      {/* WORD LIST */}
-      <div className="w-60 space-y-3">
-        <h4 className="text-xl font-bold">🔎 Palavras</h4>
-        <ul className="space-y-1">
-          {words.map(w => (
-            <li
-              key={w}
-              className={
-                foundWords.includes(w)
+        {/* WORD LIST */}
+        <div className="w-64">
+          <h3 className="font-bold mb-3 flex items-center gap-2">
+            🔎 Palavras
+          </h3>
+          <ul className="space-y-1 text-sm">
+            {words.map(w => (
+              <li
+                key={w}
+                className={foundWords.includes(w)
                   ? "line-through text-green-600 font-bold"
-                  : ""
-              }
-            >
-              {w}
-            </li>
-          ))}
-        </ul>
+                  : ""}
+              >
+                {w}
+              </li>
+            ))}
+          </ul>
 
-        <Button className="mt-4 w-full" onClick={startGame}>
-          Nova Rodada
-        </Button>
+          <Button className="mt-6 w-full" onClick={startGame}>
+            Nova Rodada
+          </Button>
+        </div>
       </div>
     </div>
   );
