@@ -91,7 +91,7 @@ const Jogos = () => {
               <CardContent className="p-0">
                 <div className="relative">
                   <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Word_search_puzzle.jpg"
+                    src="https://upload.wikimedia.org/wikipedia/commons/1/1e/Slangesiker_FP.jpg"
                     alt="Caça-Palavras"
                     className="w-full h-48 object-cover"
                   />
