@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const GRID_SIZE = 25;
+const ROWS = 25;
+const COLS = 20;
 
 const WORD_POOL = [
-  "VENDAS",
+ "VENDAS",
   "LUCRO",
   "META",
   "CREDIARIO",
@@ -55,20 +56,20 @@ const CacaPalavras = () => {
   const [selecting, setSelecting] = useState(false);
   const [path, setPath] = useState<[number, number][]>([]);
 
-  /* =========================
-     INIT
-  ========================= */
   useEffect(() => {
     startGame();
   }, []);
 
+  /* =========================
+     INIT GAME
+  ========================= */
   const startGame = () => {
     const selectedWords = [...WORD_POOL]
       .sort(() => 0.5 - Math.random())
       .slice(0, 20);
 
-    const emptyGrid: Cell[][] = Array.from({ length: GRID_SIZE }, () =>
-      Array.from({ length: GRID_SIZE }, () => ({
+    const emptyGrid: Cell[][] = Array.from({ length: ROWS }, () =>
+      Array.from({ length: COLS }, () => ({
         letter: "",
         selected: false,
         found: false,
@@ -77,10 +78,10 @@ const CacaPalavras = () => {
 
     placeWords(emptyGrid, selectedWords);
 
-    for (let i = 0; i < GRID_SIZE; i++) {
-      for (let j = 0; j < GRID_SIZE; j++) {
-        if (!emptyGrid[i][j].letter) {
-          emptyGrid[i][j].letter = randomLetter();
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (!emptyGrid[r][c].letter) {
+          emptyGrid[r][c].letter = randomLetter();
         }
       }
     }
@@ -91,7 +92,7 @@ const CacaPalavras = () => {
   };
 
   /* =========================
-     PLACE WORDS (H / V)
+     PLACE WORDS
   ========================= */
   const placeWords = (g: Cell[][], list: string[]) => {
     list.forEach(word => {
@@ -99,10 +100,10 @@ const CacaPalavras = () => {
 
       while (!placed) {
         const horizontal = Math.random() > 0.5;
-        const row = Math.floor(Math.random() * GRID_SIZE);
-        const col = Math.floor(Math.random() * GRID_SIZE);
+        const row = Math.floor(Math.random() * ROWS);
+        const col = Math.floor(Math.random() * COLS);
 
-        if (horizontal && col + word.length <= GRID_SIZE) {
+        if (horizontal && col + word.length <= COLS) {
           let ok = true;
           for (let i = 0; i < word.length; i++) {
             if (g[row][col + i].letter && g[row][col + i].letter !== word[i]) {
@@ -118,7 +119,7 @@ const CacaPalavras = () => {
           }
         }
 
-        if (!horizontal && row + word.length <= GRID_SIZE) {
+        if (!horizontal && row + word.length <= ROWS) {
           let ok = true;
           for (let i = 0; i < word.length; i++) {
             if (g[row + i][col].letter && g[row + i][col].letter !== word[i]) {
@@ -141,34 +142,32 @@ const CacaPalavras = () => {
      SELECTION
   ========================= */
   const startSelect = (r: number, c: number) => {
-    clearTempSelection();
+    clearTemp();
     setSelecting(true);
     setPath([[r, c]]);
-    markSelected([[r, c]]);
+    mark([[r, c]]);
   };
 
   const enterCell = (r: number, c: number) => {
     if (!selecting) return;
 
     const [sr, sc] = path[0];
-
-    // only straight lines
     if (r !== sr && c !== sc) return;
 
-    const newPath: [number, number][] = [];
+    const cells: [number, number][] = [];
 
     if (r === sr) {
       const min = Math.min(sc, c);
       const max = Math.max(sc, c);
-      for (let i = min; i <= max; i++) newPath.push([r, i]);
+      for (let i = min; i <= max; i++) cells.push([r, i]);
     } else {
       const min = Math.min(sr, r);
       const max = Math.max(sr, r);
-      for (let i = min; i <= max; i++) newPath.push([i, c]);
+      for (let i = min; i <= max; i++) cells.push([i, c]);
     }
 
-    setPath(newPath);
-    markSelected(newPath);
+    setPath(cells);
+    mark(cells);
   };
 
   const endSelect = () => {
@@ -186,22 +185,21 @@ const CacaPalavras = () => {
 
       setGrid(g =>
         g.map((row, r) =>
-          row.map((cell, c) => {
-            if (path.some(p => p[0] === r && p[1] === c)) {
-              return { ...cell, found: true, selected: false };
-            }
-            return cell;
-          })
+          row.map((cell, c) =>
+            path.some(p => p[0] === r && p[1] === c)
+              ? { ...cell, found: true, selected: false }
+              : cell
+          )
         )
       );
     } else {
-      clearTempSelection();
+      clearTemp();
     }
 
     setPath([]);
   };
 
-  const markSelected = (cells: [number, number][]) => {
+  const mark = (cells: [number, number][]) => {
     setGrid(g =>
       g.map((row, r) =>
         row.map((cell, c) => ({
@@ -212,11 +210,9 @@ const CacaPalavras = () => {
     );
   };
 
-  const clearTempSelection = () => {
+  const clearTemp = () => {
     setGrid(g =>
-      g.map(row =>
-        row.map(cell => ({ ...cell, selected: false }))
-      )
+      g.map(row => row.map(cell => ({ ...cell, selected: false })))
     );
   };
 
@@ -230,7 +226,7 @@ const CacaPalavras = () => {
         <div className="max-h-[75vh] overflow-y-auto border rounded-lg p-2">
           <div
             className="grid gap-1"
-            style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 2rem)` }}
+            style={{ gridTemplateColumns: `repeat(${COLS}, 2.2rem)` }}
           >
             {grid.map((row, r) =>
               row.map((cell, c) => (
@@ -239,9 +235,9 @@ const CacaPalavras = () => {
                   onMouseDown={() => startSelect(r, c)}
                   onMouseEnter={() => enterCell(r, c)}
                   onMouseUp={endSelect}
-                  className={`w-8 h-8 flex items-center justify-center text-sm font-bold rounded cursor-pointer select-none
+                  className={`w-9 h-9 flex items-center justify-center font-bold rounded cursor-pointer select-none
                     ${cell.found ? "bg-green-500 text-white" : ""}
-                    ${cell.selected ? "bg-blue-400 text-white" : ""}
+                    ${cell.selected ? "bg-blue-500 text-white" : ""}
                     ${!cell.selected && !cell.found ? "bg-gray-100" : ""}
                   `}
                 >
@@ -253,17 +249,17 @@ const CacaPalavras = () => {
         </div>
 
         {/* WORD LIST */}
-        <div className="w-64">
-          <h3 className="font-bold mb-3 flex items-center gap-2">
-            🔎 Palavras
-          </h3>
+        <div className="w-72">
+          <h3 className="font-bold mb-3">🔎 Palavras</h3>
           <ul className="space-y-1 text-sm">
             {words.map(w => (
               <li
                 key={w}
-                className={foundWords.includes(w)
-                  ? "line-through text-green-600 font-bold"
-                  : ""}
+                className={
+                  foundWords.includes(w)
+                    ? "line-through text-green-600 font-bold"
+                    : ""
+                }
               >
                 {w}
               </li>
