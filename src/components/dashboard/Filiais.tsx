@@ -29,7 +29,7 @@ interface RankingFilial {
     avatar_url: string;
     whatsapp: string;
     instagram: string;
-    updated_at: string; // ← Novo campo (timestamp ISO)
+    updated_at: string | null;
   } | null;
 }
 
@@ -39,7 +39,7 @@ const Filiais = () => {
   const [filtroRegional, setFiltroRegional] = useState<string>("todas");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [now, setNow] = useState(new Date()); // Para atualizar o contador a cada minuto
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     const fetchRanking = async () => {
@@ -57,11 +57,11 @@ const Filiais = () => {
     };
 
     fetchRanking();
-    const interval = setInterval(fetchRanking, 30000); // atualiza ranking a cada 30s
+    const interval = setInterval(fetchRanking, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Atualiza o "agora" a cada 60 segundos para recalcular "há X min"
+  // Atualiza o "agora" a cada 60 segundos para recalcular o contador
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
@@ -114,43 +114,40 @@ const Filiais = () => {
     return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
-  // Função para calcular "Atualizado há X min"
+  // Função corrigida para evitar NaN e tratar timezone corretamente
   const getUpdatedText = (updatedAt: string | null) => {
-  if (!updatedAt) return "Nunca atualizado";
+    if (!updatedAt) return "Nunca atualizado";
 
-  // Remove o timezone do final se existir (+00) e força UTC
-  let cleanDate = updatedAt;
-  if (cleanDate.includes('+')) {
-    cleanDate = cleanDate.split('+')[0]; // remove +00
-  }
-  const updatedDate = new Date(cleanDate + 'Z'); // força UTC
+    // Limpa o formato (remove milissegundos e timezone se necessário)
+    let cleanTs = updatedAt.split('.')[0]; // remove .202269
+    if (cleanTs.includes('+')) {
+      cleanTs = cleanTs.split('+')[0];
+    }
 
-  // Verifica se a data é válida
-  if (isNaN(updatedDate.getTime())) {
-    return "Data inválida";
-  }
+    // Cria Date em UTC
+    const updatedDate = new Date(cleanTs + 'Z');
+    if (isNaN(updatedDate.getTime())) {
+      console.error("Data inválida:", updatedAt);
+      return "Data inválida";
+    }
 
-  const currentDate = new Date();
-  const diffMs = currentDate.getTime() - updatedDate.getTime();
+    const currentDate = new Date();
+    const diffMs = currentDate.getTime() - updatedDate.getTime();
 
-  // Se diferença negativa (timezone bug ou data futura) → trata como recente
-  if (diffMs < 0) {
-    return "Atualizado recentemente";
-  }
+    // Se negativo (data futura ou bug) → recente
+    if (diffMs < 0) return "Atualizado recentemente";
 
-  const diffMin = Math.floor(diffMs / 60000);
+    const diffMin = Math.floor(diffMs / 60000);
 
-  if (diffMin < 2) return "Atualizado agora"; // margem de 2 min
-  if (diffMin === 1) return "Atualizado há 1 min";
-  if (diffMin < 60) return `Atualizado há ${diffMin} min`;
-  
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr === 1) return "Atualizado há 1 hora";
-  if (diffHr < 24) return `Atualizado há ${diffHr} horas`;
-  
-  const diffDays = Math.floor(diffHr / 24);
-  if (diffDays === 1) return "Atualizado há 1 dia";
-  return `Atualizado há ${diffDays} dias`;
+    if (diffMin < 2) return "Atualizado agora";
+    if (diffMin === 1) return "Atualizado há 1 min";
+    if (diffMin < 60) return `Atualizado há ${diffMin} min`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr === 1) return "Atualizado há 1 hora";
+    if (diffHr < 24) return `Atualizado há ${diffHr} horas`;
+    const diffDays = Math.floor(diffHr / 24);
+    if (diffDays === 1) return "Atualizado há 1 dia";
+    return `Atualizado há ${diffDays} dias`;
   };
 
   return (
@@ -257,7 +254,7 @@ const Filiais = () => {
                               </div>
                             </HoverCardTrigger>
                             <HoverCardContent className="w-80">
-                              {/* ... conteúdo do hover igual ao seu ... */}
+                              {/* ... seu hover original ... */}
                             </HoverCardContent>
                           </HoverCard>
                           <div>
@@ -265,7 +262,7 @@ const Filiais = () => {
                             <p className="text-xs text-gray-600">{f.regional}</p>
                           </div>
                         </div>
-                        {/* Mensagem de atualização */}
+                        {/* Contador corrigido */}
                         <p className="text-xs text-gray-500 italic mt-1">
                           {updatedText}
                         </p>
