@@ -1,5 +1,5 @@
 // src/components/dashboard/Filiais.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -61,8 +61,12 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Atualiza o "agora" a cada 60 segundos para forçar re-render do contador
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000);
+    const timer = setInterval(() => {
+      setNow(new Date());
+      console.log("Atualizando contador agora:", new Date().toISOString());
+    }, 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -113,7 +117,7 @@ const Filiais = () => {
     return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
-  // Função corrigida para calcular o tempo exato (minutos, horas, dias) sem travar ou NaN
+  // Função corrigida para calcular o tempo exato (minutos, horas, dias) sem travar
   const getUpdatedText = (updatedAt: string | null) => {
     if (!updatedAt) return "Nunca atualizado";
 
@@ -121,20 +125,13 @@ const Filiais = () => {
     const cleanTs = updatedAt
       .replace(/\.\d{6,}/, '')   // remove milissegundos longos
       .replace(/(\+|\-)\d{2}:\d{2}/, '') // remove +00:00
-      .replace(/(\+|\-)\d{2}/, ''); // remove +00
+      .replace(/(\+|\-)\d{2}/, ''); // remove +00 ou -05
 
-    // Tenta parse direto primeiro
-    let updatedDate = new Date(updatedAt);
+    const updatedDate = new Date(cleanTs + 'Z');
 
-    // Se inválido, tenta com limpeza + Z
-    if (isNaN(updatedDate.getTime())) {
-      updatedDate = new Date(cleanTs + 'Z');
-    }
-
-    // Se ainda inválido, loga e retorna mensagem
     if (isNaN(updatedDate.getTime())) {
       console.warn("Timestamp inválido:", updatedAt);
-      return "Data inválida (verificar banco)";
+      return "Data inválida";
     }
 
     const currentDate = new Date();
