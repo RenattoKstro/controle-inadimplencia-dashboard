@@ -61,7 +61,7 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Atualiza o "agora" a cada 60 segundos
+  // Atualiza o "agora" a cada 60 segundos para recalcular o contador
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
@@ -114,22 +114,23 @@ const Filiais = () => {
     return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
-  // Função FINAL e robusta para calcular o texto (sem NaN, sem travar)
+  // Função corrigida e robusta para calcular o tempo exato (sem NaN ou travamento)
   const getUpdatedText = (updatedAt: string | null) => {
     if (!updatedAt) return "Nunca atualizado";
 
-    // Limpeza máxima do formato: remove milissegundos, timezone e qualquer coisa extra
-    const cleanTs = updatedAt
-      .split('.')[0]                 // remove .202269
-      .replace(/(\+|\-)\d+$/, '');   // remove +00 ou -05
+    // Limpeza do timestamp: remove milissegundos e timezone
+    let cleanTs = updatedAt.split('.')[0]; // remove .202269 ou .384
+    if (cleanTs.includes('+')) {
+      cleanTs = cleanTs.split('+')[0]; // remove +00
+    }
 
     // Cria Date forçando UTC
     const updatedDate = new Date(cleanTs + 'Z');
 
-    // Se inválido, loga e retorna mensagem
+    // Verifica se a data é válida
     if (isNaN(updatedDate.getTime())) {
-      console.warn("Timestamp inválido no banco:", updatedAt);
-      return "Data inválida (verificar banco)";
+      console.warn("Timestamp inválido:", updatedAt);
+      return "Data inválida";
     }
 
     const currentDate = new Date();
@@ -140,17 +141,14 @@ const Filiais = () => {
 
     const diffMin = Math.floor(diffMs / 60000);
 
-    if (diffMin <= 5) return "Atualizado agora"; // margem maior para atrasos
-    if (diffMin === 1) return "Atualizado há 1 min";
+    if (diffMin <= 5) return "Atualizado agora"; // margem para atrasos de fetch
     if (diffMin < 60) return `Atualizado há ${diffMin} min`;
 
     const diffHr = Math.floor(diffMin / 60);
-    if (diffHr === 1) return "Atualizado há 1 hora";
-    if (diffHr < 24) return `Atualizado há ${diffHr} horas`;
+    if (diffHr < 24) return `Atualizado há ${diffHr} hora${diffHr === 1 ? '' : 's'}`;
 
     const diffDays = Math.floor(diffHr / 24);
-    if (diffDays === 1) return "Atualizado há 1 dia";
-    return `Atualizado há ${diffDays} dias`;
+    return `Atualizado há ${diffDays} dia${diffDays === 1 ? '' : 's'}`;
   };
 
   return (
@@ -257,7 +255,7 @@ const Filiais = () => {
                               </div>
                             </HoverCardTrigger>
                             <HoverCardContent className="w-80">
-                              {/* Seu hover original */}
+                              {/* Seu conteúdo do hover original */}
                               <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
                                   {user?.avatar_url ? (
