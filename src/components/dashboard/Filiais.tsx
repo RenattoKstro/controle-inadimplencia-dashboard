@@ -114,35 +114,37 @@ const Filiais = () => {
     return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
-  // Função corrigida e robusta para calcular o tempo exato (sem NaN ou travamento)
+  // Função robusta para calcular o tempo exato (minutos, horas, dias)
   const getUpdatedText = (updatedAt: string | null) => {
     if (!updatedAt) return "Nunca atualizado";
 
-    // Limpeza do timestamp: remove milissegundos e timezone
-    let cleanTs = updatedAt.split('.')[0]; // remove .202269 ou .384
-    if (cleanTs.includes('+')) {
-      cleanTs = cleanTs.split('+')[0]; // remove +00
-    }
+    // Limpeza agressiva: remove milissegundos, timezone e qualquer coisa extra
+    const cleanTs = updatedAt
+      .replace(/\.\d{3,}/, '')  // remove .202269 ou .384
+      .replace(/(\+|\-)\d{2}:\d{2}/, '') // remove +00:00 ou -05:00
+      .replace(/(\+|\-)\d{2}/, ''); // remove +00 ou -05
 
     // Cria Date forçando UTC
     const updatedDate = new Date(cleanTs + 'Z');
 
-    // Verifica se a data é válida
     if (isNaN(updatedDate.getTime())) {
-      console.warn("Timestamp inválido:", updatedAt);
-      return "Data inválida";
+      console.warn("Timestamp inválido:", updatedAt, "→ Tentando parse direto...");
+      const fallbackDate = new Date(updatedAt);
+      if (isNaN(fallbackDate.getTime())) {
+        return "Data inválida";
+      }
+      updatedDate = fallbackDate;
     }
 
     const currentDate = new Date();
     const diffMs = currentDate.getTime() - updatedDate.getTime();
 
-    // Diferença negativa → recente (data futura ou bug)
-    if (diffMs < 0) return "Atualizado recentemente";
+    if (diffMs < 0) return "Atualizado recentemente (data futura)";
 
     const diffMin = Math.floor(diffMs / 60000);
 
-    if (diffMin <= 5) return "Atualizado agora"; // margem para atrasos de fetch
-    if (diffMin < 60) return `Atualizado há ${diffMin} min`;
+    if (diffMin <= 5) return "Atualizado agora";
+    if (diffMin < 60) return `Atualizado há ${diffMin} minuto${diffMin === 1 ? '' : 's'}`;
 
     const diffHr = Math.floor(diffMin / 60);
     if (diffHr < 24) return `Atualizado há ${diffHr} hora${diffHr === 1 ? '' : 's'}`;
