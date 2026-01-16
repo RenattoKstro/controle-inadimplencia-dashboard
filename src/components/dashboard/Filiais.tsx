@@ -114,32 +114,33 @@ const Filiais = () => {
     return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
-  // Função robusta para calcular o tempo exato (minutos, horas, dias)
+  // Função corrigida para calcular o tempo exato (minutos, horas, dias) sem travar
   const getUpdatedText = (updatedAt: string | null) => {
     if (!updatedAt) return "Nunca atualizado";
 
-    // Limpeza agressiva: remove milissegundos, timezone e qualquer coisa extra
+    // Limpeza máxima do timestamp
     const cleanTs = updatedAt
-      .replace(/\.\d{3,}/, '')  // remove .202269 ou .384
+      .replace(/\.\d{6,}/, '')   // remove milissegundos longos (.197096)
       .replace(/(\+|\-)\d{2}:\d{2}/, '') // remove +00:00 ou -05:00
       .replace(/(\+|\-)\d{2}/, ''); // remove +00 ou -05
 
     // Cria Date forçando UTC
     const updatedDate = new Date(cleanTs + 'Z');
 
+    // Se ainda inválido, tenta parse direto
     if (isNaN(updatedDate.getTime())) {
-      console.warn("Timestamp inválido:", updatedAt, "→ Tentando parse direto...");
-      const fallbackDate = new Date(updatedAt);
-      if (isNaN(fallbackDate.getTime())) {
+      const fallback = new Date(updatedAt);
+      if (isNaN(fallback.getTime())) {
+        console.warn("Timestamp ainda inválido:", updatedAt);
         return "Data inválida";
       }
-      updatedDate = fallbackDate;
+      updatedDate = fallback;
     }
 
     const currentDate = new Date();
     const diffMs = currentDate.getTime() - updatedDate.getTime();
 
-    if (diffMs < 0) return "Atualizado recentemente (data futura)";
+    if (diffMs < 0) return "Atualizado recentemente";
 
     const diffMin = Math.floor(diffMs / 60000);
 
@@ -257,7 +258,6 @@ const Filiais = () => {
                               </div>
                             </HoverCardTrigger>
                             <HoverCardContent className="w-80">
-                              {/* Seu conteúdo do hover original */}
                               <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
                                   {user?.avatar_url ? (
