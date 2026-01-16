@@ -61,7 +61,6 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Atualiza o "agora" a cada 60 segundos para recalcular o contador
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
@@ -114,27 +113,28 @@ const Filiais = () => {
     return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
-  // Função corrigida para calcular o tempo exato (minutos, horas, dias) sem travar
+  // Função corrigida para calcular o tempo exato (minutos, horas, dias) sem travar ou NaN
   const getUpdatedText = (updatedAt: string | null) => {
     if (!updatedAt) return "Nunca atualizado";
 
     // Limpeza máxima do timestamp
     const cleanTs = updatedAt
-      .replace(/\.\d{6,}/, '')   // remove milissegundos longos (.197096)
-      .replace(/(\+|\-)\d{2}:\d{2}/, '') // remove +00:00 ou -05:00
-      .replace(/(\+|\-)\d{2}/, ''); // remove +00 ou -05
+      .replace(/\.\d{6,}/, '')   // remove milissegundos longos
+      .replace(/(\+|\-)\d{2}:\d{2}/, '') // remove +00:00
+      .replace(/(\+|\-)\d{2}/, ''); // remove +00
 
-    // Cria Date forçando UTC
-    const updatedDate = new Date(cleanTs + 'Z');
+    // Tenta parse direto primeiro
+    let updatedDate = new Date(updatedAt);
 
-    // Se ainda inválido, tenta parse direto
+    // Se inválido, tenta com limpeza + Z
     if (isNaN(updatedDate.getTime())) {
-      const fallback = new Date(updatedAt);
-      if (isNaN(fallback.getTime())) {
-        console.warn("Timestamp ainda inválido:", updatedAt);
-        return "Data inválida";
-      }
-      updatedDate = fallback;
+      updatedDate = new Date(cleanTs + 'Z');
+    }
+
+    // Se ainda inválido, loga e retorna mensagem
+    if (isNaN(updatedDate.getTime())) {
+      console.warn("Timestamp inválido:", updatedAt);
+      return "Data inválida (verificar banco)";
     }
 
     const currentDate = new Date();
