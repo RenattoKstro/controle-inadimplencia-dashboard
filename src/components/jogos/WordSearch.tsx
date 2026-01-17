@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 /* CONFIG */
@@ -6,16 +6,65 @@ const ROWS = 25;
 const COLS = 20;
 
 const WORDS = [
-  "VENDAS","LUCRO","JUROS","CREDIARIO","GAZIN",
-  "CLIENTE","CAIXA","META","DESCONTO","PARCELA",
-  "ESTOQUE","RECEBIMENTO","COMISSAO","CARTAO",
-  "BOLETO","PROMOCAO","PRECO","MARGEM","FINANCEIRO","LOJA"
+  "VENDAS",
+"LUCRO",
+"META",
+"CREDIARIO",
+"JUROS",
+"RECEBIMENTO",
+"CAIXA",
+"ESTOQUE",
+"CLIENTE",
+"PROMOCAO",
+"DESCONTO",
+"PARCELAMENTO",
+"BOLETO",
+"PIX",
+"CARTAO",
+"GARANTIA",
+"SEGURO",
+"CONSORCIO",
+"LOJA",
+"VAREJO",
+"MARGEM",
+"COMISSAO",
+"FATURAMENTO",
+"PRECO",
+"VENDEDOR",
+"GATILHO",
+"ATENDIMENTO",
+"EMPRESTIMO",
+"CCG",
+"SIGA",
+"SABIUM",
+"ASSISTENCIA",
+"GAZIN",
+"INADIMPLENCIA",
+"NEGOCIACAO",
+"PROSPECCAO",
+"FIDELIZACAO",
+"ESTORNO",
+"LIQUIDACAO",
+"ORCAMENTO",
+"FORNECEDOR",
+"LOGISTICA",
+"INVENTARIO",
+"COBRANCA",
+"ANTECIPACAO",
+"POSVENDA",
+"DNA",
+"ENTREGAS",
+"TV GAZIN",
+"MONTAGENS",
+"FILIAL",
+"AUDITORIA",
+"RENEGOCIAÇÃO",
+"ROBOZIN",
+"ABATEDORES",
 ];
 
-/* TYPES */
 type Cell = { row: number; col: number };
 
-/* COMPONENT */
 export default function WordSearch() {
   const [grid, setGrid] = useState<string[][]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
@@ -24,34 +73,61 @@ export default function WordSearch() {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selection, setSelection] = useState<Cell[]>([]);
 
+  /* TIMER */
+  const [seconds, setSeconds] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [finished, setFinished] = useState(false);
+
   /* INIT */
   useEffect(() => {
-    generateGrid();
+    startNewGame();
+    return () => stopTimer();
   }, []);
 
-  /* GRID GENERATION */
+  /* TIMER CONTROL */
+  function startTimer() {
+    stopTimer();
+    timerRef.current = setInterval(() => {
+      setSeconds(s => s + 1);
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+  }
+
+  /* GAME */
+  function startNewGame() {
+    generateGrid();
+    setFoundWords([]);
+    setFoundCells(new Set());
+    setSelection([]);
+    setFinished(false);
+    setSeconds(0);
+    startTimer();
+  }
+
+  /* GRID */
   function generateGrid() {
     const empty = Array.from({ length: ROWS }, () =>
       Array.from({ length: COLS }, () => "")
     );
 
-    const placed: { word: string; cells: Cell[] }[] = [];
-
     WORDS.forEach(word => {
-      let placedOk = false;
-      let attempts = 0;
+      let placed = false;
+      let tries = 0;
 
-      while (!placedOk && attempts < 200) {
-        attempts++;
+      while (!placed && tries < 300) {
+        tries++;
         const dir = randomDirection();
-        const startRow = Math.floor(Math.random() * ROWS);
-        const startCol = Math.floor(Math.random() * COLS);
+        const sr = Math.floor(Math.random() * ROWS);
+        const sc = Math.floor(Math.random() * COLS);
 
         const cells: Cell[] = [];
-
         for (let i = 0; i < word.length; i++) {
-          const r = startRow + dir.r * i;
-          const c = startCol + dir.c * i;
+          const r = sr + dir.r * i;
+          const c = sc + dir.c * i;
           if (r < 0 || c < 0 || r >= ROWS || c >= COLS) break;
           if (empty[r][c] && empty[r][c] !== word[i]) break;
           cells.push({ row: r, col: c });
@@ -61,8 +137,7 @@ export default function WordSearch() {
           cells.forEach((cell, i) => {
             empty[cell.row][cell.col] = word[i];
           });
-          placed.push({ word, cells });
-          placedOk = true;
+          placed = true;
         }
       }
     });
@@ -76,41 +151,37 @@ export default function WordSearch() {
     }
 
     setGrid(empty);
-    setFoundWords([]);
-    setFoundCells(new Set());
-    setSelection([]);
   }
 
-  /* MOUSE EVENTS */
+  /* SELECTION */
   function startSelection(cell: Cell) {
+    if (finished) return;
     setIsSelecting(true);
     setSelection([cell]);
   }
 
   function updateSelection(cell: Cell) {
-    if (!isSelecting) return;
-
-    const first = selection[0];
-    const path = buildLine(first, cell);
+    if (!isSelecting || finished) return;
+    const path = buildLine(selection[0], cell);
     setSelection(path);
   }
 
   function endSelection() {
     if (!isSelecting) return;
     setIsSelecting(false);
-    checkSelection();
+    validateSelection();
     setSelection([]);
   }
 
-  /* LINE BUILDER */
+  /* LOGIC */
   function buildLine(a: Cell, b: Cell): Cell[] {
     const dr = Math.sign(b.row - a.row);
     const dc = Math.sign(b.col - a.col);
 
-    if (
-      dr !== 0 && dc !== 0 &&
-      Math.abs(b.row - a.row) !== Math.abs(b.col - a.col)
-    ) return [a];
+    if (dr !== 0 && dc !== 0 &&
+        Math.abs(b.row - a.row) !== Math.abs(b.col - a.col)) {
+      return [a];
+    }
 
     const len = Math.max(
       Math.abs(b.row - a.row),
@@ -123,18 +194,24 @@ export default function WordSearch() {
     }));
   }
 
-  /* VALIDATE WORD */
-  function checkSelection() {
+  function validateSelection() {
     const word = selection.map(c => grid[c.row][c.col]).join("");
     const reversed = word.split("").reverse().join("");
 
-    const match = WORDS.find(
+    const found = WORDS.find(
       w => (w === word || w === reversed) && !foundWords.includes(w)
     );
 
-    if (!match) return;
+    if (!found) return;
 
-    setFoundWords(prev => [...prev, match]);
+    setFoundWords(prev => {
+      const next = [...prev, found];
+      if (next.length === WORDS.length) {
+        stopTimer();
+        setFinished(true);
+      }
+      return next;
+    });
 
     setFoundCells(prev => {
       const next = new Set(prev);
@@ -143,42 +220,57 @@ export default function WordSearch() {
     });
   }
 
-  /* RENDER */
+  /* UI */
   return (
     <div className="space-y-6 text-center">
       <h2 className="text-3xl font-bold">🔍 Caça-Palavras</h2>
 
-      <div className="flex justify-center gap-10">
-        {/* GRID */}
-        <div
-          className="grid gap-1 select-none"
-          style={{ gridTemplateColumns: `repeat(${COLS}, 32px)` }}
-          onMouseLeave={endSelection}
-        >
-          {grid.map((row, r) =>
-            row.map((char, c) => {
-              const key = `${r}-${c}`;
-              const selected = selection.some(s => s.row === r && s.col === c);
-              const found = foundCells.has(key);
+      <p className="text-lg">
+        ⏱️ Tempo: <b>{seconds}s</b>
+      </p>
 
-              return (
-                <div
-                  key={key}
-                  onMouseDown={() => startSelection({ row: r, col: c })}
-                  onMouseEnter={() => updateSelection({ row: r, col: c })}
-                  onMouseUp={endSelection}
-                  className={`
-                    w-8 h-8 flex items-center justify-center font-bold cursor-pointer
-                    border rounded
-                    ${found ? "bg-green-500 text-white" : ""}
-                    ${selected && !found ? "bg-blue-400 text-white" : ""}
-                  `}
-                >
-                  {char}
-                </div>
-              );
-            })
-          )}
+      {finished && (
+        <div className="text-green-600 font-bold text-xl">
+          🏆 Concluído em {seconds} segundos!
+        </div>
+      )}
+
+      <div className="flex justify-center gap-10">
+        {/* GRID COM SCROLL */}
+        <div
+          className="border rounded-lg p-2 overflow-auto"
+          style={{ maxHeight: "500px", maxWidth: "720px" }}
+        >
+          <div
+            className="grid gap-1 select-none"
+            style={{ gridTemplateColumns: `repeat(${COLS}, 32px)` }}
+            onMouseLeave={endSelection}
+          >
+            {grid.map((row, r) =>
+              row.map((char, c) => {
+                const key = `${r}-${c}`;
+                const selected = selection.some(s => s.row === r && s.col === c);
+                const found = foundCells.has(key);
+
+                return (
+                  <div
+                    key={key}
+                    onMouseDown={() => startSelection({ row: r, col: c })}
+                    onMouseEnter={() => updateSelection({ row: r, col: c })}
+                    onMouseUp={endSelection}
+                    className={`
+                      w-8 h-8 flex items-center justify-center font-bold cursor-pointer
+                      border rounded
+                      ${found ? "bg-green-500 text-white" : ""}
+                      ${selected && !found ? "bg-blue-400 text-white" : ""}
+                    `}
+                  >
+                    {char}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* WORD LIST */}
@@ -187,7 +279,9 @@ export default function WordSearch() {
           {WORDS.map(w => (
             <div
               key={w}
-              className={foundWords.includes(w) ? "line-through text-green-600" : ""}
+              className={foundWords.includes(w)
+                ? "line-through text-green-600"
+                : ""}
             >
               {w}
             </div>
@@ -195,7 +289,7 @@ export default function WordSearch() {
         </div>
       </div>
 
-      <Button onClick={generateGrid}>🔄 Nova Rodada</Button>
+      <Button onClick={startNewGame}>🔄 Nova Rodada</Button>
     </div>
   );
 }
