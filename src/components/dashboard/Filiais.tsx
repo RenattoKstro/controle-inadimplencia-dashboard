@@ -1,5 +1,5 @@
 // src/components/dashboard/Filiais.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -61,26 +61,24 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
-  /** 🔥 TIMER QUE FORÇA RE-RENDER A CADA MINUTO */
+  // Atualiza o "now" a cada 60 segundos para forçar re-render do contador
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
+      console.log("Contador atualizado:", new Date().toISOString());
     }, 60000);
-
     return () => clearInterval(timer);
   }, []);
 
   let dadosFiltrados = ranking;
 
   if (filtroRegional !== "todas") {
-    dadosFiltrados = dadosFiltrados.filter(
-      f => (f.regional || "Sem regional") === filtroRegional
-    );
+    dadosFiltrados = dadosFiltrados.filter(f => (f.regional || "Sem regional") === filtroRegional);
   }
 
   if (ocultarZeradas) {
-    dadosFiltrados = dadosFiltrados.filter(
-      f => f.total_meta_fiado > 0 || f.total_meta_desafio > 0
+    dadosFiltrados = dadosFiltrados.filter(f =>
+      f.total_meta_fiado > 0 || f.total_meta_desafio > 0
     );
   }
 
@@ -115,37 +113,39 @@ const Filiais = () => {
     const metaMes = f.total_meta_fiado || 0;
     const recebidosMes = abertura - vencidoAtual;
     const aReceber = abertura - metaMes;
-    const format = (n: number) =>
-      new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
+    const format = (n: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
     return `${format(recebidosMes)} / ${format(aReceber)}`;
   };
 
-  /** ✅ CORREÇÃO AQUI */
-  const getUpdatedText = (updatedAt: string | null, now: Date) => {
+  // Função corrigida e robusta para calcular o tempo exato
+  const getUpdatedText = (updatedAt: string | null) => {
     if (!updatedAt) return "Nunca atualizado";
 
-    const updatedDate = new Date(updatedAt);
+    // Remove partes problemáticas (milissegundos e timezone)
+    const cleanTs = updatedAt.split('.')[0].split('+')[0].split('-')[0]; // pega só YYYY-MM-DDTHH:mm:ss
+
+    const updatedDate = new Date(cleanTs + 'Z');
 
     if (isNaN(updatedDate.getTime())) {
       console.warn("Timestamp inválido:", updatedAt);
-      return "Atualizado recentemente";
+      return "Atualizado recentemente (formato não reconhecido)";
     }
 
-    const diffMs = now.getTime() - updatedDate.getTime();
+    const currentDate = new Date();
+    const diffMs = currentDate.getTime() - updatedDate.getTime();
+
     if (diffMs < 0) return "Atualizado recentemente";
 
     const diffMin = Math.floor(diffMs / 60000);
 
-    if (diffMin < 1) return "Atualizado agora";
-    if (diffMin < 60)
-      return `Atualizado há ${diffMin} minuto${diffMin === 1 ? "" : "s"}`;
+    if (diffMin <= 5) return "Atualizado agora";
+    if (diffMin < 60) return `Atualizado há ${diffMin} minuto${diffMin === 1 ? '' : 's'}`;
 
     const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24)
-      return `Atualizado há ${diffHr} hora${diffHr === 1 ? "" : "s"}`;
+    if (diffHr < 24) return `Atualizado há ${diffHr} hora${diffHr === 1 ? '' : 's'}`;
 
     const diffDays = Math.floor(diffHr / 24);
-    return `Atualizado há ${diffDays} dia${diffDays === 1 ? "" : "s"}`;
+    return `Atualizado há ${diffDays} dia${diffDays === 1 ? '' : 's'}`;
   };
 
   return (
@@ -190,23 +190,159 @@ const Filiais = () => {
       {/* TABELA */}
       <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
         <table className="w-full text-left text-sm">
+          <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
+            <tr>
+              <th className="px-4 py-2">#</th>
+              <th className="px-4 py-2">Filial</th>
+              <th className="px-4 py-2 text-center">Recebido / A Receber</th>
+              <th className="px-4 py-2 text-center">Meta Fiado</th>
+              <th className="px-4 py-2 text-center">Meta Desafio</th>
+            </tr>
+          </thead>
           <tbody>
-            {dadosFiltrados.map((f, i) => {
-              const user = f.usuario_principal;
-              const initials = getInitials(user?.nome_usuario);
-              const updatedText = getUpdatedText(user?.updated_at, now);
+            {dadosFiltrados.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center py-16 text-gray-500">
+                  <Store className="h-20 w-20 mx-auto mb-4" />
+                  <p className="text-xl">
+                    {ocultarZeradas
+                      ? "Nenhuma filial com meta ativa."
+                      : "Nenhuma filial cadastrada."}
+                  </p>
+                </td>
+              </tr>
+            ) : (
+              dadosFiltrados.map((f, i) => {
+                const user = f.usuario_principal;
+                const initials = getInitials(user?.nome_usuario);
+                const updatedText = getUpdatedText(user?.updated_at);
 
-              return (
-                <tr key={f.idfilial} className="border-b">
-                  <td className="px-4 py-3">
-                    <p className="font-medium">{f.filial}</p>
-                    <p className="text-xs text-gray-500 italic">
-                      {updatedText}
-                    </p>
-                  </td>
-                </tr>
-              );
-            })}
+                return (
+                  <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {i < 3 && (
+                          <Trophy className={`h-5 w-5 ${i === 0 ? "text-yellow-500" : i === 1 ? "text-gray-400" : "text-orange-600"}`} />
+                        )}
+                        <span className="font-bold">{i + 1}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                          <HoverCard openDelay={200}>
+                            <HoverCardTrigger asChild>
+                              <div className="cursor-pointer">
+                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500 flex items-center justify-center">
+                                  {user?.avatar_url ? (
+                                    <img
+                                      src={user.avatar_url}
+                                      alt="Perfil"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm ${user?.avatar_url ? "hidden" : ""}`}>
+                                    {initials !== "U" ? initials : <User className="h-6 w-6" />}
+                                  </div>
+                                </div>
+                              </div>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-80">
+                              <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
+                                  {user?.avatar_url ? (
+                                    <img
+                                      src={user.avatar_url}
+                                      alt="Perfil"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-2xl ${user?.avatar_url ? "hidden" : ""}`}>
+                                    {initials !== "U" ? initials : <User className="h-10 w-10" />}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="font-bold text-lg">{user?.nome_usuario || "Usuário"}</p>
+                                  <p className="text-sm text-muted-foreground">Filial {f.filial}</p>
+                                </div>
+                              </div>
+                              <div className="mt-4 space-y-2">
+                                {user?.whatsapp && (
+                                  <a
+                                    href={`https://wa.me/55${user.whatsapp}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-green-600 hover:underline"
+                                  >
+                                    <Phone className="h-4 w-4" /> WhatsApp
+                                  </a>
+                                )}
+                                {user?.instagram && (
+                                  <a
+                                    href={`https://instagram.com/${user.instagram.replace("@", "")}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-pink-600 hover:underline"
+                                  >
+                                    <Instagram className="h-4 w-4" /> Instagram
+                                  </a>
+                                )}
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
+                          <div>
+                            <p className="font-medium">{f.filial}</p>
+                            <p className="text-xs text-gray-600">{f.regional}</p>
+                          </div>
+                        </div>
+                        {/* Contador corrigido */}
+                        <p className="text-xs text-gray-500 italic mt-1">
+                          {updatedText}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <p className="font-bold text-sm">
+                        {calcularRecebidoMeta(f)}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="space-y-1">
+                        <p className={`text-lg ${getPercentColor(f.pct_fiado)}`}>
+                          {f.pct_fiado.toFixed(2)}%
+                        </p>
+                        <Progress
+                          value={f.pct_fiado}
+                          className="h-3"
+                          indicatorClassName={getProgressColor(f.pct_fiado)}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="space-y-1">
+                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(f.pct_desafio)}`}>
+                          <Zap className="h-4 w-4 text-yellow-500" />
+                          {f.pct_desafio.toFixed(2)}%
+                        </p>
+                        <Progress
+                          value={f.pct_desafio}
+                          className="h-3"
+                          indicatorClassName={getProgressColor(f.pct_desafio)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
