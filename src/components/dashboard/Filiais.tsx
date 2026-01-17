@@ -119,34 +119,37 @@ const Filiais = () => {
 
   // Função corrigida e robusta para calcular o tempo exato
   const getUpdatedText = (updatedAt: string | null) => {
-    if (!updatedAt) return "Nunca atualizado";
+  if (!updatedAt) return "Nunca atualizado";
 
-    // Remove partes problemáticas (milissegundos e timezone)
-    const cleanTs = updatedAt.split('.')[0].split('+')[0].split('-')[0]; // pega só YYYY-MM-DDTHH:mm:ss
+  // Cria Date forçando UTC (adiciona 'Z' se não tiver)
+  let utcString = updatedAt;
+  if (!utcString.endsWith('Z')) {
+    utcString = updatedAt.replace(/(\+|\-)\d{2}:\d{2}$/, 'Z'); // troca timezone por Z
+  }
 
-    const updatedDate = new Date(cleanTs + 'Z');
+  const updatedDate = new Date(utcString);
 
-    if (isNaN(updatedDate.getTime())) {
-      console.warn("Timestamp inválido:", updatedAt);
-      return "Atualizado recentemente (formato não reconhecido)";
-    }
+  if (isNaN(updatedDate.getTime())) {
+    console.warn("Timestamp inválido:", updatedAt);
+    return "Atualizado recentemente";
+  }
 
-    const currentDate = new Date();
-    const diffMs = currentDate.getTime() - updatedDate.getTime();
+  const currentDate = new Date(); // agora local, mas vamos comparar em ms
+  const diffMs = currentDate.getTime() - updatedDate.getTime();
 
-    if (diffMs < 0) return "Atualizado recentemente";
+  if (diffMs < 0) return "Atualizado recentemente";
 
-    const diffMin = Math.floor(diffMs / 60000);
+  const diffMin = Math.floor(diffMs / 60000);
 
-    if (diffMin <= 5) return "Atualizado agora";
-    if (diffMin < 60) return `Atualizado há ${diffMin} minuto${diffMin === 1 ? '' : 's'}`;
+  if (diffMin <= 5) return "Atualizado agora";
+  if (diffMin < 60) return `Atualizado há ${diffMin} minuto${diffMin === 1 ? '' : 's'}`;
 
-    const diffHr = Math.floor(diffMin / 60);
-    if (diffHr < 24) return `Atualizado há ${diffHr} hora${diffHr === 1 ? '' : 's'}`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `Atualizado há ${diffHr} hora${diffHr === 1 ? '' : 's'}`;
 
-    const diffDays = Math.floor(diffHr / 24);
-    return `Atualizado há ${diffDays} dia${diffDays === 1 ? '' : 's'}`;
-  };
+  const diffDays = Math.floor(diffHr / 24);
+  return `Atualizado há ${diffDays} dia${diffDays === 1 ? '' : 's'}`;
+};
 
   return (
     <div className="space-y-6">
