@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-/* CONFIG */
 const ROWS = 25;
 const COLS = 20;
 
 const WORDS = [
-  "VENDAS",
+ "VENDAS",
 "LUCRO",
 "META",
 "CREDIARIO",
@@ -65,26 +64,31 @@ const WORDS = [
 
 type Cell = { row: number; col: number };
 
-export default function WordSearch() {
+function CacaPalavras() {
   const [grid, setGrid] = useState<string[][]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
 
-  const [isSelecting, setIsSelecting] = useState(false);
+  const [selecting, setSelecting] = useState(false);
   const [selection, setSelection] = useState<Cell[]>([]);
 
-  /* TIMER */
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const [finished, setFinished] = useState(false);
 
-  /* INIT */
   useEffect(() => {
-    startNewGame();
+    startGame();
     return () => stopTimer();
   }, []);
 
-  /* TIMER CONTROL */
+  function startGame() {
+    generateGrid();
+    setFoundWords([]);
+    setFoundCells(new Set());
+    setSelection([]);
+    setSeconds(0);
+    startTimer();
+  }
+
   function startTimer() {
     stopTimer();
     timerRef.current = setInterval(() => {
@@ -94,48 +98,33 @@ export default function WordSearch() {
 
   function stopTimer() {
     if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
   }
 
-  /* GAME */
-  function startNewGame() {
-    generateGrid();
-    setFoundWords([]);
-    setFoundCells(new Set());
-    setSelection([]);
-    setFinished(false);
-    setSeconds(0);
-    startTimer();
-  }
-
-  /* GRID */
   function generateGrid() {
-    const empty = Array.from({ length: ROWS }, () =>
+    const g = Array.from({ length: ROWS }, () =>
       Array.from({ length: COLS }, () => "")
     );
 
     WORDS.forEach(word => {
       let placed = false;
-      let tries = 0;
 
-      while (!placed && tries < 300) {
-        tries++;
-        const dir = randomDirection();
-        const sr = Math.floor(Math.random() * ROWS);
-        const sc = Math.floor(Math.random() * COLS);
+      while (!placed) {
+        const dir = randomDir();
+        const r = Math.floor(Math.random() * ROWS);
+        const c = Math.floor(Math.random() * COLS);
 
         const cells: Cell[] = [];
         for (let i = 0; i < word.length; i++) {
-          const r = sr + dir.r * i;
-          const c = sc + dir.c * i;
-          if (r < 0 || c < 0 || r >= ROWS || c >= COLS) break;
-          if (empty[r][c] && empty[r][c] !== word[i]) break;
-          cells.push({ row: r, col: c });
+          const nr = r + dir.r * i;
+          const nc = c + dir.c * i;
+          if (nr < 0 || nc < 0 || nr >= ROWS || nc >= COLS) break;
+          if (g[nr][nc] && g[nr][nc] !== word[i]) break;
+          cells.push({ row: nr, col: nc });
         }
 
         if (cells.length === word.length) {
           cells.forEach((cell, i) => {
-            empty[cell.row][cell.col] = word[i];
+            g[cell.row][cell.col] = word[i];
           });
           placed = true;
         }
@@ -144,107 +133,70 @@ export default function WordSearch() {
 
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
-        if (!empty[r][c]) {
-          empty[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        if (!g[r][c]) {
+          g[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
         }
       }
     }
 
-    setGrid(empty);
+    setGrid(g);
   }
 
-  /* SELECTION */
-  function startSelection(cell: Cell) {
-    if (finished) return;
-    setIsSelecting(true);
+  function startSelect(cell: Cell) {
+    setSelecting(true);
     setSelection([cell]);
   }
 
-  function updateSelection(cell: Cell) {
-    if (!isSelecting || finished) return;
-    const path = buildLine(selection[0], cell);
-    setSelection(path);
+  function updateSelect(cell: Cell) {
+    if (!selecting) return;
+    setSelection(buildLine(selection[0], cell));
   }
 
-  function endSelection() {
-    if (!isSelecting) return;
-    setIsSelecting(false);
-    validateSelection();
+  function endSelect() {
+    if (!selecting) return;
+    setSelecting(false);
+    checkWord();
     setSelection([]);
   }
 
-  /* LOGIC */
-  function buildLine(a: Cell, b: Cell): Cell[] {
-    const dr = Math.sign(b.row - a.row);
-    const dc = Math.sign(b.col - a.col);
-
-    if (dr !== 0 && dc !== 0 &&
-        Math.abs(b.row - a.row) !== Math.abs(b.col - a.col)) {
-      return [a];
-    }
-
-    const len = Math.max(
-      Math.abs(b.row - a.row),
-      Math.abs(b.col - a.col)
-    ) + 1;
-
-    return Array.from({ length: len }, (_, i) => ({
-      row: a.row + dr * i,
-      col: a.col + dc * i
-    }));
-  }
-
-  function validateSelection() {
+  function checkWord() {
     const word = selection.map(c => grid[c.row][c.col]).join("");
     const reversed = word.split("").reverse().join("");
 
-    const found = WORDS.find(
+    const match = WORDS.find(
       w => (w === word || w === reversed) && !foundWords.includes(w)
     );
 
-    if (!found) return;
+    if (!match) return;
 
-    setFoundWords(prev => {
-      const next = [...prev, found];
-      if (next.length === WORDS.length) {
-        stopTimer();
-        setFinished(true);
-      }
-      return next;
-    });
-
+    setFoundWords(f => [...f, match]);
     setFoundCells(prev => {
-      const next = new Set(prev);
-      selection.forEach(c => next.add(`${c.row}-${c.col}`));
-      return next;
+      const n = new Set(prev);
+      selection.forEach(c => n.add(`${c.row}-${c.col}`));
+      return n;
     });
+
+    if (foundWords.length + 1 === WORDS.length) {
+      stopTimer();
+    }
   }
 
-  /* UI */
   return (
-    <div className="space-y-6 text-center">
-      <h2 className="text-3xl font-bold">🔍 Caça-Palavras</h2>
+    <div className="h-full flex flex-col">
+      {/* HEADER */}
+      <div className="text-center mb-3">
+        <h2 className="text-2xl font-bold">🔍 Caça-Palavras</h2>
+        <p>⏱️ Tempo: <b>{seconds}s</b></p>
+      </div>
 
-      <p className="text-lg">
-        ⏱️ Tempo: <b>{seconds}s</b>
-      </p>
-
-      {finished && (
-        <div className="text-green-600 font-bold text-xl">
-          🏆 Concluído em {seconds} segundos!
-        </div>
-      )}
-
-      <div className="flex justify-center gap-10">
-        {/* GRID COM SCROLL */}
-        <div
-          className="border rounded-lg p-2 overflow-auto"
-          style={{ maxHeight: "500px", maxWidth: "720px" }}
-        >
+      {/* CONTENT */}
+      <div className="flex-1 flex gap-6 overflow-hidden">
+        {/* GRID */}
+        <div className="flex-1 overflow-auto border rounded-lg p-2">
           <div
             className="grid gap-1 select-none"
             style={{ gridTemplateColumns: `repeat(${COLS}, 32px)` }}
-            onMouseLeave={endSelection}
+            onMouseLeave={endSelect}
           >
             {grid.map((row, r) =>
               row.map((char, c) => {
@@ -255,12 +207,12 @@ export default function WordSearch() {
                 return (
                   <div
                     key={key}
-                    onMouseDown={() => startSelection({ row: r, col: c })}
-                    onMouseEnter={() => updateSelection({ row: r, col: c })}
-                    onMouseUp={endSelection}
+                    onMouseDown={() => startSelect({ row: r, col: c })}
+                    onMouseEnter={() => updateSelect({ row: r, col: c })}
+                    onMouseUp={endSelect}
                     className={`
-                      w-8 h-8 flex items-center justify-center font-bold cursor-pointer
-                      border rounded
+                      w-8 h-8 flex items-center justify-center
+                      border rounded cursor-pointer font-bold
                       ${found ? "bg-green-500 text-white" : ""}
                       ${selected && !found ? "bg-blue-400 text-white" : ""}
                     `}
@@ -274,7 +226,7 @@ export default function WordSearch() {
         </div>
 
         {/* WORD LIST */}
-        <div className="text-left space-y-1">
+        <div className="w-48 overflow-auto">
           <h4 className="font-bold mb-2">Palavras</h4>
           {WORDS.map(w => (
             <div
@@ -289,13 +241,30 @@ export default function WordSearch() {
         </div>
       </div>
 
-      <Button onClick={startNewGame}>🔄 Nova Rodada</Button>
+      {/* FOOTER */}
+      <div className="mt-4 text-center">
+        <Button onClick={startGame}>🔄 Nova Rodada</Button>
+      </div>
     </div>
   );
 }
 
-/* UTIL */
-function randomDirection() {
+/* HELPERS */
+function buildLine(a: Cell, b: Cell): Cell[] {
+  const dr = Math.sign(b.row - a.row);
+  const dc = Math.sign(b.col - a.col);
+  const len = Math.max(
+    Math.abs(b.row - a.row),
+    Math.abs(b.col - a.col)
+  ) + 1;
+
+  return Array.from({ length: len }, (_, i) => ({
+    row: a.row + dr * i,
+    col: a.col + dc * i
+  }));
+}
+
+function randomDir() {
   const dirs = [
     { r: 0, c: 1 }, { r: 0, c: -1 },
     { r: 1, c: 0 }, { r: -1, c: 0 },
@@ -304,3 +273,5 @@ function randomDirection() {
   ];
   return dirs[Math.floor(Math.random() * dirs.length)];
 }
+
+export default CacaPalavras;
