@@ -6,10 +6,9 @@ const COLS = 18;
 
 const WORDS = [
   "VENDAS","LUCRO","META","CREDIARIO","JUROS",
-  "RECEBIMENTO","CAIXA","ESTOQUE","CLIENTE",
-  "PROMOCAO","DESCONTO","PARCELAMENTO","BOLETO",
-  "NEGOCIACAO","MARGEM","COMISSAO","FINANCEIRO",
-  "LOJA","PRECO","GAZIN"
+  "CAIXA","CLIENTE","PROMOCAO","DESCONTO",
+  "PARCELAMENTO","BOLETO","MARGEM","COMISSAO",
+  "PRECO","LOJA","ESTOQUE","GAZIN","NEGOCIACAO"
 ];
 
 type Cell = { row: number; col: number };
@@ -20,8 +19,8 @@ function CacaPalavras() {
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
   const [selection, setSelection] = useState<Cell[]>([]);
   const [selecting, setSelecting] = useState(false);
-
   const [seconds, setSeconds] = useState(0);
+
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -134,17 +133,18 @@ function CacaPalavras() {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="text-center mb-3">
-        <h2 className="text-2xl font-bold">🔍 Caça-Palavras</h2>
-        <p>⏱️ Tempo: <b>{seconds}s</b></p>
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="text-center mb-2">
+        <h2 className="text-xl font-bold">🔍 Caça-Palavras</h2>
+        <p className="text-sm">⏱️ {seconds}s</p>
       </div>
 
-      <div className="flex-1 flex gap-6 overflow-hidden">
-        <div className="flex-1 overflow-auto border rounded-lg p-2">
+      <div className="flex flex-1 gap-4 overflow-hidden">
+        {/* GRID */}
+        <div className="flex-1 overflow-auto border rounded-md p-2">
           <div
             className="grid gap-1 select-none"
-            style={{ gridTemplateColumns: `repeat(${COLS}, 32px)` }}
+            style={{ gridTemplateColumns: `repeat(${COLS}, 26px)` }}
           >
             {grid.map((row, r) =>
               row.map((char, c) => {
@@ -159,8 +159,10 @@ function CacaPalavras() {
                     onMouseEnter={() => updateSelect({ row: r, col: c })}
                     onMouseUp={endSelect}
                     className={`
-                      w-8 h-8 flex items-center justify-center
-                      border rounded cursor-pointer font-bold
+                      w-[26px] h-[26px]
+                      flex items-center justify-center
+                      text-sm font-semibold
+                      border rounded cursor-pointer
                       ${found ? "bg-green-500 text-white" : ""}
                       ${selected && !found ? "bg-blue-400 text-white" : ""}
                     `}
@@ -173,8 +175,9 @@ function CacaPalavras() {
           </div>
         </div>
 
-        <div className="w-48 overflow-auto">
-          <h4 className="font-bold mb-2">Palavras</h4>
+        {/* PALAVRAS */}
+        <div className="w-40 overflow-auto text-sm">
+          <h4 className="font-bold mb-1">Palavras</h4>
           {WORDS.map(w => (
             <div
               key={w}
@@ -188,8 +191,8 @@ function CacaPalavras() {
         </div>
       </div>
 
-      <div className="mt-4 text-center">
-        <Button onClick={startGame}>🔄 Nova Rodada</Button>
+      <div className="mt-3 text-center">
+        <Button size="sm" onClick={startGame}>🔄 Nova rodada</Button>
       </div>
     </div>
   );
