@@ -5,61 +5,11 @@ const ROWS = 25;
 const COLS = 20;
 
 const WORDS = [
- "VENDAS",
-"LUCRO",
-"META",
-"CREDIARIO",
-"JUROS",
-"RECEBIMENTO",
-"CAIXA",
-"ESTOQUE",
-"CLIENTE",
-"PROMOCAO",
-"DESCONTO",
-"PARCELAMENTO",
-"BOLETO",
-"PIX",
-"CARTAO",
-"GARANTIA",
-"SEGURO",
-"CONSORCIO",
-"LOJA",
-"VAREJO",
-"MARGEM",
-"COMISSAO",
-"FATURAMENTO",
-"PRECO",
-"VENDEDOR",
-"GATILHO",
-"ATENDIMENTO",
-"EMPRESTIMO",
-"CCG",
-"SIGA",
-"SABIUM",
-"ASSISTENCIA",
-"GAZIN",
-"INADIMPLENCIA",
-"NEGOCIACAO",
-"PROSPECCAO",
-"FIDELIZACAO",
-"ESTORNO",
-"LIQUIDACAO",
-"ORCAMENTO",
-"FORNECEDOR",
-"LOGISTICA",
-"INVENTARIO",
-"COBRANCA",
-"ANTECIPACAO",
-"POSVENDA",
-"DNA",
-"ENTREGAS",
-"TV GAZIN",
-"MONTAGENS",
-"FILIAL",
-"AUDITORIA",
-"RENEGOCIAÇÃO",
-"ROBOZIN",
-"ABATEDORES",
+  "VENDAS","LUCRO","META","CREDIARIO","JUROS",
+  "RECEBIMENTO","CAIXA","ESTOQUE","CLIENTE",
+  "PROMOCAO","DESCONTO","PARCELAMENTO","BOLETO",
+  "NEGOCIACAO","MARGEM","COMISSAO","FINANCEIRO",
+  "LOJA","PRECO","GAZIN"
 ];
 
 type Cell = { row: number; col: number };
@@ -68,17 +18,30 @@ function CacaPalavras() {
   const [grid, setGrid] = useState<string[][]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
-
-  const [selecting, setSelecting] = useState(false);
   const [selection, setSelection] = useState<Cell[]>([]);
+  const [selecting, setSelecting] = useState(false);
 
   const [seconds, setSeconds] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     startGame();
-    return () => stopTimer();
+    return stopTimer;
   }, []);
+
+  function startTimer() {
+    stopTimer();
+    timerRef.current = window.setInterval(() => {
+      setSeconds(s => s + 1);
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }
 
   function startGame() {
     generateGrid();
@@ -87,17 +50,6 @@ function CacaPalavras() {
     setSelection([]);
     setSeconds(0);
     startTimer();
-  }
-
-  function startTimer() {
-    stopTimer();
-    timerRef.current = setInterval(() => {
-      setSeconds(s => s + 1);
-    }, 1000);
-  }
-
-  function stopTimer() {
-    if (timerRef.current) clearInterval(timerRef.current);
   }
 
   function generateGrid() {
@@ -183,20 +135,16 @@ function CacaPalavras() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* HEADER */}
       <div className="text-center mb-3">
         <h2 className="text-2xl font-bold">🔍 Caça-Palavras</h2>
         <p>⏱️ Tempo: <b>{seconds}s</b></p>
       </div>
 
-      {/* CONTENT */}
       <div className="flex-1 flex gap-6 overflow-hidden">
-        {/* GRID */}
         <div className="flex-1 overflow-auto border rounded-lg p-2">
           <div
             className="grid gap-1 select-none"
             style={{ gridTemplateColumns: `repeat(${COLS}, 32px)` }}
-            onMouseLeave={endSelect}
           >
             {grid.map((row, r) =>
               row.map((char, c) => {
@@ -225,7 +173,6 @@ function CacaPalavras() {
           </div>
         </div>
 
-        {/* WORD LIST */}
         <div className="w-48 overflow-auto">
           <h4 className="font-bold mb-2">Palavras</h4>
           {WORDS.map(w => (
@@ -241,7 +188,6 @@ function CacaPalavras() {
         </div>
       </div>
 
-      {/* FOOTER */}
       <div className="mt-4 text-center">
         <Button onClick={startGame}>🔄 Nova Rodada</Button>
       </div>
@@ -253,10 +199,8 @@ function CacaPalavras() {
 function buildLine(a: Cell, b: Cell): Cell[] {
   const dr = Math.sign(b.row - a.row);
   const dc = Math.sign(b.col - a.col);
-  const len = Math.max(
-    Math.abs(b.row - a.row),
-    Math.abs(b.col - a.col)
-  ) + 1;
+  const len =
+    Math.max(Math.abs(b.row - a.row), Math.abs(b.col - a.col)) + 1;
 
   return Array.from({ length: len }, (_, i) => ({
     row: a.row + dr * i,
