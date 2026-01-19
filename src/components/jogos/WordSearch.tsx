@@ -1,9 +1,6 @@
 // src/components/jogos/CacaPalavras.tsx
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useUserData } from "@/hooks/useUserData";
-import { useToast } from "@/hooks/use-toast";
 
 const ROWS = 18;
 const COLS = 18;
@@ -18,51 +15,19 @@ const WORDS = [
 type Cell = { row: number; col: number };
 
 function CacaPalavras() {
-  const { userData } = useUserData();
-  const userId = userData?.user_id || "";
-  const { toast } = useToast();
-
   const [grid, setGrid] = useState<string[][]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
   const [selection, setSelection] = useState<Cell[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [seconds, setSeconds] = useState(0);
-  const [bestScore, setBestScore] = useState<number | null>(null);
 
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (userId) loadBestScore();
     startGame();
     return stopTimer;
-  }, [userId]);
-
-  const loadBestScore = async () => {
-    const { data } = await supabase
-      .from("user_scores")
-      .select("score")
-      .eq("user_id", userId)
-      .eq("game_name", "cacapalavras")
-      .single();
-
-    setBestScore(data?.score || null);
-  };
-
-  const saveBestScore = async (newScore: number) => {
-    if (bestScore === null || newScore < bestScore) {
-      await supabase.from("user_scores").upsert({
-        user_id: userId,
-        game_name: "cacapalavras",
-        score: newScore,
-      });
-      setBestScore(newScore);
-      toast({
-        title: "Novo recorde!",
-        description: `Você completou em ${newScore} segundos!`,
-      });
-    }
-  };
+  }, []);
 
   function startTimer() {
     stopTimer();
@@ -162,39 +127,36 @@ function CacaPalavras() {
       w => (w === word || w === reversed) && !foundWords.includes(w)
     );
 
-    if (match) {
-      setFoundWords(f => [...f, match]);
-      setFoundCells(prev => {
-        const n = new Set(prev);
-        selection.forEach(c => n.add(`${c.row}-${c.col}`));
-        return n;
-      });
+    if (!match) return;
 
-      if (foundWords.length + 1 === WORDS.length) {
-        stopTimer();
-        saveBestScore(seconds + 1); // +1 porque o timer ainda não contou o último segundo
-      }
+    setFoundWords(f => [...f, match]);
+    setFoundCells(prev => {
+      const n = new Set(prev);
+      selection.forEach(c => n.add(`${c.row}-${c.col}`));
+      return n;
+    });
+
+    if (foundWords.length + 1 === WORDS.length) {
+      stopTimer();
     }
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden p-4">
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold">🔍 Caça-Palavras</h2>
-        <div className="flex justify-center gap-8 mt-2 text-lg">
-          <p>⏱️ Tempo: <span className="font-bold text-green-600">{seconds}s</span></p>
-          {bestScore !== null && (
-            <p>Recorde: <span className="font-bold text-purple-600">{bestScore}s</span></p>
-          )}
-        </div>
+        <p className="text-sm text-muted-foreground">⏱️ {seconds}s</p>
       </div>
 
-      <div className="flex flex-1 gap-6 overflow-hidden">
-        {/* GRID */}
-        <div className="flex-1 overflow-auto border rounded-md p-4 bg-white">
-          <div
+      <div className="flex flex-1 gap-6 min-h-0">
+        {/* Área do grid com rolagem */}
+        <div className="flex-1 overflow-auto border rounded-lg bg-white p-4 shadow-sm">
+          <div 
             className="grid gap-1 select-none mx-auto"
-            style={{ gridTemplateColumns: `repeat(${COLS}, 32px)` }}
+            style={{ 
+              gridTemplateColumns: `repeat(${COLS}, minmax(32px, 1fr))`,
+              maxWidth: 'fit-content'
+            }}
           >
             {grid.map((row, r) =>
               row.map((char, c) => {
@@ -208,15 +170,30 @@ function CacaPalavras() {
                     onMouseDown={() => startSelect({ row: r, col: c })}
                     onMouseEnter={() => updateSelect({ row: r, col: c })}
                     onMouseUp={endSelect}
+                    onTouchStart={() => startSelect({ row: r, col: c })}
+                    onTouchMove={(e) => {
+                      e.preventDefault();
+                      const touch = e.touches[0];
+                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                      if (element && element.dataset.row && element.dataset.col) {
+                        updateSelect({ 
+                          row: parseInt(element.dataset.row), 
+                          col: parseInt(element.dataset.col) 
+                        });
+                      }
+                    }}
+                    onTouchEnd={endSelect}
+                    data-row={r}
+                    data-col={c}
                     className={`
-                      w-8 h-8
+                      w-8 h-8 min-w-[32px] min-h-[32px]
                       flex items-center justify-center
-                      text-lg font-bold
+                      text-base font-bold
                       border rounded cursor-pointer
-                      transition-colors
+                      transition-colors duration-150
                       ${found ? "bg-green-500 text-white" : ""}
                       ${selected && !found ? "bg-blue-400 text-white" : ""}
-                      hover:bg-gray-200
+                      hover:bg-gray-200 active:bg-blue-300
                     `}
                   >
                     {char}
@@ -227,22 +204,32 @@ function CacaPalavras() {
           </div>
         </div>
 
-        {/* PALAVRAS */}
-        <div className="w-48 overflow-y-auto text-sm bg-gray-50 p-4 rounded border">
-          <h4 className="font-bold mb-2 text-center">Palavras ({foundWords.length} / {WORDS.length})</h4>
-          {WORDS.map(w => (
-            <div
-              key={w}
-              className={`p-1 ${foundWords.includes(w) ? "line-through text-green-600" : ""}`}
-            >
-              {w}
-            </div>
-          ))}
+        {/* Lista de palavras */}
+        <div className="w-48 min-w-[192px] overflow-y-auto border rounded-lg bg-gray-50 p-4 shadow-sm">
+          <h4 className="font-bold mb-3 text-center sticky top-0 bg-gray-50 z-10 py-1">
+            Palavras ({foundWords.length} / {WORDS.length})
+          </h4>
+          <div className="space-y-1">
+            {WORDS.map(w => (
+              <div
+                key={w}
+                className={`p-1.5 rounded ${foundWords.includes(w) 
+                  ? "line-through text-green-600 bg-green-50" 
+                  : "text-gray-800"}`}
+              >
+                {w}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="mt-4 text-center">
-        <Button size="lg" onClick={startGame} className="bg-gradient-to-r from-blue-600 to-indigo-600">
+        <Button 
+          size="lg" 
+          onClick={startGame}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+        >
           🔄 Nova rodada
         </Button>
       </div>
