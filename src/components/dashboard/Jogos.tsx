@@ -108,11 +108,11 @@ const Jogos = () => {
             </Card>
           </DialogTrigger>
 
-          <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden">
-            <div className="p-6">
-              <WordSearch />
-            </div>
-          </DialogContent>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
+  <div className="h-[90vh]">
+    <CacaPalavras />
+  </div>
+</DialogContent>
         </Dialog>
       </div>
     </div>
