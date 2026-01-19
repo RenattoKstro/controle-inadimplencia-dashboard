@@ -30,6 +30,7 @@ function CacaPalavras() {
   const [selection, setSelection] = useState<Cell[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [score, setScore] = useState(0);
 
   const timerRef = useRef<number | null>(null);
 
@@ -58,6 +59,7 @@ function CacaPalavras() {
     setFoundCells(new Set());
     setSelection([]);
     setSeconds(0);
+    setScore(0);
     startTimer();
   }
 
@@ -141,15 +143,14 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
-        // Se for secreta, desconta 30 segundos
-        if (SECRET_WORDS.includes(match)) {
-          setSeconds(s => Math.max(0, s - 30));
-        }
+        // Calcula pontos: +5 para visível, +10 para secreta
+        const pointsToAdd = SECRET_WORDS.includes(match) ? 10 : 5;
+        setScore(s => s + pointsToAdd);
 
         // Verifica vitória (todas as 30 encontradas)
         if (newFound.length === ALL_WORDS.length) {
           stopTimer();
-          alert(`Parabéns! Você encontrou todas as 30 palavras em ${seconds}s!`);
+          alert(`Parabéns! Você encontrou todas as 30 palavras!\n\nPontuação: ${score + pointsToAdd} pontos\nTempo: ${seconds}s`);
         }
 
         return newFound;
@@ -170,9 +171,11 @@ function CacaPalavras() {
       {/* Cabeçalho */}
       <div className="text-center py-3 border-b bg-white shadow-sm">
         <h2 className="text-3xl font-bold">🔍 Caça-Palavras</h2>
-        <p className="text-lg text-muted-foreground mt-1">
-          ⏱️ {seconds}s • Encontradas: {visibleProgress} / {VISIBLE_WORDS.length}
-        </p>
+        <div className="flex justify-center gap-8 mt-2 text-lg">
+          <p>⏱️ Tempo: <span className="font-bold text-green-600">{seconds}s</span></p>
+          <p>Encontradas: <span className="font-bold text-blue-600">{visibleProgress} / 20</span></p>
+          <p>Pontos: <span className="font-bold text-purple-600">{score}</span></p>
+        </div>
       </div>
 
       {/* Conteúdo principal */}
@@ -307,10 +310,10 @@ function buildLine(a: Cell, b: Cell): Cell[] {
 
 function randomDir() {
   const dirs = [
-    { r: 0, c: 1 }, { r: 0, c: -1 },
-    { r: 1, c: 0 }, { r: -1, c: 0 },
-    { r: 1, c: 1 }, { r: -1, c: -1 },
-    { r: 1, c: -1 }, { r: -1, c: 1 }
+    { r: 0, c: 1 }, { r: 0, c: -1 },     // horizontal
+    { r: 1, c: 0 }, { r: -1, c: 0 },     // vertical
+    { r: 1, c: 1 }, { r: -1, c: -1 },    // diagonal principal
+    { r: 1, c: -1 }, { r: -1, c: 1 }     // diagonal secundária
   ];
   return dirs[Math.floor(Math.random() * dirs.length)];
 }
