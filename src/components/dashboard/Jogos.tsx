@@ -110,7 +110,7 @@ const Jogos = () => {
 
           <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
            <div className="h-[90vh]">
-          <CacaPalavras />
+          <WordSearch />
           </div>
          </DialogContent>
         </Dialog>
