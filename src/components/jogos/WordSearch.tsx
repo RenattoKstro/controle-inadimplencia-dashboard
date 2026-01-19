@@ -13,7 +13,7 @@ const VISIBLE_WORDS = [
   "ESTOQUE", "GAZIN", "NEGOCIACAO", "FATURA", "RECIBO"
 ];
 
-// 10 palavras secretas (não aparecem até serem encontradas)
+// 10 palavras secretas (ocultas - só aparecem quando encontradas)
 const SECRET_WORDS = [
   "FATURAMENTO", "RENDIMENTO", "EMPRESTIMO", "CHEQUE", "CARTAO",
   "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA", "LUCROBRUTO"
@@ -101,7 +101,6 @@ function CacaPalavras() {
       }
     });
 
-    // Preenche o restante com letras aleatórias
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (!g[r][c]) {
@@ -308,10 +307,10 @@ function buildLine(a: Cell, b: Cell): Cell[] {
 
 function randomDir() {
   const dirs = [
-    { r: 0, c: 1 }, { r: 0, c: -1 },     // horizontal
-    { r: 1, c: 0 }, { r: -1, c: 0 },     // vertical
-    { r: 1, c: 1 }, { r: -1, c: -1 },    // diagonal principal
-    { r: 1, c: -1 }, { r: -1, c: 1 }     // diagonal secundária
+    { r: 0, c: 1 }, { r: 0, c: -1 },
+    { r: 1, c: 0 }, { r: -1, c: 0 },
+    { r: 1, c: 1 }, { r: -1, c: -1 },
+    { r: 1, c: -1 }, { r: -1, c: 1 }
   ];
   return dirs[Math.floor(Math.random() * dirs.length)];
 }
