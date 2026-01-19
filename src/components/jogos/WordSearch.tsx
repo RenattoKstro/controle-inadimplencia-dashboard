@@ -5,12 +5,21 @@ import { Button } from "@/components/ui/button";
 const ROWS = 18;
 const COLS = 18;
 
-const WORDS = [
+// Palavras visíveis (obrigatórias)
+const VISIBLE_WORDS = [
   "VENDAS","LUCRO","META","CREDIARIO","JUROS",
   "CAIXA","CLIENTE","PROMOCAO","DESCONTO",
   "PARCELAMENTO","BOLETO","MARGEM","COMISSAO",
   "PRECO","LOJA","ESTOQUE","GAZIN","NEGOCIACAO"
 ];
+
+// Palavras ocultas (secretas - bônus)
+const SECRET_WORDS = [
+  "FATURAMENTO", "RENDIMENTO", "EMPRESTIMO", "CHEQUE", "CARTAO",
+  "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA", "LUCROBRUTO"
+];
+
+const ALL_WORDS = [...VISIBLE_WORDS, ...SECRET_WORDS];
 
 type Cell = { row: number; col: number };
 
@@ -23,7 +32,6 @@ function CacaPalavras() {
   const [seconds, setSeconds] = useState(0);
 
   const timerRef = useRef<number | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     startGame();
@@ -58,10 +66,11 @@ function CacaPalavras() {
       Array.from({ length: COLS }, () => "")
     );
 
-    WORDS.forEach(word => {
+    ALL_WORDS.forEach(word => {
       let placed = false;
       let attempts = 0;
-      while (!placed && attempts < 100) {
+
+      while (!placed && attempts < 200) { // mais tentativas para caber tudo
         attempts++;
         const dir = randomDir();
         const r = Math.floor(Math.random() * ROWS);
@@ -125,7 +134,7 @@ function CacaPalavras() {
     const word = selection.map(c => grid[c.row][c.col]).join("");
     const reversed = word.split("").reverse().join("");
 
-    const match = WORDS.find(
+    const match = ALL_WORDS.find(
       w => (w === word || w === reversed) && !foundWords.includes(w)
     );
 
@@ -137,31 +146,32 @@ function CacaPalavras() {
         return n;
       });
 
-      if (foundWords.length + 1 === WORDS.length) {
+      if (foundWords.length + 1 === ALL_WORDS.length) {
         stopTimer();
+        alert(`Parabéns! Você encontrou todas as ${ALL_WORDS.length} palavras em ${seconds} segundos!`);
       }
     }
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-screen flex flex-col bg-gray-50">
       {/* Cabeçalho compacto */}
-      <div className="text-center py-2 bg-gradient-to-b from-gray-50 to-white border-b">
-        <h2 className="text-xl font-bold">🔍 Caça-Palavras</h2>
-        <p className="text-sm text-muted-foreground">⏱️ {seconds}s</p>
+      <div className="text-center py-3 border-b bg-white shadow-sm">
+        <h2 className="text-2xl font-bold">🔍 Caça-Palavras - Varejo & Finanças</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          ⏱️ {seconds}s • Palavras: {foundWords.length} / {ALL_WORDS.length}
+        </p>
       </div>
 
-      {/* Área principal com scroll */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div 
-          ref={containerRef}
-          className="flex-1 overflow-auto p-2 sm:p-4"
-        >
+      {/* Conteúdo principal */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        {/* Grid com rolagem */}
+        <div className="flex-1 overflow-auto p-4 md:p-6 bg-white">
           <div className="flex justify-center">
             <div
               className="grid gap-0.5 sm:gap-1 select-none touch-manipulation"
               style={{
-                gridTemplateColumns: `repeat(${COLS}, minmax(24px, 34px))`,
+                gridTemplateColumns: `repeat(${COLS}, minmax(28px, 36px))`,
                 width: 'fit-content',
                 maxWidth: '100%'
               }}
@@ -198,14 +208,13 @@ function CacaPalavras() {
                       data-col={c}
                       className={`
                         aspect-square flex items-center justify-center
-                        text-base sm:text-lg font-bold
-                        border border-gray-300 rounded-sm
+                        text-base sm:text-lg md:text-xl font-bold
+                        border border-gray-200 rounded
                         cursor-pointer select-none touch-manipulation
-                        transition-colors duration-100
-                        ${found ? "bg-green-500 text-white border-green-600" : ""}
-                        ${selected && !found ? "bg-blue-500 text-white border-blue-600" : ""}
-                        active:bg-blue-600 active:scale-105
-                        hover:bg-gray-100
+                        transition-all duration-100
+                        ${found ? "bg-green-500 text-white shadow-md border-green-600" : ""}
+                        ${selected && !found ? "bg-blue-500 text-white shadow-sm border-blue-600" : ""}
+                        active:bg-blue-600 active:scale-110 hover:bg-gray-100
                       `}
                     >
                       {char}
@@ -217,34 +226,52 @@ function CacaPalavras() {
           </div>
         </div>
 
-        {/* Lista de palavras - fixa na parte inferior em telas pequenas */}
-        <div className="border-t bg-white p-3 sm:p-4">
-          <h4 className="font-bold text-center mb-2">
-            Palavras ({foundWords.length} / {WORDS.length})
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm max-h-32 overflow-y-auto">
-            {WORDS.map(w => (
-              <div
-                key={w}
-                className={`p-1.5 rounded text-center border ${
-                  foundWords.includes(w)
-                    ? "line-through bg-green-50 text-green-700 border-green-200"
-                    : "bg-gray-50 border-gray-200"
-                }`}
-              >
-                {w}
-              </div>
-            ))}
+        {/* Lista de palavras - lateral direita */}
+        <div className="w-full md:w-72 border-t md:border-t-0 md:border-l bg-gray-50 overflow-y-auto">
+          <div className="p-4 md:p-6">
+            <h4 className="font-bold text-lg mb-3 text-center">Palavras a Encontrar</h4>
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
+              {VISIBLE_WORDS.map(w => (
+                <div
+                  key={w}
+                  className={`p-2 rounded border text-center ${
+                    foundWords.includes(w)
+                      ? "line-through bg-green-50 text-green-700 border-green-200"
+                      : "bg-white border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  {w}
+                </div>
+              ))}
+            </div>
+
+            <h4 className="font-bold text-md mt-6 mb-3 text-center text-gray-700">
+              Palavras Secretas (Bônus)
+            </h4>
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
+              {SECRET_WORDS.map(w => (
+                <div
+                  key={w}
+                  className={`p-2 rounded border text-center italic text-gray-600 ${
+                    foundWords.includes(w)
+                      ? "line-through bg-green-50/50 text-green-600 border-green-200"
+                      : "bg-gray-100 border-gray-300 hover:bg-gray-200"
+                  }`}
+                >
+                  {w}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Botão Nova Rodada */}
-      <div className="p-4 border-t bg-white">
+      {/* Rodapé com botão */}
+      <div className="p-4 border-t bg-white flex justify-center">
         <Button 
           size="lg" 
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           onClick={startGame}
+          className="w-full max-w-md bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
           🔄 Nova rodada
         </Button>
