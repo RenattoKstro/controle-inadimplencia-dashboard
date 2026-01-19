@@ -1,122 +1,307 @@
-// src/pages/dashboard/Jogos.tsx
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Card, CardContent } from "@/components/ui/card";
+// src/components/jogos/CacaPalavras.tsx
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-import TicTacToe from "@/components/jogos/TicTacToe";
-import TwentyFortyEight from "@/components/jogos/TwentyFortyEight";
-import WordSearch from "@/components/jogos/WordSearch";
+const ROWS = 18;
+const COLS = 18;
 
-const Jogos = () => {
+// Palavras visíveis (obrigatórias - aparecem na lista desde o início)
+const VISIBLE_WORDS = [
+  "VENDAS","LUCRO","META","CREDIARIO","JUROS",
+  "CAIXA","CLIENTE","PROMOCAO","DESCONTO",
+  "PARCELAMENTO","BOLETO","MARGEM","COMISSAO",
+  "PRECO","LOJA","ESTOQUE","GAZIN","NEGOCIACAO"
+];
+
+// Palavras secretas (ocultas - só aparecem quando encontradas)
+const SECRET_WORDS = [
+  "FATURAMENTO", "RENDIMENTO", "EMPRESTIMO", "CHEQUE", "CARTAO",
+  "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA", "LUCROBRUTO"
+];
+
+const ALL_WORDS = [...VISIBLE_WORDS, ...SECRET_WORDS];
+
+type Cell = { row: number; col: number };
+
+function CacaPalavras() {
+  const [grid, setGrid] = useState<string[][]>([]);
+  const [foundWords, setFoundWords] = useState<string[]>([]);
+  const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
+  const [selection, setSelection] = useState<Cell[]>([]);
+  const [selecting, setSelecting] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    startGame();
+    return stopTimer;
+  }, []);
+
+  function startTimer() {
+    stopTimer();
+    timerRef.current = window.setInterval(() => {
+      setSeconds(s => s + 1);
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerRef.current !== null) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }
+
+  function startGame() {
+    generateGrid();
+    setFoundWords([]);
+    setFoundCells(new Set());
+    setSelection([]);
+    setSeconds(0);
+    startTimer();
+  }
+
+  function generateGrid() {
+    const g = Array.from({ length: ROWS }, () =>
+      Array.from({ length: COLS }, () => "")
+    );
+
+    ALL_WORDS.forEach(word => {
+      let placed = false;
+      let attempts = 0;
+
+      while (!placed && attempts < 300) {
+        attempts++;
+        const dir = randomDir();
+        const r = Math.floor(Math.random() * ROWS);
+        const c = Math.floor(Math.random() * COLS);
+
+        const cells: Cell[] = [];
+        let valid = true;
+        for (let i = 0; i < word.length; i++) {
+          const nr = r + dir.r * i;
+          const nc = c + dir.c * i;
+          if (nr < 0 || nc < 0 || nr >= ROWS || nc >= COLS) {
+            valid = false;
+            break;
+          }
+          if (g[nr][nc] && g[nr][nc] !== word[i]) {
+            valid = false;
+            break;
+          }
+          cells.push({ row: nr, col: nc });
+        }
+
+        if (valid && cells.length === word.length) {
+          cells.forEach((cell, i) => {
+            g[cell.row][cell.col] = word[i];
+          });
+          placed = true;
+        }
+      }
+    });
+
+    // Preenche o restante com letras aleatórias
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (!g[r][c]) {
+          g[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        }
+      }
+    }
+
+    setGrid(g);
+  }
+
+  function startSelect(cell: Cell) {
+    setSelecting(true);
+    setSelection([cell]);
+  }
+
+  function updateSelect(cell: Cell) {
+    if (!selecting) return;
+    setSelection(buildLine(selection[0], cell));
+  }
+
+  function endSelect() {
+    if (!selecting) return;
+    setSelecting(false);
+    checkWord();
+    setSelection([]);
+  }
+
+  function checkWord() {
+    const word = selection.map(c => grid[c.row][c.col]).join("");
+    const reversed = word.split("").reverse().join("");
+
+    const match = ALL_WORDS.find(
+      w => (w === word || w === reversed) && !foundWords.includes(w)
+    );
+
+    if (match) {
+      setFoundWords(f => [...f, match]);
+      setFoundCells(prev => {
+        const n = new Set(prev);
+        selection.forEach(c => n.add(`${c.row}-${c.col}`));
+        return n;
+      });
+
+      // Verifica se todas foram encontradas
+      if (foundWords.length + 1 === ALL_WORDS.length) {
+        stopTimer();
+        alert(`Parabéns! Você encontrou todas as ${ALL_WORDS.length} palavras (incluindo as secretas) em ${seconds} segundos!`);
+      }
+    }
+  }
+
   return (
-    <div className="space-y-8 p-4">
-      <div className="text-center">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-          Jogos
-        </h2>
+    <div className="h-full flex flex-col p-4 bg-gray-50">
+      {/* Cabeçalho */}
+      <div className="text-center mb-4">
+        <h2 className="text-3xl font-bold">🔍 Caça-Palavras</h2>
+        <p className="text-lg text-muted-foreground mt-1">
+          ⏱️ {seconds}s • Encontradas: {foundWords.length} / {ALL_WORDS.length}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        {/* ================= Tic Tac Toe ================= */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Card className="cursor-pointer hover:shadow-xl transition-shadow border-2 border-purple-500 overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/3/32/Tic_tac_toe.svg"
-                    alt="Tic Tac Toe"
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
-                    <h3 className="text-3xl font-bold text-white">Tic Tac Toe</h3>
-                  </div>
-                </div>
-                <div className="p-6 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Jogue contra a IA e acumule vitórias!
-                  </p>
-                  <Button className="w-full">Jogar</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </DialogTrigger>
+      {/* Conteúdo principal */}
+      <div className="flex-1 flex flex-col md:flex-row gap-6 overflow-hidden">
+        {/* Grid */}
+        <div className="flex-1 overflow-auto border rounded-lg bg-white shadow-sm">
+          <div className="p-4 md:p-6 flex justify-center">
+            <div
+              className="grid gap-0.5 sm:gap-1 select-none touch-manipulation"
+              style={{
+                gridTemplateColumns: `repeat(${COLS}, minmax(28px, 38px))`,
+                width: 'fit-content',
+                maxWidth: '100%'
+              }}
+            >
+              {grid.map((row, r) =>
+                row.map((char, c) => {
+                  const key = `${r}-${c}`;
+                  const selected = selection.some(s => s.row === r && s.col === c);
+                  const found = foundCells.has(key);
 
-          <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
-            <div className="p-6">
-              <TicTacToe />
+                  return (
+                    <div
+                      key={key}
+                      onMouseDown={() => startSelect({ row: r, col: c })}
+                      onMouseEnter={() => updateSelect({ row: r, col: c })}
+                      onMouseUp={endSelect}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        startSelect({ row: r, col: c });
+                      }}
+                      onTouchMove={(e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (el && (el as any).dataset?.row !== undefined) {
+                          updateSelect({
+                            row: parseInt((el as any).dataset.row),
+                            col: parseInt((el as any).dataset.col)
+                          });
+                        }
+                      }}
+                      onTouchEnd={endSelect}
+                      data-row={r}
+                      data-col={c}
+                      className={`
+                        aspect-square flex items-center justify-center
+                        text-base sm:text-lg md:text-xl font-bold
+                        border border-gray-200 rounded
+                        cursor-pointer select-none touch-manipulation
+                        transition-all duration-100
+                        ${found ? "bg-green-500 text-white shadow-md border-green-600" : ""}
+                        ${selected && !found ? "bg-blue-500 text-white shadow-sm border-blue-600" : ""}
+                        active:bg-blue-600 active:scale-110 hover:bg-gray-100
+                      `}
+                    >
+                      {char}
+                    </div>
+                  );
+                })
+              )}
             </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* ================= 2048 ================= */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Card className="cursor-pointer hover:shadow-xl transition-shadow border-2 border-purple-500 overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/2/28/2048_finished_game.png"
-                    alt="2048"
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
-                    <h3 className="text-3xl font-bold text-white">2048</h3>
-                  </div>
-                </div>
-                <div className="p-6 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Faça 2048 e bata seu recorde!
-                  </p>
-                  <Button className="w-full">Jogar</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </DialogTrigger>
-
-          <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
-            <div className="p-6">
-              <TwentyFortyEight />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* ================= CAÇA-PALAVRAS ================= */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Card className="cursor-pointer hover:shadow-xl transition-shadow border-2 border-purple-500 overflow-hidden">
-              <CardContent className="p-0">
-                <div className="relative">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/1/1e/Slangesiker_FP.jpg"
-                    alt="Caça-Palavras"
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
-                    <h3 className="text-3xl font-bold text-white">
-                      Caça-Palavras
-                    </h3>
-                  </div>
-                </div>
-                <div className="p-6 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Encontre as palavras e suba no ranking!
-                  </p>
-                  <Button className="w-full">Jogar</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </DialogTrigger>
-
-          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
-           <div className="h-[90vh]">
-          <WordSearch />
           </div>
-         </DialogContent>
-        </Dialog>
+        </div>
+
+        {/* Lista de palavras (lado direito) */}
+        <div className="w-full md:w-80 border-t md:border-t-0 md:border-l bg-white shadow-sm overflow-y-auto">
+          <div className="p-4 md:p-6">
+            <h4 className="font-bold text-lg mb-4 text-center">Palavras Visíveis</h4>
+            <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
+              {VISIBLE_WORDS.map(w => (
+                <div
+                  key={w}
+                  className={`p-2 rounded border text-center ${
+                    foundWords.includes(w)
+                      ? "line-through bg-green-50 text-green-700 border-green-200"
+                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                  }`}
+                >
+                  {w}
+                </div>
+              ))}
+            </div>
+
+            {/* Palavras secretas só aparecem quando encontradas */}
+            {foundWords.some(w => SECRET_WORDS.includes(w)) && (
+              <>
+                <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
+                  Palavras Secretas Encontradas!
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
+                  {SECRET_WORDS.filter(w => foundWords.includes(w)).map(w => (
+                    <div
+                      key={w}
+                      className="p-2 rounded bg-purple-50 border border-purple-200 text-center font-medium text-purple-800"
+                    >
+                      {w}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Rodapé */}
+      <div className="p-4 border-t bg-white flex justify-center">
+        <Button 
+          size="lg" 
+          onClick={startGame}
+          className="w-full max-w-md bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+        >
+          🔄 Nova rodada
+        </Button>
       </div>
     </div>
   );
-};
+}
 
-export default Jogos;
+/* HELPERS */
+function buildLine(a: Cell, b: Cell): Cell[] {
+  const dr = Math.sign(b.row - a.row);
+  const dc = Math.sign(b.col - a.col);
+  const len = Math.max(Math.abs(b.row - a.row), Math.abs(b.col - a.col)) + 1;
+
+  return Array.from({ length: len }, (_, i) => ({
+    row: a.row + dr * i,
+    col: a.col + dc * i
+  }));
+}
+
+function randomDir() {
+  const dirs = [
+    { r: 0, c: 1 }, { r: 0, c: -1 },     // horizontal
+    { r: 1, c: 0 }, { r: -1, c: 0 },     // vertical
+    { r: 1, c: 1 }, { r: -1, c: -1 },    // diagonal principal
+    { r: 1, c: -1 }, { r: -1, c: 1 }     // diagonal secundária
+  ];
+  return dirs[Math.floor(Math.random() * dirs.length)];
+}
+
+export default CacaPalavras;
