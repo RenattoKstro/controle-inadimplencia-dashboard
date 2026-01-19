@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const ROWS = 18;
+const ROWS = 12;
 const COLS = 18;
 
 const WORDS = [
