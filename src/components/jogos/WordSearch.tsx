@@ -90,7 +90,6 @@ function CacaPalavras() {
       }
     });
 
-    // Preenche o restante com letras aleatórias
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (!g[r][c]) {
@@ -142,88 +141,80 @@ function CacaPalavras() {
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden p-4">
+    <div className="h-full flex flex-col p-4">
+      {/* Cabeçalho */}
       <div className="text-center mb-4">
         <h2 className="text-2xl font-bold">🔍 Caça-Palavras</h2>
         <p className="text-sm text-muted-foreground">⏱️ {seconds}s</p>
       </div>
 
+      {/* Conteúdo principal com flex-1 e rolagem */}
       <div className="flex flex-1 gap-6 min-h-0">
         {/* Área do grid com rolagem */}
-        <div className="flex-1 overflow-auto border rounded-lg bg-white p-4 shadow-sm">
-          <div 
-            className="grid gap-1 select-none mx-auto"
-            style={{ 
-              gridTemplateColumns: `repeat(${COLS}, minmax(32px, 1fr))`,
-              maxWidth: 'fit-content'
-            }}
-          >
-            {grid.map((row, r) =>
-              row.map((char, c) => {
-                const key = `${r}-${c}`;
-                const selected = selection.some(s => s.row === r && s.col === c);
-                const found = foundCells.has(key);
+        <div className="flex-1 overflow-auto border rounded-lg bg-white shadow-sm">
+          <div className="p-4">
+            <div 
+              className="grid gap-1 select-none mx-auto"
+              style={{ 
+                gridTemplateColumns: `repeat(${COLS}, 34px)`,
+                width: 'fit-content'
+              }}
+            >
+              {grid.map((row, r) =>
+                row.map((char, c) => {
+                  const key = `${r}-${c}`;
+                  const selected = selection.some(s => s.row === r && s.col === c);
+                  const found = foundCells.has(key);
 
-                return (
-                  <div
-                    key={key}
-                    onMouseDown={() => startSelect({ row: r, col: c })}
-                    onMouseEnter={() => updateSelect({ row: r, col: c })}
-                    onMouseUp={endSelect}
-                    onTouchStart={() => startSelect({ row: r, col: c })}
-                    onTouchMove={(e) => {
-                      e.preventDefault();
-                      const touch = e.touches[0];
-                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                      if (element && element.dataset.row && element.dataset.col) {
-                        updateSelect({ 
-                          row: parseInt(element.dataset.row), 
-                          col: parseInt(element.dataset.col) 
-                        });
-                      }
-                    }}
-                    onTouchEnd={endSelect}
-                    data-row={r}
-                    data-col={c}
-                    className={`
-                      w-8 h-8 min-w-[32px] min-h-[32px]
-                      flex items-center justify-center
-                      text-base font-bold
-                      border rounded cursor-pointer
-                      transition-colors duration-150
-                      ${found ? "bg-green-500 text-white" : ""}
-                      ${selected && !found ? "bg-blue-400 text-white" : ""}
-                      hover:bg-gray-200 active:bg-blue-300
-                    `}
-                  >
-                    {char}
-                  </div>
-                );
-              })
-            )}
+                  return (
+                    <div
+                      key={key}
+                      onMouseDown={() => startSelect({ row: r, col: c })}
+                      onMouseEnter={() => updateSelect({ row: r, col: c })}
+                      onMouseUp={endSelect}
+                      className={`
+                        w-[34px] h-[34px]
+                        flex items-center justify-center
+                        text-lg font-bold
+                        border rounded cursor-pointer
+                        transition-colors
+                        ${found ? "bg-green-500 text-white" : ""}
+                        ${selected && !found ? "bg-blue-400 text-white" : ""}
+                        hover:bg-gray-200 active:bg-blue-300
+                      `}
+                    >
+                      {char}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Lista de palavras */}
-        <div className="w-48 min-w-[192px] overflow-y-auto border rounded-lg bg-gray-50 p-4 shadow-sm">
-          <h4 className="font-bold mb-3 text-center sticky top-0 bg-gray-50 z-10 py-1">
-            Palavras ({foundWords.length} / {WORDS.length})
-          </h4>
-          <div className="space-y-1">
-            {WORDS.map(w => (
-              <div
-                key={w}
-                className={`p-1.5 rounded ${foundWords.includes(w) 
-                  ? "line-through text-green-600 bg-green-50" 
-                  : "text-gray-800"}`}
-              >
-                {w}
-              </div>
-            ))}
+        {/* Lista de palavras (com rolagem própria se necessário) */}
+        <div className="w-48 min-w-[192px] overflow-y-auto border rounded-lg bg-gray-50 shadow-sm">
+          <div className="p-4">
+            <h4 className="font-bold mb-3 text-center sticky top-0 bg-gray-50 z-10 py-1">
+              Palavras ({foundWords.length} / {WORDS.length})
+            </h4>
+            <div className="space-y-1">
+              {WORDS.map(w => (
+                <div
+                  key={w}
+                  className={`p-1.5 rounded text-center ${foundWords.includes(w) 
+                    ? "line-through text-green-600 bg-green-50" 
+                    : "text-gray-800 hover:bg-gray-100"}`}
+                >
+                  {w}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Botão Nova Rodada */}
       <div className="mt-4 text-center">
         <Button 
           size="lg" 
