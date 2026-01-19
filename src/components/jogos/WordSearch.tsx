@@ -143,7 +143,7 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
-        // Calcula pontos: +5 para visível, +10 para secreta
+        // Pontuação: +5 para visível, +10 para secreta
         const pointsToAdd = SECRET_WORDS.includes(match) ? 10 : 5;
         setScore(s => s + pointsToAdd);
 
