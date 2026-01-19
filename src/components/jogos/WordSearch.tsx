@@ -7,22 +7,16 @@ const COLS = 18;
 
 // 20 palavras visíveis (obrigatórias - aparecem na lista desde o início)
 const VISIBLE_WORDS = [
-"VENDAS", "LUCRO", "META", "CREDIARIO", "JUROS", "RECEBIMENTO",
-"CAIXA", "ESTOQUE", "CLIENTE", "PROMOCAO", "DESCONTO",
-"PARCELAMENTO", "BOLETO", "PIX", "CARTAO", "GARANTIA", "SEGURO",
-"CONSORCIO", "LOJA", "VAREJO", "MARGEM", "COMISSAO", "FATURAMENTO",
-"PRECO", "VENDEDOR", "GATILHO", "ATENDIMENTO", "EMPRESTIMO", "CCG",
-"SIGA", "SABIUM", "ASSISTENCIA", "GAZIN", "INADIMPLENCIA", "NEGOCIACAO",
-"PROSPECCAO", "FIDELIZACAO", "ESTORNO", "LIQUIDACAO", "ORCAMENTO",
-"FORNECEDOR", "LOGISTICA", "INVENTARIO", "COBRANCA", "ANTECIPACAO",
-"POSVENDA", "ENTREGAS", "TVGAZIN", "MONTAGENS", "FILIAL",
-"AUDITORIA", "RENEGOCIACAO", "ROBOZIN", "ABATEDORES",
+  "VENDAS", "LUCRO", "META", "CREDIARIO", "JUROS",
+  "CAIXA", "CLIENTE", "PROMOCAO", "DESCONTO", "PARCELAMENTO",
+  "BOLETO", "MARGEM", "COMISSAO", "PRECO", "LOJA",
+  "ESTOQUE", "GAZIN", "NEGOCIACAO", "FATURA", "RECIBO"
 ];
 
-// 10 palavras secretas (ocultas - só aparecem quando encontradas)
+// 10 palavras secretas (ocultas - só aparecem quando encontradas, bônus)
 const SECRET_WORDS = [
-  "DNAGAZIN", "RENDIMENTO", "GAZINLOG", "CHEQUE", "QLIK", "EPRAJA", "INSS",
-  "DIVIDA", "PLR", "PAGAMENTO", "LUCROBRUTO", "REGIONAL", "BLACKFRIDAY", "PINTANDOOSETE", "
+  "FATURAMENTO", "RENDIMENTO", "EMPRESTIMO", "CHEQUE", "CARTAO",
+  "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA", "LUCROBRUTO"
 ];
 
 const ALL_WORDS = [...VISIBLE_WORDS, ...SECRET_WORDS];
@@ -153,10 +147,18 @@ function CacaPalavras() {
         const pointsToAdd = SECRET_WORDS.includes(match) ? 10 : 5;
         setScore(s => s + pointsToAdd);
 
-        // Verifica vitória (todas as 30 encontradas)
-        if (newFound.length === ALL_WORDS.length) {
+        // Se for secreta, desconta 30 segundos do tempo final
+        if (SECRET_WORDS.includes(match)) {
+          setSeconds(s => Math.max(0, s - 30));
+        }
+
+        // Verifica vitória (todas as 20 visíveis encontradas)
+        const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
+        if (visibleFound === VISIBLE_WORDS.length) {
           stopTimer();
-          alert(`Parabéns! Você encontrou todas as 30 palavras!\n\nPontuação: ${score + pointsToAdd} pontos\nTempo: ${seconds}s`);
+          const finalScore = score + pointsToAdd;
+          const finalTime = seconds;
+          alert(`Parabéns! Você encontrou todas as 20 palavras visíveis!\n\nPontuação: ${finalScore} pontos\nTempo final: ${finalTime}s\n\n(Secretas encontradas: ${newFound.length - 20} → +${(newFound.length - 20) * 10} pontos)`);
         }
 
         return newFound;
