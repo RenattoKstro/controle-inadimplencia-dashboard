@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const ROWS = 12;
+const ROWS = 18;
 const COLS = 18;
 
 const WORDS = [
@@ -23,6 +23,7 @@ function CacaPalavras() {
   const [seconds, setSeconds] = useState(0);
 
   const timerRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     startGame();
@@ -59,8 +60,9 @@ function CacaPalavras() {
 
     WORDS.forEach(word => {
       let placed = false;
-
-      while (!placed) {
+      let attempts = 0;
+      while (!placed && attempts < 100) {
+        attempts++;
         const dir = randomDir();
         const r = Math.floor(Math.random() * ROWS);
         const c = Math.floor(Math.random() * COLS);
@@ -90,6 +92,7 @@ function CacaPalavras() {
       }
     });
 
+    // Preenche o restante com letras aleatórias
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (!g[r][c]) {
@@ -126,38 +129,41 @@ function CacaPalavras() {
       w => (w === word || w === reversed) && !foundWords.includes(w)
     );
 
-    if (!match) return;
+    if (match) {
+      setFoundWords(f => [...f, match]);
+      setFoundCells(prev => {
+        const n = new Set(prev);
+        selection.forEach(c => n.add(`${c.row}-${c.col}`));
+        return n;
+      });
 
-    setFoundWords(f => [...f, match]);
-    setFoundCells(prev => {
-      const n = new Set(prev);
-      selection.forEach(c => n.add(`${c.row}-${c.col}`));
-      return n;
-    });
-
-    if (foundWords.length + 1 === WORDS.length) {
-      stopTimer();
+      if (foundWords.length + 1 === WORDS.length) {
+        stopTimer();
+      }
     }
   }
 
   return (
-    <div className="h-full flex flex-col p-4">
-      {/* Cabeçalho */}
-      <div className="text-center mb-4">
-        <h2 className="text-2xl font-bold">🔍 Caça-Palavras</h2>
+    <div className="h-full flex flex-col">
+      {/* Cabeçalho compacto */}
+      <div className="text-center py-2 bg-gradient-to-b from-gray-50 to-white border-b">
+        <h2 className="text-xl font-bold">🔍 Caça-Palavras</h2>
         <p className="text-sm text-muted-foreground">⏱️ {seconds}s</p>
       </div>
 
-      {/* Conteúdo principal com flex-1 e rolagem */}
-      <div className="flex flex-1 gap-6 min-h-0">
-        {/* Área do grid com rolagem */}
-        <div className="flex-1 overflow-auto border rounded-lg bg-white shadow-sm">
-          <div className="p-4">
-            <div 
-              className="grid gap-1 select-none mx-auto"
-              style={{ 
-                gridTemplateColumns: `repeat(${COLS}, 34px)`,
-                width: 'fit-content'
+      {/* Área principal com scroll */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div 
+          ref={containerRef}
+          className="flex-1 overflow-auto p-2 sm:p-4"
+        >
+          <div className="flex justify-center">
+            <div
+              className="grid gap-0.5 sm:gap-1 select-none touch-manipulation"
+              style={{
+                gridTemplateColumns: `repeat(${COLS}, minmax(24px, 34px))`,
+                width: 'fit-content',
+                maxWidth: '100%'
               }}
             >
               {grid.map((row, r) =>
@@ -172,15 +178,34 @@ function CacaPalavras() {
                       onMouseDown={() => startSelect({ row: r, col: c })}
                       onMouseEnter={() => updateSelect({ row: r, col: c })}
                       onMouseUp={endSelect}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        startSelect({ row: r, col: c });
+                      }}
+                      onTouchMove={(e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (el && (el as any).dataset?.row !== undefined) {
+                          updateSelect({
+                            row: parseInt((el as any).dataset.row),
+                            col: parseInt((el as any).dataset.col)
+                          });
+                        }
+                      }}
+                      onTouchEnd={endSelect}
+                      data-row={r}
+                      data-col={c}
                       className={`
-                        w-[34px] h-[34px]
-                        flex items-center justify-center
-                        text-lg font-bold
-                        border rounded cursor-pointer
-                        transition-colors
-                        ${found ? "bg-green-500 text-white" : ""}
-                        ${selected && !found ? "bg-blue-400 text-white" : ""}
-                        hover:bg-gray-200 active:bg-blue-300
+                        aspect-square flex items-center justify-center
+                        text-base sm:text-lg font-bold
+                        border border-gray-300 rounded-sm
+                        cursor-pointer select-none touch-manipulation
+                        transition-colors duration-100
+                        ${found ? "bg-green-500 text-white border-green-600" : ""}
+                        ${selected && !found ? "bg-blue-500 text-white border-blue-600" : ""}
+                        active:bg-blue-600 active:scale-105
+                        hover:bg-gray-100
                       `}
                     >
                       {char}
@@ -192,34 +217,34 @@ function CacaPalavras() {
           </div>
         </div>
 
-        {/* Lista de palavras (com rolagem própria se necessário) */}
-        <div className="w-48 min-w-[192px] overflow-y-auto border rounded-lg bg-gray-50 shadow-sm">
-          <div className="p-4">
-            <h4 className="font-bold mb-3 text-center sticky top-0 bg-gray-50 z-10 py-1">
-              Palavras ({foundWords.length} / {WORDS.length})
-            </h4>
-            <div className="space-y-1">
-              {WORDS.map(w => (
-                <div
-                  key={w}
-                  className={`p-1.5 rounded text-center ${foundWords.includes(w) 
-                    ? "line-through text-green-600 bg-green-50" 
-                    : "text-gray-800 hover:bg-gray-100"}`}
-                >
-                  {w}
-                </div>
-              ))}
-            </div>
+        {/* Lista de palavras - fixa na parte inferior em telas pequenas */}
+        <div className="border-t bg-white p-3 sm:p-4">
+          <h4 className="font-bold text-center mb-2">
+            Palavras ({foundWords.length} / {WORDS.length})
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm max-h-32 overflow-y-auto">
+            {WORDS.map(w => (
+              <div
+                key={w}
+                className={`p-1.5 rounded text-center border ${
+                  foundWords.includes(w)
+                    ? "line-through bg-green-50 text-green-700 border-green-200"
+                    : "bg-gray-50 border-gray-200"
+                }`}
+              >
+                {w}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Botão Nova Rodada */}
-      <div className="mt-4 text-center">
+      <div className="p-4 border-t bg-white">
         <Button 
           size="lg" 
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           onClick={startGame}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
           🔄 Nova rodada
         </Button>
