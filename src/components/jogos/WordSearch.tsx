@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 const ROWS = 18;
 const COLS = 18;
 
-// 20 palavras visíveis (obrigatórias - aparecem na lista desde o início)
+// 20 palavras visíveis (obrigatórias)
 const VISIBLE_WORDS = [
   "VENDAS", "LUCRO", "META", "CREDIARIO", "JUROS",
   "CAIXA", "CLIENTE", "PROMOCAO", "DESCONTO", "PARCELAMENTO",
@@ -43,6 +43,7 @@ function CacaPalavras() {
   const [showRanking, setShowRanking] = useState(false);
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [playerName, setPlayerName] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const timerRef = useRef<number | null>(null);
 
@@ -53,18 +54,27 @@ function CacaPalavras() {
   }, []);
 
   const loadRanking = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("game_rankings")
       .select("player_name, time_seconds, score")
       .eq("game_name", "cacapalavras")
       .order("time_seconds", { ascending: true })
       .limit(10);
 
-    setRanking(data || []);
+    if (error) {
+      console.error("Erro ao carregar ranking:", error);
+    } else {
+      setRanking(data || []);
+    }
   };
 
   const saveRecord = async () => {
-    if (!playerName.trim()) return;
+    if (!playerName.trim()) {
+      setSaveError("Digite um apelido válido.");
+      return;
+    }
+
+    setSaveError(null);
 
     const { error } = await supabase.from("game_rankings").insert({
       player_name: playerName.trim(),
@@ -73,12 +83,13 @@ function CacaPalavras() {
       time_seconds: seconds,
     });
 
-    if (!error) {
+    if (error) {
+      console.error("Erro ao salvar recorde:", error);
+      setSaveError("Erro ao salvar o recorde. Tente novamente.");
+    } else {
       loadRanking();
       setShowNamePrompt(false);
-      alert("Recorde salvo com sucesso!");
-    } else {
-      alert("Erro ao salvar recorde.");
+      alert("Recorde salvo com sucesso! 🎉");
     }
   };
 
@@ -104,6 +115,7 @@ function CacaPalavras() {
     setSeconds(0);
     setScore(0);
     setShowNamePrompt(false);
+    setSaveError(null);
     startTimer();
   }
 
@@ -398,6 +410,7 @@ function CacaPalavras() {
               Você completou as 20 palavras em {seconds}s com {score} pontos!<br />
               Digite seu apelido para registrar no ranking:
             </p>
+            {saveError && <p className="text-red-600 text-center mb-4">{saveError}</p>}
             <Input
               value={playerName}
               onChange={e => setPlayerName(e.target.value)}
