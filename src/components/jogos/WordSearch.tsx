@@ -15,7 +15,7 @@ const VISIBLE_WORDS = [
   "ESTOQUE", "GAZIN", "NEGOCIACAO", "FATURA", "RECIBO"
 ];
 
-// 10 palavras secretas (bônus - ocultas até encontradas)
+// 10 palavras secretas (bônus)
 const SECRET_WORDS = [
   "FATURAMENTO", "RENDIMENTO", "EMPRESTIMO", "CHEQUE", "CARTAO",
   "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA", "LUCROBRUTO"
@@ -54,17 +54,18 @@ function CacaPalavras() {
   }, []);
 
   const loadRanking = async () => {
-    const { data, error } = await supabase
-      .from("game_rankings")
-      .select("player_name, time_seconds, score")
-      .eq("game_name", "cacapalavras")
-      .order("time_seconds", { ascending: true })
-      .limit(10);
+    try {
+      const { data, error } = await supabase
+        .from("game_rankings")
+        .select("player_name, time_seconds, score")
+        .eq("game_name", "cacapalavras")
+        .order("time_seconds", { ascending: true })
+        .limit(10);
 
-    if (error) {
-      console.error("Erro ao carregar ranking:", error.message);
-    } else {
+      if (error) throw error;
       setRanking(data || []);
+    } catch (err) {
+      console.error("Erro ao carregar ranking:", err);
     }
   };
 
@@ -76,20 +77,22 @@ function CacaPalavras() {
 
     setSaveError(null);
 
-    const { error } = await supabase.from("game_rankings").insert({
-      player_name: playerName.trim(),
-      game_name: "cacapalavras",
-      score: score,
-      time_seconds: seconds,
-    });
+    try {
+      const { error } = await supabase.from("game_rankings").insert({
+        player_name: playerName.trim(),
+        game_name: "cacapalavras",
+        score: score,
+        time_seconds: seconds,
+      });
 
-    if (error) {
-      console.error("Erro completo ao salvar:", error);
-      setSaveError(`Erro ao salvar: ${error.message || "Tente novamente mais tarde."}`);
-    } else {
+      if (error) throw error;
+
       loadRanking();
       setShowNamePrompt(false);
       alert(`Recorde salvo com sucesso! 🎉\n\nNome: ${playerName.trim()}\nTempo: ${seconds}s\nPontos: ${score}`);
+    } catch (err: any) {
+      console.error("Erro completo ao salvar:", err);
+      setSaveError(err.message || "Erro ao salvar o recorde. Tente novamente.");
     }
   };
 
@@ -199,16 +202,13 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
-        // Pontuação: +5 para visível, +10 para secreta
         const pointsToAdd = SECRET_WORDS.includes(match) ? 10 : 5;
         setScore(s => s + pointsToAdd);
 
-        // Se for secreta, desconta 30 segundos
         if (SECRET_WORDS.includes(match)) {
           setSeconds(s => Math.max(0, s - 30));
         }
 
-        // Verifica se terminou as 20 visíveis
         const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
         if (visibleFound === VISIBLE_WORDS.length) {
           stopTimer();
@@ -322,7 +322,6 @@ function CacaPalavras() {
               ))}
             </div>
 
-            {/* Palavras secretas */}
             {foundWords.some(w => SECRET_WORDS.includes(w)) && (
               <>
                 <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
@@ -410,7 +409,11 @@ function CacaPalavras() {
               Você completou as 20 palavras em {seconds}s com {score} pontos!<br />
               Digite seu apelido para registrar no ranking:
             </p>
-            {saveError && <p className="text-red-600 text-center mb-4 font-medium">{saveError}</p>}
+            {saveError && (
+              <p className="text-red-600 text-center mb-4 font-medium">
+                {saveError}
+              </p>
+            )}
             <Input
               value={playerName}
               onChange={e => setPlayerName(e.target.value)}
