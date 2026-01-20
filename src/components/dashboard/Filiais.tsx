@@ -29,6 +29,7 @@ interface RankingFilial {
     avatar_url: string;
     whatsapp: string;
     instagram: string;
+    updated_at: string | null;
   } | null;
 }
 
@@ -38,6 +39,7 @@ const Filiais = () => {
   const [filtroRegional, setFiltroRegional] = useState<string>("todas");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     const fetchRanking = async () => {
@@ -55,8 +57,13 @@ const Filiais = () => {
     };
 
     fetchRanking();
-    const interval = setInterval(fetchRanking, 30_000);
+    const interval = setInterval(fetchRanking, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
   }, []);
 
   let dadosFiltrados = ranking;
@@ -100,13 +107,45 @@ const Filiais = () => {
     const abertura = f.total_abertura_vencido_mes || 0;
     const vencidoAtual = f.total_vencido || 0;
     const metaMes = f.total_meta_fiado || 0;
-
     const recebidosMes = abertura - vencidoAtual;
     const aReceber = abertura - metaMes;
+    const restante = recebidosMes - aReceber;
 
     const format = (n: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
 
-    return `${format(recebidosMes)} / ${format(aReceber)}`;
+    // Cálculo do restante com cor
+    const restanteText = format(restante);
+    let restanteClass = "text-gray-600 text-xs mt-1";
+    if (restante < 0) restanteClass = "text-red-600 font-medium text-xs mt-1";
+    if (restante > 0) restanteClass = "text-green-600 font-medium text-xs mt-1";
+
+    return (
+      <div className="flex flex-col items-center">
+        <p className="font-bold text-sm">
+          {format(recebidosMes)} / {format(aReceber)}
+        </p>
+        <p className={restanteClass}>
+          Restante: {restanteText}
+        </p>
+      </div>
+    );
+  };
+
+  const getUpdatedText = (updatedAt: string | null) => {
+    if (!updatedAt) return "Nunca atualizado";
+
+    const updatedDate = new Date(updatedAt);
+    const diffMs = now.getTime() - updatedDate.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+
+    if (diffMin < 1) return "Atualizado agora";
+    if (diffMin === 1) return "Atualizado há 1 min";
+    if (diffMin < 60) return `Atualizado há ${diffMin} min`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr === 1) return "Atualizado há 1 hora";
+    if (diffHr < 24) return `Atualizado há ${diffHr} horas`;
+    const diffDays = Math.floor(diffHr / 24);
+    return `Atualizado há ${diffDays} dia${diffDays > 1 ? 's' : ''}`;
   };
 
   return (
@@ -176,6 +215,7 @@ const Filiais = () => {
               dadosFiltrados.map((f, i) => {
                 const user = f.usuario_principal;
                 const initials = getInitials(user?.nome_usuario);
+                const updatedText = getUpdatedText(user?.updated_at);
 
                 return (
                   <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
@@ -188,88 +228,89 @@ const Filiais = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <HoverCard openDelay={200}>
-                          <HoverCardTrigger asChild>
-                            <div className="cursor-pointer">
-                              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500 flex items-center justify-center">
-                                {user?.avatar_url ? (
-                                  <img
-                                    src={user.avatar_url}
-                                    alt="Perfil"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                      e.currentTarget.nextElementSibling?.classList.remove("hidden");
-                                    }}
-                                  />
-                                ) : null}
-                                <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm ${user?.avatar_url ? "hidden" : ""}`}>
-                                  {initials !== "U" ? initials : <User className="h-6 w-6" />}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                          <HoverCard openDelay={200}>
+                            <HoverCardTrigger asChild>
+                              <div className="cursor-pointer">
+                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500 flex items-center justify-center">
+                                  {user?.avatar_url ? (
+                                    <img
+                                      src={user.avatar_url}
+                                      alt="Perfil"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm ${user?.avatar_url ? "hidden" : ""}`}>
+                                    {initials !== "U" ? initials : <User className="h-6 w-6" />}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </HoverCardTrigger>
-                          <HoverCardContent className="w-80">
-                            <div className="flex items-center gap-4">
-                              <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
-                                {user?.avatar_url ? (
-                                  <img
-                                    src={user.avatar_url}
-                                    alt="Perfil"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                      e.currentTarget.nextElementSibling?.classList.remove("hidden");
-                                    }}
-                                  />
-                                ) : null}
-                                <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-2xl ${user?.avatar_url ? "hidden" : ""}`}>
-                                  {initials !== "U" ? initials : <User className="h-10 w-10" />}
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-80">
+                              <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
+                                  {user?.avatar_url ? (
+                                    <img
+                                      src={user.avatar_url}
+                                      alt="Perfil"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-2xl ${user?.avatar_url ? "hidden" : ""}`}>
+                                    {initials !== "U" ? initials : <User className="h-10 w-10" />}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="font-bold text-lg">{user?.nome_usuario || "Usuário"}</p>
+                                  <p className="text-sm text-muted-foreground">Filial {f.filial}</p>
                                 </div>
                               </div>
-                              <div>
-                                <p className="font-bold text-lg">{user?.nome_usuario || "Usuário"}</p>
-                                <p className="text-sm text-muted-foreground">Filial {f.filial}</p>
+                              <div className="mt-4 space-y-2">
+                                {user?.whatsapp && (
+                                  <a
+                                    href={`https://wa.me/55${user.whatsapp}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-green-600 hover:underline"
+                                  >
+                                    <Phone className="h-4 w-4" /> WhatsApp
+                                  </a>
+                                )}
+                                {user?.instagram && (
+                                  <a
+                                    href={`https://instagram.com/${user.instagram.replace("@", "")}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-pink-600 hover:underline"
+                                  >
+                                    <Instagram className="h-4 w-4" /> Instagram
+                                  </a>
+                                )}
                               </div>
-                            </div>
-                            <div className="mt-4 space-y-2">
-                              {user?.whatsapp && (
-                                <a
-                                  href={`https://wa.me/55${user.whatsapp}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 text-green-600 hover:underline"
-                                >
-                                  <Phone className="h-4 w-4" /> WhatsApp
-                                </a>
-                              )}
-                              {user?.instagram && (
-                                <a
-                                  href={`https://instagram.com/${user.instagram.replace("@", "")}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2 text-pink-600 hover:underline"
-                                >
-                                  <Instagram className="h-4 w-4" /> Instagram
-                                </a>
-                              )}
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                        <div>
-                          <p className="font-medium">{f.filial}</p>
-                          <p className="text-xs text-gray-600">{f.regional}</p>
+                            </HoverCardContent>
+                          </HoverCard>
+                          <div>
+                            <p className="font-medium">{f.filial}</p>
+                            <p className="text-xs text-gray-600">{f.regional}</p>
+                          </div>
                         </div>
+                        <p className="text-xs text-gray-500 italic mt-1">
+                          {getUpdatedText(user?.updated_at)}
+                        </p>
                       </div>
                     </td>
-                    {/* COLUNA RECEBIDO / A RECEBER — SEM BARRA DE PROGRESSO */}
                     <td className="px-4 py-3 text-center">
-                      <p className="font-bold text-sm">
-                        {calcularRecebidoMeta(f)}
-                      </p>
+                      {calcularRecebidoMeta(f)}
                     </td>
-                    {/* META FIADO */}
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
                         <p className={`text-lg ${getPercentColor(f.pct_fiado)}`}>
@@ -282,7 +323,6 @@ const Filiais = () => {
                         />
                       </div>
                     </td>
-                    {/* META DESAFIO */}
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
                         <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(f.pct_desafio)}`}>
