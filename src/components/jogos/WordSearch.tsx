@@ -62,7 +62,7 @@ function CacaPalavras() {
       .limit(10);
 
     if (error) {
-      console.error("Erro ao carregar ranking:", error);
+      console.error("Erro ao carregar ranking:", error.message);
     } else {
       setRanking(data || []);
     }
@@ -84,12 +84,12 @@ function CacaPalavras() {
     });
 
     if (error) {
-      console.error("Erro ao salvar recorde:", error);
-      setSaveError("Erro ao salvar o recorde. Tente novamente.");
+      console.error("Erro completo ao salvar:", error);
+      setSaveError(`Erro ao salvar: ${error.message || "Tente novamente mais tarde."}`);
     } else {
       loadRanking();
       setShowNamePrompt(false);
-      alert("Recorde salvo com sucesso! 🎉");
+      alert(`Recorde salvo com sucesso! 🎉\n\nNome: ${playerName.trim()}\nTempo: ${seconds}s\nPontos: ${score}`);
     }
   };
 
@@ -203,7 +203,7 @@ function CacaPalavras() {
         const pointsToAdd = SECRET_WORDS.includes(match) ? 10 : 5;
         setScore(s => s + pointsToAdd);
 
-        // Se for secreta, desconta 30 segundos do tempo final
+        // Se for secreta, desconta 30 segundos
         if (SECRET_WORDS.includes(match)) {
           setSeconds(s => Math.max(0, s - 30));
         }
@@ -212,7 +212,7 @@ function CacaPalavras() {
         const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
         if (visibleFound === VISIBLE_WORDS.length) {
           stopTimer();
-          setShowNamePrompt(true); // Abre prompt para registrar nome
+          setShowNamePrompt(true);
         }
 
         return newFound;
@@ -322,7 +322,7 @@ function CacaPalavras() {
               ))}
             </div>
 
-            {/* Palavras secretas só aparecem quando encontradas */}
+            {/* Palavras secretas */}
             {foundWords.some(w => SECRET_WORDS.includes(w)) && (
               <>
                 <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
@@ -401,7 +401,7 @@ function CacaPalavras() {
         </div>
       )}
 
-      {/* Prompt para nome do jogador ao vencer */}
+      {/* Prompt para nome */}
       {showNamePrompt && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
@@ -410,7 +410,7 @@ function CacaPalavras() {
               Você completou as 20 palavras em {seconds}s com {score} pontos!<br />
               Digite seu apelido para registrar no ranking:
             </p>
-            {saveError && <p className="text-red-600 text-center mb-4">{saveError}</p>}
+            {saveError && <p className="text-red-600 text-center mb-4 font-medium">{saveError}</p>}
             <Input
               value={playerName}
               onChange={e => setPlayerName(e.target.value)}
