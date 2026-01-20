@@ -1,6 +1,8 @@
 // src/components/jogos/CacaPalavras.tsx
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 
 const ROWS = 18;
 const COLS = 18;
@@ -13,7 +15,7 @@ const VISIBLE_WORDS = [
   "ESTOQUE", "GAZIN", "NEGOCIACAO", "FATURA", "RECIBO"
 ];
 
-// 10 palavras secretas (ocultas - só aparecem quando encontradas, bônus)
+// 10 palavras secretas (bônus - ocultas até encontradas)
 const SECRET_WORDS = [
   "FATURAMENTO", "RENDIMENTO", "EMPRESTIMO", "CHEQUE", "CARTAO",
   "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA", "LUCROBRUTO"
@@ -23,6 +25,12 @@ const ALL_WORDS = [...VISIBLE_WORDS, ...SECRET_WORDS];
 
 type Cell = { row: number; col: number };
 
+type RankingEntry = {
+  player_name: string;
+  time_seconds: number;
+  score: number;
+};
+
 function CacaPalavras() {
   const [grid, setGrid] = useState<string[][]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
@@ -31,13 +39,48 @@ function CacaPalavras() {
   const [selecting, setSelecting] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [score, setScore] = useState(0);
+  const [ranking, setRanking] = useState<RankingEntry[]>([]);
+  const [showRanking, setShowRanking] = useState(false);
+  const [showNamePrompt, setShowNamePrompt] = useState(false);
+  const [playerName, setPlayerName] = useState("");
 
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     startGame();
+    loadRanking();
     return stopTimer;
   }, []);
+
+  const loadRanking = async () => {
+    const { data } = await supabase
+      .from("game_rankings")
+      .select("player_name, time_seconds, score")
+      .eq("game_name", "cacapalavras")
+      .order("time_seconds", { ascending: true })
+      .limit(10);
+
+    setRanking(data || []);
+  };
+
+  const saveRecord = async () => {
+    if (!playerName.trim()) return;
+
+    const { error } = await supabase.from("game_rankings").insert({
+      player_name: playerName.trim(),
+      game_name: "cacapalavras",
+      score: score,
+      time_seconds: seconds,
+    });
+
+    if (!error) {
+      loadRanking();
+      setShowNamePrompt(false);
+      alert("Recorde salvo com sucesso!");
+    } else {
+      alert("Erro ao salvar recorde.");
+    }
+  };
 
   function startTimer() {
     stopTimer();
@@ -60,6 +103,7 @@ function CacaPalavras() {
     setSelection([]);
     setSeconds(0);
     setScore(0);
+    setShowNamePrompt(false);
     startTimer();
   }
 
@@ -152,13 +196,11 @@ function CacaPalavras() {
           setSeconds(s => Math.max(0, s - 30));
         }
 
-        // Verifica vitória (todas as 20 visíveis encontradas)
+        // Verifica se terminou as 20 visíveis
         const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
         if (visibleFound === VISIBLE_WORDS.length) {
           stopTimer();
-          const finalScore = score + pointsToAdd;
-          const finalTime = seconds;
-          alert(`Parabéns! Você encontrou todas as 20 palavras visíveis!\n\nPontuação: ${finalScore} pontos\nTempo final: ${finalTime}s\n\n(Secretas encontradas: ${newFound.length - 20} → +${(newFound.length - 20) * 10} pontos)`);
+          setShowNamePrompt(true); // Abre prompt para registrar nome
         }
 
         return newFound;
@@ -249,7 +291,7 @@ function CacaPalavras() {
           </div>
         </div>
 
-        {/* Lista de palavras - lado direito */}
+        {/* Lista de palavras */}
         <div className="w-full md:w-80 border-t md:border-t-0 md:border-l bg-white shadow-sm overflow-y-auto">
           <div className="p-4 md:p-6">
             <h4 className="font-bold text-lg mb-4 text-center">Palavras Visíveis</h4>
@@ -291,15 +333,90 @@ function CacaPalavras() {
       </div>
 
       {/* Rodapé */}
-      <div className="p-4 border-t bg-white flex justify-center">
+      <div className="p-4 border-t bg-white flex justify-between items-center">
         <Button 
           size="lg" 
           onClick={startGame}
-          className="w-full max-w-md bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
           🔄 Nova rodada
         </Button>
+        <Button 
+          size="lg" 
+          variant="outline"
+          onClick={() => setShowRanking(true)}
+        >
+          🏆 Ver Ranking
+        </Button>
       </div>
+
+      {/* Modal de Ranking */}
+      {showRanking && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowRanking(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto m-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-2xl font-bold mb-4 text-center">🏆 Ranking - Caça-Palavras</h3>
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-3 text-left">Posição</th>
+                  <th className="p-3 text-left">Jogador</th>
+                  <th className="p-3 text-right">Tempo</th>
+                  <th className="p-3 text-right">Pontos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ranking.map((entry, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="p-3">{index + 1}º</td>
+                    <td className="p-3">{entry.player_name}</td>
+                    <td className="p-3 text-right">{entry.time_seconds}s</td>
+                    <td className="p-3 text-right">{entry.score}</td>
+                  </tr>
+                ))}
+                {ranking.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-6 text-center text-gray-500">
+                      Ainda não há recordes registrados.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <div className="mt-6 text-center">
+              <Button onClick={() => setShowRanking(false)}>Fechar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Prompt para nome do jogador ao vencer */}
+      {showNamePrompt && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
+            <h3 className="text-2xl font-bold mb-4 text-center">Novo Recorde!</h3>
+            <p className="text-center mb-6">
+              Você completou as 20 palavras em {seconds}s com {score} pontos!<br />
+              Digite seu apelido para registrar no ranking:
+            </p>
+            <Input
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value)}
+              placeholder="Seu apelido..."
+              className="mb-4"
+            />
+            <div className="flex gap-4 justify-center">
+              <Button variant="outline" onClick={() => setShowNamePrompt(false)}>Cancelar</Button>
+              <Button 
+                onClick={saveRecord}
+                disabled={!playerName.trim()}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Registrar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -318,10 +435,10 @@ function buildLine(a: Cell, b: Cell): Cell[] {
 
 function randomDir() {
   const dirs = [
-    { r: 0, c: 1 }, { r: 0, c: -1 },     // horizontal
-    { r: 1, c: 0 }, { r: -1, c: 0 },     // vertical
-    { r: 1, c: 1 }, { r: -1, c: -1 },    // diagonal principal
-    { r: 1, c: -1 }, { r: -1, c: 1 }     // diagonal secundária
+    { r: 0, c: 1 }, { r: 0, c: -1 },
+    { r: 1, c: 0 }, { r: -1, c: 0 },
+    { r: 1, c: 1 }, { r: -1, c: -1 },
+    { r: 1, c: -1 }, { r: -1, c: 1 }
   ];
   return dirs[Math.floor(Math.random() * dirs.length)];
 }
