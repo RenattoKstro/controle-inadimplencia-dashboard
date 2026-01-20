@@ -29,7 +29,7 @@ interface RankingFilial {
     avatar_url: string;
     whatsapp: string;
     instagram: string;
-    updated_at: string | null; // ← Campo essencial para o contador
+    updated_at: string | null;
   } | null;
 }
 
@@ -39,7 +39,7 @@ const Filiais = () => {
   const [filtroRegional, setFiltroRegional] = useState<string>("todas");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [now, setNow] = useState(new Date()); // Para atualizar o contador a cada minuto
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     const fetchRanking = async () => {
@@ -57,11 +57,10 @@ const Filiais = () => {
     };
 
     fetchRanking();
-    const interval = setInterval(fetchRanking, 30000); // Atualiza ranking a cada 30s
+    const interval = setInterval(fetchRanking, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Atualiza o "agora" a cada 60 segundos para recalcular "há X min"
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
@@ -110,11 +109,28 @@ const Filiais = () => {
     const metaMes = f.total_meta_fiado || 0;
     const recebidosMes = abertura - vencidoAtual;
     const aReceber = abertura - metaMes;
+    const restante = recebidosMes - aReceber;
+
     const format = (n: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
-    return `${format(recebidosMes)} / ${format(aReceber)}`;
+
+    // Cálculo do restante com cor
+    const restanteText = format(restante);
+    let restanteClass = "text-gray-600 text-xs mt-1";
+    if (restante < 0) restanteClass = "text-red-600 font-medium text-xs mt-1";
+    if (restante > 0) restanteClass = "text-green-600 font-medium text-xs mt-1";
+
+    return (
+      <div className="flex flex-col items-center">
+        <p className="font-bold text-sm">
+          {format(recebidosMes)} / {format(aReceber)}
+        </p>
+        <p className={restanteClass}>
+          Restante: {restanteText}
+        </p>
+      </div>
+    );
   };
 
-  // Função para calcular "Atualizado há X min" (individual por usuário principal)
   const getUpdatedText = (updatedAt: string | null) => {
     if (!updatedAt) return "Nunca atualizado";
 
@@ -287,16 +303,13 @@ const Filiais = () => {
                             <p className="text-xs text-gray-600">{f.regional}</p>
                           </div>
                         </div>
-                        {/* Contador de atualização */}
                         <p className="text-xs text-gray-500 italic mt-1">
-                          {updatedText}
+                          {getUpdatedText(user?.updated_at)}
                         </p>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <p className="font-bold text-sm">
-                        {calcularRecebidoMeta(f)}
-                      </p>
+                      {calcularRecebidoMeta(f)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
