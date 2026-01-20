@@ -32,6 +32,7 @@ import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import Jogos from "./dashboard/Jogos";
 
+
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
