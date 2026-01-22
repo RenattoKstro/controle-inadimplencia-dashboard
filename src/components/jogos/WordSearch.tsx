@@ -7,30 +7,29 @@ import { supabase } from "@/integrations/supabase/client";
 const ROWS = 18;
 const COLS = 18;
 
-// 20 palavras visíveis (obrigatórias)
-const VISIBLE_WORDS = [
-"ABATEDORES", "ANTECIPACAO", "ASSISTENCIA", "ATENDIMENTO", "AUDITORIA",
-"BOLETO", "CAIXA", "CCG", "CLIENTE", "COBRANCA",
-"COMISSAO", "CONSORCIO", "CREDIARIO", "DESCONTO", "DNA",
-"EMPRESTIMO", "ENTREGAS", "ESTOQUE", "ESTORNO", "FATURA",
-"FIDELIZACAO", "FILIAL", "FORNECEDOR", "GARANTIA", "GATILHO",
-"GAZIN", "INADIMPLENCIA", "INVENTARIO", "JUROS", "LIQUIDACAO",
-"LOGISTICA", "LOJA", "LUCRO", "MARGEM", "META",
-"MONTAGENS", "NEGOCIACAO", "ORCAMENTO", "PARCELAMENTO", "PIX",
-"POSVENDA", "PRECO", "PROMOCAO", "PROSPECCAO", "RECEBIMENTO",
-"RECIBO", "RENEGOCIACAO", "ROBOZIN", "SABIUM", "SEGURO",
-"SIGA", "VAREJO", "VENDAS", "VENDEDOR",
-];
-// 10 palavras secretas (bônus)
-const SECRET_WORDS = [
- "CARTAO", "CHEQUE", "COFRE", "CRACHA", "DCC", "DIVIDA",
-"ECF", "EPRAJA", "FATURAMENTO", "NOTAS",
-"OPCADASTRO", "QLIK", "RENDIMENTO", "TIGER", "TROQUINHO",
-"VEX",
-
+// Lista GRANDE de palavras possíveis (todas relacionadas ao varejo/finanças)
+const ALL_POSSIBLE_WORDS = [
+  "VENDAS", "LUCRO", "META", "CREDIARIO", "JUROS", "CAIXA", "CLIENTE", "PROMOCAO",
+  "DESCONTO", "PARCELAMENTO", "BOLETO", "MARGEM", "COMISSAO", "PRECO", "LOJA",
+  "ESTOQUE", "GAZIN", "NEGOCIACAO", "FATURA", "RECIBO", "FATURAMENTO", "RENDIMENTO",
+  "EMPRESTIMO", "CHEQUE", "CARTAO", "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA",
+  "LUCROBRUTO", "ANTECIPACAO", "ASSISTENCIA", "ATENDIMENTO", "AUDITORIA", "CCG",
+  "CONSORCIO", "DNA", "ENTREGAS", "ESTORNO", "FIDELIZACAO", "FILIAL", "FORNECEDOR",
+  "GARANTIA", "GATILHO", "INADIMPLENCIA", "INVENTARIO", "LIQUIDACAO", "LOGISTICA",
+  "MONTAGENS", "OPCADASTRO", "ORCAMENTO", "PIX", "POSVENDA", "PROSPECCAO",
+  "RECEBIMENTO", "ROBOZIN", "SABIUM", "SEGURO", "SIGA", "VAREJO", "VENDEDOR"
 ];
 
-const ALL_WORDS = [...VISIBLE_WORDS, ...SECRET_WORDS];
+// Sempre sorteia exatamente 20 palavras visíveis (obrigatórias) de ALL_POSSIBLE_WORDS
+function getVisibleWords() {
+  const shuffled = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 20);
+}
+
+// Palavras secretas extras: o restante das palavras que não foram escolhidas como visíveis
+function getSecretWords(visible: string[]) {
+  return ALL_POSSIBLE_WORDS.filter(w => !visible.includes(w));
+}
 
 type Cell = { row: number; col: number };
 
@@ -42,6 +41,9 @@ type RankingEntry = {
 
 function CacaPalavras() {
   const [grid, setGrid] = useState<string[][]>([]);
+  const [visibleWords, setVisibleWords] = useState<string[]>([]);
+  const [secretWords, setSecretWords] = useState<string[]>([]);
+  const [allWords, setAllWords] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
   const [selection, setSelection] = useState<Cell[]>([]);
@@ -100,8 +102,8 @@ function CacaPalavras() {
       setShowNamePrompt(false);
       alert(`Recorde salvo com sucesso! 🎉\n\nNome: ${playerName.trim()}\nTempo: ${seconds}s\nPontos: ${score}`);
     } catch (err: any) {
-      console.error("Erro completo ao salvar:", err);
-      setSaveError(err.message || "Erro ao salvar o recorde. Tente novamente.");
+      console.error("Erro ao salvar:", err);
+      setSaveError(err.message || "Erro ao salvar. Tente novamente.");
     }
   };
 
@@ -120,7 +122,16 @@ function CacaPalavras() {
   }
 
   function startGame() {
-    generateGrid();
+    // Sorteia as 20 visíveis aleatoriamente
+    const newVisible = getVisibleWords();
+    const newSecret = getSecretWords(newVisible);
+    const newAll = [...newVisible, ...newSecret];
+
+    setVisibleWords(newVisible);
+    setSecretWords(newSecret);
+    setAllWords(newAll);
+
+    generateGrid(newAll);
     setFoundWords([]);
     setFoundCells(new Set());
     setSelection([]);
@@ -131,12 +142,12 @@ function CacaPalavras() {
     startTimer();
   }
 
-  function generateGrid() {
+  function generateGrid(wordsToPlace: string[]) {
     const g = Array.from({ length: ROWS }, () =>
       Array.from({ length: COLS }, () => "")
     );
 
-    ALL_WORDS.forEach(word => {
+    wordsToPlace.forEach(word => {
       let placed = false;
       let attempts = 0;
 
@@ -171,6 +182,7 @@ function CacaPalavras() {
       }
     });
 
+    // Preenche o restante com letras aleatórias
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (!g[r][c]) {
@@ -211,13 +223,16 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
+        // Pontuação: +5 para visível, +10 para secreta
         const pointsToAdd = SECRET_WORDS.includes(match) ? 10 : 5;
         setScore(s => s + pointsToAdd);
 
+        // Se for secreta, desconta 30 segundos
         if (SECRET_WORDS.includes(match)) {
           setSeconds(s => Math.max(0, s - 30));
         }
 
+        // Verifica se terminou as 20 visíveis
         const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
         if (visibleFound === VISIBLE_WORDS.length) {
           stopTimer();
@@ -331,6 +346,7 @@ function CacaPalavras() {
               ))}
             </div>
 
+            {/* Palavras secretas só aparecem quando encontradas */}
             {foundWords.some(w => SECRET_WORDS.includes(w)) && (
               <>
                 <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
@@ -409,20 +425,17 @@ function CacaPalavras() {
         </div>
       )}
 
-      {/* Prompt para nome */}
+      {/* Prompt para nome ao vencer */}
       {showNamePrompt && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
-            <h3 className="text-2xl font-bold mb-4 text-center">Novo Recorde!</h3>
+            <h3 className="text-2xl font-bold mb-4 text-center">Parabéns!</h3>
             <p className="text-center mb-6">
-              Você completou as 20 palavras em {seconds}s com {score} pontos!<br />
+              Você encontrou as 20 palavras visíveis em {seconds}s!<br />
+              Pontos: {score}<br /><br />
               Digite seu apelido para registrar no ranking:
             </p>
-            {saveError && (
-              <p className="text-red-600 text-center mb-4 font-medium">
-                {saveError}
-              </p>
-            )}
+            {saveError && <p className="text-red-600 text-center mb-4 font-medium">{saveError}</p>}
             <Input
               value={playerName}
               onChange={e => setPlayerName(e.target.value)}
