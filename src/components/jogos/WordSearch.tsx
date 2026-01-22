@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 const ROWS = 18;
 const COLS = 18;
 
-// Lista GRANDE de palavras possíveis (você forneceu)
+// Lista GRANDE de palavras possíveis (todas que você forneceu)
 const ALL_POSSIBLE_WORDS = [
   "ABATEDORES", "ANTECIPACAO", "ASSISTENCIA", "ATENDIMENTO", "AUDITORIA",
   "BOLETO", "CAIXA", "CCG", "CLIENTE", "COBRANCA",
@@ -26,13 +26,13 @@ const ALL_POSSIBLE_WORDS = [
   "VEX"
 ];
 
-// Sempre sorteia exatamente 20 palavras visíveis
+// Função para selecionar aleatoriamente EXATAMENTE 20 palavras visíveis
 function getVisibleWords() {
   const shuffled = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 20);
 }
 
-// Palavras secretas extras: tudo que não foi selecionado como visível
+// Palavras secretas/extras: tudo que NÃO foi selecionado como visível
 function getSecretWords(visible: string[]) {
   return ALL_POSSIBLE_WORDS.filter(w => !visible.includes(w));
 }
@@ -52,7 +52,7 @@ function CacaPalavras() {
   const [allWords, setAllWords] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
-  const [cellUsage, setCellUsage] = useState<Map<string, number>>(new Map()); // para detectar cruzamentos
+  const [cellUsage, setCellUsage] = useState<Map<string, number>>(new Map()); // para cruzamentos
   const [selection, setSelection] = useState<Cell[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -127,6 +127,7 @@ function CacaPalavras() {
   }
 
   function startGame() {
+    // Sorteia exatamente 20 palavras visíveis
     const newVisible = getVisibleWords();
     const newSecret = getSecretWords(newVisible);
     const newAll = [...newVisible, ...newSecret];
@@ -217,7 +218,7 @@ function CacaPalavras() {
     const word = selection.map(c => grid[c.row][c.col]).join("");
     const reversed = word.split("").reverse().join("");
 
-    const match = ALL_WORDS.find(
+    const match = allWords.find(
       w => (w === word || w === reversed) && !foundWords.includes(w)
     );
 
@@ -225,10 +226,12 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
-        const pointsToAdd = VISIBLE_WORDS.includes(match) ? 5 : 10;
+        // Pontuação: +5 para visível, +10 para secreta/extra
+        const pointsToAdd = visibleWords.includes(match) ? 5 : 10;
         setScore(s => s + pointsToAdd);
 
-        if (!VISIBLE_WORDS.includes(match)) {
+        // Desconto de 30s apenas para secretas/extras
+        if (!visibleWords.includes(match)) {
           setSeconds(s => Math.max(0, s - 30));
         }
 
@@ -240,7 +243,7 @@ function CacaPalavras() {
           return updated;
         });
 
-        // Conta uso por célula (para subcores de cruzamento)
+        // Conta uso por célula para cruzamentos
         setCellUsage(prev => {
           const updated = new Map(prev);
           cells.forEach(cell => {
@@ -250,8 +253,9 @@ function CacaPalavras() {
           return updated;
         });
 
-        const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
-        if (visibleFound === VISIBLE_WORDS.length) {
+        // Verifica se terminou as 20 visíveis
+        const visibleFound = newFound.filter(w => visibleWords.includes(w)).length;
+        if (visibleFound === 20) {
           stopTimer();
           setShowNamePrompt(true);
         }
@@ -261,7 +265,7 @@ function CacaPalavras() {
     }
   }
 
-  const visibleProgress = foundWords.filter(w => VISIBLE_WORDS.includes(w)).length;
+  const visibleProgress = foundWords.filter(w => visibleWords.includes(w)).length;
 
   return (
     <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
@@ -378,13 +382,13 @@ function CacaPalavras() {
               ))}
             </div>
 
-            {foundWords.some(w => !VISIBLE_WORDS.includes(w)) && (
+            {foundWords.some(w => !visibleWords.includes(w)) && (
               <>
                 <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
                   Palavras Extras Encontradas!
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
-                  {foundWords.filter(w => !VISIBLE_WORDS.includes(w)).map(w => (
+                  {foundWords.filter(w => !visibleWords.includes(w)).map(w => (
                     <div
                       key={w}
                       className="p-2 rounded bg-purple-50 border border-purple-200 text-center font-medium text-purple-800"
