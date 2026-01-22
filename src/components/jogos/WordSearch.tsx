@@ -7,21 +7,35 @@ import { supabase } from "@/integrations/supabase/client";
 const ROWS = 18;
 const COLS = 18;
 
-// 20 palavras visíveis (obrigatórias)
-const VISIBLE_WORDS = [
-  "VENDAS", "LUCRO", "META", "CREDIARIO", "JUROS",
-  "CAIXA", "CLIENTE", "PROMOCAO", "DESCONTO", "PARCELAMENTO",
-  "BOLETO", "MARGEM", "COMISSAO", "PRECO", "LOJA",
-  "ESTOQUE", "GAZIN", "NEGOCIACAO", "FATURA", "RECIBO"
+// Lista GRANDE de palavras possíveis (todas que você forneceu)
+const ALL_POSSIBLE_WORDS = [
+  "ABATEDORES", "ANTECIPACAO", "ASSISTENCIA", "ATENDIMENTO", "AUDITORIA",
+  "BOLETO", "CAIXA", "CCG", "CLIENTE", "COBRANCA",
+  "COMISSAO", "CONSORCIO", "CREDIARIO", "DESCONTO", "DNA",
+  "EMPRESTIMO", "ENTREGAS", "ESTOQUE", "ESTORNO", "FATURA",
+  "FIDELIZACAO", "FILIAL", "FORNECEDOR", "GARANTIA", "GATILHO",
+  "GAZIN", "INADIMPLENCIA", "INVENTARIO", "JUROS", "LIQUIDACAO",
+  "LOGISTICA", "LOJA", "LUCRO", "MARGEM", "META",
+  "MONTAGENS", "NEGOCIACAO", "ORCAMENTO", "PARCELAMENTO", "PIX",
+  "POSVENDA", "PRECO", "PROMOCAO", "PROSPECCAO", "RECEBIMENTO",
+  "RECIBO", "RENEGOCIACAO", "ROBOZIN", "SABIUM", "SEGURO",
+  "SIGA", "VAREJO", "VENDAS", "VENDEDOR",
+  "CARTAO", "CHEQUE", "COFRE", "CRACHA", "DCC", "DIVIDA",
+  "ECF", "EPRAJA", "FATURAMENTO", "NOTAS",
+  "OPCADASTRO", "QLIK", "RENDIMENTO", "TIGER", "TROQUINHO",
+  "VEX"
 ];
 
-// 10 palavras secretas (bônus)
-const SECRET_WORDS = [
-  "FATURAMENTO", "RENDIMENTO", "EMPRESTIMO", "CHEQUE", "CARTAO",
-  "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA", "LUCROBRUTO"
-];
+// Função para selecionar aleatoriamente EXATAMENTE 20 palavras visíveis
+function getVisibleWords() {
+  const shuffled = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 20);
+}
 
-const ALL_WORDS = [...VISIBLE_WORDS, ...SECRET_WORDS];
+// Palavras secretas/extras: tudo que NÃO foi selecionado como visível
+function getSecretWords(visible: string[]) {
+  return ALL_POSSIBLE_WORDS.filter(w => !visible.includes(w));
+}
 
 type Cell = { row: number; col: number };
 
@@ -33,8 +47,12 @@ type RankingEntry = {
 
 function CacaPalavras() {
   const [grid, setGrid] = useState<string[][]>([]);
+  const [visibleWords, setVisibleWords] = useState<string[]>([]);
+  const [secretWords, setSecretWords] = useState<string[]>([]);
+  const [allWords, setAllWords] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
+  const [cellUsage, setCellUsage] = useState<Map<string, number>>(new Map()); // para cruzamentos
   const [selection, setSelection] = useState<Cell[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -89,18 +107,16 @@ function CacaPalavras() {
 
       loadRanking();
       setShowNamePrompt(false);
-      alert(`Recorde salvo com sucesso! 🎉\n\nNome: ${playerName.trim()}\nTempo: ${seconds}s\nPontos: ${score}`);
+      alert(`Recorde salvo! 🎉\nNome: ${playerName.trim()}\nTempo: ${seconds}s\nPontos: ${score}`);
     } catch (err: any) {
-      console.error("Erro completo ao salvar:", err);
-      setSaveError(err.message || "Erro ao salvar o recorde. Tente novamente.");
+      console.error("Erro ao salvar:", err);
+      setSaveError(err.message || "Erro ao salvar. Tente novamente.");
     }
   };
 
   function startTimer() {
     stopTimer();
-    timerRef.current = window.setInterval(() => {
-      setSeconds(s => s + 1);
-    }, 1000);
+    timerRef.current = window.setInterval(() => setSeconds(s => s + 1), 1000);
   }
 
   function stopTimer() {
@@ -111,9 +127,19 @@ function CacaPalavras() {
   }
 
   function startGame() {
-    generateGrid();
+    // Sorteia exatamente 20 palavras visíveis
+    const newVisible = getVisibleWords();
+    const newSecret = getSecretWords(newVisible);
+    const newAll = [...newVisible, ...newSecret];
+
+    setVisibleWords(newVisible);
+    setSecretWords(newSecret);
+    setAllWords(newAll);
+
+    generateGrid(newAll);
     setFoundWords([]);
     setFoundCells(new Set());
+    setCellUsage(new Map());
     setSelection([]);
     setSeconds(0);
     setScore(0);
@@ -122,12 +148,10 @@ function CacaPalavras() {
     startTimer();
   }
 
-  function generateGrid() {
-    const g = Array.from({ length: ROWS }, () =>
-      Array.from({ length: COLS }, () => "")
-    );
+  function generateGrid(wordsToPlace: string[]) {
+    const g = Array.from({ length: ROWS }, () => Array(COLS).fill(""));
 
-    ALL_WORDS.forEach(word => {
+    wordsToPlace.forEach(word => {
       let placed = false;
       let attempts = 0;
 
@@ -194,7 +218,7 @@ function CacaPalavras() {
     const word = selection.map(c => grid[c.row][c.col]).join("");
     const reversed = word.split("").reverse().join("");
 
-    const match = ALL_WORDS.find(
+    const match = allWords.find(
       w => (w === word || w === reversed) && !foundWords.includes(w)
     );
 
@@ -202,31 +226,46 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
-        const pointsToAdd = SECRET_WORDS.includes(match) ? 10 : 5;
+        // Pontuação: +5 para visível, +10 para secreta/extra
+        const pointsToAdd = visibleWords.includes(match) ? 5 : 10;
         setScore(s => s + pointsToAdd);
 
-        if (SECRET_WORDS.includes(match)) {
+        // Desconto de 30s apenas para secretas/extras
+        if (!visibleWords.includes(match)) {
           setSeconds(s => Math.max(0, s - 30));
         }
 
-        const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
-        if (visibleFound === VISIBLE_WORDS.length) {
+        // Marca células como encontradas
+        const cells = selection.map(c => `${c.row}-${c.col}`);
+        setFoundCells(prev => {
+          const updated = new Set(prev);
+          cells.forEach(cell => updated.add(cell));
+          return updated;
+        });
+
+        // Conta uso por célula para cruzamentos
+        setCellUsage(prev => {
+          const updated = new Map(prev);
+          cells.forEach(cell => {
+            const count = (updated.get(cell) || 0) + 1;
+            updated.set(cell, count);
+          });
+          return updated;
+        });
+
+        // Verifica se terminou as 20 visíveis
+        const visibleFound = newFound.filter(w => visibleWords.includes(w)).length;
+        if (visibleFound === 20) {
           stopTimer();
           setShowNamePrompt(true);
         }
 
         return newFound;
       });
-
-      setFoundCells(prev => {
-        const n = new Set(prev);
-        selection.forEach(c => n.add(`${c.row}-${c.col}`));
-        return n;
-      });
     }
   }
 
-  const visibleProgress = foundWords.filter(w => VISIBLE_WORDS.includes(w)).length;
+  const visibleProgress = foundWords.filter(w => visibleWords.includes(w)).length;
 
   return (
     <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
@@ -256,8 +295,28 @@ function CacaPalavras() {
               {grid.map((row, r) =>
                 row.map((char, c) => {
                   const key = `${r}-${c}`;
-                  const selected = selection.some(s => s.row === r && s.col === c);
-                  const found = foundCells.has(key);
+                  const isFound = foundCells.has(key);
+                  const usageCount = cellUsage.get(key) || 0;
+                  const isSelected = selection.some(s => s.row === r && s.col === c);
+
+                  let bgClass = "";
+                  let textClass = "text-black";
+
+                  if (isFound) {
+                    if (usageCount >= 3) {
+                      bgClass = "bg-purple-600";
+                      textClass = "text-white";
+                    } else if (usageCount === 2) {
+                      bgClass = "bg-orange-500";
+                      textClass = "text-white";
+                    } else {
+                      bgClass = "bg-green-500";
+                      textClass = "text-white";
+                    }
+                  } else if (isSelected) {
+                    bgClass = "bg-blue-500";
+                    textClass = "text-white";
+                  }
 
                   return (
                     <div
@@ -289,9 +348,10 @@ function CacaPalavras() {
                         border border-gray-200 rounded
                         cursor-pointer select-none touch-manipulation
                         transition-all duration-100
-                        ${found ? "bg-green-500 text-white shadow-md border-green-600" : ""}
-                        ${selected && !found ? "bg-blue-500 text-white shadow-sm border-blue-600" : ""}
-                        active:bg-blue-600 active:scale-110 hover:bg-gray-100
+                        ${bgClass}
+                        ${textClass}
+                        ${!isFound && !isSelected ? "hover:bg-gray-100" : ""}
+                        active:scale-110
                       `}
                     >
                       {char}
@@ -306,9 +366,9 @@ function CacaPalavras() {
         {/* Lista de palavras */}
         <div className="w-full md:w-80 border-t md:border-t-0 md:border-l bg-white shadow-sm overflow-y-auto">
           <div className="p-4 md:p-6">
-            <h4 className="font-bold text-lg mb-4 text-center">Palavras Visíveis</h4>
+            <h4 className="font-bold text-lg mb-4 text-center">Palavras Visíveis (20)</h4>
             <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
-              {VISIBLE_WORDS.map(w => (
+              {visibleWords.map(w => (
                 <div
                   key={w}
                   className={`p-2 rounded border text-center ${
@@ -322,13 +382,13 @@ function CacaPalavras() {
               ))}
             </div>
 
-            {foundWords.some(w => SECRET_WORDS.includes(w)) && (
+            {foundWords.some(w => !visibleWords.includes(w)) && (
               <>
                 <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
-                  Palavras Secretas Encontradas!
+                  Palavras Extras Encontradas!
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
-                  {SECRET_WORDS.filter(w => foundWords.includes(w)).map(w => (
+                  {foundWords.filter(w => !visibleWords.includes(w)).map(w => (
                     <div
                       key={w}
                       className="p-2 rounded bg-purple-50 border border-purple-200 text-center font-medium text-purple-800"
@@ -404,16 +464,13 @@ function CacaPalavras() {
       {showNamePrompt && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
-            <h3 className="text-2xl font-bold mb-4 text-center">Novo Recorde!</h3>
+            <h3 className="text-2xl font-bold mb-4 text-center">Parabéns!</h3>
             <p className="text-center mb-6">
-              Você completou as 20 palavras em {seconds}s com {score} pontos!<br />
+              Você encontrou as 20 palavras visíveis em {seconds}s!<br />
+              Pontos: {score}<br /><br />
               Digite seu apelido para registrar no ranking:
             </p>
-            {saveError && (
-              <p className="text-red-600 text-center mb-4 font-medium">
-                {saveError}
-              </p>
-            )}
+            {saveError && <p className="text-red-600 text-center mb-4 font-medium">{saveError}</p>}
             <Input
               value={playerName}
               onChange={e => setPlayerName(e.target.value)}
