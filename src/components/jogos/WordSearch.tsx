@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 const ROWS = 18;
 const COLS = 18;
 
-// Lista GRANDE de palavras possíveis (todas relacionadas ao varejo/finanças)
+// Lista GRANDE de palavras possíveis
 const ALL_POSSIBLE_WORDS = [
   "ABATEDORES", "ANTECIPACAO", "ASSISTENCIA", "ATENDIMENTO", "AUDITORIA",
   "BOLETO", "CAIXA", "CCG", "CLIENTE", "COBRANCA",
@@ -25,13 +25,11 @@ const ALL_POSSIBLE_WORDS = [
   "TIGER", "CRACHA", "DCC", "ECF", "EPRAJA", "NOTAS"
 ];
 
-// Função para selecionar aleatoriamente 20 palavras visíveis
 function getVisibleWords() {
   const shuffled = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 20);
 }
 
-// Palavras secretas extras: tudo que não foi selecionado como visível
 function getSecretWords(visible: string[]) {
   return ALL_POSSIBLE_WORDS.filter(w => !visible.includes(w));
 }
@@ -51,6 +49,7 @@ function CacaPalavras() {
   const [allWords, setAllWords] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
+  const [cellUsage, setCellUsage] = useState<Map<string, number>>(new Map()); // conta quantas palavras usam cada célula
   const [selection, setSelection] = useState<Cell[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -105,18 +104,16 @@ function CacaPalavras() {
 
       loadRanking();
       setShowNamePrompt(false);
-      alert(`Recorde salvo com sucesso! 🎉\n\nNome: ${playerName.trim()}\nTempo: ${seconds}s\nPontos: ${score}`);
+      alert(`Recorde salvo! 🎉\nNome: ${playerName.trim()}\nTempo: ${seconds}s\nPontos: ${score}`);
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
-      setSaveError(err.message || "Erro ao salvar o recorde. Tente novamente.");
+      setSaveError(err.message || "Erro ao salvar. Tente novamente.");
     }
   };
 
   function startTimer() {
     stopTimer();
-    timerRef.current = window.setInterval(() => {
-      setSeconds(s => s + 1);
-    }, 1000);
+    timerRef.current = window.setInterval(() => setSeconds(s => s + 1), 1000);
   }
 
   function stopTimer() {
@@ -127,7 +124,6 @@ function CacaPalavras() {
   }
 
   function startGame() {
-    // Sorteia as 20 visíveis aleatoriamente
     const newVisible = getVisibleWords();
     const newSecret = getSecretWords(newVisible);
     const newAll = [...newVisible, ...newSecret];
@@ -139,6 +135,7 @@ function CacaPalavras() {
     generateGrid(newAll);
     setFoundWords([]);
     setFoundCells(new Set());
+    setCellUsage(new Map());
     setSelection([]);
     setSeconds(0);
     setScore(0);
@@ -148,9 +145,7 @@ function CacaPalavras() {
   }
 
   function generateGrid(wordsToPlace: string[]) {
-    const g = Array.from({ length: ROWS }, () =>
-      Array.from({ length: COLS }, () => "")
-    );
+    const g = Array.from({ length: ROWS }, () => Array(COLS).fill(""));
 
     wordsToPlace.forEach(word => {
       let placed = false;
@@ -187,7 +182,7 @@ function CacaPalavras() {
       }
     });
 
-    // Preenche o restante com letras aleatórias
+    // Preenche letras aleatórias
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (!g[r][c]) {
@@ -228,16 +223,34 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
-        // Pontuação: +5 para visível, +10 para secreta/extra
+        // Pontuação
         const pointsToAdd = VISIBLE_WORDS.includes(match) ? 5 : 10;
         setScore(s => s + pointsToAdd);
 
-        // Desconto de 30s apenas para secretas/extras
+        // Desconto de tempo só para secretas/extras
         if (!VISIBLE_WORDS.includes(match)) {
           setSeconds(s => Math.max(0, s - 30));
         }
 
-        // Verifica se terminou as 20 visíveis
+        // Marca todas as células da palavra como encontradas
+        const cells = selection.map(c => `${c.row}-${c.col}`);
+        setFoundCells(prev => {
+          const updated = new Set(prev);
+          cells.forEach(cell => updated.add(cell));
+          return updated;
+        });
+
+        // Atualiza contagem de uso por célula (para subcores de cruzamento)
+        setCellUsage(prev => {
+          const updated = new Map(prev);
+          cells.forEach(cell => {
+            const count = (updated.get(cell) || 0) + 1;
+            updated.set(cell, count);
+          });
+          return updated;
+        });
+
+        // Verifica vitória (20 visíveis)
         const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
         if (visibleFound === VISIBLE_WORDS.length) {
           stopTimer();
@@ -245,12 +258,6 @@ function CacaPalavras() {
         }
 
         return newFound;
-      });
-
-      setFoundCells(prev => {
-        const n = new Set(prev);
-        selection.forEach(c => n.add(`${c.row}-${c.col}`));
-        return n;
       });
     }
   }
@@ -285,8 +292,28 @@ function CacaPalavras() {
               {grid.map((row, r) =>
                 row.map((char, c) => {
                   const key = `${r}-${c}`;
-                  const selected = selection.some(s => s.row === r && s.col === c);
-                  const found = foundCells.has(key);
+                  const isFound = foundCells.has(key);
+                  const usageCount = cellUsage.get(key) || 0;
+                  const isSelected = selection.some(s => s.row === r && s.col === c);
+
+                  let bgClass = "";
+                  let textClass = "text-black";
+
+                  if (isFound) {
+                    if (usageCount >= 3) {
+                      bgClass = "bg-purple-600";
+                      textClass = "text-white";
+                    } else if (usageCount === 2) {
+                      bgClass = "bg-orange-500";
+                      textClass = "text-white";
+                    } else {
+                      bgClass = "bg-green-500";
+                      textClass = "text-white";
+                    }
+                  } else if (isSelected) {
+                    bgClass = "bg-blue-500";
+                    textClass = "text-white";
+                  }
 
                   return (
                     <div
@@ -318,9 +345,10 @@ function CacaPalavras() {
                         border border-gray-200 rounded
                         cursor-pointer select-none touch-manipulation
                         transition-all duration-100
-                        ${found ? "bg-green-500 text-white shadow-md border-green-600" : ""}
-                        ${selected && !found ? "bg-blue-500 text-white shadow-sm border-blue-600" : ""}
-                        active:bg-blue-600 active:scale-110 hover:bg-gray-100
+                        ${bgClass}
+                        ${textClass}
+                        ${!isFound && !isSelected ? "hover:bg-gray-100" : ""}
+                        active:scale-110
                       `}
                     >
                       {char}
@@ -351,7 +379,7 @@ function CacaPalavras() {
               ))}
             </div>
 
-            {/* Palavras secretas/extras só aparecem quando encontradas */}
+            {/* Palavras extras encontradas */}
             {foundWords.some(w => !VISIBLE_WORDS.includes(w)) && (
               <>
                 <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
