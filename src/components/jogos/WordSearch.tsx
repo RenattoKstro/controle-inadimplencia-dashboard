@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 const ROWS = 18;
 const COLS = 18;
 
-// Lista GRANDE de palavras possíveis
+// Lista GRANDE de palavras possíveis (você forneceu)
 const ALL_POSSIBLE_WORDS = [
   "ABATEDORES", "ANTECIPACAO", "ASSISTENCIA", "ATENDIMENTO", "AUDITORIA",
   "BOLETO", "CAIXA", "CCG", "CLIENTE", "COBRANCA",
@@ -19,17 +19,20 @@ const ALL_POSSIBLE_WORDS = [
   "MONTAGENS", "NEGOCIACAO", "ORCAMENTO", "PARCELAMENTO", "PIX",
   "POSVENDA", "PRECO", "PROMOCAO", "PROSPECCAO", "RECEBIMENTO",
   "RECIBO", "RENEGOCIACAO", "ROBOZIN", "SABIUM", "SEGURO",
-  "SIGA", "VAREJO", "VENDAS", "VENDEDOR", "FATURAMENTO",
-  "RENDIMENTO", "CHEQUE", "CARTAO", "DIVIDA", "FLUXOCAIXA",
-  "LUCROBRUTO", "TROQUINHO", "VEX", "OPCADASTRO", "QLIK",
-  "TIGER", "CRACHA", "DCC", "ECF", "EPRAJA", "NOTAS"
+  "SIGA", "VAREJO", "VENDAS", "VENDEDOR",
+  "CARTAO", "CHEQUE", "COFRE", "CRACHA", "DCC", "DIVIDA",
+  "ECF", "EPRAJA", "FATURAMENTO", "NOTAS",
+  "OPCADASTRO", "QLIK", "RENDIMENTO", "TIGER", "TROQUINHO",
+  "VEX"
 ];
 
+// Sempre sorteia exatamente 20 palavras visíveis
 function getVisibleWords() {
   const shuffled = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 20);
 }
 
+// Palavras secretas extras: tudo que não foi selecionado como visível
 function getSecretWords(visible: string[]) {
   return ALL_POSSIBLE_WORDS.filter(w => !visible.includes(w));
 }
@@ -49,7 +52,7 @@ function CacaPalavras() {
   const [allWords, setAllWords] = useState<string[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
   const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
-  const [cellUsage, setCellUsage] = useState<Map<string, number>>(new Map()); // conta quantas palavras usam cada célula
+  const [cellUsage, setCellUsage] = useState<Map<string, number>>(new Map()); // para detectar cruzamentos
   const [selection, setSelection] = useState<Cell[]>([]);
   const [selecting, setSelecting] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -182,7 +185,6 @@ function CacaPalavras() {
       }
     });
 
-    // Preenche letras aleatórias
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (!g[r][c]) {
@@ -223,16 +225,14 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
-        // Pontuação
         const pointsToAdd = VISIBLE_WORDS.includes(match) ? 5 : 10;
         setScore(s => s + pointsToAdd);
 
-        // Desconto de tempo só para secretas/extras
         if (!VISIBLE_WORDS.includes(match)) {
           setSeconds(s => Math.max(0, s - 30));
         }
 
-        // Marca todas as células da palavra como encontradas
+        // Marca células como encontradas
         const cells = selection.map(c => `${c.row}-${c.col}`);
         setFoundCells(prev => {
           const updated = new Set(prev);
@@ -240,7 +240,7 @@ function CacaPalavras() {
           return updated;
         });
 
-        // Atualiza contagem de uso por célula (para subcores de cruzamento)
+        // Conta uso por célula (para subcores de cruzamento)
         setCellUsage(prev => {
           const updated = new Map(prev);
           cells.forEach(cell => {
@@ -250,7 +250,6 @@ function CacaPalavras() {
           return updated;
         });
 
-        // Verifica vitória (20 visíveis)
         const visibleFound = newFound.filter(w => VISIBLE_WORDS.includes(w)).length;
         if (visibleFound === VISIBLE_WORDS.length) {
           stopTimer();
@@ -379,7 +378,6 @@ function CacaPalavras() {
               ))}
             </div>
 
-            {/* Palavras extras encontradas */}
             {foundWords.some(w => !VISIBLE_WORDS.includes(w)) && (
               <>
                 <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
@@ -458,7 +456,7 @@ function CacaPalavras() {
         </div>
       )}
 
-      {/* Prompt para nome ao vencer */}
+      {/* Prompt para nome */}
       {showNamePrompt && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
