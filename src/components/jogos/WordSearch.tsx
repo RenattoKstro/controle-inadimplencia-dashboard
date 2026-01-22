@@ -9,24 +9,29 @@ const COLS = 18;
 
 // Lista GRANDE de palavras possíveis (todas relacionadas ao varejo/finanças)
 const ALL_POSSIBLE_WORDS = [
-  "VENDAS", "LUCRO", "META", "CREDIARIO", "JUROS", "CAIXA", "CLIENTE", "PROMOCAO",
-  "DESCONTO", "PARCELAMENTO", "BOLETO", "MARGEM", "COMISSAO", "PRECO", "LOJA",
-  "ESTOQUE", "GAZIN", "NEGOCIACAO", "FATURA", "RECIBO", "FATURAMENTO", "RENDIMENTO",
-  "EMPRESTIMO", "CHEQUE", "CARTAO", "DIVIDA", "COBRANCA", "RENEGOCIACAO", "FLUXOCAIXA",
-  "LUCROBRUTO", "ANTECIPACAO", "ASSISTENCIA", "ATENDIMENTO", "AUDITORIA", "CCG",
-  "CONSORCIO", "DNA", "ENTREGAS", "ESTORNO", "FIDELIZACAO", "FILIAL", "FORNECEDOR",
-  "GARANTIA", "GATILHO", "INADIMPLENCIA", "INVENTARIO", "LIQUIDACAO", "LOGISTICA",
-  "MONTAGENS", "OPCADASTRO", "ORCAMENTO", "PIX", "POSVENDA", "PROSPECCAO",
-  "RECEBIMENTO", "ROBOZIN", "SABIUM", "SEGURO", "SIGA", "VAREJO", "VENDEDOR"
+  "ABATEDORES", "ANTECIPACAO", "ASSISTENCIA", "ATENDIMENTO", "AUDITORIA",
+  "BOLETO", "CAIXA", "CCG", "CLIENTE", "COBRANCA",
+  "COMISSAO", "CONSORCIO", "CREDIARIO", "DESCONTO", "DNA",
+  "EMPRESTIMO", "ENTREGAS", "ESTOQUE", "ESTORNO", "FATURA",
+  "FIDELIZACAO", "FILIAL", "FORNECEDOR", "GARANTIA", "GATILHO",
+  "GAZIN", "INADIMPLENCIA", "INVENTARIO", "JUROS", "LIQUIDACAO",
+  "LOGISTICA", "LOJA", "LUCRO", "MARGEM", "META",
+  "MONTAGENS", "NEGOCIACAO", "ORCAMENTO", "PARCELAMENTO", "PIX",
+  "POSVENDA", "PRECO", "PROMOCAO", "PROSPECCAO", "RECEBIMENTO",
+  "RECIBO", "RENEGOCIACAO", "ROBOZIN", "SABIUM", "SEGURO",
+  "SIGA", "VAREJO", "VENDAS", "VENDEDOR", "FATURAMENTO",
+  "RENDIMENTO", "CHEQUE", "CARTAO", "DIVIDA", "FLUXOCAIXA",
+  "LUCROBRUTO", "TROQUINHO", "VEX", "OPCADASTRO", "QLIK",
+  "TIGER", "CRACHA", "DCC", "ECF", "EPRAJA", "NOTAS"
 ];
 
-// Sempre sorteia exatamente 20 palavras visíveis (obrigatórias) de ALL_POSSIBLE_WORDS
+// Função para selecionar aleatoriamente 20 palavras visíveis
 function getVisibleWords() {
   const shuffled = [...ALL_POSSIBLE_WORDS].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 20);
 }
 
-// Palavras secretas extras: o restante das palavras que não foram escolhidas como visíveis
+// Palavras secretas extras: tudo que não foi selecionado como visível
 function getSecretWords(visible: string[]) {
   return ALL_POSSIBLE_WORDS.filter(w => !visible.includes(w));
 }
@@ -103,7 +108,7 @@ function CacaPalavras() {
       alert(`Recorde salvo com sucesso! 🎉\n\nNome: ${playerName.trim()}\nTempo: ${seconds}s\nPontos: ${score}`);
     } catch (err: any) {
       console.error("Erro ao salvar:", err);
-      setSaveError(err.message || "Erro ao salvar. Tente novamente.");
+      setSaveError(err.message || "Erro ao salvar o recorde. Tente novamente.");
     }
   };
 
@@ -223,12 +228,12 @@ function CacaPalavras() {
       setFoundWords(prev => {
         const newFound = [...prev, match];
 
-        // Pontuação: +5 para visível, +10 para secreta
-        const pointsToAdd = SECRET_WORDS.includes(match) ? 10 : 5;
+        // Pontuação: +5 para visível, +10 para secreta/extra
+        const pointsToAdd = VISIBLE_WORDS.includes(match) ? 5 : 10;
         setScore(s => s + pointsToAdd);
 
-        // Se for secreta, desconta 30 segundos
-        if (SECRET_WORDS.includes(match)) {
+        // Desconto de 30s apenas para secretas/extras
+        if (!VISIBLE_WORDS.includes(match)) {
           setSeconds(s => Math.max(0, s - 30));
         }
 
@@ -330,9 +335,9 @@ function CacaPalavras() {
         {/* Lista de palavras */}
         <div className="w-full md:w-80 border-t md:border-t-0 md:border-l bg-white shadow-sm overflow-y-auto">
           <div className="p-4 md:p-6">
-            <h4 className="font-bold text-lg mb-4 text-center">Palavras Visíveis</h4>
+            <h4 className="font-bold text-lg mb-4 text-center">Palavras Visíveis (20)</h4>
             <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
-              {VISIBLE_WORDS.map(w => (
+              {visibleWords.map(w => (
                 <div
                   key={w}
                   className={`p-2 rounded border text-center ${
@@ -346,14 +351,14 @@ function CacaPalavras() {
               ))}
             </div>
 
-            {/* Palavras secretas só aparecem quando encontradas */}
-            {foundWords.some(w => SECRET_WORDS.includes(w)) && (
+            {/* Palavras secretas/extras só aparecem quando encontradas */}
+            {foundWords.some(w => !VISIBLE_WORDS.includes(w)) && (
               <>
                 <h4 className="font-bold text-md mt-8 mb-3 text-center text-purple-700">
-                  Palavras Secretas Encontradas!
+                  Palavras Extras Encontradas!
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-1 gap-2 text-sm">
-                  {SECRET_WORDS.filter(w => foundWords.includes(w)).map(w => (
+                  {foundWords.filter(w => !VISIBLE_WORDS.includes(w)).map(w => (
                     <div
                       key={w}
                       className="p-2 rounded bg-purple-50 border border-purple-200 text-center font-medium text-purple-800"
