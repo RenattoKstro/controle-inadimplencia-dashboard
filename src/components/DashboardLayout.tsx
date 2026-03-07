@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet, Trophy, Utensils, Gift, Sliders, Menu,
-  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut
+  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +16,7 @@ import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
 import Filiais from "./dashboard/Filiais";
-import RankingApoiadores from "@/components/RankingApoiadores"; // ← IMPORT MANTIDO
+import RankingApoiadores from "@/components/RankingApoiadores";
 import { useUserData } from "@/hooks/useUserData";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -32,7 +32,6 @@ import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import Jogos from "./dashboard/Jogos";
 
-
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("meta-fiado");
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -43,7 +42,6 @@ const DashboardLayout = () => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
- 
   const {
     userData,
     updateUserData,
@@ -122,6 +120,21 @@ const DashboardLayout = () => {
       className={`min-h-screen ${isDarkMode ? "bg-background dark" : "bg-gradient-to-br from-slate-50 to-slate-100"}`}
       ref={contentRef}
     >
+      {/* AVISO IMPORTANTE NO TOPO */}
+      <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 px-4 text-center font-bold text-lg shadow-lg flex items-center justify-center gap-3">
+        <AlertCircle className="w-6 h-6 animate-pulse" />
+        Atenção, em breve o link do app irá mudar!
+        <a
+          href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl?mode=hq2tcli"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-yellow-200 transition-colors flex items-center gap-2"
+        >
+          Entre no grupo para ter acesso ao novo link
+          <FaWhatsapp className="w-5 h-5" />
+        </a>
+      </div>
+
       {/* HEADER */}
       <header className="bg-card shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -190,7 +203,8 @@ const DashboardLayout = () => {
                 <Button variant="outline" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
-                {/* BOTÃO DE PERFIL COM FOTO */}
+
+                {/* BOTÃO DE PERFIL */}
                 <div className="relative">
                   <Button
                     variant="ghost"
@@ -288,11 +302,9 @@ const DashboardLayout = () => {
 
       {/* MAIN CONTENT */}
       <div className="flex flex-col lg:flex-row min-h-screen">
-        {/* REMOVIDO O ASIDE COM RANKING */}
-        <main className="flex-1 lg:ml-0 pt-6 pb-20"> {/* lg:ml-0 porque não tem sidebar */}
+        <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              {/* TAB LIST COM NOVA GUIA */}
               <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-9 w-full p-1 bg-card rounded-xl mb-6 gap-1">
                 <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm">Ajustes</TabsTrigger>
                 <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm">Fiado</TabsTrigger>
@@ -324,6 +336,7 @@ const DashboardLayout = () => {
                   setMostrarHistorico={setMostrarHistorico}
                 />
               </TabsContent>
+
               <TabsContent value="meta-fiado">
                 <MetaFiado
                   userData={userData}
@@ -336,6 +349,7 @@ const DashboardLayout = () => {
                   setRecebidoHoje={setRecebidoHoje}
                 />
               </TabsContent>
+
               <TabsContent value="meta-desafio">
                 <MetaDesafio
                   userData={userData}
@@ -348,6 +362,7 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
+
               <TabsContent value="meta-alimentacao">
                 <MetaAlimentacao
                   userData={userData}
@@ -360,6 +375,7 @@ const DashboardLayout = () => {
                   setRecebidoHoje={() => {}}
                 />
               </TabsContent>
+
               {bonusPerdidoAtivado && (
                 <TabsContent value="meta-perdido">
                   <MetaPerdido
@@ -374,6 +390,7 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
+
               <TabsContent value="meus-premios">
                 <MeusPremios
                   userData={userData}
@@ -387,6 +404,7 @@ const DashboardLayout = () => {
                   setTotalGanhos={() => {}}
                 />
               </TabsContent>
+
               {mostrarHistorico && (
                 <TabsContent value="historicos">
                   <Historicos
@@ -401,10 +419,11 @@ const DashboardLayout = () => {
                   />
                 </TabsContent>
               )}
+
               <TabsContent value="filiais">
                 <Filiais />
               </TabsContent>
-              {/* NOVA GUIA APOIADORES */}
+
               <TabsContent value="apoiadores">
                 <div className="space-y-6">
                   <div className="text-center">
@@ -420,9 +439,10 @@ const DashboardLayout = () => {
                   </div>
                 </div>
               </TabsContent>
+
               <TabsContent value="jogos">
-  <Jogos />
-</TabsContent>
+                <Jogos />
+              </TabsContent>
             </Tabs>
           </div>
         </main>
