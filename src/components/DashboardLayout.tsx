@@ -421,24 +421,7 @@ const DashboardLayout = () => {
               <TabsContent value="filiais">
                 <Filiais />
               </TabsContent>
-
-              <TabsContent value="apoiadores">
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h2 className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                      Ranking de Apoiadores
-                    </h2>
-                    <p className="text-muted-foreground mt-4 text-lg">
-                      Os maiores apoiadores do mês • Atualizado a cada 30s
-                    </p>
-                  </div>
-                  <div className="max-w-5xl mx-auto px-4">
-                    <RankingApoiadores />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="jogos">
+            <TabsContent value="jogos">
                 <Jogos />
               </TabsContent>
             </Tabs>
