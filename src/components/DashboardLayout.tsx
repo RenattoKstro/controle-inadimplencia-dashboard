@@ -317,7 +317,6 @@ const DashboardLayout = () => {
                   <TabsTrigger value="historicos" className="gap-1 text-xs sm:text-sm">Histórico</TabsTrigger>
                 )}
                 <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
-                <TabsTrigger value="apoiadores" className="gap-1 text-xs sm:text-sm">Apoiadores</TabsTrigger>
                 <TabsTrigger value="jogos" className="gap-1 text-xs sm:text-sm">Jogos</TabsTrigger>
               </TabsList>
 
