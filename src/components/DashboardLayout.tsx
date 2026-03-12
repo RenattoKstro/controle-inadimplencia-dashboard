@@ -23,7 +23,6 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
-import { Moon, Sun } from "lucide-react";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
@@ -33,7 +32,6 @@ import Jogos from "./dashboard/Jogos";
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { toast } = useToast();
@@ -50,7 +48,6 @@ const DashboardLayout = () => {
     diasRestantesCalculados,
   } = useUserData();
   const [recebidoHoje, setRecebidoHoje] = useState(0);
-  const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
@@ -71,10 +68,9 @@ const DashboardLayout = () => {
   }, [navigate, toast]);
 
   useEffect(() => {
-    document.body.classList.toggle("dark", isDarkMode);
-  }, [isDarkMode]);
-
-  const toggleDarkMode = () => setIsDarkMode(prev => !prev);
+    document.body.classList.add("dark");
+    return () => document.body.classList.remove("dark");
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -116,7 +112,7 @@ const DashboardLayout = () => {
 
   return (
     <div
-      className={`min-h-screen ${isDarkMode ? "bg-background dark" : "bg-gradient-to-br from-slate-50 to-slate-100"}`}
+      className="min-h-screen bg-zinc-950 text-zinc-100 dark"
       ref={contentRef}
     >
       {/* HEADER */}
@@ -142,9 +138,6 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon" onClick={toggleDarkMode}>
-                  {isDarkMode ? <Sun /> : <Moon />}
-                </Button>
               </div>
             </>
           ) : (
@@ -168,7 +161,7 @@ const DashboardLayout = () => {
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
                 </Dialog>
-                <Button variant="ghost" size="icon" onClick={() => setShowCalendar(!showCalendar)} className="text-zinc-300 hover:text-white hover:bg-white/10">
+                <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
                   <Calendar className="h-4 w-4" />
                 </Button>
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -184,9 +177,6 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon" onClick={toggleDarkMode}>
-                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </Button>
 
                 {/* BOTÃO DE PERFIL */}
                 <div className="relative">
@@ -211,7 +201,7 @@ const DashboardLayout = () => {
                     )}
                   </Button>
                   {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50">
+                    <div className="absolute right-0 mt-2 w-96 bg-zinc-900 text-zinc-100 rounded-2xl shadow-2xl border border-white/10 p-6 z-50">
                       <div className="flex items-center gap-5 mb-6">
                         <label htmlFor="upload-foto" className="cursor-pointer group">
                           {userData?.avatar_url ? (
@@ -261,13 +251,13 @@ const DashboardLayout = () => {
                           />
                         </label>
                         <div>
-                          <p className="text-2xl font-bold text-gray-800">
+                          <p className="text-2xl font-bold text-zinc-100">
                             {userData?.nome_usuario || "Usuário"}
                           </p>
-                          <p className="text-lg text-purple-600 font-medium">
+                          <p className="text-lg text-indigo-400 font-medium">
                             Filial {String(userData?.filial || "00000").padStart(5, "0")}
                           </p>
-                          <p className="text-sm text-gray-500 mt-2">
+                          <p className="text-sm text-zinc-400 mt-2">
                             Clique na foto para alterar
                           </p>
                         </div>
@@ -434,7 +424,7 @@ const DashboardLayout = () => {
       </div>
 
       {/* FOOTER */}
-      <footer className="bg-card shadow-md p-4 mt-8">
+      <footer className="bg-zinc-950 border-t border-white/10 shadow-md p-4 mt-8">
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />
