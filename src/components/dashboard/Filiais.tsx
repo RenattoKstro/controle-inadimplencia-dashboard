@@ -79,7 +79,7 @@ const Filiais = () => {
   }
 
   if (loading) {
-    return <p className="text-center py-20 text-xl">Carregando Filiais %...</p>;
+    return <p className="text-center py-20 text-xl text-zinc-200">Carregando Filiais %...</p>;
   }
 
   const getInitials = (nome: string | null | undefined): string => {
@@ -90,10 +90,10 @@ const Filiais = () => {
   };
 
   const getPercentColor = (pct: number) => {
-    if (pct >= 100) return "text-green-600 font-bold";
-    if (pct >= 94) return "text-yellow-600 font-bold";
-    if (pct >= 90) return "text-red-600 font-bold";
-    return "text-foreground";
+    if (pct >= 100) return "text-emerald-400 font-bold";
+    if (pct >= 94) return "text-amber-400 font-bold";
+    if (pct >= 90) return "text-rose-400 font-bold";
+    return "text-zinc-300";
   };
 
   const getProgressColor = (pct: number) => {
@@ -115,9 +115,9 @@ const Filiais = () => {
 
     // Cálculo do restante com cor
     const restanteText = format(restante);
-    let restanteClass = "text-gray-600 text-xs mt-1";
-    if (restante < 0) restanteClass = "text-red-600 font-medium text-xs mt-1";
-    if (restante > 0) restanteClass = "text-green-600 font-medium text-xs mt-1";
+    let restanteClass = "text-zinc-400 text-xs mt-1";
+    if (restante < 0) restanteClass = "text-rose-400 font-medium text-xs mt-1";
+    if (restante > 0) restanteClass = "text-emerald-400 font-medium text-xs mt-1";
 
     return (
       <div className="flex flex-col items-center">
@@ -149,9 +149,9 @@ const Filiais = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-zinc-100">
       <div className="text-center">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h2 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
           Filiais %
         </h2>
         <p className="text-muted-foreground mt-2">
@@ -163,10 +163,10 @@ const Filiais = () => {
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
         <div className="w-full max-w-xs">
           <Select value={filtroRegional} onValueChange={setFiltroRegional}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-zinc-900 border-white/10 text-zinc-100">
               <SelectValue placeholder="Todas as regionais" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-zinc-900 border-white/10 text-zinc-100">
               <SelectItem value="todas">Todas as regionais</SelectItem>
               {regionais.map(reg => (
                 <SelectItem key={reg} value={reg}>{reg}</SelectItem>
@@ -175,22 +175,22 @@ const Filiais = () => {
           </Select>
         </div>
 
-        <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-lg shadow border">
+        <div className="flex items-center gap-3 bg-zinc-900/90 px-6 py-3 rounded-lg border border-white/10">
           <Switch
             id="ocultar-zeradas"
             checked={ocultarZeradas}
             onCheckedChange={setOcultarZeradas}
           />
-          <Label htmlFor="ocultar-zeradas" className="cursor-pointer font-medium">
+          <Label htmlFor="ocultar-zeradas" className="cursor-pointer font-medium text-zinc-200">
             Ocultar filiais zeradas
           </Label>
         </div>
       </div>
 
       {/* TABELA */}
-      <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
+      <div className="bg-zinc-950/90 rounded-xl shadow-lg border border-white/10 overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs">
+          <thead className="bg-gradient-to-r from-indigo-700 to-violet-700 text-zinc-100 text-xs">
             <tr>
               <th className="px-4 py-2">#</th>
               <th className="px-4 py-2">Filial</th>
@@ -202,7 +202,7 @@ const Filiais = () => {
           <tbody>
             {dadosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-16 text-gray-500">
+                <td colSpan={5} className="text-center py-16 text-zinc-400">
                   <Store className="h-20 w-20 mx-auto mb-4" />
                   <p className="text-xl">
                     {ocultarZeradas
@@ -218,7 +218,7 @@ const Filiais = () => {
                 const updatedText = getUpdatedText(user?.updated_at);
 
                 return (
-                  <tr key={f.idfilial} className="border-b hover:bg-gray-50 transition-colors">
+                  <tr key={f.idfilial} className="border-b border-white/10 hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {i < 3 && (
@@ -251,7 +251,7 @@ const Filiais = () => {
                                 </div>
                               </div>
                             </HoverCardTrigger>
-                            <HoverCardContent className="w-80">
+                            <HoverCardContent className="w-80 bg-zinc-900 text-zinc-100 border-white/10">
                               <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
                                   {user?.avatar_url ? (
@@ -271,7 +271,7 @@ const Filiais = () => {
                                 </div>
                                 <div>
                                   <p className="font-bold text-lg">{user?.nome_usuario || "Usuário"}</p>
-                                  <p className="text-sm text-muted-foreground">Filial {f.filial}</p>
+                                  <p className="text-sm text-zinc-400">Filial {f.filial}</p>
                                 </div>
                               </div>
                               <div className="mt-4 space-y-2">
@@ -280,7 +280,7 @@ const Filiais = () => {
                                     href={`https://wa.me/55${user.whatsapp}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-green-600 hover:underline"
+                                    className="flex items-center gap-2 text-emerald-400 hover:underline"
                                   >
                                     <Phone className="h-4 w-4" /> WhatsApp
                                   </a>
@@ -290,7 +290,7 @@ const Filiais = () => {
                                     href={`https://instagram.com/${user.instagram.replace("@", "")}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-pink-600 hover:underline"
+                                    className="flex items-center gap-2 text-pink-400 hover:underline"
                                   >
                                     <Instagram className="h-4 w-4" /> Instagram
                                   </a>
@@ -300,10 +300,10 @@ const Filiais = () => {
                           </HoverCard>
                           <div>
                             <p className="font-medium">{f.filial}</p>
-                            <p className="text-xs text-gray-600">{f.regional}</p>
+                            <p className="text-xs text-zinc-400">{f.regional}</p>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-500 italic mt-1">
+                        <p className="text-xs text-zinc-500 italic mt-1">
                           {getUpdatedText(user?.updated_at)}
                         </p>
                       </div>
@@ -318,7 +318,7 @@ const Filiais = () => {
                         </p>
                         <Progress
                           value={f.pct_fiado}
-                          className="h-3"
+                          className="h-3 bg-zinc-800"
                           indicatorClassName={getProgressColor(f.pct_fiado)}
                         />
                       </div>
@@ -331,7 +331,7 @@ const Filiais = () => {
                         </p>
                         <Progress
                           value={f.pct_desafio}
-                          className="h-3"
+                          className="h-3 bg-zinc-800"
                           indicatorClassName={getProgressColor(f.pct_desafio)}
                         />
                       </div>
