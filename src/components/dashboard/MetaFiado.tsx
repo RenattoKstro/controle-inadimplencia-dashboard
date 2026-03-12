@@ -37,16 +37,16 @@ const CardItem = ({
   progressValue?: number;
 }) => {
   return (
-    <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${color} bg-opacity-50`}>
-      <CardContent className="p-4 md:p-6">
+    <Card className={`shadow-sm hover:shadow-md transition-shadow duration-200 border border-border/60 ${color} bg-opacity-15 overflow-hidden`}>
+      <CardContent className="p-3 sm:p-4 md:p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
+          <h3 className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight">{title}</h3>
           <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(value)}</div>
+          <div className="text-base sm:text-lg md:text-xl font-semibold text-foreground break-words leading-tight">{formatCurrency(value)}</div>
           {showProgress && (
-            <div className="text-lg font-bold text-red-600">
+            <div className="text-sm sm:text-base font-semibold text-red-600 whitespace-nowrap">
               {progressValue.toFixed(2)}%
             </div>
           )}
@@ -61,7 +61,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
   current: number;
   target: number;
   icon: React.ReactNode;
-  userData: any;
+  userData: { vencido_atual: number; meta_mes: number };
 }) => {
   const isMobile = useIsMobile();
 
@@ -90,21 +90,21 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
 
   return (
     <Card
-      className={`shadow-sm hover:shadow-md transition-shadow duration-200 bg-blue-500 bg-opacity-10 ${
+      className={`shadow-sm hover:shadow-md transition-shadow duration-200 border border-border/60 bg-primary/5 overflow-hidden ${
         isMobile ? "col-span-1" : "col-span-1 md:col-span-3"
       }`}
     >
       <CardHeader className="pb-2">
         <div className="flex flex-col items-center gap-2">
-          <CardTitle className="text-lg md:text-xl flex items-center gap-2">
+          <CardTitle className="text-base sm:text-lg md:text-xl flex items-center gap-2 text-center">
             {icon}
             {title}
           </CardTitle>
-          <div className="text-xl md:text-2xl font-bold text-foreground">
+          <div className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground break-words text-center">
             {percentageComplete.toFixed(2)}% concluído
           </div>
         </div>
-        <CardDescription className="text-sm mt-1 text-center text-foreground">
+        <CardDescription className="text-xs sm:text-sm mt-1 text-center text-muted-foreground">
           <div className="flex flex-col md:flex-row md:gap-4 justify-center">
             <span>Meta: {formatCurrency(target)}</span>
             <span>Atual: {formatCurrency(current)}</span>
@@ -114,7 +114,7 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
       <CardContent>
         <div className="space-y-2">
           <div
-            className="w-full h-10 md:h-12 rounded-full bg-white overflow-hidden relative"
+            className="w-full h-8 sm:h-9 md:h-10 rounded-full bg-muted overflow-hidden relative"
             style={{ boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.1)" }}
           >
             <div
@@ -126,12 +126,12 @@ const ProgressCard = ({ title, current, target, icon, userData }: {
               }}
             />
           </div>
-          <div className="flex flex-wrap gap-4 mt-2 justify-center">
+          <div className="flex flex-wrap gap-x-3 gap-y-2 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
               <div key={percentual} className="flex items-center gap-2">
                 <div
                   className={cn(
-                    "text-sm md:text-base font-medium",
+                    "text-xs sm:text-sm md:text-base font-medium break-words",
                     atingido ? "text-green-600" : "text-red-600"
                   )}
                 >
@@ -221,7 +221,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
         >
           {[...Array(isMobile ? 4 : 8)].map((_, i) => (
             <Card key={i} className="shadow-sm">
-              <CardContent className="p-4 md:p-6">
+              <CardContent className="p-3 sm:p-4 md:p-5">
                 <div className="flex items-center justify-between mb-4">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-8 w-8 rounded-full" />
@@ -238,7 +238,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl md:text-2xl font-bold text-red-600 flex items-center gap-2">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-red-600 flex items-center gap-2">
           <Handshake className="h-5 w-5 text-red-600" />
           Meta Fiado
         </h2>
@@ -292,9 +292,9 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
           color="bg-yellow-500"
         />
         <Card
-          className={`shadow-sm hover:shadow-md transition-shadow duration-200 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-50`}
+          className={`shadow-sm hover:shadow-md transition-shadow duration-200 border border-border/60 ${gap >= 0 ? "bg-green-500" : "bg-red-500"} bg-opacity-15 overflow-hidden`}
         >
-          <CardContent className="p-4 md:p-6">
+          <CardContent className="p-3 sm:p-4 md:p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-foreground">{gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"}</h3>
               <span
@@ -303,7 +303,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
                 <Wallet size={16} />
               </span>
             </div>
-            <div className="text-xl md:text-2xl font-bold text-foreground">{formatCurrency(gap)}</div>
+            <div className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground break-words text-center">{formatCurrency(gap)}</div>
             <div className="mt-2 text-sm text-foreground">
               {gap >= 0 ? "Acima da meta" : "Abaixo da meta"}
             </div>

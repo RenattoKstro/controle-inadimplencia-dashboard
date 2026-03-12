@@ -69,9 +69,9 @@ const MetaDesafio = ({
 
   if (!userData) {
     return (
-      <Card className="shadow-md">
+      <Card className="shadow-md border border-border/60 overflow-hidden">
         <CardHeader>
-          <CardTitle className="text-xl font-bold flex items-center gap-2">
+          <CardTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
             <Trophy className="text-yellow-500" />
             Meta Desafio
           </CardTitle>
@@ -124,7 +124,7 @@ const MetaDesafio = ({
 
   if (isLoading) {
     return (
-      <Card className="shadow-sm">
+      <Card className="shadow-sm border border-border/60 overflow-hidden">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
@@ -149,15 +149,15 @@ const MetaDesafio = ({
   }
 
   return (
-    <Card className="shadow-md">
+    <Card className="shadow-md border border-border/60 overflow-hidden">
       <CardHeader>
         <div className="flex flex-wrap justify-between items-center gap-2">
           <div>
-            <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <CardTitle className="text-lg sm:text-xl font-semibold flex items-center gap-2">
               <Trophy className="text-yellow-500" />
               Meta Desafio
             </CardTitle>
-            <CardDescription className="text-foreground">
+            <CardDescription className="text-muted-foreground">
               Acompanha seu progresso
             </CardDescription>
           </div>
@@ -189,17 +189,17 @@ const MetaDesafio = ({
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 md:space-y-6">
+      <CardContent className="space-y-4 md:space-y-5">
         <div className="space-y-2">
           <div className="text-sm font-medium text-foreground">Meta Desafio</div>
           {isEditing ? (
             <Input
               value={metaDesafio}
               onChange={(e) => setMetaDesafio(parseFloat(e.target.value) || 0)}
-              className="font-bold text-lg"
+              className="font-semibold text-base sm:text-lg"
             />
           ) : (
-            <div className="text-xl md:text-2xl font-bold text-foreground">
+            <div className="text-base sm:text-lg md:text-xl font-semibold text-foreground break-words">
               {formatCurrency(userData.meta_desafio)}
             </div>
           )}
@@ -211,13 +211,7 @@ const MetaDesafio = ({
               {formatPercentage(progresso)}
             </span>
           </div>
-          <div
-            className="w-full bg-white rounded-full h-4 md:h-6 shadow-inner"
-            style={{
-              backgroundColor: "#ffffff",
-              boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.2)",
-            }}
-          >
+          <div className="w-full bg-muted rounded-full h-3.5 md:h-4 shadow-inner overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500 ease-in-out"
               style={{
@@ -228,7 +222,7 @@ const MetaDesafio = ({
               }}
             />
           </div>
-          <div className="flex flex-wrap gap-4 mt-2 justify-center">
+          <div className="flex flex-wrap gap-x-3 gap-y-2 mt-2 justify-center">
             {valoresRestantes.map(({ percentual, diferenca, atingido }, index) => (
               <div
                 key={percentual}
@@ -236,7 +230,7 @@ const MetaDesafio = ({
               >
                 <div
                   className={cn(
-                    "text-sm md:text-base font-medium",
+                    "text-xs sm:text-sm md:text-base font-medium break-words",
                     atingido ? "text-green-600" : "text-red-600"
                   )}
                 >
@@ -252,47 +246,47 @@ const MetaDesafio = ({
         <div
           className={`grid ${isMobile ? "grid-cols-1 gap-3" : "grid-cols-3 gap-4"}`}
         >
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-purple-500 bg-opacity-50">
-            <CardContent className="p-3 md:p-4">
+          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-purple-500/15 border border-border/60 overflow-hidden">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
-                <h3 className="text-sm font-medium text-foreground">
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
                   Valor Restante
                 </h3>
                 <span className="p-1.5 md:p-2 rounded-full bg-purple-500 text-white">
                   <Target size={isMobile ? 14 : 16} />
                 </span>
               </div>
-              <div className="text-lg md:text-xl font-bold text-foreground">
+              <div className="text-base sm:text-lg font-semibold text-foreground break-words">
                 {formatCurrency(valorRestante)}
               </div>
             </CardContent>
           </Card>
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-orange-500 bg-opacity-50">
-            <CardContent className="p-3 md:p-4">
+          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-orange-500/15 border border-border/60 overflow-hidden">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
-                <h3 className="text-sm font-medium text-foreground">
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
                   Receber por Dia
                 </h3>
                 <span className="p-1.5 md:p-2 rounded-full bg-orange-500 text-white">
                   <Calculator size={isMobile ? 14 : 16} />
                 </span>
               </div>
-              <div className="text-lg md:text-xl font-bold text-foreground">
+              <div className="text-base sm:text-lg font-semibold text-foreground break-words">
                 {formatCurrency(valorPorDia)}
               </div>
             </CardContent>
           </Card>
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-gray-500 bg-opacity-50">
-            <CardContent className="p-3 md:p-4">
+          <Card className="shadow-sm hover:shadow transition-shadow duration-200 bg-slate-500/15 border border-border/60 overflow-hidden">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2 md:mb-3">
-                <h3 className="text-sm font-medium text-foreground">
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
                   Dias Restantes
                 </h3>
                 <span className="p-1.5 md:p-2 rounded-full bg-gray-500 text-white">
                   <Target size={isMobile ? 14 : 16} />
                 </span>
               </div>
-              <div className="text-lg md:text-xl font-bold text-foreground">{diasRestantes}</div>
+              <div className="text-base sm:text-lg font-semibold text-foreground break-words">{diasRestantes}</div>
             </CardContent>
           </Card>
         </div>

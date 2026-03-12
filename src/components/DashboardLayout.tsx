@@ -304,33 +304,33 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 w-full p-1.5 bg-slate-900/75 border border-white/10 backdrop-blur-xl rounded-2xl mb-6 gap-1.5">
-                <TabsTrigger value="ajustes-metas" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1.5 bg-background/80 border border-border/70 backdrop-blur-xl rounded-2xl mb-6 gap-1.5 shadow-sm">
+                <TabsTrigger value="ajustes-metas" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
                   <Sliders className="h-4 w-4" /> Ajustes
                 </TabsTrigger>
-                <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                <TabsTrigger value="metas" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
                   <Gift className="h-4 w-4" /> Metas
                 </TabsTrigger>
-                <TabsTrigger value="meta-alimentacao" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                <TabsTrigger value="meta-alimentacao" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
                   <Utensils className="h-4 w-4" /> Alimentação
                 </TabsTrigger>
                 {bonusPerdidoAtivado && (
-                  <TabsTrigger value="meta-perdido" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                  <TabsTrigger value="meta-perdido" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
                     <AlertTriangle className="h-4 w-4" /> Perdido
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="meus-premios" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                <TabsTrigger value="meus-premios" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
                   <Trophy className="h-4 w-4" /> Prêmios
                 </TabsTrigger>
                 {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                  <TabsTrigger value="historicos" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
                     <History className="h-4 w-4" /> Histórico
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="filiais" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                <TabsTrigger value="filiais" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
-                <TabsTrigger value="jogos" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                <TabsTrigger value="jogos" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
                   <Instagram className="h-4 w-4" /> Jogos
                 </TabsTrigger>
               </TabsList>
@@ -351,8 +351,8 @@ const DashboardLayout = () => {
               </TabsContent>
 
               <TabsContent value="metas">
-                <div className="rounded-3xl border border-white/20 bg-slate-950/55 p-4 sm:p-6 backdrop-blur-2xl shadow-2xl shadow-black/20">
-                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6 items-start">
+                <div className="rounded-3xl border border-border/70 bg-card/90 p-3 sm:p-5 backdrop-blur-xl shadow-lg overflow-hidden">
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4 lg:gap-6 items-start">
                     <div>
                       <MetaFiado
                         userData={userData}
@@ -366,7 +366,7 @@ const DashboardLayout = () => {
                       />
                     </div>
 
-                    <div className="hidden lg:block h-full min-h-24 w-px bg-white/20" />
+                    <div className="hidden lg:block h-full min-h-24 w-px bg-border/80" />
 
                     <div>
                       <MetaDesafio
