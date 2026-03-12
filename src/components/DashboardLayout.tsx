@@ -351,36 +351,32 @@ const DashboardLayout = () => {
               </TabsContent>
 
               <TabsContent value="metas">
-                <div className="rounded-3xl border border-border/70 bg-card/90 p-3 sm:p-5 backdrop-blur-xl shadow-lg overflow-hidden">
-                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-4 lg:gap-6 items-start">
-                    <div>
-                      <MetaFiado
-                        userData={userData}
-                        updateUserData={updateUserData}
-                        diasSemExpediente={diasSemExpediente}
-                        updateDiasSemExpediente={updateDiasSemExpediente}
-                        diasRestantesCalculados={diasRestantesCalculados}
-                        isLoading={isLoading}
-                        bonusPerdidoAtivado={bonusPerdidoAtivado}
-                        setRecebidoHoje={setRecebidoHoje}
-                      />
-                    </div>
+                <div className="space-y-6">
+                  <section className="rounded-3xl border border-border/70 bg-card/90 p-3 sm:p-5 backdrop-blur-xl shadow-lg">
+                    <MetaFiado
+                      userData={userData}
+                      updateUserData={updateUserData}
+                      diasSemExpediente={diasSemExpediente}
+                      updateDiasSemExpediente={updateDiasSemExpediente}
+                      diasRestantesCalculados={diasRestantesCalculados}
+                      isLoading={isLoading}
+                      bonusPerdidoAtivado={bonusPerdidoAtivado}
+                      setRecebidoHoje={setRecebidoHoje}
+                    />
+                  </section>
 
-                    <div className="hidden lg:block h-full min-h-24 w-px bg-border/80" />
-
-                    <div>
-                      <MetaDesafio
-                        userData={userData}
-                        updateUserData={updateUserData}
-                        diasSemExpediente={diasSemExpediente}
-                        updateDiasSemExpediente={updateDiasSemExpediente}
-                        diasRestantesCalculados={diasRestantesCalculados}
-                        isLoading={isLoading}
-                        bonusPerdidoAtivado={bonusPerdidoAtivado}
-                        setRecebidoHoje={() => {}}
-                      />
-                    </div>
-                  </div>
+                  <section className="rounded-3xl border border-border/70 bg-card/90 p-3 sm:p-5 backdrop-blur-xl shadow-lg">
+                    <MetaDesafio
+                      userData={userData}
+                      updateUserData={updateUserData}
+                      diasSemExpediente={diasSemExpediente}
+                      updateDiasSemExpediente={updateDiasSemExpediente}
+                      diasRestantesCalculados={diasRestantesCalculados}
+                      isLoading={isLoading}
+                      bonusPerdidoAtivado={bonusPerdidoAtivado}
+                      setRecebidoHoje={() => {}}
+                    />
+                  </section>
                 </div>
               </TabsContent>
 
