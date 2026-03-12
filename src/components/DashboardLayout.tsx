@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet, Trophy, Utensils, Gift, Sliders, Menu,
-  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut, AlertCircle
+  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -119,33 +119,18 @@ const DashboardLayout = () => {
       className={`min-h-screen ${isDarkMode ? "bg-background dark" : "bg-gradient-to-br from-slate-50 to-slate-100"}`}
       ref={contentRef}
     >
-      {/* AVISO IMPORTANTE NO TOPO */}
-      <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 px-4 text-center font-bold text-lg shadow-lg flex items-center justify-center gap-3">
-        <AlertCircle className="w-6 h-6 animate-pulse" />
-        Atenção, em breve o link do app irá mudar!
-        <a
-          href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl?mode=hq2tcli"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-yellow-200 transition-colors flex items-center gap-2"
-        >
-          Entre no grupo para ter acesso ao novo link
-          <FaWhatsapp className="w-5 h-5" />
-        </a>
-      </div>
-
       {/* HEADER */}
-      <header className="bg-card shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-zinc-950/95 border-b border-white/10 backdrop-blur-xl shadow-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           {isMobile ? (
             <>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Inadimplência {percentual && `${percentual}%`}
+              <h1 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-indigo-500" /> Inadimplência <span className="text-indigo-500 text-sm">{percentual && `${percentual}%`}</span>
               </h1>
               <div className="flex gap-2">
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon"><Menu /></Button>
+                    <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon"><Menu /></Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-80">
                     <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
@@ -157,19 +142,19 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+                <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun /> : <Moon />}
                 </Button>
               </div>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Controle de Inadimplência {percentual && `${percentual}%`}
+              <h1 className="text-2xl font-semibold text-zinc-100 flex items-center gap-3">
+                <Shield className="h-5 w-5 text-indigo-500" /> Controle de Inadimplência <span className="text-indigo-500 text-base">{percentual && `${percentual}%`}</span>
               </h1>
-              <div className="flex items-center gap-3">
-                <Button onClick={print} variant="outline" className="gap-2">
-                  <RiScreenshot2Fill className="w-5 h-5" /> Print
+              <div className="flex items-center gap-2">
+                <Button onClick={print} variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
+                  <RiScreenshot2Fill className="w-5 h-5" />
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
@@ -183,12 +168,12 @@ const DashboardLayout = () => {
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
                 </Dialog>
-                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
-                  <Calendar className="h-4 w-4" /> {today.toLocaleDateString("pt-BR")}
+                <Button variant="ghost" size="icon" onClick={() => setShowCalendar(!showCalendar)} className="text-zinc-300 hover:text-white hover:bg-white/10">
+                  <Calendar className="h-4 w-4" />
                 </Button>
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button>
+                    <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon"><Menu className="h-5 w-5" /></Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-80">
                     <Apps />
@@ -199,7 +184,7 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
+                <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon" onClick={toggleDarkMode}>
                   {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
 
@@ -208,7 +193,7 @@ const DashboardLayout = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full overflow-hidden border-2 border-purple-500 hover:border-purple-600 transition-all"
+                    className="rounded-full overflow-hidden border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                   >
                     {userData?.avatar_url ? (
@@ -304,33 +289,33 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1.5 bg-background/80 border border-border/70 backdrop-blur-xl rounded-2xl mb-6 gap-1.5 shadow-sm">
-                <TabsTrigger value="ajustes-metas" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1">
+                <TabsTrigger value="ajustes-metas" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                   <Sliders className="h-4 w-4" /> Ajustes
                 </TabsTrigger>
-                <TabsTrigger value="metas" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
+                <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                   <Gift className="h-4 w-4" /> Metas
                 </TabsTrigger>
-                <TabsTrigger value="meta-alimentacao" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
+                <TabsTrigger value="meta-alimentacao" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                   <Utensils className="h-4 w-4" /> Alimentação
                 </TabsTrigger>
                 {bonusPerdidoAtivado && (
-                  <TabsTrigger value="meta-perdido" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
+                  <TabsTrigger value="meta-perdido" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                     <AlertTriangle className="h-4 w-4" /> Perdido
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="meus-premios" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
+                <TabsTrigger value="meus-premios" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                   <Trophy className="h-4 w-4" /> Prêmios
                 </TabsTrigger>
                 {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
+                  <TabsTrigger value="historicos" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                     <History className="h-4 w-4" /> Histórico
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="filiais" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
+                <TabsTrigger value="filiais" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
-                <TabsTrigger value="jogos" className="gap-1.5 text-[11px] sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground rounded-xl px-2">
+                <TabsTrigger value="jogos" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                   <Instagram className="h-4 w-4" /> Jogos
                 </TabsTrigger>
               </TabsList>
