@@ -32,7 +32,7 @@ import MetaPerdido from "./dashboard/MetaPerdido";
 import Jogos from "./dashboard/Jogos";
 
 const DashboardLayout = () => {
-  const [activeTab, setActiveTab] = useState("meta-fiado");
+  const [activeTab, setActiveTab] = useState("metas");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -304,20 +304,35 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-9 w-full p-1 bg-card rounded-xl mb-6 gap-1">
-                <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm">Ajustes</TabsTrigger>
-                <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm">Fiado</TabsTrigger>
-                <TabsTrigger value="meta-desafio" className="gap-1 text-xs sm:text-sm">Desafio</TabsTrigger>
-                <TabsTrigger value="meta-alimentacao" className="gap-1 text-xs sm:text-sm">Alimentação</TabsTrigger>
+              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 w-full p-1.5 bg-slate-900/75 border border-white/10 backdrop-blur-xl rounded-2xl mb-6 gap-1.5">
+                <TabsTrigger value="ajustes-metas" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                  <Sliders className="h-4 w-4" /> Ajustes
+                </TabsTrigger>
+                <TabsTrigger value="metas" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                  <Gift className="h-4 w-4" /> Metas
+                </TabsTrigger>
+                <TabsTrigger value="meta-alimentacao" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                  <Utensils className="h-4 w-4" /> Alimentação
+                </TabsTrigger>
                 {bonusPerdidoAtivado && (
-                  <TabsTrigger value="meta-perdido" className="gap-1 text-xs sm:text-sm">Perdido</TabsTrigger>
+                  <TabsTrigger value="meta-perdido" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                    <AlertTriangle className="h-4 w-4" /> Perdido
+                  </TabsTrigger>
                 )}
-                <TabsTrigger value="meus-premios" className="gap-1 text-xs sm:text-sm">Prêmios</TabsTrigger>
+                <TabsTrigger value="meus-premios" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                  <Trophy className="h-4 w-4" /> Prêmios
+                </TabsTrigger>
                 {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className="gap-1 text-xs sm:text-sm">Histórico</TabsTrigger>
+                  <TabsTrigger value="historicos" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                    <History className="h-4 w-4" /> Histórico
+                  </TabsTrigger>
                 )}
-                <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
-                <TabsTrigger value="jogos" className="gap-1 text-xs sm:text-sm">Jogos</TabsTrigger>
+                <TabsTrigger value="filiais" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                  <Store className="h-4 w-4" /> Filiais %
+                </TabsTrigger>
+                <TabsTrigger value="jogos" className="gap-1.5 text-xs sm:text-sm data-[state=active]:bg-white/15 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-200 rounded-xl">
+                  <Instagram className="h-4 w-4" /> Jogos
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="ajustes-metas">
@@ -335,30 +350,38 @@ const DashboardLayout = () => {
                 />
               </TabsContent>
 
-              <TabsContent value="meta-fiado">
-                <MetaFiado
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={setRecebidoHoje}
-                />
-              </TabsContent>
+              <TabsContent value="metas">
+                <div className="rounded-3xl border border-white/20 bg-slate-950/55 p-4 sm:p-6 backdrop-blur-2xl shadow-2xl shadow-black/20">
+                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6 items-start">
+                    <div>
+                      <MetaFiado
+                        userData={userData}
+                        updateUserData={updateUserData}
+                        diasSemExpediente={diasSemExpediente}
+                        updateDiasSemExpediente={updateDiasSemExpediente}
+                        diasRestantesCalculados={diasRestantesCalculados}
+                        isLoading={isLoading}
+                        bonusPerdidoAtivado={bonusPerdidoAtivado}
+                        setRecebidoHoje={setRecebidoHoje}
+                      />
+                    </div>
 
-              <TabsContent value="meta-desafio">
-                <MetaDesafio
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={() => {}}
-                />
+                    <div className="hidden lg:block h-full min-h-24 w-px bg-white/20" />
+
+                    <div>
+                      <MetaDesafio
+                        userData={userData}
+                        updateUserData={updateUserData}
+                        diasSemExpediente={diasSemExpediente}
+                        updateDiasSemExpediente={updateDiasSemExpediente}
+                        diasRestantesCalculados={diasRestantesCalculados}
+                        isLoading={isLoading}
+                        bonusPerdidoAtivado={bonusPerdidoAtivado}
+                        setRecebidoHoje={() => {}}
+                      />
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
 
               <TabsContent value="meta-alimentacao">
