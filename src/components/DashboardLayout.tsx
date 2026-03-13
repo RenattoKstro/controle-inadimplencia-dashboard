@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import MetaFiado from "./dashboard/MetaFiado";
-import MetaDesafio from "./dashboard/MetaDesafio";
+import MetasOverview from "./dashboard/MetasOverview";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
@@ -322,33 +321,16 @@ const DashboardLayout = () => {
               </TabsContent>
 
               <TabsContent value="metas">
-                <div className="space-y-6">
-                  <section className="rounded-3xl border border-border/70 bg-card/90 p-3 sm:p-5 backdrop-blur-xl shadow-lg">
-                    <MetaFiado
-                      userData={userData}
-                      updateUserData={updateUserData}
-                      diasSemExpediente={diasSemExpediente}
-                      updateDiasSemExpediente={updateDiasSemExpediente}
-                      diasRestantesCalculados={diasRestantesCalculados}
-                      isLoading={isLoading}
-                      bonusPerdidoAtivado={bonusPerdidoAtivado}
-                      setRecebidoHoje={setRecebidoHoje}
-                    />
-                  </section>
-
-                  <section className="rounded-3xl border border-border/70 bg-card/90 p-3 sm:p-5 backdrop-blur-xl shadow-lg">
-                    <MetaDesafio
-                      userData={userData}
-                      updateUserData={updateUserData}
-                      diasSemExpediente={diasSemExpediente}
-                      updateDiasSemExpediente={updateDiasSemExpediente}
-                      diasRestantesCalculados={diasRestantesCalculados}
-                      isLoading={isLoading}
-                      bonusPerdidoAtivado={bonusPerdidoAtivado}
-                      setRecebidoHoje={() => {}}
-                    />
-                  </section>
-                </div>
+                <MetasOverview
+                  userData={userData}
+                  updateUserData={updateUserData}
+                  diasSemExpediente={diasSemExpediente}
+                  updateDiasSemExpediente={updateDiasSemExpediente}
+                  diasRestantesCalculados={diasRestantesCalculados}
+                  isLoading={isLoading}
+                  bonusPerdidoAtivado={bonusPerdidoAtivado}
+                  setRecebidoHoje={setRecebidoHoje}
+                />
               </TabsContent>
 
               <TabsContent value="meta-alimentacao">
