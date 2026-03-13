@@ -153,6 +153,7 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
 
   const diasRestantes = userData.dias_restantes || diasRestantesCalculados || 0;
   const metaDiaria = diasRestantes > 0 ? restanteFiado / diasRestantes : 0;
+  const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - vencidoAtual).toFixed(2)));
 
   const fiadoPercent = vencidoAtual > 0 ? (metaFiado / vencidoAtual) * 100 : 0;
   const desafioPercent = vencidoAtual > 0 && metaDesafio > 0 ? (metaDesafio / vencidoAtual) * 100 : 0;
@@ -188,9 +189,8 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
   }
 
   useEffect(() => {
-    const recebidoHoje = Math.max(0, Number(((userData.abertura_dia || 0) - vencidoAtual).toFixed(2)));
     setRecebidoHoje?.(recebidoHoje);
-  }, [setRecebidoHoje, userData.abertura_dia, vencidoAtual]);
+  }, [setRecebidoHoje, recebidoHoje]);
 
   return (
     <div className="space-y-5">
@@ -211,7 +211,7 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
                 <Metric icon={<Wallet className="h-4 w-4" />} label="À Receber" value={formatCurrency(aReceber)} />
                 <Metric icon={<TrendingUp className="h-4 w-4 text-indigo-400" />} label="Recebido" value={formatCurrency(recebidosMes)} />
                 <Metric icon={<Target className="h-4 w-4 text-indigo-400" />} label="Restante" value={formatCurrency(restanteFiado)} />
-                <Metric icon={<Flame className="h-4 w-4 text-rose-400" />} label="Meta Diária" value={formatCurrency(metaDiaria)} />
+                <Metric icon={<Flame className="h-4 w-4 text-rose-400" />} label="Meta Diária / Rec. Hoje" value={`${formatCurrency(metaDiaria)} / ${formatCurrency(recebidoHoje)}`} />
               </div>
             </div>
 
