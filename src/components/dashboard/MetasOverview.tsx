@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardProps } from "../DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -18,36 +18,109 @@ const formatCurrency = (value: number): string =>
     maximumFractionDigits: 2,
   }).format(value || 0);
 
-const CircleProgress = ({ value, color, label, amount, subtitle }: { value: number; color: string; label: string; amount: string; subtitle: string }) => {
+const OrbitMilestones = ({
+  milestones,
+  color,
+}: {
+  milestones: Array<{ percentual: number; atingido: boolean; falta: number }>;
+  color: "fiado" | "desafio";
+}) => {
+  const size = 240;
+  const center = size / 2;
+  const orbitRadius = 92;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none z-20">
+      {milestones.map((item, index) => {
+        const angle = (-90 + (360 / milestones.length) * index) * (Math.PI / 180);
+        const x = center + orbitRadius * Math.cos(angle);
+        const y = center + orbitRadius * Math.sin(angle);
+
+        return (
+          <div
+            key={item.percentual}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: x, top: y }}
+          >
+            <div
+              className={`w-14 h-14 rounded-full border backdrop-blur-md shadow-lg flex flex-col items-center justify-center text-[10px] leading-tight ${
+                color === "fiado"
+                  ? "bg-indigo-500/10 border-indigo-400/35"
+                  : "bg-emerald-500/10 border-emerald-400/35"
+              }`}
+            >
+              <span className="text-zinc-100 font-semibold">{item.percentual}%</span>
+              {item.atingido ? (
+                <span className="text-emerald-400 font-bold">✓</span>
+              ) : (
+                <span className="text-zinc-300 text-[9px]">{formatCurrency(item.falta)}</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const CircleProgress = ({
+  value,
+  color,
+  label,
+  amount,
+  subtitle,
+  milestones,
+  orbitColor,
+}: {
+  value: number;
+  color: string;
+  label: string;
+  amount: string;
+  subtitle: string;
+  milestones: Array<{ percentual: number; atingido: boolean; falta: number }>;
+  orbitColor: "fiado" | "desafio";
+}) => {
   const normalized = Math.max(0, Math.min(100, value));
   const radius = 52;
   const size = 130;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (normalized / 100) * circumference;
+  const [showMilestones, setShowMilestones] = useState(false);
 
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="text-zinc-100 text-base font-semibold flex items-center gap-2">{label}</div>
-      <div className="relative">
-        <svg width={size} height={size} className="-rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(255,255,255,0.12)" strokeWidth="6" fill="none" />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke={color}
-            strokeWidth="6"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-zinc-100">
-          {Math.round(normalized)}%
+
+      <div
+        className="relative"
+        onMouseEnter={() => setShowMilestones(true)}
+        onMouseLeave={() => setShowMilestones(false)}
+        onClick={() => setShowMilestones((prev) => !prev)}
+      >
+        <div className="relative flex items-center justify-center" style={{ width: 240, height: 240 }}>
+          {showMilestones && <OrbitMilestones milestones={milestones} color={orbitColor} />}
+
+          <svg width={size} height={size} className="-rotate-90 z-10">
+            <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(255,255,255,0.12)" strokeWidth="6" fill="none" />
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              stroke={color}
+              strokeWidth="6"
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+            />
+          </svg>
+          <div className="absolute inset-0 z-10 flex items-center justify-center text-2xl font-bold text-zinc-100 pointer-events-none">
+            {Math.round(normalized)}%
+          </div>
         </div>
       </div>
-      <p className="text-lg sm:text-xl font-semibold text-zinc-50">{amount}</p>
+
+      <p className="text-lg sm:text-xl font-semibold text-zinc-50 -mt-8">{amount}</p>
       <p className="text-zinc-400 text-sm">{subtitle}</p>
     </div>
   );
@@ -85,6 +158,26 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
   const desafioPercent = vencidoAtual > 0 && metaDesafio > 0 ? (metaDesafio / vencidoAtual) * 100 : 0;
   const desafioAtingida = desafioPercent >= 100;
 
+  const fiadoMilestones = useMemo(() => {
+    const percentuais = [94, 96, 98, 99, 100, 101, 103, 105];
+    return percentuais.map((percentual) => {
+      const vencidoAlvo = metaFiado / (percentual / 100);
+      const atingido = fiadoPercent >= percentual;
+      const falta = Math.max(0, vencidoAtual - vencidoAlvo);
+      return { percentual, atingido, falta };
+    });
+  }, [metaFiado, vencidoAtual, fiadoPercent]);
+
+  const desafioMilestones = useMemo(() => {
+    const percentuais = [96, 98, 100];
+    return percentuais.map((percentual) => {
+      const vencidoAlvo = metaDesafio / (percentual / 100);
+      const atingido = desafioPercent >= percentual;
+      const falta = Math.max(0, vencidoAtual - vencidoAlvo);
+      return { percentual, atingido, falta };
+    });
+  }, [metaDesafio, vencidoAtual, desafioPercent]);
+
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
   let diasTrabalhados = 0;
@@ -101,8 +194,8 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
 
   return (
     <div className="space-y-5">
-      <Card className="bg-zinc-950 border border-indigo-500/25 shadow-2xl">
-        <CardContent className="p-5 sm:p-6">
+      <Card className="bg-zinc-950 border border-indigo-500/25 shadow-2xl overflow-visible">
+        <CardContent className="p-5 sm:p-6 overflow-visible">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6 items-center">
             <div className="space-y-4">
               <CircleProgress
@@ -111,6 +204,8 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
                 label="◎ Meta Fiado"
                 amount={formatCurrency(metaFiado)}
                 subtitle="Meta Fiado"
+                milestones={fiadoMilestones}
+                orbitColor="fiado"
               />
               <div className="grid grid-cols-2 gap-5">
                 <Metric icon={<Wallet className="h-4 w-4" />} label="À Receber" value={formatCurrency(aReceber)} />
@@ -129,6 +224,8 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
                 label="◔ Meta Desafio"
                 amount={formatCurrency(metaDesafio)}
                 subtitle="Meta Desafio"
+                milestones={desafioMilestones}
+                orbitColor="desafio"
               />
               <div className="grid grid-cols-2 gap-5">
                 <Metric icon={<Target className="h-4 w-4 text-indigo-400" />} label="Meta Desafio" value={formatCurrency(metaDesafio)} />
