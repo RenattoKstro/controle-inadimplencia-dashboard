@@ -43,11 +43,11 @@ const CircleProgress = ({ value, color, label, amount, subtitle }: { value: numb
             strokeDashoffset={strokeDashoffset}
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-zinc-100">
+        <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-zinc-100">
           {Math.round(normalized)}%
         </div>
       </div>
-      <p className="text-2xl font-semibold text-zinc-50">{amount}</p>
+      <p className="text-lg sm:text-xl font-semibold text-zinc-50">{amount}</p>
       <p className="text-zinc-400 text-sm">{subtitle}</p>
     </div>
   );
@@ -56,7 +56,7 @@ const CircleProgress = ({ value, color, label, amount, subtitle }: { value: numb
 const Metric = ({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: string }) => (
   <div>
     <div className="flex items-center gap-2 text-sm text-zinc-400">{icon} {label}</div>
-    <div className={`text-4xl font-semibold break-words ${accent || "text-zinc-50"}`}>{value}</div>
+    <div className={`text-base sm:text-lg md:text-xl font-semibold break-words ${accent || "text-zinc-50"}`}>{value}</div>
   </div>
 );
 
@@ -64,7 +64,7 @@ const SmallCard = ({ title, value }: { title: string; value: string }) => (
   <Card className="bg-zinc-900/80 border border-white/10">
     <CardContent className="p-4">
       <p className="text-sm text-zinc-400">{title}</p>
-      <p className="text-2xl font-semibold text-zinc-100 mt-1 break-words">{value}</p>
+      <p className="text-lg sm:text-xl font-semibold text-zinc-100 mt-1 break-words">{value}</p>
     </CardContent>
   </Card>
 );
