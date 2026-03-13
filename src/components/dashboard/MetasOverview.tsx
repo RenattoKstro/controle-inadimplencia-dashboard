@@ -129,7 +129,7 @@ const CircleProgress = ({
 const Metric = ({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: string }) => (
   <div>
     <div className="flex items-center gap-2 text-sm text-zinc-400">{icon} {label}</div>
-    <div className={`text-base sm:text-lg md:text-xl font-semibold break-words ${accent || "text-zinc-50"}`}>{value}</div>
+    <div className={`text-sm sm:text-base md:text-lg font-semibold whitespace-nowrap ${accent || "text-zinc-50"}`}>{value}</div>
   </div>
 );
 
@@ -137,7 +137,7 @@ const SmallCard = ({ title, value }: { title: string; value: string }) => (
   <Card className="bg-zinc-900/80 border border-white/10">
     <CardContent className="p-4">
       <p className="text-sm text-zinc-400">{title}</p>
-      <p className="text-lg sm:text-xl font-semibold text-zinc-100 mt-1 break-words">{value}</p>
+      <p className="text-base sm:text-lg font-semibold text-zinc-100 mt-1 whitespace-nowrap">{value}</p>
     </CardContent>
   </Card>
 );
@@ -181,12 +181,26 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
 
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
   let diasTrabalhados = 0;
   for (let d = new Date(firstDay); d <= today; d.setDate(d.getDate() + 1)) {
     const isSunday = d.getDay() === 0;
     const isOffDay = diasSemExpediente?.some((date) => date.toDateString() === d.toDateString());
     if (!isSunday && !isOffDay) diasTrabalhados++;
   }
+
+  let totalDiasUteisMes = 0;
+  for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+    const isSunday = d.getDay() === 0;
+    const isOffDay = diasSemExpediente?.some((date) => date.toDateString() === d.toDateString());
+    if (!isSunday && !isOffDay) totalDiasUteisMes++;
+  }
+
+  const diasTrabalhadosEfetivo = userData.dias_trabalhados || diasTrabalhados;
+  const valorPorDiaEsperado = aReceber > 0 && totalDiasUteisMes > 0 ? aReceber / totalDiasUteisMes : 0;
+  const valorEsperadoAcumulado = diasTrabalhadosEfetivo > 0 ? valorPorDiaEsperado * diasTrabalhadosEfetivo : 0;
+  const gap = recebidosMes - valorEsperadoAcumulado;
 
   useEffect(() => {
     setRecebidoHoje?.(recebidoHoje);
@@ -207,7 +221,7 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
                 milestones={fiadoMilestones}
                 orbitColor="fiado"
               />
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 <Metric icon={<Wallet className="h-4 w-4" />} label="À Receber" value={formatCurrency(aReceber)} />
                 <Metric icon={<TrendingUp className="h-4 w-4 text-indigo-400" />} label="Recebido" value={formatCurrency(recebidosMes)} />
                 <Metric icon={<Target className="h-4 w-4 text-indigo-400" />} label="Restante" value={formatCurrency(restanteFiado)} />
@@ -227,7 +241,7 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
                 milestones={desafioMilestones}
                 orbitColor="desafio"
               />
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 <Metric icon={<Target className="h-4 w-4 text-indigo-400" />} label="Meta Desafio" value={formatCurrency(metaDesafio)} />
                 <Metric icon={<TrendingUp className="h-4 w-4 text-indigo-400" />} label="Recebido" value={formatCurrency(recebidosMes)} />
                 <Metric icon={<AlertTriangle className="h-4 w-4 text-rose-400" />} label="Vencido Atual" value={formatCurrency(vencidoAtual)} />
@@ -245,7 +259,7 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <SmallCard title="Abertura Mês" value={formatCurrency(aberturaMes)} />
-        <SmallCard title="Vencido Atual" value={formatCurrency(vencidoAtual)} />
+        <SmallCard title={gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"} value={formatCurrency(gap)} />
         <SmallCard title="Dias Trabalhados" value={String(diasTrabalhados)} />
         <SmallCard title="Dias Restantes" value={String(diasRestantes)} />
       </div>
