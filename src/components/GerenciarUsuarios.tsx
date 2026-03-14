@@ -6,15 +6,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Trash2, Pencil, Save, X, Plus } from "lucide-react";
 
 interface UsuarioDashboard {
-  id: number;
-  user_id: string;
-  email: string | null;
-  nome_usuario: string | null;
-  filial: number | null;
-  role: string | null;
-  whatsapp: string | null;
-  instagram: string | null;
-  membro: boolean | null;
+  id: number | string | null;
+  user_id: string | null;
+  email?: string | null;
+  nome_usuario?: string | null;
+  filial?: number | null;
+  role?: string | null;
+  whatsapp?: string | null;
+  instagram?: string | null;
+  membro?: boolean | null;
 }
 
 interface FilialInfo {
@@ -24,7 +24,7 @@ interface FilialInfo {
 }
 
 interface UsuarioComFilial {
-  id: number;
+  id: number | string | null;
   user_id: string;
   email: string;
   nome_usuario: string;
@@ -53,35 +53,30 @@ const GerenciarUsuarios = () => {
     try {
       const { data: dashboard, error } = await supabase
         .from("user_dashboard")
-        .select("id, user_id, email, nome_usuario, filial, role, whatsapp, instagram, membro")
-        .not("user_id", "is", null)
+        .select("*")
         .order("nome_usuario", { ascending: true });
 
-      let usuariosDb = (dashboard as unknown as UsuarioDashboard[]) || [];
-
-      if (error) {
-        const { data: dashboardFallback, error: fallbackError } = await supabase
-          .from("user_dashboard")
-          .select("id, user_id, email, nome_usuario, filial, role, whatsapp, instagram")
-          .not("user_id", "is", null)
-          .order("nome_usuario", { ascending: true });
-
-        if (fallbackError || !dashboardFallback) {
-          setUsuarios([]);
-          setLoading(false);
-          return;
-        }
-
-        usuariosDb = (dashboardFallback as unknown as UsuarioDashboard[]).map((u) => ({ ...u, membro: false }));
-      }
-
-      if (!usuariosDb.length) {
+      if (error || !dashboard) {
         setUsuarios([]);
-        setLoading(false);
         return;
       }
 
-      const filiaisIds = Array.from(new Set(usuariosDb.map((u) => u.filial).filter((f): f is number => Boolean(f))));
+      const usuariosDb = (dashboard as unknown as UsuarioDashboard[])
+        .filter((u) => Boolean(u.user_id || u.id))
+        .map((u) => ({ ...u, user_id: u.user_id || String(u.id) }));
+
+      if (!usuariosDb.length) {
+        setUsuarios([]);
+        return;
+      }
+
+      const filiaisIds = Array.from(
+        new Set(
+          usuariosDb
+            .map((u) => u.filial)
+            .filter((f): f is number => typeof f === "number")
+        )
+      );
 
       let filiaisMap: Record<number, FilialInfo> = {};
       if (filiaisIds.length > 0) {
@@ -94,14 +89,16 @@ const GerenciarUsuarios = () => {
       }
 
       const lista: UsuarioComFilial[] = usuariosDb.map((u) => {
-        const filialData = u.filial ? filiaisMap[u.filial] : undefined;
+        const filialId = typeof u.filial === "number" ? u.filial : null;
+        const filialData = filialId ? filiaisMap[filialId] : undefined;
+
         return {
           id: u.id,
-          user_id: u.user_id,
+          user_id: u.user_id || String(u.id),
           email: u.email || "Sem e-mail",
           nome_usuario: u.nome_usuario || "Sem nome",
-          filial_id: u.filial || null,
-          nome_filial: filialData?.filial || (u.filial ? `Filial ${u.filial}` : "Sem filial"),
+          filial_id: filialId,
+          nome_filial: filialData?.filial || (filialId ? `Filial ${filialId}` : "Sem filial"),
           regional: filialData?.regional || "Sem regional",
           role: u.role || "Sem perfil",
           whatsapp: u.whatsapp || "-",
@@ -140,8 +137,15 @@ const GerenciarUsuarios = () => {
       .eq("user_id", userId);
 
     if (userError) {
-      alert("Erro ao atualizar usuário.");
-      return;
+      const { error: fallbackUpdateError } = await supabase
+        .from("user_dashboard")
+        .update({ nome_usuario: form.nome_usuario, filial: filialNumber })
+        .eq("user_id", userId);
+
+      if (fallbackUpdateError) {
+        alert("Erro ao atualizar usuário.");
+        return;
+      }
     }
 
     if (filialNumber && form.regional.trim()) {
