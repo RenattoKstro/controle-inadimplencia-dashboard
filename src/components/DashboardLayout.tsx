@@ -277,7 +277,7 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 w-full p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1">
+              <TabsList className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1">
                 <TabsTrigger value="ajustes-metas" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                   <Sliders className="h-4 w-4" /> Ajustes
                 </TabsTrigger>
@@ -302,6 +302,9 @@ const DashboardLayout = () => {
                 )}
                 <TabsTrigger value="filiais" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
                   <Store className="h-4 w-4" /> Filiais %
+                </TabsTrigger>
+                <TabsTrigger value="matriz" className="gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2">
+                  <Store className="h-4 w-4" /> Matriz
                 </TabsTrigger>
               </TabsList>
 
@@ -392,6 +395,12 @@ const DashboardLayout = () => {
 
               <TabsContent value="filiais">
                 <Filiais />
+              </TabsContent>
+
+              <TabsContent value="matriz">
+                <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center">
+                  <p className="text-zinc-200 text-lg font-medium">Esta guia está disponível somente para membros.</p>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
