@@ -35,6 +35,7 @@ interface UsuarioComFilial {
   whatsapp: string;
   instagram: string;
   membro: boolean;
+  origem?: "user_dashboard" | "vw_ranking_filiais";
 }
 
 const GerenciarUsuarios = () => {
@@ -107,8 +108,48 @@ const GerenciarUsuarios = () => {
           whatsapp: u.whatsapp || "-",
           instagram: u.instagram || "-",
           membro: Boolean(u.membro),
+          origem: "user_dashboard",
         };
       });
+
+      const { data: rankingData } = await supabase
+        .from("vw_ranking_filiais")
+        .select("idfilial, filial, regional, usuario_principal")
+        .not("usuario_principal", "is", null);
+
+      if (rankingData) {
+        const existentes = new Set(lista.map((u) => u.user_id));
+        const extras: UsuarioComFilial[] = (rankingData as Array<{
+          idfilial: number;
+          filial: string;
+          regional: string | null;
+          usuario_principal: {
+            user_id: string;
+            nome_usuario: string;
+            whatsapp: string;
+            instagram: string;
+          } | null;
+        }>)
+          .filter((r) => r.usuario_principal?.user_id)
+          .map((r, index) => ({
+            id: `view-${r.idfilial}-${index}`,
+            user_id: r.usuario_principal!.user_id,
+            email: "Sem e-mail",
+            nome_usuario: r.usuario_principal?.nome_usuario || "Sem nome",
+            filial_id: r.idfilial,
+            nome_filial: r.filial || `Filial ${r.idfilial}`,
+            regional: r.regional || "Sem regional",
+            role: "Sem perfil",
+            whatsapp: r.usuario_principal?.whatsapp || "-",
+            instagram: r.usuario_principal?.instagram || "-",
+            membro: false,
+            origem: "vw_ranking_filiais",
+          }))
+          .filter((u) => !existentes.has(u.user_id));
+
+        setUsuarios([...lista, ...extras]);
+        return;
+      }
 
       setUsuarios(lista);
     } finally {
@@ -145,16 +186,31 @@ const GerenciarUsuarios = () => {
     const { error: userError } = await buildQuery();
 
     if (userError) {
-      const fallbackBase = supabase.from("user_dashboard").update({ nome_usuario: form.nome_usuario, filial: filialNumber });
-      const fallbackQuery = editingRowDbId ? fallbackBase.eq("id", editingRowDbId) : fallbackBase.eq("user_id", userId);
-      const { error: fallbackUpdateError } = await fallbackQuery;
+      const fallbackPayload = { nome_usuario: form.nome_usuario, filial: filialNumber, user_id: userId };
+      const { error: fallbackUpsertError } = await supabase
+        .from("user_dashboard")
+        .upsert(fallbackPayload, { onConflict: "user_id" });
 
-      if (fallbackUpdateError) {
+      if (!fallbackUpsertError && form.membro) {
+        const { error: membroRoleError } = await supabase
+          .from("user_dashboard")
+          .update({ role: "membro" })
+          .eq("user_id", userId);
+
+        if (membroRoleError) {
+          alert("Usuário atualizado, mas não foi possível marcar membro neste ambiente.");
+          cancelEdit();
+          fetchUsuarios();
+          return;
+        }
+      }
+
+      if (fallbackUpsertError) {
         alert("Erro ao atualizar usuário.");
         return;
       }
 
-      alert("Usuário atualizado, mas o campo de membro não pôde ser salvo neste ambiente.");
+      alert("Usuário atualizado com sucesso.");
     } else {
       alert("Usuário atualizado com sucesso.");
     }
