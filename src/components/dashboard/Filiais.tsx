@@ -36,7 +36,7 @@ interface RankingFilial {
 const Filiais = () => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
   const [regionais, setRegionais] = useState<string[]>([]);
-  const [filtroRegional, setFiltroRegional] = useState<string>("todas");
+  const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
@@ -50,6 +50,7 @@ const Filiais = () => {
       if (!error && data) {
         const lista = data as RankingFilial[];
         const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
+        if (!regs.includes("Membros")) regs.unshift("Membros");
         setRegionais(regs);
         setRanking(lista);
       }
@@ -61,6 +62,10 @@ const Filiais = () => {
     return () => clearInterval(interval);
   }, []);
 
+
+  useEffect(() => {
+    setFiltroRegional("Membros");
+  }, []);
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
@@ -167,8 +172,9 @@ const Filiais = () => {
               <SelectValue placeholder="Todas as regionais" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-white/10 text-zinc-100">
+              <SelectItem value="Membros">Membros</SelectItem>
               <SelectItem value="todas">Todas as regionais</SelectItem>
-              {regionais.map(reg => (
+              {regionais.filter((reg) => reg !== "Membros").map(reg => (
                 <SelectItem key={reg} value={reg}>{reg}</SelectItem>
               ))}
             </SelectContent>
