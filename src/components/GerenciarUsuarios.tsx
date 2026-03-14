@@ -1,128 +1,292 @@
-// src/components/GerenciarUsuarios.tsx
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil, Save, X, Plus } from "lucide-react";
+
+interface UsuarioDashboard {
+  id: number;
+  user_id: string;
+  email: string | null;
+  nome_usuario: string | null;
+  filial: number | null;
+  role: string | null;
+  whatsapp: string | null;
+  instagram: string | null;
+}
+
+interface FilialInfo {
+  idfilial: number;
+  filial: string;
+  regional: string | null;
+}
+
+interface UsuarioComFilial {
+  id: number;
+  user_id: string;
+  email: string;
+  nome_usuario: string;
+  filial_id: number | null;
+  nome_filial: string;
+  regional: string;
+  role: string;
+  whatsapp: string;
+  instagram: string;
+}
 
 const GerenciarUsuarios = () => {
-  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioComFilial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [form, setForm] = useState({ nome_usuario: "", filial_id: "", regional: "" });
+  const [novaRegional, setNovaRegional] = useState("");
 
   useEffect(() => {
     fetchUsuarios();
   }, []);
 
   const fetchUsuarios = async () => {
+    setLoading(true);
     try {
-      // 1. Pega TODOS os registros da tabela user_dashboard
       const { data: dashboard, error } = await supabase
         .from("user_dashboard")
-        .select("id, user_id, email, nome_usuario, filial")
-        .not("user_id", "is", null);
+        .select("id, user_id, email, nome_usuario, filial, role, whatsapp, instagram")
+        .not("user_id", "is", null)
+        .order("nome_usuario", { ascending: true });
 
-      if (error || !dashboard || dashboard.length === 0) {
-        console.log("Nenhum usuário encontrado ou erro:", error);
+      if (error || !dashboard) {
         setUsuarios([]);
         setLoading(false);
         return;
       }
 
-      // 2. Pega os nomes das filiais
-      const filiaisIds = dashboard
-        .map(u => u.filial)
-        .filter(Boolean);
+      const usuariosDb = dashboard as unknown as UsuarioDashboard[];
+      const filiaisIds = Array.from(new Set(usuariosDb.map((u) => u.filial).filter((f): f is number => Boolean(f))));
 
-      let filiaisMap: any = {};
+      let filiaisMap: Record<number, FilialInfo> = {};
       if (filiaisIds.length > 0) {
         const { data: filiais } = await supabase
           .from("filiais")
-          .select("idfilial, filial")
+          .select("idfilial, filial, regional")
           .in("idfilial", filiaisIds);
 
-        filiaisMap = Object.fromEntries(
-          (filiais || []).map(f => [f.idfilial, f.filial])
-        );
+        filiaisMap = Object.fromEntries((filiais as FilialInfo[] || []).map((f) => [f.idfilial, f]));
       }
 
-      // 3. Monta a lista completa
-      const lista = dashboard.map(u => ({
-        user_id: u.user_id,
-        email: u.email || "Sem e-mail",
-        nome_usuario: u.nome_usuario || "Sem nome",
-        nome_filial: u.filial ? filiaisMap[u.filial] || `Filial ${u.filial}` : "Sem filial"
-      }));
+      const lista: UsuarioComFilial[] = usuariosDb.map((u) => {
+        const filialData = u.filial ? filiaisMap[u.filial] : undefined;
+        return {
+          id: u.id,
+          user_id: u.user_id,
+          email: u.email || "Sem e-mail",
+          nome_usuario: u.nome_usuario || "Sem nome",
+          filial_id: u.filial || null,
+          nome_filial: filialData?.filial || (u.filial ? `Filial ${u.filial}` : "Sem filial"),
+          regional: filialData?.regional || "Sem regional",
+          role: u.role || "Sem perfil",
+          whatsapp: u.whatsapp || "-",
+          instagram: u.instagram || "-",
+        };
+      });
 
       setUsuarios(lista);
-    } catch (err) {
-      console.error("Erro fatal:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (user_id: string) => {
-    if (!confirm("Tem certeza que quer excluir este usuário?")) return;
+  const startEdit = (u: UsuarioComFilial) => {
+    setEditingUserId(u.user_id);
+    setForm({
+      nome_usuario: u.nome_usuario,
+      filial_id: u.filial_id ? String(u.filial_id) : "",
+      regional: u.regional === "Sem regional" ? "" : u.regional,
+    });
+  };
 
-    // Remove do user_dashboard
-    await supabase.from("user_dashboard").delete().eq("user_id", user_id);
-    
+  const cancelEdit = () => {
+    setEditingUserId(null);
+    setForm({ nome_usuario: "", filial_id: "", regional: "" });
+  };
+
+  const saveEdit = async (userId: string) => {
+    const filialNumber = form.filial_id ? Number(form.filial_id) : null;
+
+    const { error: userError } = await supabase
+      .from("user_dashboard")
+      .update({ nome_usuario: form.nome_usuario, filial: filialNumber })
+      .eq("user_id", userId);
+
+    if (userError) {
+      alert("Erro ao atualizar usuário.");
+      return;
+    }
+
+    if (filialNumber && form.regional.trim()) {
+      await supabase
+        .from("filiais")
+        .upsert(
+          [{ idfilial: filialNumber, regional: form.regional.trim(), ativo: true }],
+          { onConflict: "idfilial" }
+        );
+    }
+
+    cancelEdit();
     fetchUsuarios();
   };
 
-  if (loading) {
-    return <p className="text-center py-20 text-xl">Carregando usuários...</p>;
-  }
+  const handleDelete = async (userId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
+
+    const { error } = await supabase
+      .from("user_dashboard")
+      .delete()
+      .eq("user_id", userId);
+
+    if (error) {
+      alert("Erro ao excluir usuário.");
+      return;
+    }
+
+    fetchUsuarios();
+  };
+
+  const aplicarRegionalEmMassa = async () => {
+    if (!novaRegional.trim()) return;
+
+    const filiaisIds = Array.from(
+      new Set(
+        usuarios
+          .map((u) => u.filial_id)
+          .filter((id): id is number => Boolean(id))
+      )
+    );
+
+    if (filiaisIds.length === 0) {
+      alert("Nenhuma filial para aplicar regional.");
+      return;
+    }
+
+    const payload = filiaisIds.map((id) => ({ idfilial: id, regional: novaRegional.trim(), ativo: true }));
+
+    const { error } = await supabase
+      .from("filiais")
+      .upsert(payload, { onConflict: "idfilial" });
+
+    if (error) {
+      alert("Erro ao aplicar regional.");
+      return;
+    }
+
+    setNovaRegional("");
+    fetchUsuarios();
+  };
+
+  if (loading) return <p className="text-center py-10">Carregando usuários...</p>;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
-      <div className="p-6 border-b bg-gradient-to-r from-blue-600 to-purple-600">
-        <h3 className="text-2xl font-bold text-white">Gerenciamento de Usuários</h3>
-        <p className="text-blue-100 mt-1">{usuarios.length} usuários encontrados</p>
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
+        <p className="text-sm text-zinc-300">Total de usuários: {usuarios.length}</p>
+        <div className="flex gap-2 w-full md:w-auto">
+          <Input
+            value={novaRegional}
+            onChange={(e) => setNovaRegional(e.target.value)}
+            placeholder="Adicionar/forçar regional em todas filiais da lista"
+            className="md:w-96 bg-zinc-900 border-zinc-700 text-zinc-100"
+          />
+          <Button size="sm" onClick={aplicarRegionalEmMassa} className="bg-indigo-600 hover:bg-indigo-500">
+            <Plus className="h-4 w-4 mr-1" /> Aplicar
+          </Button>
+        </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-gray-50">
-            <TableHead>E-mail</TableHead>
-            <TableHead>Nome</TableHead>
-            <TableHead>Filial</TableHead>
-            <TableHead>User ID</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {usuarios.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-16 text-gray-500">
-                Nenhum usuário encontrado.
-              </TableCell>
+      <div className="rounded-lg border border-zinc-700 overflow-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-zinc-900/80 hover:bg-zinc-900/80">
+              <TableHead>E-mail</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Filial</TableHead>
+              <TableHead>Regional</TableHead>
+              <TableHead>Perfil</TableHead>
+              <TableHead>WhatsApp</TableHead>
+              <TableHead>Instagram</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
-          ) : (
-            usuarios.map((u) => (
-              <TableRow key={u.user_id} className="hover:bg-gray-50">
-                <TableCell className="font-medium">{u.email}</TableCell>
-                <TableCell className="font-bold text-purple-700">
-                  {u.nome_usuario}
-                </TableCell>
-                <TableCell>{u.nome_filial}</TableCell>
-                <TableCell className="text-xs font-mono text-gray-600">
-                  {u.user_id.slice(0, 8)}...
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDelete(u.user_id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
+          </TableHeader>
+          <TableBody>
+            {usuarios.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-10">Nenhum usuário encontrado.</TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ) : (
+              usuarios.map((u) => {
+                const isEditing = editingUserId === u.user_id;
+                return (
+                  <TableRow key={u.user_id} className="hover:bg-zinc-800/50">
+                    <TableCell className="max-w-48 truncate">{u.email}</TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={form.nome_usuario}
+                          onChange={(e) => setForm((prev) => ({ ...prev, nome_usuario: e.target.value }))}
+                          className="h-8 bg-zinc-900 border-zinc-700 text-zinc-100"
+                        />
+                      ) : u.nome_usuario}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={form.filial_id}
+                          onChange={(e) => setForm((prev) => ({ ...prev, filial_id: e.target.value }))}
+                          className="h-8 w-28 bg-zinc-900 border-zinc-700 text-zinc-100"
+                        />
+                      ) : `${u.nome_filial} (${u.filial_id ?? "-"})`}
+                    </TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <Input
+                          value={form.regional}
+                          onChange={(e) => setForm((prev) => ({ ...prev, regional: e.target.value }))}
+                          className="h-8 w-36 bg-zinc-900 border-zinc-700 text-zinc-100"
+                        />
+                      ) : u.regional}
+                    </TableCell>
+                    <TableCell>{u.role}</TableCell>
+                    <TableCell>{u.whatsapp}</TableCell>
+                    <TableCell>{u.instagram}</TableCell>
+                    <TableCell className="text-xs font-mono">{u.user_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-right space-x-1">
+                      {isEditing ? (
+                        <>
+                          <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-500" onClick={() => saveEdit(u.user_id)}>
+                            <Save className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-8" onClick={cancelEdit}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button size="sm" variant="outline" className="h-8" onClick={() => startEdit(u)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="destructive" className="h-8" onClick={() => handleDelete(u.user_id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };

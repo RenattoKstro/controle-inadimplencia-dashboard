@@ -1,5 +1,6 @@
 // src/pages/Admin.tsx
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ const ADMIN_EMAIL = "rks7ro@gmail.com";
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
