@@ -14,6 +14,7 @@ interface UsuarioDashboard {
   role: string | null;
   whatsapp: string | null;
   instagram: string | null;
+  membro: boolean | null;
 }
 
 interface FilialInfo {
@@ -33,13 +34,14 @@ interface UsuarioComFilial {
   role: string;
   whatsapp: string;
   instagram: string;
+  membro: boolean;
 }
 
 const GerenciarUsuarios = () => {
   const [usuarios, setUsuarios] = useState<UsuarioComFilial[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome_usuario: "", filial_id: "", regional: "" });
+  const [form, setForm] = useState({ nome_usuario: "", filial_id: "", regional: "", membro: false });
   const [novaRegional, setNovaRegional] = useState("");
 
   useEffect(() => {
@@ -51,17 +53,34 @@ const GerenciarUsuarios = () => {
     try {
       const { data: dashboard, error } = await supabase
         .from("user_dashboard")
-        .select("id, user_id, email, nome_usuario, filial, role, whatsapp, instagram")
+        .select("id, user_id, email, nome_usuario, filial, role, whatsapp, instagram, membro")
         .not("user_id", "is", null)
         .order("nome_usuario", { ascending: true });
 
-      if (error || !dashboard) {
+      let usuariosDb = (dashboard as unknown as UsuarioDashboard[]) || [];
+
+      if (error) {
+        const { data: dashboardFallback, error: fallbackError } = await supabase
+          .from("user_dashboard")
+          .select("id, user_id, email, nome_usuario, filial, role, whatsapp, instagram")
+          .not("user_id", "is", null)
+          .order("nome_usuario", { ascending: true });
+
+        if (fallbackError || !dashboardFallback) {
+          setUsuarios([]);
+          setLoading(false);
+          return;
+        }
+
+        usuariosDb = (dashboardFallback as unknown as UsuarioDashboard[]).map((u) => ({ ...u, membro: false }));
+      }
+
+      if (!usuariosDb.length) {
         setUsuarios([]);
         setLoading(false);
         return;
       }
 
-      const usuariosDb = dashboard as unknown as UsuarioDashboard[];
       const filiaisIds = Array.from(new Set(usuariosDb.map((u) => u.filial).filter((f): f is number => Boolean(f))));
 
       let filiaisMap: Record<number, FilialInfo> = {};
@@ -87,6 +106,7 @@ const GerenciarUsuarios = () => {
           role: u.role || "Sem perfil",
           whatsapp: u.whatsapp || "-",
           instagram: u.instagram || "-",
+          membro: Boolean(u.membro),
         };
       });
 
@@ -102,12 +122,13 @@ const GerenciarUsuarios = () => {
       nome_usuario: u.nome_usuario,
       filial_id: u.filial_id ? String(u.filial_id) : "",
       regional: u.regional === "Sem regional" ? "" : u.regional,
+      membro: u.membro,
     });
   };
 
   const cancelEdit = () => {
     setEditingUserId(null);
-    setForm({ nome_usuario: "", filial_id: "", regional: "" });
+    setForm({ nome_usuario: "", filial_id: "", regional: "", membro: false });
   };
 
   const saveEdit = async (userId: string) => {
@@ -115,7 +136,7 @@ const GerenciarUsuarios = () => {
 
     const { error: userError } = await supabase
       .from("user_dashboard")
-      .update({ nome_usuario: form.nome_usuario, filial: filialNumber })
+      .update({ nome_usuario: form.nome_usuario, filial: filialNumber, membro: form.membro })
       .eq("user_id", userId);
 
     if (userError) {
@@ -213,6 +234,7 @@ const GerenciarUsuarios = () => {
               <TableHead>Perfil</TableHead>
               <TableHead>WhatsApp</TableHead>
               <TableHead>Instagram</TableHead>
+              <TableHead>Membros</TableHead>
               <TableHead>ID</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -220,7 +242,7 @@ const GerenciarUsuarios = () => {
           <TableBody>
             {usuarios.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-10">Nenhum usuário encontrado.</TableCell>
+                <TableCell colSpan={10} className="text-center py-10">Nenhum usuário encontrado.</TableCell>
               </TableRow>
             ) : (
               usuarios.map((u) => {
@@ -258,6 +280,18 @@ const GerenciarUsuarios = () => {
                     <TableCell>{u.role}</TableCell>
                     <TableCell>{u.whatsapp}</TableCell>
                     <TableCell>{u.instagram}</TableCell>
+                    <TableCell>
+                      {isEditing ? (
+                        <label className="inline-flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={form.membro}
+                            onChange={(e) => setForm((prev) => ({ ...prev, membro: e.target.checked }))}
+                          />
+                          Membro
+                        </label>
+                      ) : (u.membro ? "Sim" : "Não")}
+                    </TableCell>
                     <TableCell className="text-xs font-mono">{u.user_id.slice(0, 8)}...</TableCell>
                     <TableCell className="text-right space-x-1">
                       {isEditing ? (

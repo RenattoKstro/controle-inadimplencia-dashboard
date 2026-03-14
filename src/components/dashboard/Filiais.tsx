@@ -36,6 +36,7 @@ interface RankingFilial {
 const Filiais = () => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
   const [regionais, setRegionais] = useState<string[]>([]);
+  const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
   const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,39 @@ const Filiais = () => {
         setRegionais(regs);
         setRanking(lista);
       }
+
+      const { data: membrosData, error: membrosError } = await supabase
+        .from("user_dashboard")
+        .select("filial")
+        .eq("membro", true)
+        .not("filial", "is", null);
+
+      if (!membrosError && membrosData) {
+        const filiaisMembros = new Set(
+          (membrosData as Array<{ filial: number | null }>)
+            .map((item) => item.filial)
+            .filter((filial): filial is number => typeof filial === "number")
+        );
+        setFiliaisComMembros(filiaisMembros);
+      } else {
+        // Fallback para ambientes onde a coluna `membro` ainda não existe:
+        // considera usuários com role = "membro" para não interromper o filtro.
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_dashboard")
+          .select("filial, role")
+          .not("filial", "is", null);
+
+        if (!roleError && roleData) {
+          const filiaisMembros = new Set(
+            (roleData as Array<{ filial: number | null; role: string | null }>)
+              .filter((item) => (item.role || "").toLowerCase() === "membro")
+              .map((item) => item.filial)
+              .filter((filial): filial is number => typeof filial === "number")
+          );
+          setFiliaisComMembros(filiaisMembros);
+        }
+      }
+
       setLoading(false);
     };
 
@@ -73,7 +107,9 @@ const Filiais = () => {
 
   let dadosFiltrados = ranking;
 
-  if (filtroRegional !== "todas") {
+  if (filtroRegional === "Membros") {
+    dadosFiltrados = dadosFiltrados.filter((f) => filiaisComMembros.has(f.idfilial));
+  } else if (filtroRegional !== "todas") {
     dadosFiltrados = dadosFiltrados.filter(f => (f.regional || "Sem regional") === filtroRegional);
   }
 
