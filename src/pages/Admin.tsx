@@ -69,7 +69,7 @@ const Admin = () => {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Seção Upload Filiais */}
         <section>
           <Card className="bg-white/10 backdrop-blur border-purple-500 max-w-2xl">
@@ -87,14 +87,14 @@ const Admin = () => {
 
         {/* Seção Gerenciar Usuários */}
         <section>
-          <Card className="bg-white/10 backdrop-blur border-purple-500">
+          <Card className="bg-white/10 backdrop-blur border-purple-500 w-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-2xl">
                 <Users className="h-8 w-8 text-purple-400" />
                 Gerenciar Usuários
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               <GerenciarUsuarios />
             </CardContent>
           </Card>

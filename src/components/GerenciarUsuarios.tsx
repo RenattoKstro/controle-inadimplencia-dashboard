@@ -297,10 +297,10 @@ const GerenciarUsuarios = () => {
         </div>
       </div>
 
-      <div className="rounded-lg border border-zinc-700 overflow-auto">
-        <Table>
+      <div className="rounded-lg border border-zinc-700 overflow-auto max-h-[70vh]">
+        <Table className="min-w-[980px]">
           <TableHeader>
-            <TableRow className="bg-zinc-900/80 hover:bg-zinc-900/80">
+            <TableRow className="bg-zinc-900/80 hover:bg-zinc-900/80 sticky top-0 z-20">
               <TableHead>E-mail</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Filial</TableHead>
@@ -309,8 +309,8 @@ const GerenciarUsuarios = () => {
               <TableHead>WhatsApp</TableHead>
               <TableHead>Instagram</TableHead>
               <TableHead>Membros</TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="hidden lg:table-cell">ID</TableHead>
+              <TableHead className="text-right sticky right-0 bg-zinc-900/95">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -366,8 +366,8 @@ const GerenciarUsuarios = () => {
                         </label>
                       ) : (u.membro ? "Sim" : "Não")}
                     </TableCell>
-                    <TableCell className="text-xs font-mono">{u.user_id.slice(0, 8)}...</TableCell>
-                    <TableCell className="text-right space-x-1">
+                    <TableCell className="text-xs font-mono hidden lg:table-cell">{u.user_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-right space-x-1 sticky right-0 bg-zinc-950/95">
                       {isEditing ? (
                         <>
                           <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-500" onClick={() => saveEdit(u.user_id)}>
