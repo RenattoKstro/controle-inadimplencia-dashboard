@@ -41,6 +41,7 @@ const GerenciarUsuarios = () => {
   const [usuarios, setUsuarios] = useState<UsuarioComFilial[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editingRowDbId, setEditingRowDbId] = useState<string | null>(null);
   const [form, setForm] = useState({ nome_usuario: "", filial_id: "", regional: "", membro: false });
   const [novaRegional, setNovaRegional] = useState("");
 
@@ -62,8 +63,10 @@ const GerenciarUsuarios = () => {
       }
 
       const usuariosDb = (dashboard as unknown as UsuarioDashboard[])
-        .filter((u) => Boolean(u.user_id || u.id))
-        .map((u) => ({ ...u, user_id: u.user_id || String(u.id) }));
+        .map((u, index) => ({
+          ...u,
+          user_id: u.user_id || `row-${u.id ?? index}`,
+        }));
 
       if (!usuariosDb.length) {
         setUsuarios([]);
@@ -115,6 +118,7 @@ const GerenciarUsuarios = () => {
 
   const startEdit = (u: UsuarioComFilial) => {
     setEditingUserId(u.user_id);
+    setEditingRowDbId(u.id !== null ? String(u.id) : null);
     setForm({
       nome_usuario: u.nome_usuario,
       filial_id: u.filial_id ? String(u.filial_id) : "",
@@ -125,27 +129,34 @@ const GerenciarUsuarios = () => {
 
   const cancelEdit = () => {
     setEditingUserId(null);
+    setEditingRowDbId(null);
     setForm({ nome_usuario: "", filial_id: "", regional: "", membro: false });
   };
 
   const saveEdit = async (userId: string) => {
     const filialNumber = form.filial_id ? Number(form.filial_id) : null;
 
-    const { error: userError } = await supabase
-      .from("user_dashboard")
-      .update({ nome_usuario: form.nome_usuario, filial: filialNumber, membro: form.membro })
-      .eq("user_id", userId);
+    const buildQuery = () => {
+      const base = supabase.from("user_dashboard").update({ nome_usuario: form.nome_usuario, filial: filialNumber, membro: form.membro });
+      if (editingRowDbId) return base.eq("id", editingRowDbId);
+      return base.eq("user_id", userId);
+    };
+
+    const { error: userError } = await buildQuery();
 
     if (userError) {
-      const { error: fallbackUpdateError } = await supabase
-        .from("user_dashboard")
-        .update({ nome_usuario: form.nome_usuario, filial: filialNumber })
-        .eq("user_id", userId);
+      const fallbackBase = supabase.from("user_dashboard").update({ nome_usuario: form.nome_usuario, filial: filialNumber });
+      const fallbackQuery = editingRowDbId ? fallbackBase.eq("id", editingRowDbId) : fallbackBase.eq("user_id", userId);
+      const { error: fallbackUpdateError } = await fallbackQuery;
 
       if (fallbackUpdateError) {
         alert("Erro ao atualizar usuário.");
         return;
       }
+
+      alert("Usuário atualizado, mas o campo de membro não pôde ser salvo neste ambiente.");
+    } else {
+      alert("Usuário atualizado com sucesso.");
     }
 
     if (filialNumber && form.regional.trim()) {
@@ -161,13 +172,16 @@ const GerenciarUsuarios = () => {
     fetchUsuarios();
   };
 
-  const handleDelete = async (userId: string) => {
+  const handleDelete = async (userId: string, dbId: number | string | null) => {
     if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
 
-    const { error } = await supabase
+    const query = supabase
       .from("user_dashboard")
-      .delete()
-      .eq("user_id", userId);
+      .delete();
+
+    const deleteQuery = dbId !== null ? query.eq("id", String(dbId)) : query.eq("user_id", userId);
+
+    const { error } = await deleteQuery;
 
     if (error) {
       alert("Erro ao excluir usuário.");
@@ -312,7 +326,7 @@ const GerenciarUsuarios = () => {
                           <Button size="sm" variant="outline" className="h-8" onClick={() => startEdit(u)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="destructive" className="h-8" onClick={() => handleDelete(u.user_id)}>
+                          <Button size="sm" variant="destructive" className="h-8" onClick={() => handleDelete(u.user_id, u.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </>

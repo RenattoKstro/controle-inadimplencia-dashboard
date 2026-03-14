@@ -108,14 +108,14 @@ const UploadFiliaisExcel = () => {
   };
 
   return (
-    <Card className="max-w-2xl mx-auto border border-green-500/50 bg-zinc-950/60">
-      <CardHeader className="bg-green-600/20 border-b border-green-500/30 text-green-100 text-center py-4">
-        <CardTitle className="text-lg md:text-xl font-semibold flex items-center justify-center gap-2">
-          <CheckCircle className="h-5 w-5" />
-          Upload de Base de Filiais
+    <Card className="max-w-md mx-auto border border-green-500/40 bg-zinc-950/60">
+      <CardHeader className="bg-green-600/15 border-b border-green-500/20 text-green-100 text-center py-2 px-3">
+        <CardTitle className="text-sm md:text-base font-semibold flex items-center justify-center gap-1.5">
+          <CheckCircle className="h-4 w-4" />
+Upload Base Filiais
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4 md:p-5 space-y-4">
+      <CardContent className="p-3 space-y-2.5">
         <Input
           type="file"
           accept=".xlsx,.xls,.csv"
@@ -124,21 +124,21 @@ const UploadFiliaisExcel = () => {
           className="bg-zinc-900 border-zinc-700 text-zinc-100"
         />
 
-        {file && <p className="text-sm text-green-300">Arquivo carregado: {file.name}</p>}
+        {file && <p className="text-xs text-green-300 truncate">Arquivo: {file.name}</p>}
 
         <Button
           onClick={handleUpload}
           disabled={!file || uploading}
           size="sm"
-          className="h-9 px-4 bg-green-600 hover:bg-green-700"
+          className="h-8 px-3 text-xs bg-green-600 hover:bg-green-700"
         >
-          {uploading ? `Importando... ${Math.round(progress)}%` : "Upload de base filiais"}
+          {uploading ? `Importando... ${Math.round(progress)}%` : "Importar"}
         </Button>
 
-        {uploading && <Progress value={progress} className="h-2" />}
+        {uploading && <Progress value={progress} className="h-1.5" />}
 
         {result && (
-          <div className="p-3 bg-green-500/10 border border-green-500/40 rounded-lg text-sm text-green-200">
+          <div className="p-2 bg-green-500/10 border border-green-500/40 rounded-md text-xs text-green-200">
             {result}
           </div>
         )}
