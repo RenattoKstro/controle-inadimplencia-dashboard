@@ -60,21 +60,13 @@ const GerenciarUsuarios = () => {
         .select("*")
         .order("nome_usuario", { ascending: true });
 
-      if (error || !dashboard) {
-        setUsuarios([]);
-        return;
-      }
-
-      const usuariosDb = (dashboard as unknown as UsuarioDashboard[])
-        .map((u, index) => ({
-          ...u,
-          user_id: u.user_id || `row-${u.id ?? index}`,
-        }));
-
-      if (!usuariosDb.length) {
-        setUsuarios([]);
-        return;
-      }
+      const usuariosDb = !error && dashboard
+        ? (dashboard as unknown as UsuarioDashboard[])
+            .map((u, index) => ({
+              ...u,
+              user_id: u.user_id || `row-${u.id ?? index}`,
+            }))
+        : [];
 
       const filiaisIds = Array.from(
         new Set(
@@ -164,7 +156,12 @@ const GerenciarUsuarios = () => {
         return;
       }
 
-      setUsuarios(lista);
+      if (lista.length > 0) {
+        setUsuarios(lista);
+        return;
+      }
+
+      setUsuarios([]);
     } finally {
       setLoading(false);
     }
