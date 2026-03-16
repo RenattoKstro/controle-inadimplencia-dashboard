@@ -133,20 +133,31 @@ const GerenciarUsuarios = () => {
           } | null;
         }>)
           .filter((r) => r.usuario_principal?.user_id)
-          .map((r, index) => ({
-            id: `view-${r.idfilial}-${index}`,
-            user_id: r.usuario_principal!.user_id,
-            email: "Sem e-mail",
-            nome_usuario: r.usuario_principal?.nome_usuario || "Sem nome",
-            filial_id: r.idfilial,
-            nome_filial: r.filial || `Filial ${r.idfilial}`,
-            regional: r.regional || "Sem regional",
-            role: "Sem perfil",
-            whatsapp: r.usuario_principal?.whatsapp || "-",
-            instagram: r.usuario_principal?.instagram || "-",
-            membro: false,
-            origem: "vw_ranking_filiais",
-          }))
+          .map((r, index) => {
+            const principal = r.usuario_principal as {
+              user_id: string;
+              nome_usuario?: string | null;
+              whatsapp?: string | null;
+              instagram?: string | null;
+              role?: string | null;
+              membro?: boolean | null;
+            } | null;
+
+            return {
+              id: `view-${r.idfilial}-${index}`,
+              user_id: principal?.user_id || `view-user-${index}`,
+              email: "Sem e-mail",
+              nome_usuario: principal?.nome_usuario || "Sem nome",
+              filial_id: r.idfilial,
+              nome_filial: r.filial || `Filial ${r.idfilial}`,
+              regional: r.regional || "Sem regional",
+              role: principal?.role || "Sem perfil",
+              whatsapp: principal?.whatsapp || "-",
+              instagram: principal?.instagram || "-",
+              membro: Boolean(principal?.membro) || (principal?.role || "").toLowerCase() === "membro",
+              origem: "vw_ranking_filiais",
+            };
+          })
           .filter((u) => !existentes.has(u.user_id));
 
         setUsuarios([...lista, ...extras]);
@@ -229,7 +240,7 @@ const GerenciarUsuarios = () => {
       if (!fallbackUpdateError && fallbackAffected) {
         updatedSuccessfully = true;
       } else {
-        saveError = fallbackUpdateError || userError || { message: "usuário não encontrado em user_dashboard" };
+        saveError = fallbackUpdateError || userError || { message: "usuário não encontrado em user_dashboard (ou sem permissão de leitura por RLS)" };
       }
     }
 
