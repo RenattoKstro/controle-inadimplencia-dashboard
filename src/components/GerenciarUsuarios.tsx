@@ -43,6 +43,7 @@ const GerenciarUsuarios = () => {
   const [loading, setLoading] = useState(true);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingRowDbId, setEditingRowDbId] = useState<string | null>(null);
+  const [editingOrigem, setEditingOrigem] = useState<"user_dashboard" | "vw_ranking_filiais" | null>(null);
   const [form, setForm] = useState({ nome_usuario: "", filial_id: "", regional: "", membro: false });
   const [novaRegional, setNovaRegional] = useState("");
 
@@ -159,7 +160,9 @@ const GerenciarUsuarios = () => {
 
   const startEdit = (u: UsuarioComFilial) => {
     setEditingUserId(u.user_id);
-    setEditingRowDbId(u.id !== null ? String(u.id) : null);
+    const rowId = u.id !== null ? String(u.id) : null;
+    setEditingRowDbId(rowId && !rowId.startsWith("view-") ? rowId : null);
+    setEditingOrigem(u.origem || "user_dashboard");
     setForm({
       nome_usuario: u.nome_usuario,
       filial_id: u.filial_id ? String(u.filial_id) : "",
@@ -171,49 +174,77 @@ const GerenciarUsuarios = () => {
   const cancelEdit = () => {
     setEditingUserId(null);
     setEditingRowDbId(null);
+    setEditingOrigem(null);
     setForm({ nome_usuario: "", filial_id: "", regional: "", membro: false });
   };
 
   const saveEdit = async (userId: string) => {
     const filialNumber = form.filial_id ? Number(form.filial_id) : null;
 
-    const buildQuery = () => {
-      const base = supabase.from("user_dashboard").update({ nome_usuario: form.nome_usuario, filial: filialNumber, membro: form.membro });
-      if (editingRowDbId) return base.eq("id", editingRowDbId);
+    if (userId.startsWith("row-")) {
+      alert("Este usuário não possui user_id válido para atualização. Complete o cadastro na base primeiro.");
+      return;
+    }
+
+    const updateWithMembro = async () => {
+      const base = supabase
+        .from("user_dashboard")
+        .update({ nome_usuario: form.nome_usuario, filial: filialNumber, membro: form.membro });
+      if (editingRowDbId && editingOrigem === "user_dashboard") return base.eq("id", editingRowDbId);
       return base.eq("user_id", userId);
     };
 
-    const { error: userError } = await buildQuery();
+    const updateWithoutMembro = async () => {
+      const base = supabase
+        .from("user_dashboard")
+        .update({ nome_usuario: form.nome_usuario, filial: filialNumber });
+      if (editingRowDbId && editingOrigem === "user_dashboard") return base.eq("id", editingRowDbId);
+      return base.eq("user_id", userId);
+    };
+
+    let saveError: { message?: string } | null = null;
+
+    const { error: userError } = await updateWithMembro();
 
     if (userError) {
-      const fallbackPayload = { nome_usuario: form.nome_usuario, filial: filialNumber, user_id: userId };
-      const { error: fallbackUpsertError } = await supabase
-        .from("user_dashboard")
-        .upsert(fallbackPayload, { onConflict: "user_id" });
+      const { error: fallbackUpdateError } = await updateWithoutMembro();
 
-      if (!fallbackUpsertError && form.membro) {
-        const { error: membroRoleError } = await supabase
+      if (fallbackUpdateError) {
+        const insertPayload = {
+          user_id: userId,
+          nome_usuario: form.nome_usuario,
+          filial: filialNumber,
+          role: form.membro ? "membro" : null,
+        };
+
+        const { error: insertError } = await supabase
           .from("user_dashboard")
-          .update({ role: "membro" })
-          .eq("user_id", userId);
+          .insert(insertPayload);
 
-        if (membroRoleError) {
-          alert("Usuário atualizado, mas não foi possível marcar membro neste ambiente.");
-          cancelEdit();
-          fetchUsuarios();
-          return;
+        if (insertError) {
+          saveError = insertError;
         }
       }
-
-      if (fallbackUpsertError) {
-        alert("Erro ao atualizar usuário.");
-        return;
-      }
-
-      alert("Usuário atualizado com sucesso.");
-    } else {
-      alert("Usuário atualizado com sucesso.");
     }
+
+    if (!saveError) {
+      const roleValue = form.membro ? "membro" : null;
+      const { error: roleError } = await supabase
+        .from("user_dashboard")
+        .update({ role: roleValue })
+        .eq("user_id", userId);
+
+      if (roleError) {
+        // não bloqueia o fluxo: alguns ambientes podem não ter permissão para role.
+      }
+    }
+
+    if (saveError) {
+      alert(`Erro ao atualizar usuário: ${saveError.message || "verifique permissões da base."}`);
+      return;
+    }
+
+    alert("Usuário atualizado com sucesso.");
 
     if (filialNumber && form.regional.trim()) {
       await supabase
