@@ -205,34 +205,25 @@ const GerenciarUsuarios = () => {
     };
 
     let saveError: { message?: string } | null = null;
+    let updatedSuccessfully = false;
 
     const { data: firstUpdateRows, error: userError } = await updateWithMembro();
-
     const firstUpdateAffected = Array.isArray(firstUpdateRows) && firstUpdateRows.length > 0;
 
-    if (userError || !firstUpdateAffected) {
+    if (!userError && firstUpdateAffected) {
+      updatedSuccessfully = true;
+    } else {
       const { data: fallbackRows, error: fallbackUpdateError } = await updateWithoutMembro();
       const fallbackAffected = Array.isArray(fallbackRows) && fallbackRows.length > 0;
 
-      if (fallbackUpdateError || !fallbackAffected) {
-        const insertPayload = {
-          user_id: userId,
-          nome_usuario: form.nome_usuario,
-          filial: filialNumber,
-          role: form.membro ? "membro" : null,
-        };
-
-        const { error: insertError } = await supabase
-          .from("user_dashboard")
-          .insert(insertPayload);
-
-        if (insertError) {
-          saveError = insertError;
-        }
+      if (!fallbackUpdateError && fallbackAffected) {
+        updatedSuccessfully = true;
+      } else {
+        saveError = fallbackUpdateError || userError || { message: "usuário não encontrado em user_dashboard" };
       }
     }
 
-    if (!saveError) {
+    if (updatedSuccessfully) {
       const roleValue = form.membro ? "membro" : null;
       const { error: roleError } = await supabase
         .from("user_dashboard")
@@ -245,7 +236,11 @@ const GerenciarUsuarios = () => {
     }
 
     if (saveError) {
-      alert(`Erro ao atualizar usuário: ${saveError.message || "verifique permissões da base."}`);
+      if ((saveError.message || "").toLowerCase().includes("row-level security")) {
+        alert("Erro de permissão (RLS): este usuário ainda não pode ser alterado pelo painel. Peça para ele abrir o dashboard e salvar os dados em Ajustes de Metas ao menos uma vez.");
+      } else {
+        alert(`Erro ao atualizar usuário: ${saveError.message || "verifique permissões da base."}`);
+      }
       return;
     }
 
