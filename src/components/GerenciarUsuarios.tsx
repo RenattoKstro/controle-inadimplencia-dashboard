@@ -189,7 +189,8 @@ const GerenciarUsuarios = () => {
     const updateWithMembro = async () => {
       const base = supabase
         .from("user_dashboard")
-        .update({ nome_usuario: form.nome_usuario, filial: filialNumber, membro: form.membro });
+        .update({ nome_usuario: form.nome_usuario, filial: filialNumber, membro: form.membro })
+        .select("user_id");
       if (editingRowDbId && editingOrigem === "user_dashboard") return base.eq("id", editingRowDbId);
       return base.eq("user_id", userId);
     };
@@ -197,19 +198,23 @@ const GerenciarUsuarios = () => {
     const updateWithoutMembro = async () => {
       const base = supabase
         .from("user_dashboard")
-        .update({ nome_usuario: form.nome_usuario, filial: filialNumber });
+        .update({ nome_usuario: form.nome_usuario, filial: filialNumber })
+        .select("user_id");
       if (editingRowDbId && editingOrigem === "user_dashboard") return base.eq("id", editingRowDbId);
       return base.eq("user_id", userId);
     };
 
     let saveError: { message?: string } | null = null;
 
-    const { error: userError } = await updateWithMembro();
+    const { data: firstUpdateRows, error: userError } = await updateWithMembro();
 
-    if (userError) {
-      const { error: fallbackUpdateError } = await updateWithoutMembro();
+    const firstUpdateAffected = Array.isArray(firstUpdateRows) && firstUpdateRows.length > 0;
 
-      if (fallbackUpdateError) {
+    if (userError || !firstUpdateAffected) {
+      const { data: fallbackRows, error: fallbackUpdateError } = await updateWithoutMembro();
+      const fallbackAffected = Array.isArray(fallbackRows) && fallbackRows.length > 0;
+
+      if (fallbackUpdateError || !fallbackAffected) {
         const insertPayload = {
           user_id: userId,
           nome_usuario: form.nome_usuario,

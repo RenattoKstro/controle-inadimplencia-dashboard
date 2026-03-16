@@ -99,6 +99,8 @@ const DashboardLayout = () => {
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
+  const isMembro = Boolean((userData as { membro?: boolean; role?: string } | null)?.membro)
+    || ((userData?.role || "").toLowerCase() === "membro");
 
   if (isLoading || !userData) {
     return (
@@ -249,9 +251,16 @@ const DashboardLayout = () => {
                           />
                         </label>
                         <div>
-                          <p className="text-2xl font-bold text-zinc-100">
-                            {userData?.nome_usuario || "Usuário"}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-2xl font-bold text-zinc-100">
+                              {userData?.nome_usuario || "Usuário"}
+                            </p>
+                            {isMembro && (
+                              <span className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">
+                                Membro
+                              </span>
+                            )}
+                          </div>
                           <p className="text-lg text-indigo-400 font-medium">
                             Filial {String(userData?.filial || "00000").padStart(5, "0")}
                           </p>
