@@ -44,6 +44,7 @@ const GerenciarUsuarios = () => {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editingRowDbId, setEditingRowDbId] = useState<string | null>(null);
   const [editingOrigem, setEditingOrigem] = useState<"user_dashboard" | "vw_ranking_filiais" | null>(null);
+  const [schemaTemMembro, setSchemaTemMembro] = useState(true);
   const [form, setForm] = useState({ nome_usuario: "", filial_id: "", regional: "", membro: false });
   const [novaRegional, setNovaRegional] = useState("");
 
@@ -108,7 +109,7 @@ const GerenciarUsuarios = () => {
           role: u.role || "Sem perfil",
           whatsapp: u.whatsapp || "-",
           instagram: u.instagram || "-",
-          membro: Boolean(u.membro),
+          membro: Boolean(u.membro) || (u.role || "").toLowerCase() === "membro",
           origem: "user_dashboard",
         };
       });
@@ -187,6 +188,10 @@ const GerenciarUsuarios = () => {
     }
 
     const updateWithMembro = async () => {
+      if (!schemaTemMembro) {
+        return { data: null, error: { message: "membro column unavailable" } };
+      }
+
       const base = supabase
         .from("user_dashboard")
         .update({ nome_usuario: form.nome_usuario, filial: filialNumber, membro: form.membro })
@@ -209,6 +214,11 @@ const GerenciarUsuarios = () => {
 
     const { data: firstUpdateRows, error: userError } = await updateWithMembro();
     const firstUpdateAffected = Array.isArray(firstUpdateRows) && firstUpdateRows.length > 0;
+    const erroColunaMembro = (userError?.message || "").toLowerCase().includes("could not find the 'membro' column");
+
+    if (erroColunaMembro) {
+      setSchemaTemMembro(false);
+    }
 
     if (!userError && firstUpdateAffected) {
       updatedSuccessfully = true;
