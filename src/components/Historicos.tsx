@@ -137,7 +137,7 @@ const Historicos = ({
         .eq("user_id", authUserId)
         .eq("month", selectedMonth);
       if (fetchError) {
-        console.error("Error fetching existing record:", fetchError.message);
+        console.error("Erro ao buscar registro existente:", fetchError.message);
         return;
       }
       const existingRecord = existingRecords?.[0];
@@ -188,7 +188,7 @@ const Historicos = ({
           .eq("id", editingDailyId)
           .eq("user_id", authUserId);
         if (diarioError) {
-          console.error("Error updating historico_diario:", diarioError.message, "Details:", diarioError.details, "Code:", diarioError.code);
+          console.error("Erro ao atualizar historico_diario:", diarioError.message, "Detalhes:", diarioError.details, "Código:", diarioError.code);
           throw diarioError;
         }
         console.log("Daily record updated successfully");
@@ -217,7 +217,7 @@ const Historicos = ({
           .eq("user_id", authUserId)
           .eq("month", formData.month);
         if (fetchError) {
-          console.error("Error fetching existing record:", fetchError.message);
+          console.error("Erro ao buscar registro existente:", fetchError.message);
           throw fetchError;
         }
         const existingRecord = existingRecords?.[0];
@@ -235,11 +235,11 @@ const Historicos = ({
         }
         const { data: historicoData, error: historicoError } = historicoResult || { data: null, error: null };
         if (historicoError) {
-          console.error("Error saving historico:", historicoError.message, "Details:", historicoError.details, "Code:", historicoError.code);
+          console.error("Erro ao salvar histórico:", historicoError.message, "Detalhes:", historicoError.details, "Código:", historicoError.code);
           throw historicoError;
         }
         if (!historicoData || historicoData.length === 0) {
-          console.warn("No data returned from Supabase after historico save");
+          console.warn("Nenhum dado retornado do Supabase após salvar histórico");
           return;
         }
         console.log("Historico saved successfully, response:", historicoData);
@@ -258,7 +258,7 @@ const Historicos = ({
           .eq("data_recebimento", formData.data_recebimento)
           .eq("user_id", authUserId);
         if (dailyFetchError) {
-          console.error("Error fetching existing daily record:", dailyFetchError.message);
+          console.error("Erro ao buscar registro diário existente:", dailyFetchError.message);
           throw dailyFetchError;
         }
         let diarioResult;
@@ -276,11 +276,11 @@ const Historicos = ({
         }
         const { data: diarioData, error: diarioError } = diarioResult;
         if (diarioError) {
-          console.error("Error saving historico_diario:", diarioError.message, "Details:", diarioError.details, "Code:", diarioError.code);
+          console.error("Erro ao salvar historico_diario:", diarioError.message, "Detalhes:", diarioError.details, "Código:", diarioError.code);
           throw diarioError;
         }
         if (!diarioData || diarioData.length === 0) {
-          console.warn("No data returned from Supabase after historico_diario save");
+          console.warn("Nenhum dado retornado do Supabase após salvar historico_diario");
         } else {
           console.log("Historico_diario saved successfully, response:", diarioData);
         }
@@ -300,7 +300,7 @@ const Historicos = ({
       await fetchHistorico();
       await fetchDailyRecords();
     } catch (error) {
-      console.error("Error in handleSubmit (catch):", error.message, "Details:", (error as any).details, "Code:", (error as any).code);
+      console.error("Erro em handleSubmit (catch):", error.message, "Detalhes:", (error as any).details, "Código:", (error as any).code);
     }
   };
 
@@ -344,12 +344,12 @@ const Historicos = ({
       if (error) {
         console.error("Erro ao excluir histórico:", error.message, error.details);
       } else {
-        console.log("Item deleted successfully, response:", data);
+        console.log("Item excluído com sucesso, resposta:", data);
         await fetchHistorico();
         await fetchDailyRecords();
       }
     } catch (error) {
-      console.error("Error in handleDelete (catch):", error.message, (error as any).details);
+      console.error("Erro em handleDelete (catch):", error.message, (error as any).details);
     } finally {
       setDeleteConfirmationOpen(false);
       setItemToDelete(null);
@@ -386,11 +386,11 @@ const Historicos = ({
       if (error) {
         console.error("Erro ao excluir registro diário:", error.message, error.details);
       } else {
-        console.log("Daily item deleted successfully");
+        console.log("Item diário excluído com sucesso");
         await fetchDailyRecords();
       }
     } catch (error) {
-      console.error("Error in handleDeleteDaily (catch):", error.message, (error as any).details);
+      console.error("Erro em handleDeleteDaily (catch):", error.message, (error as any).details);
     }
   };
 
