@@ -157,7 +157,7 @@ const DashboardLayout = () => {
           ) : (
             <>
               <h1 className={isDark ? "text-2xl font-semibold text-zinc-100 flex items-center gap-3" : "text-2xl font-semibold text-slate-900 flex items-center gap-3"}>
-                <Shield className="h-5 w-5 text-indigo-500" /> Controle de Inadimplência <span className="text-indigo-500 text-base">{percentual && `${percentual}%`}</span>
+                <Shield className="h-5 w-5 text-indigo-500" /> Meu Fiado <span className="text-indigo-500 text-base">{percentual && `${percentual}%`}</span>
               </h1>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" onClick={toggleTheme} className={isDark ? "border-white/20 text-zinc-100 hover:bg-white/10" : "border-slate-300 text-slate-800 hover:bg-slate-100"}>

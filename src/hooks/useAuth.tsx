@@ -87,7 +87,7 @@ export const useAuth = () => {
         if (error) throw error;
         toast({
           title: "Login efetuado com sucesso!",
-          description: "Bem vindo ao Controle de Inadimplência Dashboard.",
+          description: "Bem vindo ao Meu Fiado.",
         });
       } else {
         console.log("Attempting signup with:", { email });

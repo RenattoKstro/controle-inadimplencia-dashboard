@@ -1,7 +1,7 @@
 {
-  "name": "Controle de Inadimplência",
-  "short_name": "Controle",
-  "description": "Controle de Inadimplência Dashboard",
+  "name": "Meu Fiado",
+  "short_name": "Meu Fiado",
+  "description": "Meu Fiado",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
