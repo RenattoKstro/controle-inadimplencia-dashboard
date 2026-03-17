@@ -320,11 +320,16 @@ const MeusPremios = ({
 
   const renderTabContent = () => {
     const isLider = userData.role === "líder";
-    const totalPremios = isLider ? totalPremiosLider : totalPremiosCadastro;
     const totalGanhos = isLider ? totalGanhosLider : totalGanhosCadastro;
     const premiosFiado = isLider ? premios.fiadoLider : premios.fiadoCadastro;
     const premiosDesafio = isLider ? premios.desafioLider : premios.desafioCadastro;
     const premiosAlimentacao = isLider ? premios.alimentacaoLider : [];
+
+    const totalPossivelFiado = isLider ? 787.60 : 315.00;
+    const totalPossivelDesafio = isLider ? 500.00 : 350.00;
+    const totalPossivelAlimentacao = isLider ? 100.00 : 0.00;
+    const totalPossivelPerdido = bonusPerdidoAtivado ? 700.00 : 0.00;
+    const totalPossivelGeral = totalPossivelFiado + totalPossivelDesafio + totalPossivelAlimentacao + totalPossivelPerdido;
 
     return (
       <>
@@ -332,14 +337,14 @@ const MeusPremios = ({
           <CardPremio
             titulo="Meta Fiado"
             premios={premiosFiado}
-            total={totalPremios}
+            total={totalPossivelFiado}
             icon={<Wallet className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-blue-500`} />}
             color="border-blue-500"
           />
           <CardPremio
             titulo="Meta Desafio"
             premios={premiosDesafio}
-            total={totalPremios}
+            total={totalPossivelDesafio}
             icon={<Trophy className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-yellow-500`} />}
             color="border-yellow-500"
           />
@@ -347,7 +352,7 @@ const MeusPremios = ({
             <CardPremio
               titulo="Vale Alimentação"
               premios={premiosAlimentacao}
-              total={totalPremios}
+              total={totalPossivelAlimentacao}
               icon={<Gift className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-green-500`} />}
               color="border-green-500"
             />
@@ -365,19 +370,19 @@ const MeusPremios = ({
             />
           )}
         </div>
-        <Card className="shadow-md bg-gradient-to-r from-purple-50 to-blue-50">
-          <CardContent className="p-4 md:p-6">
+        <Card className="shadow-md bg-white/5 border border-white/10 backdrop-blur-lg max-w-3xl">
+          <CardContent className="p-3 md:p-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
               <div>
-                <h3 className="text-base md:text-lg font-bold flex items-center gap-1 md:gap-2">
-                  <Gift className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-purple-500`} /> Total Geral de Ganhos ({isLider ? "Líder" : "Cadastro"})
+                <h3 className="text-sm md:text-base font-bold flex items-center gap-1 md:gap-2 text-zinc-100">
+                  <Gift className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-purple-400`} /> Total Geral de Ganhos ({isLider ? "Líder" : "Op. Auxiliar"})
                 </h3>
-                <p className="text-xs md:text-sm text-gray-500">Soma de todos os prêmios conquistados</p>
+                <p className="text-xs text-zinc-400">Soma de todos os prêmios conquistados</p>
               </div>
-              <div className="text-xl md:text-2xl font-bold text-purple-700 self-end md:self-auto">
+              <div className="text-lg md:text-xl font-bold text-zinc-100 self-end md:self-auto">
                 {formatCurrency(totalGanhos)}
-                <span className="text-xs md:text-sm text-gray-500 block text-right">
-                  de {formatCurrency(totalPremios + (bonusPerdidoAtivado ? 700.00 : 0))}
+                <span className="text-xs text-zinc-400 block text-right">
+                  de {formatCurrency(totalPossivelGeral)}
                 </span>
               </div>
             </div>

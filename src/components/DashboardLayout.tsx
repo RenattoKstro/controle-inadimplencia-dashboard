@@ -3,14 +3,13 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet, Trophy, Utensils, Gift, Sliders, Menu,
-  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut, AlertCircle
+  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut, Shield, Sun, Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import MetaFiado from "./dashboard/MetaFiado";
-import MetaDesafio from "./dashboard/MetaDesafio";
+import MetasOverview from "./dashboard/MetasOverview";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
@@ -23,17 +22,14 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
-import { Moon, Sun } from "lucide-react";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
-import Jogos from "./dashboard/Jogos";
 
 const DashboardLayout = () => {
-  const [activeTab, setActiveTab] = useState("meta-fiado");
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("metas");
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { toast } = useToast();
@@ -41,6 +37,7 @@ const DashboardLayout = () => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const {
     userData,
     updateUserData,
@@ -50,7 +47,6 @@ const DashboardLayout = () => {
     diasRestantesCalculados,
   } = useUserData();
   const [recebidoHoje, setRecebidoHoje] = useState(0);
-  const [showCalendar, setShowCalendar] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
   const today = new Date();
@@ -71,10 +67,16 @@ const DashboardLayout = () => {
   }, [navigate, toast]);
 
   useEffect(() => {
-    document.body.classList.toggle("dark", isDarkMode);
-  }, [isDarkMode]);
+    const saved = localStorage.getItem("dashboard-theme");
+    setTheme(saved === "light" ? "light" : "dark");
+  }, []);
 
-  const toggleDarkMode = () => setIsDarkMode(prev => !prev);
+  useEffect(() => {
+    const isDarkTheme = theme === "dark";
+    document.body.classList.toggle("dark", isDarkTheme);
+    document.documentElement.classList.toggle("dark", isDarkTheme);
+    localStorage.setItem("dashboard-theme", theme);
+  }, [theme]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -102,9 +104,14 @@ const DashboardLayout = () => {
     setTimeout(() => setShowInstagramUsername(false), 2000);
   };
 
+  const toggleTheme = () => setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
+  const isMembro = Boolean((userData as { membro?: boolean; role?: string } | null)?.membro)
+    || ((userData?.role || "").toLowerCase() === "membro");
+  const isDark = theme === "dark";
 
   if (isLoading || !userData) {
     return (
@@ -116,36 +123,24 @@ const DashboardLayout = () => {
 
   return (
     <div
-      className={`min-h-screen ${isDarkMode ? "bg-background dark" : "bg-gradient-to-br from-slate-50 to-slate-100"}`}
+      className={isDark ? "min-h-screen bg-zinc-950 text-zinc-100" : "min-h-screen bg-slate-100 text-slate-900"}
       ref={contentRef}
     >
-      {/* AVISO IMPORTANTE NO TOPO */}
-      <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white py-3 px-4 text-center font-bold text-lg shadow-lg flex items-center justify-center gap-3">
-        <AlertCircle className="w-6 h-6 animate-pulse" />
-        Atenção, em breve o link do app irá mudar!
-        <a
-          href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl?mode=hq2tcli"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-yellow-200 transition-colors flex items-center gap-2"
-        >
-          Entre no grupo para ter acesso ao novo link
-          <FaWhatsapp className="w-5 h-5" />
-        </a>
-      </div>
-
       {/* HEADER */}
-      <header className="bg-card shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className={isDark ? "bg-zinc-950/95 border-b border-white/10 backdrop-blur-xl shadow-md sticky top-0 z-50" : "bg-white/95 border-b border-slate-200 backdrop-blur-xl shadow-sm sticky top-0 z-50"}>
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           {isMobile ? (
             <>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Inadimplência {percentual && `${percentual}%`}
+              <h1 className={isDark ? "text-lg font-semibold text-zinc-100 flex items-center gap-2" : "text-lg font-semibold text-slate-900 flex items-center gap-2"}>
+                <Shield className="h-4 w-4 text-indigo-500" /> Inadimplência <span className="text-indigo-500 text-sm">{percentual && `${percentual}%`}</span>
               </h1>
               <div className="flex gap-2">
+                <Button variant="outline" size="icon" onClick={toggleTheme} className={isDark ? "border-white/20 text-zinc-100 hover:bg-white/10" : "border-slate-300 text-slate-800 hover:bg-slate-100"}>
+                  {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </Button>
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon"><Menu /></Button>
+                    <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon"><Menu /></Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-80">
                     <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
@@ -157,19 +152,19 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
-                  {isDarkMode ? <Sun /> : <Moon />}
-                </Button>
               </div>
             </>
           ) : (
             <>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-                Controle de Inadimplência {percentual && `${percentual}%`}
+              <h1 className={isDark ? "text-2xl font-semibold text-zinc-100 flex items-center gap-3" : "text-2xl font-semibold text-slate-900 flex items-center gap-3"}>
+                <Shield className="h-5 w-5 text-indigo-500" /> Controle de Inadimplência <span className="text-indigo-500 text-base">{percentual && `${percentual}%`}</span>
               </h1>
-              <div className="flex items-center gap-3">
-                <Button onClick={print} variant="outline" className="gap-2">
-                  <RiScreenshot2Fill className="w-5 h-5" /> Print
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={toggleTheme} className={isDark ? "border-white/20 text-zinc-100 hover:bg-white/10" : "border-slate-300 text-slate-800 hover:bg-slate-100"}>
+                  {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </Button>
+                <Button onClick={print} variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
+                  <RiScreenshot2Fill className="w-5 h-5" />
                 </Button>
                 <Dialog>
                   <DialogTrigger asChild>
@@ -183,12 +178,12 @@ const DashboardLayout = () => {
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
                 </Dialog>
-                <Button variant="outline" size="sm" onClick={() => setShowCalendar(!showCalendar)} className="gap-2">
-                  <Calendar className="h-4 w-4" /> {today.toLocaleDateString("pt-BR")}
+                <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
+                  <Calendar className="h-4 w-4" />
                 </Button>
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon"><Menu className="h-5 w-5" /></Button>
+                    <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon"><Menu className="h-5 w-5" /></Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-80">
                     <Apps />
@@ -199,16 +194,13 @@ const DashboardLayout = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button variant="outline" size="icon" onClick={toggleDarkMode}>
-                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </Button>
 
                 {/* BOTÃO DE PERFIL */}
                 <div className="relative">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full overflow-hidden border-2 border-purple-500 hover:border-purple-600 transition-all"
+                    className="rounded-full overflow-hidden border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                   >
                     {userData?.avatar_url ? (
@@ -226,7 +218,7 @@ const DashboardLayout = () => {
                     )}
                   </Button>
                   {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-2xl shadow-2xl border border-purple-200 p-6 z-50">
+                    <div className={isDark ? "absolute right-0 mt-2 w-96 bg-zinc-900 text-zinc-100 rounded-2xl shadow-2xl border border-white/10 p-6 z-50" : "absolute right-0 mt-2 w-96 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 p-6 z-50"}>
                       <div className="flex items-center gap-5 mb-6">
                         <label htmlFor="upload-foto" className="cursor-pointer group">
                           {userData?.avatar_url ? (
@@ -276,13 +268,20 @@ const DashboardLayout = () => {
                           />
                         </label>
                         <div>
-                          <p className="text-2xl font-bold text-gray-800">
-                            {userData?.nome_usuario || "Usuário"}
-                          </p>
-                          <p className="text-lg text-purple-600 font-medium">
+                          <div className="flex items-center gap-2">
+                            <p className={isDark ? "text-2xl font-bold text-zinc-100" : "text-2xl font-bold text-slate-900"}>
+                              {userData?.nome_usuario || "Usuário"}
+                            </p>
+                            {isMembro && (
+                              <span className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">
+                                Membro
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-lg text-indigo-400 font-medium">
                             Filial {String(userData?.filial || "00000").padStart(5, "0")}
                           </p>
-                          <p className="text-sm text-gray-500 mt-2">
+                          <p className={isDark ? "text-sm text-zinc-400 mt-2" : "text-sm text-slate-500 mt-2"}>
                             Clique na foto para alterar
                           </p>
                         </div>
@@ -304,20 +303,35 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-9 w-full p-1 bg-card rounded-xl mb-6 gap-1">
-                <TabsTrigger value="ajustes-metas" className="gap-1 text-xs sm:text-sm">Ajustes</TabsTrigger>
-                <TabsTrigger value="meta-fiado" className="gap-1 text-xs sm:text-sm">Fiado</TabsTrigger>
-                <TabsTrigger value="meta-desafio" className="gap-1 text-xs sm:text-sm">Desafio</TabsTrigger>
-                <TabsTrigger value="meta-alimentacao" className="gap-1 text-xs sm:text-sm">Alimentação</TabsTrigger>
+              <TabsList className={isDark ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1" : "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1"}>
+                <TabsTrigger value="ajustes-metas" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <Sliders className="h-4 w-4" /> Ajustes
+                </TabsTrigger>
+                <TabsTrigger value="metas" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <Gift className="h-4 w-4" /> Metas
+                </TabsTrigger>
+                <TabsTrigger value="meta-alimentacao" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <Utensils className="h-4 w-4" /> Alimentação
+                </TabsTrigger>
                 {bonusPerdidoAtivado && (
-                  <TabsTrigger value="meta-perdido" className="gap-1 text-xs sm:text-sm">Perdido</TabsTrigger>
+                  <TabsTrigger value="meta-perdido" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                    <AlertTriangle className="h-4 w-4" /> Perdido
+                  </TabsTrigger>
                 )}
-                <TabsTrigger value="meus-premios" className="gap-1 text-xs sm:text-sm">Prêmios</TabsTrigger>
+                <TabsTrigger value="meus-premios" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <Trophy className="h-4 w-4" /> Prêmios
+                </TabsTrigger>
                 {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className="gap-1 text-xs sm:text-sm">Histórico</TabsTrigger>
+                  <TabsTrigger value="historicos" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                    <History className="h-4 w-4" /> Histórico
+                  </TabsTrigger>
                 )}
-                <TabsTrigger value="filiais" className="gap-1 text-xs sm:text-sm">Filiais %</TabsTrigger>
-                <TabsTrigger value="jogos" className="gap-1 text-xs sm:text-sm">Jogos</TabsTrigger>
+                <TabsTrigger value="filiais" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <Store className="h-4 w-4" /> Filiais %
+                </TabsTrigger>
+                <TabsTrigger value="matriz" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <Store className="h-4 w-4" /> Matriz
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="ajustes-metas">
@@ -335,8 +349,8 @@ const DashboardLayout = () => {
                 />
               </TabsContent>
 
-              <TabsContent value="meta-fiado">
-                <MetaFiado
+              <TabsContent value="metas">
+                <MetasOverview
                   userData={userData}
                   updateUserData={updateUserData}
                   diasSemExpediente={diasSemExpediente}
@@ -345,19 +359,6 @@ const DashboardLayout = () => {
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
                   setRecebidoHoje={setRecebidoHoje}
-                />
-              </TabsContent>
-
-              <TabsContent value="meta-desafio">
-                <MetaDesafio
-                  userData={userData}
-                  updateUserData={updateUserData}
-                  diasSemExpediente={diasSemExpediente}
-                  updateDiasSemExpediente={updateDiasSemExpediente}
-                  diasRestantesCalculados={diasRestantesCalculados}
-                  isLoading={isLoading}
-                  bonusPerdidoAtivado={bonusPerdidoAtivado}
-                  setRecebidoHoje={() => {}}
                 />
               </TabsContent>
 
@@ -421,8 +422,11 @@ const DashboardLayout = () => {
               <TabsContent value="filiais">
                 <Filiais />
               </TabsContent>
-            <TabsContent value="jogos">
-                <Jogos />
+
+              <TabsContent value="matriz">
+                <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center">
+                  <p className="text-zinc-200 text-lg font-medium">Esta guia está disponível somente para membros.</p>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
@@ -430,7 +434,7 @@ const DashboardLayout = () => {
       </div>
 
       {/* FOOTER */}
-      <footer className="bg-card shadow-md p-4 mt-8">
+      <footer className="bg-zinc-950 border-t border-white/10 shadow-md p-4 mt-8">
         <div className="max-w-7xl mx-auto flex justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
             <FaWhatsapp className="text-green-600" />

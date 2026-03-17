@@ -38,12 +38,11 @@ const UploadFiliaisExcel = () => {
 
         let success = 0;
         const batchSize = 100;
-        const batch: any[] = [];
+        const batch: Array<{ idfilial: number; filial: string; regional: string; ativo: boolean }> = [];
 
         for (const row of json) {
-          const r = row as any;
+          const r = row as Record<string, unknown>;
 
-          // Busca idfilial
           let idfilial: number | null = null;
           for (const key in r) {
             if (key.toLowerCase().includes("idfilial") || key.toLowerCase().includes("id")) {
@@ -56,7 +55,6 @@ const UploadFiliaisExcel = () => {
           }
           if (!idfilial) continue;
 
-          // Busca nome da filial
           let nomeFilial = "Filial Desconhecida";
           for (const key in r) {
             if (key.toLowerCase().includes("filial")) {
@@ -65,7 +63,6 @@ const UploadFiliaisExcel = () => {
             }
           }
 
-          // Busca regional
           let regional = "";
           for (const key in r) {
             if (key.toLowerCase().includes("regional")) {
@@ -75,10 +72,10 @@ const UploadFiliaisExcel = () => {
           }
 
           batch.push({
-            idfilial: idfilial,
+            idfilial,
             filial: nomeFilial,
-            regional: regional,
-            ativo: true
+            regional,
+            ativo: true,
           });
 
           if (batch.length === batchSize) {
@@ -98,8 +95,7 @@ const UploadFiliaisExcel = () => {
           success += error ? 0 : batch.length;
         }
 
-        setResult(`SUCESSO TOTAL! ${success} filiais importadas com regional!`);
-
+        setResult(`SUCESSO! ${success} filiais importadas/atualizadas.`);
       } catch (err) {
         console.error(err);
         setResult("Erro ao processar o arquivo.");
@@ -112,27 +108,38 @@ const UploadFiliaisExcel = () => {
   };
 
   return (
-    <Card className="max-w-2xl mx-auto border-4 border-green-600">
-      <CardHeader className="bg-green-600 text-white text-center">
-        <CardTitle className="text-4xl font-bold flex items-center justify-center gap-4">
-          <CheckCircle className="h-16 w-16" />
-          IMPORTAR FILIAIS (com Regional)
+    <Card className="max-w-md mx-auto border border-green-500/40 bg-zinc-950/60">
+      <CardHeader className="bg-green-600/15 border-b border-green-500/20 text-green-100 text-center py-2 px-3">
+        <CardTitle className="text-sm md:text-base font-semibold flex items-center justify-center gap-1.5">
+          <CheckCircle className="h-4 w-4" />
+Upload Base Filiais
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-12 space-y-8">
-        <Input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} disabled={uploading} className="text-xl" />
-        {file && <p className="text-2xl font-bold text-green-700 text-center">Arquivo carregado: {file.name}</p>}
-        
-        <Button onClick={handleUpload} disabled={!file || uploading} size="lg" className="w-full h-20 text-3xl bg-green-600 hover:bg-green-700">
-          {uploading ? `IMPORTANDO... ${Math.round(progress)}%` : "IMPORTAR AGORA"}
+      <CardContent className="p-3 space-y-2.5">
+        <Input
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          onChange={handleFileChange}
+          disabled={uploading}
+          className="bg-zinc-900 border-zinc-700 text-zinc-100"
+        />
+
+        {file && <p className="text-xs text-green-300 truncate">Arquivo: {file.name}</p>}
+
+        <Button
+          onClick={handleUpload}
+          disabled={!file || uploading}
+          size="sm"
+          className="h-8 px-3 text-xs bg-green-600 hover:bg-green-700"
+        >
+          {uploading ? `Importando... ${Math.round(progress)}%` : "Importar"}
         </Button>
 
-        {uploading && <Progress value={progress} className="h-10" />}
+        {uploading && <Progress value={progress} className="h-1.5" />}
 
         {result && (
-          <div className="p-12 bg-green-100 border-8 border-green-600 rounded-3xl text-center">
-            <CheckCircle className="h-32 w-32 mx-auto mb-6 text-green-600" />
-            <p className="text-5xl font-bold text-green-800">{result}</p>
+          <div className="p-2 bg-green-500/10 border border-green-500/40 rounded-md text-xs text-green-200">
+            {result}
           </div>
         )}
       </CardContent>
