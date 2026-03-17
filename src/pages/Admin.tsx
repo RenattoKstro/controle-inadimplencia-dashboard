@@ -1,5 +1,6 @@
 // src/pages/Admin.tsx
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ const ADMIN_EMAIL = "rks7ro@gmail.com";
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,13 +69,13 @@ const Admin = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12 space-y-12">
+      <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Seção Upload Filiais */}
         <section>
-          <Card className="bg-white/10 backdrop-blur border-purple-500">
+          <Card className="bg-white/10 backdrop-blur border-purple-500 max-w-2xl">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-2xl">
-                <Upload className="h-8 w-8 text-purple-400" />
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Upload className="h-5 w-5 text-purple-400" />
                 Upload de Base de Filiais
               </CardTitle>
             </CardHeader>
@@ -86,28 +87,17 @@ const Admin = () => {
 
         {/* Seção Gerenciar Usuários */}
         <section>
-          <Card className="bg-white/10 backdrop-blur border-purple-500">
+          <Card className="bg-white/10 backdrop-blur border-purple-500 w-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-2xl">
                 <Users className="h-8 w-8 text-purple-400" />
                 Gerenciar Usuários
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               <GerenciarUsuarios />
             </CardContent>
           </Card>
-        </section>
-
-        {/* Botão Aprovações */}
-        <section className="flex justify-center">
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-xl px-12 py-8 font-bold shadow-2xl"
-            onClick={() => navigate("/aprovacoes")}
-          >
-            Acessar Área de Aprovações
-          </Button>
         </section>
 
         {/* Alerta de Segurança */}

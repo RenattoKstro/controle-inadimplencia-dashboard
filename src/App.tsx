@@ -9,7 +9,6 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ResetPassword from "./pages/ResetPassword";
-import AprovacoesAdmin from "./pages/aprovacoes"; // ← ADICIONEI A ROTA!
 import Admin from "./pages/Admin";
 import { supabase } from "./integrations/supabase/client";
 
@@ -46,7 +45,6 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/callback" element={<Callback />} />
-          <Route path="/aprovacoes" element={<AprovacoesAdmin />} /> {/* ← ROTA ADICIONADA */}
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
