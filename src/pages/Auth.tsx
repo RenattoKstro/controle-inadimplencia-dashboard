@@ -25,7 +25,7 @@ export default function Auth() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-300 text-xs">
             <Shield className="h-3.5 w-3.5" /> Acesso Seguro
           </div>
-          <h1 className="text-2xl font-bold">Controle de Inadimplência</h1>
+          <h1 className="text-2xl font-bold">Meu Fiado</h1>
           <p className="text-sm text-zinc-400">
             {isLogin ? "Faça login na sua conta" : "Crie sua conta"}
           </p>

@@ -24,7 +24,7 @@ const Index = () => {
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-bold">
-          Controle de Inadimplência
+          Meu Fiado
         </h1>
 
         <p className="text-zinc-400 text-base sm:text-lg max-w-xl mx-auto">
