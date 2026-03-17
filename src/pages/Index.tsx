@@ -1,59 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Shield, ArrowRight } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [showWarning, setShowWarning] = useState(true); // Estado para controlar o aviso
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        navigate("/dashboard");
-      }
+      if (data.session) navigate("/dashboard");
     };
-    
+
     checkAuth();
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-slate-100 p-4">
-      {/* Aviso no topo da página */}
-      {showWarning && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 w-full max-w-md flex justify-between items-center">
-          <p className="text-sm">
-            <strong>Aviso Importante:</strong> Cadastre-se apenas com e-mails Gmail (ex.: @gmail.com). E-mails corporativos ou de outros provedores podem não funcionar corretamente.
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowWarning(false)}
-            className="text-yellow-700 hover:text-yellow-900"
-          >
-            Fechar
-          </Button>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-zinc-900/80 shadow-2xl p-8 sm:p-10 text-center space-y-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/40 bg-indigo-500/10 text-indigo-300 text-sm">
+          <Shield className="h-4 w-4" /> Plataforma Oficial
         </div>
-      )}
 
-      <div className="max-w-md w-full p-6 sm:p-8 bg-white rounded-lg shadow-lg text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800">
-          Controle de Inadimplência <span className="text-sm font-normal bg-purple-500 text-white px-1.5 py-0.5 rounded-md ml-1">Beta</span>
+        <h1 className="text-3xl sm:text-4xl font-bold">
+          Controle de Inadimplência
         </h1>
-        <p className="text-base sm:text-lg text-gray-600 mb-6 sm:mb-8">
-          Gerencie suas metas de inadimplência de forma eficiente e acompanhe seu progresso.
+
+        <p className="text-zinc-400 text-base sm:text-lg max-w-xl mx-auto">
+          Gerencie metas de forma clara, acompanhe indicadores em tempo real e mantenha performance com visual moderno em tema escuro.
         </p>
-        <div className="space-y-4">
-          <Button 
-            className="w-full py-5 sm:py-6 text-base sm:text-lg"
+
+        <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-left text-sm text-amber-200">
+          <strong className="text-amber-300">Aviso:</strong> cadastre-se preferencialmente com e-mails Gmail (@gmail.com) para evitar falhas de autenticação.
+        </div>
+
+        <div className="space-y-3">
+          <Button
+            className="w-full h-12 text-base bg-indigo-600 hover:bg-indigo-500"
             onClick={() => navigate("/auth")}
           >
-            Acessar Dashboard
+            Acessar Dashboard <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
-          <p className="text-xs sm:text-sm text-gray-500">
-            Faça login ou crie uma conta para começar a gerenciar suas metas.
-          </p>
+          <p className="text-sm text-zinc-500">Faça login ou crie uma conta para começar.</p>
         </div>
       </div>
     </div>
