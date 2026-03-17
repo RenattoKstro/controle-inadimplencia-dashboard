@@ -41,6 +41,7 @@ const Filiais = () => {
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
+  const isDark = document.documentElement.classList.contains("dark");
 
   useEffect(() => {
     const fetchRanking = async () => {
@@ -120,7 +121,7 @@ const Filiais = () => {
   }
 
   if (loading) {
-    return <p className="text-center py-20 text-xl text-zinc-200">Carregando Filiais %...</p>;
+    return <p className={isDark ? "text-center py-20 text-xl text-zinc-200" : "text-center py-20 text-xl text-slate-700"}>Carregando Filiais %...</p>;
   }
 
   const getInitials = (nome: string | null | undefined): string => {
@@ -190,7 +191,7 @@ const Filiais = () => {
   };
 
   return (
-    <div className="space-y-6 text-zinc-100">
+    <div className={isDark ? "space-y-6 text-zinc-100" : "space-y-6 text-slate-900"}>
       <div className="text-center">
         <h2 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
           Filiais %
@@ -204,10 +205,10 @@ const Filiais = () => {
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
         <div className="w-full max-w-xs">
           <Select value={filtroRegional} onValueChange={setFiltroRegional}>
-            <SelectTrigger className="bg-zinc-900 border-white/10 text-zinc-100">
+            <SelectTrigger className={isDark ? "bg-zinc-900 border-white/10 text-zinc-100" : "bg-white border-slate-300 text-slate-900"}>
               <SelectValue placeholder="Todas as regionais" />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-white/10 text-zinc-100">
+            <SelectContent className={isDark ? "bg-zinc-900 border-white/10 text-zinc-100" : "bg-white border-slate-300 text-slate-900"}>
               <SelectItem value="Membros">Membros</SelectItem>
               <SelectItem value="todas">Todas as regionais</SelectItem>
               {regionais.filter((reg) => reg !== "Membros").map(reg => (
@@ -217,22 +218,22 @@ const Filiais = () => {
           </Select>
         </div>
 
-        <div className="flex items-center gap-3 bg-zinc-900/90 px-6 py-3 rounded-lg border border-white/10">
+        <div className={isDark ? "flex items-center gap-3 bg-zinc-900/90 px-6 py-3 rounded-lg border border-white/10" : "flex items-center gap-3 bg-white px-6 py-3 rounded-lg border border-slate-300"}>
           <Switch
             id="ocultar-zeradas"
             checked={ocultarZeradas}
             onCheckedChange={setOcultarZeradas}
           />
-          <Label htmlFor="ocultar-zeradas" className="cursor-pointer font-medium text-zinc-200">
+          <Label htmlFor="ocultar-zeradas" className={isDark ? "cursor-pointer font-medium text-zinc-200" : "cursor-pointer font-medium text-slate-700"}>
             Ocultar filiais zeradas
           </Label>
         </div>
       </div>
 
       {/* TABELA */}
-      <div className="bg-zinc-950/90 rounded-xl shadow-lg border border-white/10 overflow-hidden">
+      <div className={isDark ? "bg-zinc-950/90 rounded-xl shadow-lg border border-white/10 overflow-hidden" : "bg-white rounded-xl shadow-lg border border-slate-300 overflow-hidden"}>
         <table className="w-full text-left text-sm">
-          <thead className="bg-gradient-to-r from-indigo-700 to-violet-700 text-zinc-100 text-xs">
+          <thead className={isDark ? "bg-gradient-to-r from-indigo-700 to-violet-700 text-zinc-100 text-xs" : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs"}>
             <tr>
               <th className="px-4 py-2">#</th>
               <th className="px-4 py-2">Filial</th>
@@ -260,7 +261,7 @@ const Filiais = () => {
                 const updatedText = getUpdatedText(user?.updated_at);
 
                 return (
-                  <tr key={f.idfilial} className="border-b border-white/10 hover:bg-white/5 transition-colors">
+                  <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {i < 3 && (
@@ -293,7 +294,7 @@ const Filiais = () => {
                                 </div>
                               </div>
                             </HoverCardTrigger>
-                            <HoverCardContent className="w-80 bg-zinc-900 text-zinc-100 border-white/10">
+                            <HoverCardContent className={isDark ? "w-80 bg-zinc-900 text-zinc-100 border-white/10" : "w-80 bg-white text-slate-900 border-slate-300"}>
                               <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
                                   {user?.avatar_url ? (

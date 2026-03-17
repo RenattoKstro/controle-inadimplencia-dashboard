@@ -21,9 +21,11 @@ const formatCurrency = (value: number): string =>
 const OrbitMilestones = ({
   milestones,
   color,
+  isDark,
 }: {
   milestones: Array<{ percentual: number; atingido: boolean; falta: number }>;
   color: "fiado" | "desafio";
+  isDark: boolean;
 }) => {
   const size = 240;
   const center = size / 2;
@@ -49,11 +51,11 @@ const OrbitMilestones = ({
                   : "bg-emerald-500/10 border-emerald-400/35"
               }`}
             >
-              <span className="text-zinc-100 font-semibold">{item.percentual}%</span>
+              <span className={isDark ? "text-zinc-100 font-semibold" : "text-slate-800 font-semibold"}>{item.percentual}%</span>
               {item.atingido ? (
                 <span className="text-emerald-400 font-bold">✓</span>
               ) : (
-                <span className="text-zinc-300 text-[9px]">{formatCurrency(item.falta)}</span>
+                <span className={isDark ? "text-zinc-300 text-[9px]" : "text-slate-600 text-[9px]"}>{formatCurrency(item.falta)}</span>
               )}
             </div>
           </div>
@@ -71,6 +73,7 @@ const CircleProgress = ({
   subtitle,
   milestones,
   orbitColor,
+  isDark,
 }: {
   value: number;
   color: string;
@@ -79,6 +82,7 @@ const CircleProgress = ({
   subtitle: string;
   milestones: Array<{ percentual: number; atingido: boolean; falta: number }>;
   orbitColor: "fiado" | "desafio";
+  isDark: boolean;
 }) => {
   const normalized = Math.max(0, Math.min(100, value));
   const radius = 52;
@@ -89,7 +93,7 @@ const CircleProgress = ({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="text-zinc-100 text-base font-semibold flex items-center gap-2">{label}</div>
+      <div className={isDark ? "text-zinc-100 text-base font-semibold flex items-center gap-2" : "text-slate-900 text-base font-semibold flex items-center gap-2"}>{label}</div>
 
       <div
         className="relative"
@@ -98,10 +102,10 @@ const CircleProgress = ({
         onClick={() => setShowMilestones((prev) => !prev)}
       >
         <div className="relative flex items-center justify-center" style={{ width: 240, height: 240 }}>
-          {showMilestones && <OrbitMilestones milestones={milestones} color={orbitColor} />}
+          {showMilestones && <OrbitMilestones milestones={milestones} color={orbitColor} isDark={isDark} />}
 
           <svg width={size} height={size} className="-rotate-90 z-10">
-            <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(255,255,255,0.12)" strokeWidth="6" fill="none" />
+            <circle cx={size / 2} cy={size / 2} r={radius} stroke={isDark ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.2)"} strokeWidth="6" fill="none" />
             <circle
               cx={size / 2}
               cy={size / 2}
@@ -114,35 +118,36 @@ const CircleProgress = ({
               strokeDashoffset={strokeDashoffset}
             />
           </svg>
-          <div className="absolute inset-0 z-10 flex items-center justify-center text-2xl font-bold text-zinc-100 pointer-events-none">
+          <div className={isDark ? "absolute inset-0 z-10 flex items-center justify-center text-2xl font-bold text-zinc-100 pointer-events-none" : "absolute inset-0 z-10 flex items-center justify-center text-2xl font-bold text-slate-900 pointer-events-none"}>
             {Math.round(normalized)}%
           </div>
         </div>
       </div>
 
-      <p className="text-lg sm:text-xl font-semibold text-zinc-50 -mt-8">{amount}</p>
-      <p className="text-zinc-400 text-sm">{subtitle}</p>
+      <p className={isDark ? "text-lg sm:text-xl font-semibold text-zinc-50 -mt-8" : "text-lg sm:text-xl font-semibold text-slate-900 -mt-8"}>{amount}</p>
+      <p className={isDark ? "text-zinc-400 text-sm" : "text-slate-600 text-sm"}>{subtitle}</p>
     </div>
   );
 };
 
-const Metric = ({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: string }) => (
+const Metric = ({ icon, label, value, accent, isDark }: { icon: React.ReactNode; label: string; value: string; accent?: string; isDark: boolean }) => (
   <div>
-    <div className="flex items-center gap-2 text-sm text-zinc-400">{icon} {label}</div>
-    <div className={`text-sm sm:text-base md:text-lg font-semibold whitespace-nowrap ${accent || "text-zinc-50"}`}>{value}</div>
+    <div className={isDark ? "flex items-center gap-2 text-sm text-zinc-400" : "flex items-center gap-2 text-sm text-slate-600"}>{icon} {label}</div>
+    <div className={`text-sm sm:text-base md:text-lg font-semibold whitespace-nowrap ${accent || (isDark ? "text-zinc-50" : "text-slate-900")}`}>{value}</div>
   </div>
 );
 
-const SmallCard = ({ title, value }: { title: string; value: string }) => (
-  <Card className="bg-zinc-900/80 border border-white/10">
+const SmallCard = ({ title, value, isDark }: { title: string; value: string; isDark: boolean }) => (
+  <Card className={isDark ? "bg-zinc-900/80 border border-white/10" : "bg-white border border-slate-300"}>
     <CardContent className="p-4">
-      <p className="text-sm text-zinc-400">{title}</p>
-      <p className="text-base sm:text-lg font-semibold text-zinc-100 mt-1 whitespace-nowrap">{value}</p>
+      <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-600"}>{title}</p>
+      <p className={isDark ? "text-base sm:text-lg font-semibold text-zinc-100 mt-1 whitespace-nowrap" : "text-base sm:text-lg font-semibold text-slate-900 mt-1 whitespace-nowrap"}>{value}</p>
     </CardContent>
   </Card>
 );
 
 const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, setRecebidoHoje }: DashboardProps) => {
+  const isDark = document.documentElement.classList.contains("dark");
   const aberturaMes = userData.abertura_vencido_mes || 0;
   const metaFiado = userData.meta_mes || 0;
   const metaDesafio = userData.meta_desafio || 0;
@@ -208,11 +213,12 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
 
   return (
     <div className="space-y-5">
-      <Card className="bg-zinc-950 border border-indigo-500/25 shadow-2xl overflow-visible">
+      <Card className={isDark ? "bg-zinc-950 border border-indigo-500/25 shadow-2xl overflow-visible" : "bg-white border border-indigo-300/60 shadow-lg overflow-visible"}>
         <CardContent className="p-5 sm:p-6 overflow-visible">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6 items-center">
             <div className="space-y-4">
               <CircleProgress
+                isDark={isDark}
                 value={fiadoPercent}
                 color="#4f46e5"
                 label="◎ Meta Fiado"
@@ -222,17 +228,18 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
                 orbitColor="fiado"
               />
               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                <Metric icon={<Wallet className="h-4 w-4" />} label="À Receber" value={formatCurrency(aReceber)} />
-                <Metric icon={<TrendingUp className="h-4 w-4 text-indigo-400" />} label="Recebido" value={formatCurrency(recebidosMes)} />
-                <Metric icon={<Target className="h-4 w-4 text-indigo-400" />} label="Restante" value={formatCurrency(restanteFiado)} />
-                <Metric icon={<Flame className="h-4 w-4 text-rose-400" />} label="Meta Diária / Rec. Hoje" value={`${formatCurrency(metaDiaria)} / ${formatCurrency(recebidoHoje)}`} />
+                <Metric isDark={isDark} icon={<Wallet className="h-4 w-4" />} label="À Receber" value={formatCurrency(aReceber)} />
+                <Metric isDark={isDark} icon={<TrendingUp className="h-4 w-4 text-indigo-400" />} label="Recebido" value={formatCurrency(recebidosMes)} />
+                <Metric isDark={isDark} icon={<Target className="h-4 w-4 text-indigo-400" />} label="Restante" value={formatCurrency(restanteFiado)} />
+                <Metric isDark={isDark} icon={<Flame className="h-4 w-4 text-rose-400" />} label="Meta Diária / Rec. Hoje" value={`${formatCurrency(metaDiaria)} / ${formatCurrency(recebidoHoje)}`} />
               </div>
             </div>
 
-            <div className="hidden lg:block w-px h-full bg-white/10" />
+            <div className={isDark ? "hidden lg:block w-px h-full bg-white/10" : "hidden lg:block w-px h-full bg-slate-300"} />
 
             <div className="space-y-4">
               <CircleProgress
+                isDark={isDark}
                 value={desafioPercent}
                 color="#10b981"
                 label="◔ Meta Desafio"
@@ -242,14 +249,15 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
                 orbitColor="desafio"
               />
               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-                <Metric icon={<Target className="h-4 w-4 text-indigo-400" />} label="Meta Desafio" value={formatCurrency(metaDesafio)} />
-                <Metric icon={<TrendingUp className="h-4 w-4 text-indigo-400" />} label="Recebido" value={formatCurrency(recebidosMes)} />
-                <Metric icon={<AlertTriangle className="h-4 w-4 text-rose-400" />} label="Vencido Atual" value={formatCurrency(vencidoAtual)} />
+                <Metric isDark={isDark} icon={<Target className="h-4 w-4 text-indigo-400" />} label="Meta Desafio" value={formatCurrency(metaDesafio)} />
+                <Metric isDark={isDark} icon={<TrendingUp className="h-4 w-4 text-indigo-400" />} label="Recebido" value={formatCurrency(recebidosMes)} />
+                <Metric isDark={isDark} icon={<AlertTriangle className="h-4 w-4 text-rose-400" />} label="Vencido Atual" value={formatCurrency(vencidoAtual)} />
                 <Metric
+                  isDark={isDark}
                   icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />}
                   label="Status"
                   value={desafioAtingida ? "Atingida ✓" : "Em andamento"}
-                  accent={desafioAtingida ? "text-emerald-300" : "text-zinc-100"}
+                  accent={desafioAtingida ? "text-emerald-300" : (isDark ? "text-zinc-100" : "text-slate-900")}
                 />
               </div>
             </div>
@@ -258,10 +266,10 @@ const MetasOverview = ({ userData, diasRestantesCalculados, diasSemExpediente, s
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-        <SmallCard title="Abertura Mês" value={formatCurrency(aberturaMes)} />
-        <SmallCard title={gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"} value={formatCurrency(gap)} />
-        <SmallCard title="Dias Trabalhados" value={String(diasTrabalhados)} />
-        <SmallCard title="Dias Restantes" value={String(diasRestantes)} />
+        <SmallCard isDark={isDark} title="Abertura Mês" value={formatCurrency(aberturaMes)} />
+        <SmallCard isDark={isDark} title={gap >= 0 ? "GAP (Positivo)" : "GAP (Negativo)"} value={formatCurrency(gap)} />
+        <SmallCard isDark={isDark} title="Dias Trabalhados" value={String(diasTrabalhados)} />
+        <SmallCard isDark={isDark} title="Dias Restantes" value={String(diasRestantes)} />
       </div>
     </div>
   );
