@@ -192,10 +192,9 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   };
 
   const getPercentColor = (pct: number) => {
-    if (pct >= 100) return "text-emerald-400 font-bold";
-    if (pct >= 94) return "text-amber-400 font-bold";
-    if (pct >= 90) return "text-rose-400 font-bold";
-    return "text-zinc-300";
+    if (pct >= 100) return isDark ? "text-emerald-400 font-bold" : "text-emerald-600 font-bold";
+    if (pct >= 94) return isDark ? "text-amber-400 font-bold" : "text-amber-500 font-bold";
+    return isDark ? "text-rose-400 font-bold" : "text-rose-600 font-bold";
   };
 
   const getProgressColor = (pct: number) => {
