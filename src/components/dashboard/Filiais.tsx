@@ -201,7 +201,8 @@ const Filiais = () => {
     }
 
     const badgeSetIncompleto = filiaisComBadgeMembro.size < filiaisComMembros.size;
-    if (badgeSetIncompleto && filiaisComMembros.has(filialId)) {
+    const fallbackBadgeSeguro = filiaisComMembros.size > 0 && filiaisComMembros.size < ranking.length;
+    if (badgeSetIncompleto && fallbackBadgeSeguro && filiaisComMembros.has(filialId)) {
       return true;
     }
 
