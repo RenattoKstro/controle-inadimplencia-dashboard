@@ -35,7 +35,11 @@ interface RankingFilial {
   } | null;
 }
 
-const Filiais = () => {
+type FiliaisProps = {
+  isViewerMembro: boolean;
+};
+
+const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
   const [regionais, setRegionais] = useState<string[]>([]);
   const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
@@ -219,6 +223,10 @@ const Filiais = () => {
 
     if (filiaisComBadgeMembro.has(filialId)) {
       return true;
+    }
+
+    if (!isViewerMembro) {
+      return false;
     }
 
     return filiaisConfirmadasMembros.has(filialId);

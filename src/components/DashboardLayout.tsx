@@ -421,7 +421,7 @@ const DashboardLayout = () => {
               )}
 
               <TabsContent value="filiais">
-                <Filiais />
+                <Filiais isViewerMembro={isMembro} />
               </TabsContent>
 
               <TabsContent value="matriz">
