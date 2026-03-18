@@ -129,7 +129,7 @@ const MatrizLinks = () => {
     <div className="space-y-8">
       <div className={isDark ? "rounded-3xl border border-white/10 bg-zinc-900/70 p-6 shadow-2xl" : "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg"}>
         <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-          Matriz de Atalhos
+          Atalhos
         </h2>
         <p className={isDark ? "mt-2 text-zinc-400" : "mt-2 text-slate-600"}>
           Links rápidos para Aciona One, extensões do Chrome e ferramentas de IA.

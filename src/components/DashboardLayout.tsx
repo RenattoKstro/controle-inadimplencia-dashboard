@@ -425,7 +425,13 @@ const DashboardLayout = () => {
               </TabsContent>
 
               <TabsContent value="matriz">
-                <MatrizLinks />
+                {isMembro ? (
+                  <MatrizLinks />
+                ) : (
+                  <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md p-8 text-center"}>
+                    <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-800 text-lg font-medium"}>Esta guia é somente para membros.</p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
