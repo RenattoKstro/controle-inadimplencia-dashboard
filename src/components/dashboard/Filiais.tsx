@@ -39,6 +39,7 @@ const Filiais = () => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
   const [regionais, setRegionais] = useState<string[]>([]);
   const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
+  const [viewPossuiMarcacaoMembro, setViewPossuiMarcacaoMembro] = useState(false);
   const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -58,9 +59,21 @@ const Filiais = () => {
         setRegionais(regs);
         setRanking(lista);
 
+        const possuiMarcacaoNaView = lista.some((item) => (
+          typeof item.usuario_principal?.membro === "boolean"
+          || Boolean(item.usuario_principal?.role)
+        ));
+        setViewPossuiMarcacaoMembro(possuiMarcacaoNaView);
+
         const filiaisMembros = new Set(
           lista
-            .filter((item) => Boolean(item.usuario_principal?.membro) || (item.usuario_principal?.role || "").toLowerCase() === "membro")
+            .filter((item) => {
+              if (possuiMarcacaoNaView) {
+                return Boolean(item.usuario_principal?.membro) || (item.usuario_principal?.role || "").toLowerCase() === "membro";
+              }
+
+              return Boolean(item.usuario_principal?.user_id);
+            })
             .map((item) => item.idfilial)
         );
         setFiliaisComMembros(filiaisMembros);
@@ -150,9 +163,13 @@ const Filiais = () => {
     );
   };
 
-  const isUsuarioMembro = (user: RankingFilial["usuario_principal"]) => (
-    Boolean(user?.membro) || (user?.role || "").toLowerCase() === "membro"
-  );
+  const isUsuarioMembro = (user: RankingFilial["usuario_principal"]) => {
+    if (viewPossuiMarcacaoMembro) {
+      return Boolean(user?.membro) || (user?.role || "").toLowerCase() === "membro";
+    }
+
+    return Boolean(user?.user_id);
+  };
 
   const membroBadge = (
     <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
