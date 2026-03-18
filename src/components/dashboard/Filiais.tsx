@@ -39,12 +39,13 @@ type FiliaisProps = {
   isViewerMembro: boolean;
 };
 
+const ADMIN_EMAIL = "rks7ro@gmail.com";
+
 const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
   const [regionais, setRegionais] = useState<string[]>([]);
   const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
   const [filiaisComBadgeMembro, setFiliaisComBadgeMembro] = useState<Set<number>>(new Set());
-  const [filiaisConfirmadasMembros, setFiliaisConfirmadasMembros] = useState<Set<number>>(new Set());
   const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -71,31 +72,36 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
         );
 
         let filiaisMarcadasNoUserDashboard = new Set<number>();
-        const { data: membrosData, error: membrosError } = await supabase
-          .from("user_dashboard")
-          .select("filial")
-          .eq("membro", true)
-          .not("filial", "is", null);
+        const { data: { user } } = await supabase.auth.getUser();
+        const isAdminViewer = user?.email === ADMIN_EMAIL;
 
-        if (!membrosError && membrosData) {
-          filiaisMarcadasNoUserDashboard = new Set(
-            (membrosData as Array<{ filial: number | null }>)
-              .map((item) => item.filial)
-              .filter((filial): filial is number => typeof filial === "number")
-          );
-        } else {
-          const { data: roleData, error: roleError } = await supabase
+        if (isAdminViewer) {
+          const { data: membrosData, error: membrosError } = await supabase
             .from("user_dashboard")
-            .select("filial, role")
+            .select("filial")
+            .eq("membro", true)
             .not("filial", "is", null);
 
-          if (!roleError && roleData) {
+          if (!membrosError && membrosData) {
             filiaisMarcadasNoUserDashboard = new Set(
-              (roleData as Array<{ filial: number | null; role: string | null }>)
-                .filter((item) => (item.role || "").toLowerCase() === "membro")
+              (membrosData as Array<{ filial: number | null }>)
                 .map((item) => item.filial)
                 .filter((filial): filial is number => typeof filial === "number")
             );
+          } else {
+            const { data: roleData, error: roleError } = await supabase
+              .from("user_dashboard")
+              .select("filial, role")
+              .not("filial", "is", null);
+
+            if (!roleError && roleData) {
+              filiaisMarcadasNoUserDashboard = new Set(
+                (roleData as Array<{ filial: number | null; role: string | null }>)
+                  .filter((item) => (item.role || "").toLowerCase() === "membro")
+                  .map((item) => item.filial)
+                  .filter((filial): filial is number => typeof filial === "number")
+              );
+            }
           }
         }
 
@@ -146,22 +152,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       f.total_meta_fiado > 0 || f.total_meta_desafio > 0
     );
   }
-
-  const membrosConfirmadosNoFiltro = ranking
-    .filter((f) => filiaisComMembros.has(f.idfilial))
-    .filter((f) => !ocultarZeradas || f.total_meta_fiado > 0 || f.total_meta_desafio > 0);
-
-  useEffect(() => {
-    if (membrosConfirmadosNoFiltro.length === 0) return;
-
-    const proximasFiliais = new Set(membrosConfirmadosNoFiltro.map((item) => item.idfilial));
-    setFiliaisConfirmadasMembros((prev) => {
-      const unchanged = prev.size === proximasFiliais.size
-        && [...prev].every((item) => proximasFiliais.has(item));
-
-      return unchanged ? prev : proximasFiliais;
-    });
-  }, [ranking, filiaisComMembros, ocultarZeradas]);
 
   if (loading) {
     return <p className={isDark ? "text-center py-20 text-xl text-zinc-200" : "text-center py-20 text-xl text-slate-700"}>Carregando Filiais %...</p>;
@@ -221,16 +211,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       return true;
     }
 
-    if (filiaisComBadgeMembro.has(filialId)) {
-      return true;
-    }
-
-    if (!isViewerMembro) {
-      const fallbackSeguroNaoMembro = filiaisConfirmadasMembros.size > 0 && filiaisConfirmadasMembros.size < ranking.length;
-      return fallbackSeguroNaoMembro && filiaisConfirmadasMembros.has(filialId);
-    }
-
-    return filiaisConfirmadasMembros.has(filialId);
+    return filiaisComBadgeMembro.has(filialId);
   };
 
   const membroBadge = (
