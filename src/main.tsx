@@ -38,7 +38,7 @@ if ("serviceWorker" in navigator) {
         });
       })
       .catch((error) => {
-        console.error("Service Worker registration failed:", error);
+        console.error("Falha ao registrar Service Worker:", error);
       });
   });
 

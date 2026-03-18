@@ -51,7 +51,7 @@ const ResetPassword: React.FC = () => {
       });
       navigate('/auth');
     } catch (error: any) {
-      console.error('Error during password reset:', error);
+      console.error('Erro durante redefinição de senha:', error);
       toast({
         title: 'Erro',
         description: error.message || 'Erro ao redefinir a senha. Verifique o link ou solicite um novo.',

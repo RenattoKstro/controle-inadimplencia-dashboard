@@ -26,7 +26,7 @@ export const useAuth = () => {
           navigate("/dashboard");
         }
       } catch (error) {
-        console.error("Error checking initial session:", error);
+        console.error("Erro ao verificar sessão inicial:", error);
       } finally {
         setIsCheckingSession(false);
       }
@@ -52,14 +52,14 @@ export const useAuth = () => {
   };
 
   const handleConnectionError = (error: any) => {
-    console.error("Connection error:", error);
+    console.error("Erro de conexão:", error);
     let errorMsg = "Falha ao conectar ao servidor. Verifique sua conexão com a internet e tente novamente.";
     if (retryCount > 0) {
-      errorMsg += ` Attempt ${retryCount} failed.`;
+      errorMsg += ` Tentativa ${retryCount} falhou.`;
     }
     setErrorMessage(errorMsg);
     toast({
-      title: "Connection Error",
+      title: "Erro de conexão",
       description: errorMsg,
       variant: "destructive",
     });
@@ -107,14 +107,14 @@ export const useAuth = () => {
         });
       }
     } catch (error: any) {
-      console.error("Authentication error:", error);
+      console.error("Erro de autenticação:", error);
       if (error.message === "Failed to fetch" || error.__isAuthError) {
         handleConnectionError(error);
         setRetryCount((prev) => prev + 1);
       } else {
         setErrorMessage(error.message);
         toast({
-          title: "Error",
+          title: "Erro",
           description: error.message || "Ocorreu um erro durante a autenticação.",
           variant: "destructive",
         });
@@ -138,9 +138,9 @@ export const useAuth = () => {
       console.log("Google login initial error:", error);
       if (error) throw error;
     } catch (error: any) {
-      console.error("Google login error:", error);
+      console.error("Erro no login com Google:", error);
       toast({
-        title: "Error",
+        title: "Erro",
         description: error.message || "Falha ao efetuar login com o Google.",
         variant: "destructive",
       });
