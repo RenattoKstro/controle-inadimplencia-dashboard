@@ -226,7 +226,8 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
     }
 
     if (!isViewerMembro) {
-      return false;
+      const fallbackSeguroNaoMembro = filiaisConfirmadasMembros.size > 0 && filiaisConfirmadasMembros.size < ranking.length;
+      return fallbackSeguroNaoMembro && filiaisConfirmadasMembros.has(filialId);
     }
 
     return filiaisConfirmadasMembros.has(filialId);
