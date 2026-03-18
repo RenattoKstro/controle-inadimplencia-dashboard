@@ -39,7 +39,7 @@ const Filiais = () => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
   const [regionais, setRegionais] = useState<string[]>([]);
   const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
-  const [viewPossuiMarcacaoMembro, setViewPossuiMarcacaoMembro] = useState(false);
+  const [filiaisComBadgeMembro, setFiliaisComBadgeMembro] = useState<Set<number>>(new Set());
   const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -59,23 +59,55 @@ const Filiais = () => {
         setRegionais(regs);
         setRanking(lista);
 
-        const possuiMarcacaoNaView = lista.some((item) => (
-          typeof item.usuario_principal?.membro === "boolean"
-          || Boolean(item.usuario_principal?.role)
-        ));
-        setViewPossuiMarcacaoMembro(possuiMarcacaoNaView);
-
-        const filiaisMembros = new Set(
+        const filiaisMarcadasNaView = new Set(
           lista
-            .filter((item) => {
-              if (possuiMarcacaoNaView) {
-                return Boolean(item.usuario_principal?.membro) || (item.usuario_principal?.role || "").toLowerCase() === "membro";
-              }
-
-              return Boolean(item.usuario_principal?.user_id);
-            })
+            .filter((item) => Boolean(item.usuario_principal?.membro) || (item.usuario_principal?.role || "").toLowerCase() === "membro")
             .map((item) => item.idfilial)
         );
+
+        let filiaisMarcadasNoUserDashboard = new Set<number>();
+        const { data: membrosData, error: membrosError } = await supabase
+          .from("user_dashboard")
+          .select("filial")
+          .eq("membro", true)
+          .not("filial", "is", null);
+
+        if (!membrosError && membrosData) {
+          filiaisMarcadasNoUserDashboard = new Set(
+            (membrosData as Array<{ filial: number | null }>)
+              .map((item) => item.filial)
+              .filter((filial): filial is number => typeof filial === "number")
+          );
+        } else {
+          const { data: roleData, error: roleError } = await supabase
+            .from("user_dashboard")
+            .select("filial, role")
+            .not("filial", "is", null);
+
+          if (!roleError && roleData) {
+            filiaisMarcadasNoUserDashboard = new Set(
+              (roleData as Array<{ filial: number | null; role: string | null }>)
+                .filter((item) => (item.role || "").toLowerCase() === "membro")
+                .map((item) => item.filial)
+                .filter((filial): filial is number => typeof filial === "number")
+            );
+          }
+        }
+
+        const filiaisComMarcacaoExplicita = new Set([
+          ...filiaisMarcadasNaView,
+          ...filiaisMarcadasNoUserDashboard,
+        ]);
+        setFiliaisComBadgeMembro(filiaisComMarcacaoExplicita);
+
+        const filiaisMembros = filiaisComMarcacaoExplicita.size > 0
+          ? filiaisComMarcacaoExplicita
+          : new Set(
+              lista
+                .filter((item) => Boolean(item.usuario_principal?.user_id))
+                .map((item) => item.idfilial)
+            );
+
         setFiliaisComMembros(filiaisMembros);
       }
 
@@ -163,12 +195,12 @@ const Filiais = () => {
     );
   };
 
-  const isUsuarioMembro = (user: RankingFilial["usuario_principal"]) => {
-    if (viewPossuiMarcacaoMembro) {
-      return Boolean(user?.membro) || (user?.role || "").toLowerCase() === "membro";
+  const isUsuarioMembro = (filialId: number, user: RankingFilial["usuario_principal"]) => {
+    if (Boolean(user?.membro) || (user?.role || "").toLowerCase() === "membro") {
+      return true;
     }
 
-    return Boolean(user?.user_id);
+    return filiaisComBadgeMembro.has(filialId);
   };
 
   const membroBadge = (
@@ -264,7 +296,7 @@ const Filiais = () => {
                 const user = f.usuario_principal;
                 const initials = getInitials(user?.nome_usuario);
                 const updatedText = getUpdatedText(user?.updated_at);
-                const usuarioMembro = isUsuarioMembro(user);
+                const usuarioMembro = isUsuarioMembro(f.idfilial, user);
 
                 return (
                   <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
