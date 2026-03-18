@@ -117,11 +117,12 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
           // fallback silencioso quando o manifesto ainda não existir.
         }
 
-        const filiaisComMarcacaoExplicita = new Set([
-          ...filiaisManifesto,
-          ...filiaisMarcadasNaView,
-          ...filiaisMarcadasNoUserDashboard,
-        ]);
+        const filiaisComMarcacaoExplicita = filiaisManifesto.size > 0
+          ? filiaisManifesto
+          : new Set([
+              ...filiaisMarcadasNaView,
+              ...filiaisMarcadasNoUserDashboard,
+            ]);
         setFiliaisComBadgeMembro(filiaisComMarcacaoExplicita);
 
         const filiaisMembros = filiaisComMarcacaoExplicita.size > 0
