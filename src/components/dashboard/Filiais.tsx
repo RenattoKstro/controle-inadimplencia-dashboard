@@ -200,6 +200,11 @@ const Filiais = () => {
       return true;
     }
 
+    const badgeSetIncompleto = filiaisComBadgeMembro.size < filiaisComMembros.size;
+    if (badgeSetIncompleto && filiaisComMembros.has(filialId)) {
+      return true;
+    }
+
     return filiaisComBadgeMembro.has(filialId);
   };
 
@@ -296,7 +301,7 @@ const Filiais = () => {
                 const user = f.usuario_principal;
                 const initials = getInitials(user?.nome_usuario);
                 const updatedText = getUpdatedText(user?.updated_at);
-                const usuarioMembro = isUsuarioMembro(f.idfilial, user) || filtroRegional === "Membros";
+                const usuarioMembro = isUsuarioMembro(f.idfilial, user);
 
                 return (
                   <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
