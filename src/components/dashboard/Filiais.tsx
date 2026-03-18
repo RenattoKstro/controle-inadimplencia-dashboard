@@ -40,7 +40,24 @@ type FiliaisProps = {
 };
 
 const ADMIN_EMAIL = "rks7ro@gmail.com";
+const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
 const MEMBROS_MANIFEST_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/membros-filiais.json";
+
+
+const publishMembrosManifest = async (filiais: Set<number>) => {
+  const payload = JSON.stringify({
+    updated_at: new Date().toISOString(),
+    filiais: Array.from(filiais).sort((a, b) => a - b),
+  });
+
+  const file = new TextEncoder().encode(payload);
+  await supabase.storage
+    .from("perfis")
+    .upload(MEMBROS_MANIFEST_PATH, file, {
+      contentType: "application/json",
+      upsert: true,
+    });
+};
 
 const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
@@ -123,17 +140,13 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
               ...filiaisMarcadasNaView,
               ...filiaisMarcadasNoUserDashboard,
             ]);
+
+        if (isAdminViewer && filiaisComMarcacaoExplicita.size > 0) {
+          await publishMembrosManifest(filiaisComMarcacaoExplicita);
+        }
+
         setFiliaisComBadgeMembro(filiaisComMarcacaoExplicita);
-
-        const filiaisMembros = filiaisComMarcacaoExplicita.size > 0
-          ? filiaisComMarcacaoExplicita
-          : new Set(
-              lista
-                .filter((item) => Boolean(item.usuario_principal?.user_id))
-                .map((item) => item.idfilial)
-            );
-
-        setFiliaisComMembros(filiaisMembros);
+        setFiliaisComMembros(filiaisComMarcacaoExplicita);
       }
 
       setLoading(false);
