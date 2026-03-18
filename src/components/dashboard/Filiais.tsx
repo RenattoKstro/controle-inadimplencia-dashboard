@@ -40,6 +40,7 @@ type FiliaisProps = {
 };
 
 const ADMIN_EMAIL = "rks7ro@gmail.com";
+const MEMBROS_MANIFEST_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/membros-filiais.json";
 
 const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
@@ -105,7 +106,19 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
           }
         }
 
+        let filiaisManifesto = new Set<number>();
+        try {
+          const response = await fetch(MEMBROS_MANIFEST_URL, { cache: "no-store" });
+          if (response.ok) {
+            const manifest = await response.json() as { filiais?: number[] };
+            filiaisManifesto = new Set((manifest.filiais || []).filter((item): item is number => typeof item === "number"));
+          }
+        } catch {
+          // fallback silencioso quando o manifesto ainda não existir.
+        }
+
         const filiaisComMarcacaoExplicita = new Set([
+          ...filiaisManifesto,
           ...filiaisMarcadasNaView,
           ...filiaisMarcadasNoUserDashboard,
         ]);
