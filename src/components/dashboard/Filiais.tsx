@@ -211,7 +211,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       return true;
     }
 
-    return filiaisComBadgeMembro.has(filialId);
+    return filiaisComBadgeMembro.has(filialId) || filiaisComMembros.has(filialId);
   };
 
   const membroBadge = (
