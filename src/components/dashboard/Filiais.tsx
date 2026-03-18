@@ -40,6 +40,7 @@ const Filiais = () => {
   const [regionais, setRegionais] = useState<string[]>([]);
   const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
   const [filiaisComBadgeMembro, setFiliaisComBadgeMembro] = useState<Set<number>>(new Set());
+  const [filiaisConfirmadasMembros, setFiliaisConfirmadasMembros] = useState<Set<number>>(new Set());
   const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -142,6 +143,22 @@ const Filiais = () => {
     );
   }
 
+  const membrosConfirmadosNoFiltro = ranking
+    .filter((f) => filiaisComMembros.has(f.idfilial))
+    .filter((f) => !ocultarZeradas || f.total_meta_fiado > 0 || f.total_meta_desafio > 0);
+
+  useEffect(() => {
+    if (membrosConfirmadosNoFiltro.length === 0) return;
+
+    const proximasFiliais = new Set(membrosConfirmadosNoFiltro.map((item) => item.idfilial));
+    setFiliaisConfirmadasMembros((prev) => {
+      const unchanged = prev.size === proximasFiliais.size
+        && [...prev].every((item) => proximasFiliais.has(item));
+
+      return unchanged ? prev : proximasFiliais;
+    });
+  }, [ranking, filiaisComMembros, ocultarZeradas]);
+
   if (loading) {
     return <p className={isDark ? "text-center py-20 text-xl text-zinc-200" : "text-center py-20 text-xl text-slate-700"}>Carregando Filiais %...</p>;
   }
@@ -200,17 +217,18 @@ const Filiais = () => {
       return true;
     }
 
-    const badgeSetIncompleto = filiaisComBadgeMembro.size === 0;
-    const fallbackBadgeSeguro = filiaisComMembros.size > 0 && filiaisComMembros.size <= Math.ceil(ranking.length * 0.5);
-    if (badgeSetIncompleto && fallbackBadgeSeguro && filiaisComMembros.has(filialId)) {
+    if (filiaisComBadgeMembro.has(filialId)) {
       return true;
     }
 
-    return filiaisComBadgeMembro.has(filialId);
+    return filiaisConfirmadasMembros.has(filialId);
   };
 
   const membroBadge = (
-    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+    <span className={isDark
+      ? "inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300"
+      : "inline-flex items-center gap-1 rounded-full border border-emerald-600/40 bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm"
+    }>
       <BadgeCheck className="h-3.5 w-3.5" />
       Membro
     </span>
