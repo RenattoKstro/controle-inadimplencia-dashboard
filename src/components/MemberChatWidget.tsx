@@ -91,6 +91,12 @@ const MemberChatWidget = ({
     return () => clearInterval(interval);
   }, [isMembro]);
 
+  const sortedMessages = useMemo(() => messages.slice().sort((a, b) => {
+    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return aTime - bTime;
+  }), [messages]);
+
   useEffect(() => {
     if (open) {
       setLastSeenAt(new Date().toISOString());
@@ -102,12 +108,6 @@ const MemberChatWidget = ({
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, open]);
-
-  const sortedMessages = useMemo(() => messages.slice().sort((a, b) => {
-    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-    return aTime - bTime;
-  }), [messages]);
 
   const isPrivateMessage = (message: ChatMessageRow) => (
     Boolean(message.is_private)
