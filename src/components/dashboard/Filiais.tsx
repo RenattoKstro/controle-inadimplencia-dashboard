@@ -45,6 +45,10 @@ type FilialOperator = {
   updated_at?: string | null;
   role?: string | null;
   membro?: boolean | null;
+  abertura_vencido_mes?: number | null;
+  meta_mes?: number | null;
+  meta_desafio?: number | null;
+  vencido_atual?: number | null;
 };
 
 type FiliaisProps = {
@@ -107,6 +111,23 @@ const getLatestUpdatedAt = (operators: FilialOperator[], fallback?: string | nul
   return fallback || null;
 };
 
+const getLatestMetricSnapshot = (operators: FilialOperator[], fallback: RankingFilial) => {
+  const latestOperator = operators.reduce<FilialOperator | null>((latest, operator) => {
+    const operatorTimestamp = operator.updated_at ? new Date(operator.updated_at).getTime() : 0;
+    const latestTimestamp = latest?.updated_at ? new Date(latest.updated_at).getTime() : 0;
+
+    if (!latest) return operator;
+    return operatorTimestamp > latestTimestamp ? operator : latest;
+  }, null);
+
+  return {
+    abertura_vencido_mes: latestOperator?.abertura_vencido_mes ?? fallback.total_abertura_vencido_mes ?? 0,
+    meta_mes: latestOperator?.meta_mes ?? fallback.total_meta_fiado ?? 0,
+    meta_desafio: latestOperator?.meta_desafio ?? fallback.total_meta_desafio ?? 0,
+    vencido_atual: latestOperator?.vencido_atual ?? fallback.total_vencido ?? 0,
+  };
+};
+
 const publishMembrosManifest = async (filiais: Set<number>) => {
   const payload = JSON.stringify({
     updated_at: new Date().toISOString(),
@@ -157,7 +178,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
         try {
           const { data: operadoresData, error: operadoresError } = await supabase
             .from("user_dashboard")
-            .select("user_id, filial, nome_usuario, avatar_url, whatsapp, instagram, updated_at, role, membro")
+            .select("user_id, filial, nome_usuario, avatar_url, whatsapp, instagram, updated_at, role, membro, abertura_vencido_mes, meta_mes, meta_desafio, vencido_atual")
             .not("filial", "is", null)
             .order("updated_at", { ascending: false });
 
@@ -298,10 +319,14 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
     return "bg-gray-400";
   };
 
-  const calcularRecebidoMeta = (f: RankingFilial) => {
-    const abertura = f.total_abertura_vencido_mes || 0;
-    const vencidoAtual = f.total_vencido || 0;
-    const metaMes = f.total_meta_fiado || 0;
+  const calcularRecebidoMeta = (metrics: {
+    abertura_vencido_mes: number;
+    meta_mes: number;
+    vencido_atual: number;
+  }) => {
+    const abertura = metrics.abertura_vencido_mes || 0;
+    const vencidoAtual = metrics.vencido_atual || 0;
+    const metaMes = metrics.meta_mes || 0;
     const recebidosMes = Math.max(0, abertura - vencidoAtual);
     const aReceber = Math.max(0, abertura - metaMes);
     const restante = Math.max(0, vencidoAtual - metaMes);
@@ -467,7 +492,10 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                     : fallbackUser,
                   filiaisComBadgeMembro
                 );
+                const metrics = getLatestMetricSnapshot(operadores, f);
                 const updatedText = getUpdatedText(getLatestUpdatedAt(operadores, f.usuario_principal?.updated_at || null));
+                const pctMetaFiado = metrics.vencido_atual > 0 ? (metrics.meta_mes / metrics.vencido_atual) * 100 : 0;
+                const pctMetaDesafio = metrics.vencido_atual > 0 && metrics.meta_desafio > 0 ? (metrics.meta_desafio / metrics.vencido_atual) * 100 : 0;
 
                 return (
                   <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
@@ -591,30 +619,30 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {calcularRecebidoMeta(f)}
+                      {calcularRecebidoMeta(metrics)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        <p className={`text-lg ${getPercentColor(f.total_vencido > 0 ? (f.total_meta_fiado / f.total_vencido) * 100 : 0)}`}>
-                          {(f.total_vencido > 0 ? (f.total_meta_fiado / f.total_vencido) * 100 : 0).toFixed(2)}%
+                        <p className={`text-lg ${getPercentColor(pctMetaFiado)}`}>
+                          {pctMetaFiado.toFixed(2)}%
                         </p>
                         <Progress
-                          value={f.total_vencido > 0 ? (f.total_meta_fiado / f.total_vencido) * 100 : 0}
+                          value={pctMetaFiado}
                           className="h-3 bg-zinc-800"
-                          indicatorClassName={getProgressColor(f.total_vencido > 0 ? (f.total_meta_fiado / f.total_vencido) * 100 : 0)}
+                          indicatorClassName={getProgressColor(pctMetaFiado)}
                         />
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(f.total_vencido > 0 && f.total_meta_desafio > 0 ? (f.total_meta_desafio / f.total_vencido) * 100 : 0)}`}>
+                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(pctMetaDesafio)}`}>
                           <Zap className="h-4 w-4 text-yellow-500" />
-                          {(f.total_vencido > 0 && f.total_meta_desafio > 0 ? (f.total_meta_desafio / f.total_vencido) * 100 : 0).toFixed(2)}%
+                          {pctMetaDesafio.toFixed(2)}%
                         </p>
                         <Progress
-                          value={f.total_vencido > 0 && f.total_meta_desafio > 0 ? (f.total_meta_desafio / f.total_vencido) * 100 : 0}
+                          value={pctMetaDesafio}
                           className="h-3 bg-zinc-800"
-                          indicatorClassName={getProgressColor(f.total_vencido > 0 && f.total_meta_desafio > 0 ? (f.total_meta_desafio / f.total_vencido) * 100 : 0)}
+                          indicatorClassName={getProgressColor(pctMetaDesafio)}
                         />
                       </div>
                     </td>

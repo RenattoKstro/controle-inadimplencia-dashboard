@@ -80,6 +80,20 @@ const splitUserName = (fullName?: string | null) => {
   };
 };
 
+const hasCompleteProfileInfo = (userData: {
+  nome_usuario?: string | null;
+  filial?: number | null;
+  role?: string | null;
+}) => {
+  const parsedName = splitUserName(userData?.nome_usuario);
+  return Boolean(
+    parsedName.firstName.trim()
+    && parsedName.lastName.trim()
+    && userData?.filial
+    && normalizeOperatorRole(userData?.role)
+  );
+};
+
 const AjustesMetas = ({
   userData,
   updateUserData,
@@ -166,18 +180,14 @@ const AjustesMetas = ({
   }, [userData, diasRestantesCalculados]);
 
   const handleEditarMetas = () => {
+    if (hasCompleteProfileInfo(userData)) {
+      setIsEditingMetas(true);
+      return;
+    }
+
     setIsEditingMetas(true);
     setIsEditingPerfil(true);
-    setSelectedOperatorRole("");
-    setFirstName("");
-    setLastName("");
-
-    const perfilIncompleto = !userData?.nome_usuario || !userData?.filial;
-    const mensagem = perfilIncompleto
-      ? "Antes de editar as metas, você precisa preencher nome, sobrenome, selecionar a filial e escolher se é Op. Líder ou Op. Auxiliar."
-      : "Antes de alterar as metas, confirme novamente nome, sobrenome e seu papel de operador no formulário.";
-
-    alert(mensagem);
+    alert("Antes de editar as metas pela primeira vez, você precisa completar nome, sobrenome, filial e papel do operador.");
   };
 
   const handleSave = async () => {
