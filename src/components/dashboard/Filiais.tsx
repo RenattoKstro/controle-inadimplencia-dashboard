@@ -440,26 +440,26 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        <p className={`text-lg ${getPercentColor(f.pct_fiado)}`}>
-                          {f.pct_fiado.toFixed(2)}%
+                        <p className={`text-lg ${getPercentColor(f.total_vencido > 0 ? (f.total_meta_fiado / f.total_vencido) * 100 : 0)}`}>
+                          {(f.total_vencido > 0 ? (f.total_meta_fiado / f.total_vencido) * 100 : 0).toFixed(2)}%
                         </p>
                         <Progress
-                          value={f.pct_fiado}
+                          value={f.total_vencido > 0 ? (f.total_meta_fiado / f.total_vencido) * 100 : 0}
                           className="h-3 bg-zinc-800"
-                          indicatorClassName={getProgressColor(f.pct_fiado)}
+                          indicatorClassName={getProgressColor(f.total_vencido > 0 ? (f.total_meta_fiado / f.total_vencido) * 100 : 0)}
                         />
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(f.pct_desafio)}`}>
+                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(f.total_vencido > 0 && f.total_meta_desafio > 0 ? (f.total_meta_desafio / f.total_vencido) * 100 : 0)}`}>
                           <Zap className="h-4 w-4 text-yellow-500" />
-                          {f.pct_desafio.toFixed(2)}%
+                          {(f.total_vencido > 0 && f.total_meta_desafio > 0 ? (f.total_meta_desafio / f.total_vencido) * 100 : 0).toFixed(2)}%
                         </p>
                         <Progress
-                          value={f.pct_desafio}
+                          value={f.total_vencido > 0 && f.total_meta_desafio > 0 ? (f.total_meta_desafio / f.total_vencido) * 100 : 0}
                           className="h-3 bg-zinc-800"
-                          indicatorClassName={getProgressColor(f.pct_desafio)}
+                          indicatorClassName={getProgressColor(f.total_vencido > 0 && f.total_meta_desafio > 0 ? (f.total_meta_desafio / f.total_vencido) * 100 : 0)}
                         />
                       </div>
                     </td>

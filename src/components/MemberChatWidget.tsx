@@ -11,6 +11,8 @@ type ChatViewer = {
   filial?: number | string | null;
 };
 
+const emptyPrivateTarget: ChatViewer | null = null;
+
 type ChatMessageRow = {
   id: string | number;
   created_at?: string | null;
@@ -23,6 +25,11 @@ type ChatMessageRow = {
   user_filial?: number | string | null;
   mensagem?: string | null;
   message?: string | null;
+  recipient_user_id?: string | null;
+  target_user_id?: string | null;
+  is_private?: boolean | null;
+  chat_type?: string | null;
+  scope?: string | null;
 };
 
 const CHAT_TABLE = "member_chat_messages";
@@ -55,6 +62,8 @@ const MemberChatWidget = ({
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [privateTarget, setPrivateTarget] = useState<ChatViewer | null>(emptyPrivateTarget);
+  const [lastSeenAt, setLastSeenAt] = useState<string>(new Date().toISOString());
   const isDark = document.documentElement.classList.contains("dark");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -75,12 +84,18 @@ const MemberChatWidget = ({
   };
 
   useEffect(() => {
-    if (!open || !isMembro) return;
+    if (!isMembro) return;
     loadMessages();
 
     const interval = setInterval(loadMessages, 15000);
     return () => clearInterval(interval);
-  }, [open, isMembro]);
+  }, [isMembro]);
+
+  useEffect(() => {
+    if (open) {
+      setLastSeenAt(new Date().toISOString());
+    }
+  }, [open, sortedMessages.length]);
 
   useEffect(() => {
     if (open) {
@@ -94,13 +109,47 @@ const MemberChatWidget = ({
     return aTime - bTime;
   }), [messages]);
 
-  const handleSend = async () => {
-    if (!text.trim() || !viewer.user_id || !isMembro) return;
-    setSending(true);
+  const isPrivateMessage = (message: ChatMessageRow) => (
+    Boolean(message.is_private)
+    || (message.chat_type || "").toLowerCase() === "private"
+    || (message.scope || "").toLowerCase() === "private"
+    || Boolean(message.recipient_user_id)
+    || Boolean(message.target_user_id)
+  );
 
-    const chatText = text.trim();
+  const visibleMessages = useMemo(() => {
+    if (!privateTarget?.user_id) {
+      return sortedMessages.filter((message) => !isPrivateMessage(message));
+    }
+
+    return sortedMessages.filter((message) => {
+      const recipientId = message.recipient_user_id || message.target_user_id;
+      const senderId = message.user_id;
+      return isPrivateMessage(message)
+        && (
+          (senderId === viewer.user_id && recipientId === privateTarget.user_id)
+          || (senderId === privateTarget.user_id && recipientId === viewer.user_id)
+        );
+    });
+  }, [sortedMessages, privateTarget, viewer.user_id]);
+
+  const unreadCount = useMemo(() => {
+    if (!isMembro) return 0;
+    const seenAt = new Date(lastSeenAt).getTime();
+
+    return sortedMessages.filter((message) => {
+      const createdAt = message.created_at ? new Date(message.created_at).getTime() : 0;
+      const isOwn = message.user_id && viewer.user_id && message.user_id === viewer.user_id;
+      const recipientId = message.recipient_user_id || message.target_user_id;
+      const visibleToViewer = !isPrivateMessage(message) || recipientId === viewer.user_id;
+
+      return !isOwn && visibleToViewer && createdAt > seenAt;
+    }).length;
+  }, [sortedMessages, lastSeenAt, isMembro, viewer.user_id]);
+
+  const buildPayloads = (chatText: string) => {
     const filialNumber = viewer.filial ? Number(viewer.filial) : null;
-    const payloads = [
+    const basePublicPayloads = [
       {
         user_id: viewer.user_id,
         nome_usuario: viewer.nome_usuario || "Membro",
@@ -138,6 +187,47 @@ const MemberChatWidget = ({
       },
     ];
 
+    if (!privateTarget?.user_id) return basePublicPayloads;
+
+    return [
+      {
+        user_id: viewer.user_id,
+        nome_usuario: viewer.nome_usuario || "Membro",
+        avatar_url: viewer.avatar_url || null,
+        filial: filialNumber,
+        mensagem: chatText,
+        recipient_user_id: privateTarget.user_id,
+        is_private: true,
+      },
+      {
+        user_id: viewer.user_id,
+        user_name: viewer.nome_usuario || "Membro",
+        user_avatar_url: viewer.avatar_url || null,
+        user_filial: filialNumber,
+        message: chatText,
+        target_user_id: privateTarget.user_id,
+        chat_type: "private",
+      },
+      {
+        user_id: viewer.user_id,
+        nome_usuario: viewer.nome_usuario || "Membro",
+        avatar_url: viewer.avatar_url || null,
+        filial: filialNumber,
+        content: chatText,
+        recipient_user_id: privateTarget.user_id,
+        scope: "private",
+      },
+      ...basePublicPayloads,
+    ];
+  };
+
+  const handleSend = async () => {
+    if (!text.trim() || !viewer.user_id || !isMembro) return;
+    setSending(true);
+
+    const chatText = text.trim();
+    const payloads = buildPayloads(chatText);
+
     let lastError: { message?: string } | null = null;
     for (const payload of payloads) {
       const { error } = await supabase.from(CHAT_TABLE).insert(payload as never);
@@ -166,6 +256,11 @@ const MemberChatWidget = ({
         aria-label="Abrir chat dos membros"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {!open && unreadCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[11px] font-bold text-white">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </button>
 
       {open && (
@@ -178,9 +273,9 @@ const MemberChatWidget = ({
             : "flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3"
           }>
             <div>
-              <p className="font-semibold">Chat dos membros</p>
+              <p className="font-semibold">{privateTarget?.user_id ? `Privado com ${privateTarget.nome_usuario || "membro"}` : "Chat dos membros"}</p>
               <p className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-500"}>
-                Mensagens expiram automaticamente em 1 hora.
+                {privateTarget?.user_id ? "Somente vocês dois veem esta conversa." : "Mensagens expiram automaticamente em 1 hora."}
               </p>
             </div>
             <MessageCircle className="h-5 w-5 text-indigo-400" />
@@ -201,10 +296,10 @@ const MemberChatWidget = ({
               <div className={isDark ? "flex-1 space-y-3 overflow-y-auto bg-zinc-950 px-4 py-4" : "flex-1 space-y-3 overflow-y-auto bg-white px-4 py-4"}>
                 {loading ? (
                   <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-500"}>Carregando mensagens...</p>
-                ) : sortedMessages.length === 0 ? (
+                ) : visibleMessages.length === 0 ? (
                   <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-500"}>Nenhuma mensagem por enquanto.</p>
                 ) : (
-                  sortedMessages.map((message) => {
+                  visibleMessages.map((message) => {
                     const nome = message.nome_usuario || message.user_name || "Membro";
                     const avatar = message.avatar_url || message.user_avatar_url || null;
                     const filial = message.filial || message.user_filial;
@@ -217,7 +312,20 @@ const MemberChatWidget = ({
                           ? `max-w-[85%] rounded-2xl border px-3 py-3 ${own ? "border-indigo-500/40 bg-indigo-500/15" : "border-white/10 bg-zinc-900"}`
                           : `max-w-[85%] rounded-2xl border px-3 py-3 ${own ? "border-indigo-300 bg-indigo-50" : "border-slate-200 bg-slate-50"}`
                         }>
-                          <div className="mb-2 flex items-center gap-2">
+                          <button
+                            type="button"
+                            className="mb-2 flex items-center gap-2 text-left"
+                            onClick={() => {
+                              if (message.user_id && message.user_id !== viewer.user_id) {
+                                setPrivateTarget({
+                                  user_id: message.user_id || undefined,
+                                  nome_usuario: nome,
+                                  avatar_url: avatar || undefined,
+                                  filial: filial,
+                                });
+                              }
+                            }}
+                          >
                             {avatar ? (
                               <img src={avatar} alt={nome} className="h-9 w-9 rounded-full object-cover" />
                             ) : (
@@ -231,7 +339,7 @@ const MemberChatWidget = ({
                                 Filial {String(filial || "00000").padStart(5, "0")} • {formatTime(message.created_at)}
                               </p>
                             </div>
-                          </div>
+                          </button>
                           <p className={isDark ? "text-sm text-zinc-100" : "text-sm text-slate-800"}>{body}</p>
                         </div>
                       </div>
@@ -245,6 +353,15 @@ const MemberChatWidget = ({
                 ? "border-t border-white/10 bg-zinc-900/90 px-4 py-3"
                 : "border-t border-slate-200 bg-slate-50 px-4 py-3"
               }>
+                {privateTarget?.user_id && (
+                  <button
+                    type="button"
+                    onClick={() => setPrivateTarget(emptyPrivateTarget)}
+                    className={isDark ? "mb-2 text-xs text-indigo-300 hover:text-indigo-200" : "mb-2 text-xs text-indigo-600 hover:text-indigo-500"}
+                  >
+                    ← Voltar para o chat geral
+                  </button>
+                )}
                 <div className="flex items-center gap-2">
                   <Input
                     value={text}
