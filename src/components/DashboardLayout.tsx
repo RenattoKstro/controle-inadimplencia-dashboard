@@ -28,7 +28,6 @@ import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import MemberChat from "./MemberChat";
-import type { Tables } from "@/integrations/supabase/types";
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
@@ -426,8 +425,12 @@ const DashboardLayout = () => {
               </TabsContent>
 
               <TabsContent value="matriz">
-                <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center">
-                  <p className="text-zinc-200 text-lg font-medium">Esta guia está disponível somente para membros.</p>
+                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 p-8 text-center"}>
+                  <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-900 text-lg font-medium"}>
+                    {isMembro
+                      ? "Área Matriz liberada para membros. O conteúdo principal desta guia permanece igual ao configurado anteriormente."
+                      : "Esta guia está disponível somente para membros."}
+                  </p>
                 </div>
               </TabsContent>
             </Tabs>
@@ -435,7 +438,14 @@ const DashboardLayout = () => {
         </main>
       </div>
 
-      <MemberChat userData={userData as Tables<"user_dashboard">} isDark={isDark} />
+      <MemberChat
+        isDark={isDark}
+        isMember={isMembro}
+        userId={userData?.user_id}
+        userName={userData?.nome_usuario}
+        filial={userData?.filial}
+        avatarUrl={userData?.avatar_url}
+      />
 
       {/* FOOTER */}
       <footer className="bg-zinc-950 border-t border-white/10 shadow-md p-4 mt-8">
