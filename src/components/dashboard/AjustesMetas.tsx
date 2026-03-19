@@ -24,6 +24,8 @@ import {
   Phone,
   Instagram,
   Info,
+  Crown,
+  UserRound,
 } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,6 +54,19 @@ interface CardItemProps {
   formatAsCurrency?: boolean;
 }
 
+type OperatorRole = "líder" | "auxiliar";
+
+const normalizeOperatorRole = (role?: string | null): OperatorRole | "" => {
+  const normalizedRole = (role || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (normalizedRole === "lider") return "líder";
+  if (normalizedRole === "auxiliar") return "auxiliar";
+  return "";
+};
+
 const AjustesMetas = ({
   userData,
   updateUserData,
@@ -74,6 +89,7 @@ const AjustesMetas = ({
   const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
   const [whatsapp, setWhatsapp] = useState(userData?.whatsapp || "");
   const [instagram, setInstagram] = useState(userData?.instagram || "");
+  const [selectedOperatorRole, setSelectedOperatorRole] = useState<OperatorRole | "">(normalizeOperatorRole(userData?.role));
   const [formState, setFormState] = useState({
     abertura_vencido_mes: userData?.abertura_vencido_mes || 0,
     abertura_dia: userData?.abertura_dia || 0,
@@ -85,7 +101,7 @@ const AjustesMetas = ({
     meta_perdido: userData?.meta_perdido || 0,
     rec_perdido: userData?.rec_perdido || 0,
     carteira_total: userData?.carteira_total || 0,
-    role: userData?.role || "líder",
+    role: normalizeOperatorRole(userData?.role) || "líder",
   });
 
   const formatWhatsapp = (value: string) => {
@@ -129,16 +145,20 @@ const AjustesMetas = ({
     setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
     setWhatsapp(userData?.whatsapp || "");
     setInstagram(userData?.instagram || "");
+    setSelectedOperatorRole(normalizeOperatorRole(userData?.role));
   }, [userData, diasRestantesCalculados]);
 
-  // NOVA FUNÇÃO: CLICAR EM "EDITAR METAS" FORÇA PERFIL SE FALTAR NOME OU FILIAL
   const handleEditarMetas = () => {
-    if (!userData?.nome_usuario || !userData?.filial) {
-      setIsEditingPerfil(true);
-      alert("Antes de editar as metas, você precisa preencher seu nome e selecionar a filial!");
-    } else {
-      setIsEditingMetas(true);
-    }
+    setIsEditingMetas(true);
+    setIsEditingPerfil(true);
+    setSelectedOperatorRole("");
+
+    const perfilIncompleto = !userData?.nome_usuario || !userData?.filial;
+    const mensagem = perfilIncompleto
+      ? "Antes de editar as metas, você precisa preencher seu nome, selecionar a filial e escolher se é Op. Líder ou Op. Auxiliar."
+      : "Antes de alterar as metas, confirme novamente no formulário se você é Op. Líder ou Op. Auxiliar.";
+
+    alert(mensagem);
   };
 
   const handleSave = async () => {
@@ -162,20 +182,55 @@ const AjustesMetas = ({
         alert("Você deve selecionar uma filial!");
         return;
       }
+      if (!selectedOperatorRole) {
+        alert("Escolha se você é Op. Líder ou Op. Auxiliar antes de salvar.");
+        return;
+      }
     }
+
+    const filialSelecionada = selectedFilial?.numero || userData?.filial || null;
+    const metasCompartilhadas = {
+      abertura_vencido_mes: formState.abertura_vencido_mes,
+      abertura_dia: formState.abertura_dia,
+      meta_mes: formState.meta_mes,
+      vencido_atual: formState.vencido_atual,
+      dias_restantes: formState.dias_restantes,
+      dias_trabalhados: formState.dias_trabalhados,
+      meta_desafio: formState.meta_desafio,
+      meta_perdido: formState.meta_perdido,
+      rec_perdido: formState.rec_perdido,
+      carteira_total: formState.carteira_total,
+    };
 
     const dadosParaSalvar: any = {};
     if (isEditingMetas) {
-      Object.assign(dadosParaSalvar, formState);
+      Object.assign(dadosParaSalvar, metasCompartilhadas);
     }
     if (isEditingPerfil) {
       if (nomeUsuario.trim()) dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
       if (whatsapp.replace(/\D/g, "").length >= 11) dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
       if (instagram.trim()) dadosParaSalvar.instagram = instagram.trim().replace("@", "");
       if (selectedFilial) dadosParaSalvar.filial = selectedFilial.numero;
+      dadosParaSalvar.role = selectedOperatorRole;
     }
 
     if (Object.keys(dadosParaSalvar).length > 0) {
+      if (isEditingMetas && filialSelecionada) {
+        const { error: syncError } = await supabase
+          .from("user_dashboard")
+          .update({
+            ...metasCompartilhadas,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("filial", filialSelecionada);
+
+        if (syncError) {
+          console.error("Erro ao sincronizar metas da filial:", syncError);
+          alert("Erro ao sincronizar metas da filial: " + syncError.message);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("user_dashboard")
         .upsert({
@@ -208,6 +263,7 @@ const AjustesMetas = ({
     setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
     setWhatsapp(userData?.whatsapp || "");
     setInstagram(userData?.instagram || "");
+    setSelectedOperatorRole(normalizeOperatorRole(userData?.role));
     setIsEditingMetas(false);
     setIsEditingPerfil(false);
     setOpenPopover(false);
@@ -284,7 +340,10 @@ const AjustesMetas = ({
             <Button
               variant="outline"
               className="gap-2 text-muted-foreground hover:text-foreground border-muted-foreground hover:border-foreground"
-              onClick={() => setIsEditingPerfil(true)}
+              onClick={() => {
+                setSelectedOperatorRole(normalizeOperatorRole(formState.role));
+                setIsEditingPerfil(true);
+              }}
             >
               <Info className="h-4 w-4" />
               Editar Informações
@@ -301,23 +360,9 @@ const AjustesMetas = ({
               </Button>
             </div>
           )}
-          {/* BOTÕES DE ROLE E SWITCHES */}
+          {/* SWITCHES */}
           {!(isEditingMetas || isEditingPerfil) && (
             <>
-              <div className="flex gap-2">
-                <Button
-                  variant={formState.role === "líder" ? "default" : "outline"}
-                  onClick={() => updateUserData({ role: "líder" })}
-                >
-                  {formState.role === "líder" ? "Líder" : "Op. Líder"}
-                </Button>
-                <Button
-                  variant={formState.role === "auxiliar" ? "default" : "outline"}
-                  onClick={() => updateUserData({ role: "auxiliar" })}
-                >
-                  {formState.role === "auxiliar" ? "Auxiliar" : "Op. Auxiliar"}
-                </Button>
-              </div>
               <div className="flex items-center gap-2">
                 <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
                 <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
@@ -416,6 +461,55 @@ const AjustesMetas = ({
                   </PopoverContent>
                 </Popover>
               </div>
+            </div>
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+              <div className="mb-3">
+                <Label className="text-xl font-bold text-amber-900">Tipo de operador</Label>
+                <p className="mt-1 text-sm text-amber-800">
+                  Escolha obrigatoriamente se você atua como Op. Líder ou Op. Auxiliar nesta filial.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <Button
+                  type="button"
+                  variant={selectedOperatorRole === "líder" ? "default" : "outline"}
+                  className={`h-auto justify-start gap-3 px-4 py-4 text-left ${selectedOperatorRole === "líder" ? "bg-red-600 hover:bg-red-500" : "border-red-300 text-red-700 hover:bg-red-50"}`}
+                  onClick={() => {
+                    setSelectedOperatorRole("líder");
+                    setFormState((prev) => ({ ...prev, role: "líder" }));
+                  }}
+                >
+                  <Crown className="h-5 w-5" />
+                  <div>
+                    <p className="font-semibold">Op. Líder</p>
+                    <p className={`text-xs ${selectedOperatorRole === "líder" ? "text-red-100" : "text-red-700"}`}>
+                      Responsável principal pela operação da filial.
+                    </p>
+                  </div>
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedOperatorRole === "auxiliar" ? "default" : "outline"}
+                  className={`h-auto justify-start gap-3 px-4 py-4 text-left ${selectedOperatorRole === "auxiliar" ? "bg-amber-500 text-zinc-950 hover:bg-amber-400" : "border-amber-300 text-amber-700 hover:bg-amber-50"}`}
+                  onClick={() => {
+                    setSelectedOperatorRole("auxiliar");
+                    setFormState((prev) => ({ ...prev, role: "auxiliar" }));
+                  }}
+                >
+                  <UserRound className="h-5 w-5" />
+                  <div>
+                    <p className="font-semibold">Op. Auxiliar</p>
+                    <p className={`text-xs ${selectedOperatorRole === "auxiliar" ? "text-zinc-800" : "text-amber-700"}`}>
+                      Atua em conjunto com o líder usando os mesmos resultados da filial.
+                    </p>
+                  </div>
+                </Button>
+              </div>
+              {!selectedOperatorRole && (
+                <p className="mt-3 text-sm font-medium text-red-600">
+                  É obrigatório escolher o tipo de operador para continuar.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

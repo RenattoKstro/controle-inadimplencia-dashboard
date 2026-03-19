@@ -1,0 +1,17 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="28" fill="#050816"/>
+  <path d="M30 82L47 48L64 82" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M37 69H57" stroke="white" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="72" cy="44" r="6" fill="white"/>
+  <circle cx="90" cy="38" r="5" fill="white"/>
+  <circle cx="99" cy="53" r="5" fill="white"/>
+  <circle cx="83" cy="61" r="6" fill="white"/>
+  <circle cx="70" cy="59" r="4.5" fill="white"/>
+  <circle cx="92" cy="72" r="4.5" fill="white"/>
+  <path d="M72 44L90 38L99 53L83 61L70 59L72 44Z" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M83 61L92 72L99 53" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M70 59L83 61" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M73 92C82.3888 92 90 84.3888 90 75C90 65.6112 82.3888 58 73 58C63.6112 58 56 65.6112 56 75C56 84.3888 63.6112 92 73 92Z" stroke="white" stroke-width="7"/>
+  <path d="M97 84V66" stroke="white" stroke-width="7" stroke-linecap="round"/>
+  <path d="M97 75C97 84.3888 104.611 92 114 92" stroke="white" stroke-width="7" stroke-linecap="round"/>
+</svg>
