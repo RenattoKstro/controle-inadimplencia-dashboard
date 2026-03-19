@@ -30,42 +30,108 @@ export type Database = {
         }
         Relationships: []
       }
+      member_chat_messages: {
+        Row: {
+          author_avatar_url: string | null
+          author_filial: string | null
+          author_name: string | null
+          created_at: string | null
+          expires_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          author_avatar_url?: string | null
+          author_filial?: string | null
+          author_name?: string | null
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          author_avatar_url?: string | null
+          author_filial?: string | null
+          author_name?: string | null
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_dashboard: {
         Row: {
           abertura_dia: number | null
           abertura_vencido_mes: number | null
+          avatar_url: string | null
+          carteira_total: number | null
           created_at: string | null
           dias_restantes: number | null
+          email: string | null
+          filial: number | null
           id: string
+          instagram: string | null
+          membro: boolean | null
           meta_desafio: number | null
           meta_mes: number | null
+          meta_perdido: number | null
+          nome_usuario: string | null
+          rec_perdido: number | null
+          role: string | null
           updated_at: string | null
           user_id: string
           vencido_atual: number | null
+          whatsapp: string | null
         }
         Insert: {
           abertura_dia?: number | null
           abertura_vencido_mes?: number | null
+          avatar_url?: string | null
+          carteira_total?: number | null
           created_at?: string | null
           dias_restantes?: number | null
+          email?: string | null
+          filial?: number | null
           id?: string
+          instagram?: string | null
+          membro?: boolean | null
           meta_desafio?: number | null
           meta_mes?: number | null
+          meta_perdido?: number | null
+          nome_usuario?: string | null
+          rec_perdido?: number | null
+          role?: string | null
           updated_at?: string | null
           user_id: string
           vencido_atual?: number | null
+          whatsapp?: string | null
         }
         Update: {
           abertura_dia?: number | null
           abertura_vencido_mes?: number | null
+          avatar_url?: string | null
+          carteira_total?: number | null
           created_at?: string | null
           dias_restantes?: number | null
+          email?: string | null
+          filial?: number | null
           id?: string
+          instagram?: string | null
+          membro?: boolean | null
           meta_desafio?: number | null
           meta_mes?: number | null
+          meta_perdido?: number | null
+          nome_usuario?: string | null
+          rec_perdido?: number | null
+          role?: string | null
           updated_at?: string | null
           user_id?: string
           vencido_atual?: number | null
+          whatsapp?: string | null
         }
         Relationships: []
       }

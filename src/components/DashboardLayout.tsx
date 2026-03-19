@@ -27,6 +27,8 @@ import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
+import MemberChat from "./MemberChat";
+import type { Tables } from "@/integrations/supabase/types";
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
@@ -432,6 +434,8 @@ const DashboardLayout = () => {
           </div>
         </main>
       </div>
+
+      <MemberChat userData={userData as Tables<"user_dashboard">} isDark={isDark} />
 
       {/* FOOTER */}
       <footer className="bg-zinc-950 border-t border-white/10 shadow-md p-4 mt-8">
