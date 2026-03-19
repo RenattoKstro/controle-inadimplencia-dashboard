@@ -193,6 +193,8 @@ const MemberChat = ({ isDark, isMember, userId, userName, filial, avatarUrl }: M
     : "border-slate-200 bg-white text-slate-900 shadow-slate-300/50";
   const mutedTextClasses = isDark ? "text-zinc-400" : "text-slate-500";
 
+  if (!isMember) return null;
+
   return (
     <>
       {open && (

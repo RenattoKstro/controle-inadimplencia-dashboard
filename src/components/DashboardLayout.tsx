@@ -114,6 +114,12 @@ const DashboardLayout = () => {
     || ((userData?.role || "").toLowerCase() === "membro");
   const isDark = theme === "dark";
 
+  useEffect(() => {
+    if (!isMembro && activeTab === "matriz") {
+      setActiveTab("metas");
+    }
+  }, [activeTab, isMembro]);
+
   if (isLoading || !userData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -330,9 +336,11 @@ const DashboardLayout = () => {
                 <TabsTrigger value="filiais" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
-                <TabsTrigger value="matriz" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                  <Store className="h-4 w-4" /> Matriz
-                </TabsTrigger>
+{isMembro && (
+                  <TabsTrigger value="matriz" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                    <Store className="h-4 w-4" /> Matriz
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="ajustes-metas">
@@ -424,15 +432,15 @@ const DashboardLayout = () => {
                 <Filiais />
               </TabsContent>
 
-              <TabsContent value="matriz">
-                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 p-8 text-center"}>
-                  <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-900 text-lg font-medium"}>
-                    {isMembro
-                      ? "Área Matriz liberada para membros. O conteúdo principal desta guia permanece igual ao configurado anteriormente."
-                      : "Esta guia está disponível somente para membros."}
-                  </p>
-                </div>
-              </TabsContent>
+              {isMembro && (
+                <TabsContent value="matriz">
+                  <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 p-8 text-center"}>
+                    <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-900 text-lg font-medium"}>
+                      Área Matriz liberada para membros.
+                    </p>
+                  </div>
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         </main>

@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trophy, Zap, Store, Phone, Instagram, User } from "lucide-react";
+import { Trophy, Zap, Store, Phone, Instagram, User, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   HoverCard,
@@ -30,6 +30,8 @@ interface RankingFilial {
     whatsapp: string;
     instagram: string;
     updated_at: string | null;
+    membro?: boolean | null;
+    role?: string | null;
   } | null;
 }
 
@@ -49,13 +51,33 @@ const Filiais = () => {
         .from("vw_ranking_filiais")
         .select("*");
 
-      if (!error && data) {
-        const lista = data as RankingFilial[];
-        const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
-        if (!regs.includes("Membros")) regs.unshift("Membros");
-        setRegionais(regs);
-        setRanking(lista);
-      }
+      const lista = !error && data ? (data as RankingFilial[]) : [];
+
+      const { data: membrosInfo } = await supabase
+        .from("user_dashboard")
+        .select("user_id, membro, role");
+
+      const membrosMap = new Map(
+        ((membrosInfo || []) as Array<{ user_id: string | null; membro?: boolean | null; role?: string | null }>)
+          .filter((item): item is { user_id: string; membro?: boolean | null; role?: string | null } => Boolean(item.user_id))
+          .map((item) => [item.user_id, { membro: Boolean(item.membro), role: item.role || null }])
+      );
+
+      const rankingComMembros = lista.map((filial) => ({
+        ...filial,
+        usuario_principal: filial.usuario_principal
+          ? {
+              ...filial.usuario_principal,
+              membro: Boolean(membrosMap.get(filial.usuario_principal.user_id)?.membro),
+              role: membrosMap.get(filial.usuario_principal.user_id)?.role || null,
+            }
+          : null,
+      }));
+
+      const regs = [...new Set(rankingComMembros.map(f => f.regional || "Sem regional"))].sort();
+      if (!regs.includes("Membros")) regs.unshift("Membros");
+      setRegionais(regs);
+      setRanking(rankingComMembros);
 
       const { data: membrosData, error: membrosError } = await supabase
         .from("user_dashboard")
@@ -259,6 +281,7 @@ const Filiais = () => {
                 const user = f.usuario_principal;
                 const initials = getInitials(user?.nome_usuario);
                 const updatedText = getUpdatedText(user?.updated_at);
+                const userIsMembro = Boolean(user?.membro) || (user?.role || "").toLowerCase() === "membro";
 
                 return (
                   <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
@@ -342,7 +365,14 @@ const Filiais = () => {
                             </HoverCardContent>
                           </HoverCard>
                           <div>
-                            <p className="font-medium">{f.filial}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium">{f.filial}</p>
+                              {userIsMembro && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-300">
+                                  <BadgeCheck className="h-3.5 w-3.5" /> Membro
+                                </span>
+                              )}
+                            </div>
                             <p className="text-xs text-zinc-400">{f.regional}</p>
                           </div>
                         </div>
