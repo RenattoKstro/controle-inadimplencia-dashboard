@@ -46,6 +46,16 @@ const getFirstName = (name?: string | null) => {
   return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
 };
 
+const getFirstNameAndLastSurname = (name?: string | null) => {
+  const normalizedName = (name || "").trim().replace(/\s+/g, " ");
+  if (!normalizedName) return "Usuário";
+
+  const parts = normalizedName.split(" ");
+  if (parts.length === 1) return parts[0];
+
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+};
+
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
@@ -131,7 +141,7 @@ const DashboardLayout = () => {
     || ((userData?.role || "").toLowerCase() === "membro");
   const isDark = theme === "dark";
   const operatorRole = normalizeOperatorRole(userData?.role);
-  const profileFirstName = getFirstName(userData?.nome_usuario);
+  const profileDisplayName = getFirstNameAndLastSurname(userData?.nome_usuario);
 
   if (isLoading || !userData) {
     return (
@@ -222,6 +232,7 @@ const DashboardLayout = () => {
                     size="icon"
                     className="rounded-full overflow-hidden border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    title={userData?.nome_usuario || "Usuário"}
                   >
                     {userData?.avatar_url ? (
                       <div className="w-10 h-10 rounded-full overflow-hidden">
@@ -290,7 +301,7 @@ const DashboardLayout = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className={isDark ? "text-2xl font-bold text-zinc-100" : "text-2xl font-bold text-slate-900"}>
-                              {profileFirstName}
+                              <span title={userData?.nome_usuario || "Usuário"}>{profileDisplayName}</span>
                             </p>
                             {operatorRole === "líder" && (
                               <span className="inline-flex items-center rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">

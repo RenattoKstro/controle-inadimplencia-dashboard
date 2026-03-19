@@ -92,6 +92,21 @@ const sortOperators = (filialId: number, operators: FilialOperator[], badgeSet: 
   })
 );
 
+const getLatestUpdatedAt = (operators: FilialOperator[], fallback?: string | null) => {
+  const latestTimestamp = operators.reduce<number | null>((latest, operator) => {
+    if (!operator.updated_at) return latest;
+    const timestamp = new Date(operator.updated_at).getTime();
+    if (Number.isNaN(timestamp)) return latest;
+    return latest === null || timestamp > latest ? timestamp : latest;
+  }, null);
+
+  if (latestTimestamp !== null) {
+    return new Date(latestTimestamp).toISOString();
+  }
+
+  return fallback || null;
+};
+
 const publishMembrosManifest = async (filiais: Set<number>) => {
   const payload = JSON.stringify({
     updated_at: new Date().toISOString(),
@@ -287,17 +302,16 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
     const abertura = f.total_abertura_vencido_mes || 0;
     const vencidoAtual = f.total_vencido || 0;
     const metaMes = f.total_meta_fiado || 0;
-    const recebidosMes = abertura - vencidoAtual;
-    const aReceber = abertura - metaMes;
-    const restante = recebidosMes - aReceber;
+    const recebidosMes = Math.max(0, abertura - vencidoAtual);
+    const aReceber = Math.max(0, abertura - metaMes);
+    const restante = Math.max(0, vencidoAtual - metaMes);
 
     const format = (n: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
 
-    // Cálculo do restante com cor
     const restanteText = format(restante);
     let restanteClass = "text-zinc-400 text-xs mt-1";
-    if (restante < 0) restanteClass = "text-rose-400 font-medium text-xs mt-1";
-    if (restante > 0) restanteClass = "text-emerald-400 font-medium text-xs mt-1";
+    if (restante > 0) restanteClass = "text-rose-400 font-medium text-xs mt-1";
+    if (restante === 0) restanteClass = "text-emerald-400 font-medium text-xs mt-1";
 
     return (
       <div className="flex flex-col items-center">
@@ -453,7 +467,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                     : fallbackUser,
                   filiaisComBadgeMembro
                 );
-                const updatedText = getUpdatedText(operadores[0]?.updated_at || f.usuario_principal?.updated_at || null);
+                const updatedText = getUpdatedText(getLatestUpdatedAt(operadores, f.usuario_principal?.updated_at || null));
 
                 return (
                   <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
