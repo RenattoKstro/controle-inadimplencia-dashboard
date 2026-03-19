@@ -170,7 +170,7 @@ const MetaFiado = ({ userData, isLoading, diasRestantesCalculados, setRecebidoHo
                     strokeDashoffset={dashOffset}
                   />
                 </svg>
-                <div className="absolute text-2xl sm:text-3xl font-bold">{Math.round(progressoPercentual)}%</div>
+                <div className="absolute text-2xl sm:text-3xl font-bold">{progressoPercentual.toFixed(2).replace(".", ",")}%</div>
               </div>
               <p className="mt-2 text-lg sm:text-xl font-semibold text-zinc-50 text-center break-words">{formatCurrency(userData.meta_mes || 0)}</p>
               <p className="text-sm text-zinc-400">Meta Fiado</p>

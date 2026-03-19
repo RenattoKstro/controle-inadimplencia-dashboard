@@ -119,7 +119,7 @@ const CircleProgress = ({
             />
           </svg>
           <div className={isDark ? "absolute inset-0 z-10 flex items-center justify-center text-2xl font-bold text-zinc-100 pointer-events-none" : "absolute inset-0 z-10 flex items-center justify-center text-2xl font-bold text-slate-900 pointer-events-none"}>
-            {Math.round(normalized)}%
+            {normalized.toFixed(2).replace(".", ",")}%
           </div>
         </div>
       </div>
