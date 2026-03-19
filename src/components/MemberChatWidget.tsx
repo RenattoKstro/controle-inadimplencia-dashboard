@@ -98,24 +98,60 @@ const MemberChatWidget = ({
     if (!text.trim() || !viewer.user_id || !isMembro) return;
     setSending(true);
 
-    const payload = {
-      user_id: viewer.user_id,
-      nome_usuario: viewer.nome_usuario || "Membro",
-      avatar_url: viewer.avatar_url || null,
-      filial: viewer.filial ? Number(viewer.filial) : null,
-      mensagem: text.trim(),
-    };
+    const chatText = text.trim();
+    const filialNumber = viewer.filial ? Number(viewer.filial) : null;
+    const payloads = [
+      {
+        user_id: viewer.user_id,
+        nome_usuario: viewer.nome_usuario || "Membro",
+        avatar_url: viewer.avatar_url || null,
+        filial: filialNumber,
+        mensagem: chatText,
+      },
+      {
+        user_id: viewer.user_id,
+        user_name: viewer.nome_usuario || "Membro",
+        user_avatar_url: viewer.avatar_url || null,
+        user_filial: filialNumber,
+        message: chatText,
+      },
+      {
+        user_id: viewer.user_id,
+        nome_usuario: viewer.nome_usuario || "Membro",
+        avatar_url: viewer.avatar_url || null,
+        filial: filialNumber,
+        message: chatText,
+      },
+      {
+        user_id: viewer.user_id,
+        user_name: viewer.nome_usuario || "Membro",
+        user_avatar_url: viewer.avatar_url || null,
+        user_filial: filialNumber,
+        mensagem: chatText,
+      },
+      {
+        user_id: viewer.user_id,
+        nome_usuario: viewer.nome_usuario || "Membro",
+        avatar_url: viewer.avatar_url || null,
+        filial: filialNumber,
+        content: chatText,
+      },
+    ];
 
-    const { error } = await supabase.from(CHAT_TABLE).insert(payload as never);
-
-    setSending(false);
-    if (error) {
-      alert("Não foi possível enviar a mensagem no chat.");
-      return;
+    let lastError: { message?: string } | null = null;
+    for (const payload of payloads) {
+      const { error } = await supabase.from(CHAT_TABLE).insert(payload as never);
+      if (!error) {
+        setSending(false);
+        setText("");
+        loadMessages();
+        return;
+      }
+      lastError = error;
     }
 
-    setText("");
-    loadMessages();
+    setSending(false);
+    alert(lastError?.message || "Não foi possível enviar a mensagem no chat.");
   };
 
   return (
