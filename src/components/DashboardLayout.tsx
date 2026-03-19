@@ -41,6 +41,11 @@ const normalizeOperatorRole = (role?: string | null) => {
   return "";
 };
 
+const getFirstName = (name?: string | null) => {
+  const normalizedName = (name || "").trim();
+  return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
+};
+
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
@@ -126,6 +131,7 @@ const DashboardLayout = () => {
     || ((userData?.role || "").toLowerCase() === "membro");
   const isDark = theme === "dark";
   const operatorRole = normalizeOperatorRole(userData?.role);
+  const profileFirstName = getFirstName(userData?.nome_usuario);
 
   if (isLoading || !userData) {
     return (
@@ -284,7 +290,7 @@ const DashboardLayout = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className={isDark ? "text-2xl font-bold text-zinc-100" : "text-2xl font-bold text-slate-900"}>
-                              {userData?.nome_usuario || "Usuário"}
+                              {profileFirstName}
                             </p>
                             {operatorRole === "líder" && (
                               <span className="inline-flex items-center rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">

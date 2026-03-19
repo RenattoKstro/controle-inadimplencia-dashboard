@@ -66,6 +66,11 @@ const normalizeOperatorRole = (role?: string | null) => {
   return "";
 };
 
+const getFirstName = (name?: string | null) => {
+  const normalizedName = (name || "").trim();
+  return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
+};
+
 const isOperatorMember = (user?: Pick<FilialOperator, "membro" | "role"> | null) => (
   Boolean(user?.membro) || (user?.role || "").toLowerCase() === "membro"
 );
@@ -473,6 +478,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                           <div className="space-y-2">
                             {operadores.map((user) => {
                               const initials = getInitials(user?.nome_usuario);
+                              const displayName = getFirstName(user?.nome_usuario);
                               const usuarioMembro = isUsuarioMembro(f.idfilial, user as RankingFilial["usuario_principal"]);
 
                               return (
@@ -500,7 +506,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                       </div>
                                       <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                          <p className="font-semibold leading-none">{user?.nome_usuario || "Usuário"}</p>
+                                          <p className="font-semibold leading-none">{displayName}</p>
                                           {getRoleBadge(user?.role)}
                                           {usuarioMembro && membroBadge}
                                         </div>
@@ -530,7 +536,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                       </div>
                                       <div>
                                         <div className="flex flex-wrap items-center gap-2">
-                                          <p className="font-bold text-lg">{user?.nome_usuario || "Usuário"}</p>
+                                          <p className="font-bold text-lg">{displayName}</p>
                                           {getRoleBadge(user?.role)}
                                           {usuarioMembro && membroBadge}
                                         </div>

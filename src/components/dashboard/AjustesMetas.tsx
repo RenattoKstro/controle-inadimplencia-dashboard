@@ -67,6 +67,19 @@ const normalizeOperatorRole = (role?: string | null): OperatorRole | "" => {
   return "";
 };
 
+const splitUserName = (fullName?: string | null) => {
+  const normalizedName = (fullName || "").trim().replace(/\s+/g, " ");
+  if (!normalizedName) {
+    return { firstName: "", lastName: "" };
+  }
+
+  const [firstName, ...rest] = normalizedName.split(" ");
+  return {
+    firstName: firstName || "",
+    lastName: rest.join(" "),
+  };
+};
+
 const AjustesMetas = ({
   userData,
   updateUserData,
@@ -86,7 +99,9 @@ const AjustesMetas = ({
   const [openPopover, setOpenPopover] = useState(false);
   const [filiaisList, setFiliaisList] = useState<{ numero: number; label: string }[]>([]);
   const [selectedFilial, setSelectedFilial] = useState<{ numero: number; label: string } | null>(null);
-  const [nomeUsuario, setNomeUsuario] = useState(userData?.nome_usuario?.toUpperCase() || "");
+  const initialNameParts = splitUserName(userData?.nome_usuario);
+  const [firstName, setFirstName] = useState(initialNameParts.firstName.toUpperCase());
+  const [lastName, setLastName] = useState(initialNameParts.lastName.toUpperCase());
   const [whatsapp, setWhatsapp] = useState(userData?.whatsapp || "");
   const [instagram, setInstagram] = useState(userData?.instagram || "");
   const [selectedOperatorRole, setSelectedOperatorRole] = useState<OperatorRole | "">(normalizeOperatorRole(userData?.role));
@@ -142,7 +157,9 @@ const AjustesMetas = ({
       ...userData,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
     }));
-    setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
+    const parsedName = splitUserName(userData?.nome_usuario);
+    setFirstName(parsedName.firstName.toUpperCase());
+    setLastName(parsedName.lastName.toUpperCase());
     setWhatsapp(userData?.whatsapp || "");
     setInstagram(userData?.instagram || "");
     setSelectedOperatorRole(normalizeOperatorRole(userData?.role));
@@ -152,11 +169,13 @@ const AjustesMetas = ({
     setIsEditingMetas(true);
     setIsEditingPerfil(true);
     setSelectedOperatorRole("");
+    setFirstName("");
+    setLastName("");
 
     const perfilIncompleto = !userData?.nome_usuario || !userData?.filial;
     const mensagem = perfilIncompleto
-      ? "Antes de editar as metas, você precisa preencher seu nome, selecionar a filial e escolher se é Op. Líder ou Op. Auxiliar."
-      : "Antes de alterar as metas, confirme novamente no formulário se você é Op. Líder ou Op. Auxiliar.";
+      ? "Antes de editar as metas, você precisa preencher nome, sobrenome, selecionar a filial e escolher se é Op. Líder ou Op. Auxiliar."
+      : "Antes de alterar as metas, confirme novamente nome, sobrenome e seu papel de operador no formulário.";
 
     alert(mensagem);
   };
@@ -170,8 +189,12 @@ const AjustesMetas = ({
 
     // VALIDAÇÃO OBRIGATÓRIA NO PERFIL
     if (isEditingPerfil) {
-      if (!nomeUsuario.trim()) {
+      if (!firstName.trim()) {
         alert("O nome é obrigatório!");
+        return;
+      }
+      if (!lastName.trim()) {
+        alert("O sobrenome é obrigatório!");
         return;
       }
       if (whatsapp.replace(/\D/g, "").length < 11) {
@@ -207,7 +230,8 @@ const AjustesMetas = ({
       Object.assign(dadosParaSalvar, metasCompartilhadas);
     }
     if (isEditingPerfil) {
-      if (nomeUsuario.trim()) dadosParaSalvar.nome_usuario = nomeUsuario.trim().toUpperCase();
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim().replace(/\s+/g, " ");
+      if (fullName) dadosParaSalvar.nome_usuario = fullName.toUpperCase();
       if (whatsapp.replace(/\D/g, "").length >= 11) dadosParaSalvar.whatsapp = whatsapp.replace(/\D/g, "");
       if (instagram.trim()) dadosParaSalvar.instagram = instagram.trim().replace("@", "");
       if (selectedFilial) dadosParaSalvar.filial = selectedFilial.numero;
@@ -260,7 +284,9 @@ const AjustesMetas = ({
       ...userData,
       dias_restantes: userData?.dias_restantes || diasRestantesCalculados || 0,
     }));
-    setNomeUsuario(userData?.nome_usuario?.toUpperCase() || "");
+    const parsedName = splitUserName(userData?.nome_usuario);
+    setFirstName(parsedName.firstName.toUpperCase());
+    setLastName(parsedName.lastName.toUpperCase());
     setWhatsapp(userData?.whatsapp || "");
     setInstagram(userData?.instagram || "");
     setSelectedOperatorRole(normalizeOperatorRole(userData?.role));
@@ -383,17 +409,32 @@ const AjustesMetas = ({
       {isEditingPerfil && (
         <Card className="border-2 border-dashed border-purple-400 bg-purple-50">
           <CardContent className="pt-6 space-y-6">
-            {/* Nome */}
-            <div className="flex items-center gap-4">
-              <User className="h-10 w-10 text-purple-600" />
-              <div className="flex-1">
-                <Label className="text-xl font-bold text-purple-900">Nome completo</Label>
-                <Input
-                  value={nomeUsuario}
-                  onChange={(e) => setNomeUsuario(e.target.value.toUpperCase())}
-                  placeholder="SEU NOME COMPLETO"
-                  className="text-2xl font-bold text-center"
-                />
+            {/* Nome e sobrenome */}
+            <div className="flex items-start gap-4">
+              <User className="mt-3 h-10 w-10 text-purple-600" />
+              <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="text-xl font-bold text-purple-900">Nome</Label>
+                  <Input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value.toUpperCase().slice(0, 15))}
+                    placeholder="SEU NOME"
+                    maxLength={15}
+                    className="text-2xl font-bold text-center"
+                  />
+                  <p className="mt-1 text-sm text-gray-600">Máximo de 15 caracteres.</p>
+                </div>
+                <div>
+                  <Label className="text-xl font-bold text-purple-900">Sobrenome</Label>
+                  <Input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value.toUpperCase().slice(0, 45))}
+                    placeholder="SEU SOBRENOME"
+                    maxLength={45}
+                    className="text-2xl font-bold text-center"
+                  />
+                  <p className="mt-1 text-sm text-gray-600">Máximo de 45 caracteres.</p>
+                </div>
               </div>
             </div>
             {/* WhatsApp */}
