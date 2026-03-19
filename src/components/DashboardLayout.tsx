@@ -27,6 +27,7 @@ import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
+import MatrizLinks from "./MatrizLinks";
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
@@ -420,13 +421,17 @@ const DashboardLayout = () => {
               )}
 
               <TabsContent value="filiais">
-                <Filiais />
+                <Filiais isViewerMembro={isMembro} />
               </TabsContent>
 
               <TabsContent value="matriz">
-                <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center">
-                  <p className="text-zinc-200 text-lg font-medium">Esta guia está disponível somente para membros.</p>
-                </div>
+                {isMembro ? (
+                  <MatrizLinks />
+                ) : (
+                  <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md p-8 text-center"}>
+                    <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-800 text-lg font-medium"}>Esta guia é somente para membros.</p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>

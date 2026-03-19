@@ -38,6 +38,35 @@ interface UsuarioComFilial {
   origem?: "user_dashboard" | "vw_ranking_filiais";
 }
 
+
+const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
+const PERFIS_PUBLIC_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis";
+
+const syncMembrosManifest = async (usuarios: UsuarioComFilial[]) => {
+  const filiaisMembro = Array.from(
+    new Set(
+      usuarios
+        .filter((u) => u.membro && typeof u.filial_id === "number")
+        .map((u) => u.filial_id as number)
+    )
+  ).sort((a, b) => a - b);
+
+  const payload = JSON.stringify({
+    updated_at: new Date().toISOString(),
+    filiais: filiaisMembro,
+  });
+
+  const file = new TextEncoder().encode(payload);
+  await supabase.storage
+    .from("perfis")
+    .upload(MEMBROS_MANIFEST_PATH, file, {
+      contentType: "application/json",
+      upsert: true,
+    });
+
+  return `${PERFIS_PUBLIC_URL}/${MEMBROS_MANIFEST_PATH}`;
+};
+
 const GerenciarUsuarios = () => {
   const [usuarios, setUsuarios] = useState<UsuarioComFilial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,11 +181,14 @@ const GerenciarUsuarios = () => {
           })
           .filter((u) => !existentes.has(u.user_id));
 
-        setUsuarios([...lista, ...extras]);
+        const usuariosCompletos = [...lista, ...extras];
+        await syncMembrosManifest(usuariosCompletos);
+        setUsuarios(usuariosCompletos);
         return;
       }
 
       if (lista.length > 0) {
+        await syncMembrosManifest(lista);
         setUsuarios(lista);
         return;
       }
