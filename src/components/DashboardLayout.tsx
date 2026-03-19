@@ -27,6 +27,8 @@ import { BiSolidReport } from "react-icons/bi";
 import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
+import MatrizLinks from "./MatrizLinks";
+import MemberChatWidget from "./MemberChatWidget";
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
@@ -420,18 +422,32 @@ const DashboardLayout = () => {
               )}
 
               <TabsContent value="filiais">
-                <Filiais />
+                <Filiais isViewerMembro={isMembro} />
               </TabsContent>
 
               <TabsContent value="matriz">
-                <div className="rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center">
-                  <p className="text-zinc-200 text-lg font-medium">Esta guia está disponível somente para membros.</p>
-                </div>
+                {isMembro ? (
+                  <MatrizLinks />
+                ) : (
+                  <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md p-8 text-center"}>
+                    <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-800 text-lg font-medium"}>Esta guia é somente para membros.</p>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
         </main>
       </div>
+
+      <MemberChatWidget
+        isMembro={isMembro}
+        viewer={{
+          user_id: userData?.user_id,
+          nome_usuario: userData?.nome_usuario,
+          avatar_url: userData?.avatar_url,
+          filial: userData?.filial,
+        }}
+      />
 
       {/* FOOTER */}
       <footer className="bg-zinc-950 border-t border-white/10 shadow-md p-4 mt-8">
