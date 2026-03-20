@@ -28,6 +28,33 @@ import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import MatrizLinks from "./MatrizLinks";
+import MemberChatWidget from "./MemberChatWidget";
+
+const normalizeOperatorRole = (role?: string | null) => {
+  const normalizedRole = (role || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (normalizedRole === "lider") return "líder";
+  if (normalizedRole === "auxiliar") return "auxiliar";
+  return "";
+};
+
+const getFirstName = (name?: string | null) => {
+  const normalizedName = (name || "").trim();
+  return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
+};
+
+const getFirstNameAndLastSurname = (name?: string | null) => {
+  const normalizedName = (name || "").trim().replace(/\s+/g, " ");
+  if (!normalizedName) return "Usuário";
+
+  const parts = normalizedName.split(" ");
+  if (parts.length === 1) return parts[0];
+
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+};
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
@@ -110,9 +137,10 @@ const DashboardLayout = () => {
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
-  const isMembro = Boolean((userData as { membro?: boolean; role?: string } | null)?.membro)
-    || ((userData?.role || "").toLowerCase() === "membro");
+  const isMembro = Boolean((userData as { membro?: boolean } | null)?.membro);
   const isDark = theme === "dark";
+  const operatorRole = normalizeOperatorRole(userData?.role);
+  const profileDisplayName = getFirstNameAndLastSurname(userData?.nome_usuario);
 
   if (isLoading || !userData) {
     return (
@@ -203,6 +231,7 @@ const DashboardLayout = () => {
                     size="icon"
                     className="rounded-full overflow-hidden border border-white/10 bg-white/5 hover:bg-white/10 transition-all"
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    title={userData?.nome_usuario || "Usuário"}
                   >
                     {userData?.avatar_url ? (
                       <div className="w-10 h-10 rounded-full overflow-hidden">
@@ -271,8 +300,18 @@ const DashboardLayout = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className={isDark ? "text-2xl font-bold text-zinc-100" : "text-2xl font-bold text-slate-900"}>
-                              {userData?.nome_usuario || "Usuário"}
+                              <span title={userData?.nome_usuario || "Usuário"}>{profileDisplayName}</span>
                             </p>
+                            {operatorRole === "líder" && (
+                              <span className="inline-flex items-center rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-xs font-semibold text-red-400">
+                                Op. Líder
+                              </span>
+                            )}
+                            {operatorRole === "auxiliar" && (
+                              <span className="inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-400">
+                                Op. Auxiliar
+                              </span>
+                            )}
                             {isMembro && (
                               <span className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">
                                 Membro
@@ -426,7 +465,10 @@ const DashboardLayout = () => {
 
               <TabsContent value="matriz">
                 {isMembro ? (
-                  <MatrizLinks />
+                  <MatrizLinks
+                    userId={userData?.user_id}
+                    receivedAmount={recebidoHoje}
+                  />
                 ) : (
                   <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md p-8 text-center"}>
                     <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-800 text-lg font-medium"}>Esta guia é somente para membros.</p>
@@ -437,6 +479,16 @@ const DashboardLayout = () => {
           </div>
         </main>
       </div>
+
+      <MemberChatWidget
+        isMembro={isMembro}
+        viewer={{
+          user_id: userData?.user_id,
+          nome_usuario: userData?.nome_usuario,
+          avatar_url: userData?.avatar_url,
+          filial: userData?.filial,
+        }}
+      />
 
       {/* FOOTER */}
       <footer className="bg-zinc-950 border-t border-white/10 shadow-md p-4 mt-8">
