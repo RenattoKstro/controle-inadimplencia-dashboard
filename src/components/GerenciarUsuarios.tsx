@@ -130,7 +130,7 @@ const GerenciarUsuarios = () => {
           role: u.role || "Sem perfil",
           whatsapp: u.whatsapp || "-",
           instagram: u.instagram || "-",
-          membro: Boolean(u.membro) || (u.role || "").toLowerCase() === "membro",
+          membro: Boolean(u.membro),
           origem: "user_dashboard",
         };
       });
@@ -175,7 +175,7 @@ const GerenciarUsuarios = () => {
               role: principal?.role || "Sem perfil",
               whatsapp: principal?.whatsapp || "-",
               instagram: principal?.instagram || "-",
-              membro: Boolean(principal?.membro) || (principal?.role || "").toLowerCase() === "membro",
+              membro: Boolean(principal?.membro),
               origem: "vw_ranking_filiais",
             };
           })

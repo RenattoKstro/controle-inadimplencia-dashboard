@@ -75,14 +75,12 @@ const getFirstName = (name?: string | null) => {
   return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
 };
 
-const isOperatorMember = (user?: Pick<FilialOperator, "membro" | "role"> | null) => (
-  Boolean(user?.membro) || (user?.role || "").toLowerCase() === "membro"
-);
+const isOperatorMember = (user?: Pick<FilialOperator, "membro"> | null) => Boolean(user?.membro);
 
-const sortOperators = (filialId: number, operators: FilialOperator[], badgeSet: Set<number>) => (
+const sortOperators = (operators: FilialOperator[]) => (
   operators.slice().sort((a, b) => {
-    const aMember = isOperatorMember(a) || badgeSet.has(filialId);
-    const bMember = isOperatorMember(b) || badgeSet.has(filialId);
+    const aMember = isOperatorMember(a);
+    const bMember = isOperatorMember(b);
     if (aMember !== bMember) return aMember ? -1 : 1;
 
     const aRole = normalizeOperatorRole(a.role);
@@ -220,20 +218,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                 .map((item) => item.filial)
                 .filter((filial): filial is number => typeof filial === "number")
             );
-          } else {
-            const { data: roleData, error: roleError } = await supabase
-              .from("user_dashboard")
-              .select("filial, role")
-              .not("filial", "is", null);
-
-            if (!roleError && roleData) {
-              filiaisMarcadasNoUserDashboard = new Set(
-                (roleData as Array<{ filial: number | null; role: string | null }>)
-                  .filter((item) => (item.role || "").toLowerCase() === "membro")
-                  .map((item) => item.filial)
-                  .filter((filial): filial is number => typeof filial === "number")
-              );
-            }
           }
         }
 
@@ -350,12 +334,8 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
     );
   };
 
-  const isUsuarioMembro = (filialId: number, user: RankingFilial["usuario_principal"]) => {
-    if (isOperatorMember(user)) {
-      return true;
-    }
-
-    return filiaisComBadgeMembro.has(filialId) || filiaisComMembros.has(filialId);
+  const isUsuarioMembro = (_filialId: number, user: RankingFilial["usuario_principal"]) => {
+    return isOperatorMember(user);
   };
 
   const membroBadge = (
@@ -486,11 +466,9 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                     } satisfies FilialOperator]
                   : [];
                 const operadores = sortOperators(
-                  f.idfilial,
                   (operadoresPorFilial[f.idfilial] && operadoresPorFilial[f.idfilial].length > 0)
                     ? operadoresPorFilial[f.idfilial]
                     : fallbackUser,
-                  filiaisComBadgeMembro
                 );
                 const metrics = getLatestMetricSnapshot(operadores, f);
                 const updatedText = getUpdatedText(getLatestUpdatedAt(operadores, f.usuario_principal?.updated_at || null));

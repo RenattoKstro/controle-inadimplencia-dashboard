@@ -137,8 +137,7 @@ const DashboardLayout = () => {
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
-  const isMembro = Boolean((userData as { membro?: boolean; role?: string } | null)?.membro)
-    || ((userData?.role || "").toLowerCase() === "membro");
+  const isMembro = Boolean((userData as { membro?: boolean } | null)?.membro);
   const isDark = theme === "dark";
   const operatorRole = normalizeOperatorRole(userData?.role);
   const profileDisplayName = getFirstNameAndLastSurname(userData?.nome_usuario);
