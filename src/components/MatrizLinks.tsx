@@ -1,4 +1,8 @@
-import { Chrome, ExternalLink, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Chrome, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type LinkItem = {
   id: string;
@@ -122,67 +126,174 @@ const sections: LinkSection[] = [
   },
 ];
 
-const MatrizLinks = () => {
+type MatrizLinksProps = {
+  userId?: string;
+  receivedAmount?: number;
+};
+
+const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+}).format(value || 0);
+
+const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const isDark = document.documentElement.classList.contains("dark");
+  const [metaDiariaInput, setMetaDiariaInput] = useState("0");
+
+  useEffect(() => {
+    if (!userId) return;
+    const saved = localStorage.getItem(`matriz-meta-diaria:${userId}`);
+    if (saved !== null) {
+      setMetaDiariaInput(saved);
+    }
+  }, [userId]);
+
+  const metaDiaria = useMemo(() => {
+    const normalized = Number(metaDiariaInput.replace(",", "."));
+    return Number.isFinite(normalized) ? Math.max(0, normalized) : 0;
+  }, [metaDiariaInput]);
+
+  useEffect(() => {
+    if (!userId) return;
+    localStorage.setItem(`matriz-meta-diaria:${userId}`, String(metaDiaria));
+  }, [metaDiaria, userId]);
+
+  const restante = Math.max(0, metaDiaria - receivedAmount);
+  const percentual = metaDiaria > 0 ? (receivedAmount / metaDiaria) * 100 : 0;
 
   return (
     <div className="space-y-8">
       <div className={isDark ? "rounded-3xl border border-white/10 bg-zinc-900/70 p-6 shadow-2xl" : "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg"}>
         <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-          Atalhos
+          Matriz
         </h2>
         <p className={isDark ? "mt-2 text-zinc-400" : "mt-2 text-slate-600"}>
-          Links rápidos para Aciona One, extensões do Chrome e ferramentas de IA.
+          Atalhos rápidos e acompanhamento da Meta Matriz em um único lugar.
         </p>
       </div>
 
-      {sections.map((section) => {
-        const SectionIcon = section.icon;
+      <Tabs defaultValue="atalhos" className="space-y-6">
+        <TabsList className={isDark ? "grid w-full grid-cols-2 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-2 rounded-2xl border border-slate-200 bg-white p-1"}>
+          <TabsTrigger value="atalhos" className="rounded-xl">Atalhos</TabsTrigger>
+          <TabsTrigger value="meta-matriz" className="rounded-xl">Meta Matriz</TabsTrigger>
+        </TabsList>
 
-        return (
-          <section key={section.id} className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/80 p-3" : "rounded-2xl border border-slate-200 bg-white p-3"}>
-                <SectionIcon className="h-5 w-5 text-indigo-400" />
+        <TabsContent value="atalhos" className="space-y-8">
+          {sections.map((section) => {
+            const SectionIcon = section.icon;
+
+            return (
+              <section key={section.id} className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/80 p-3" : "rounded-2xl border border-slate-200 bg-white p-3"}>
+                    <SectionIcon className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold">{section.title}</h3>
+                    <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-600"}>{section.description}</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {section.items.map((item) => (
+                    <a
+                      key={item.id}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={isDark ? "group rounded-2xl border border-white/10 bg-zinc-900/80 p-4 transition-all hover:-translate-y-1 hover:border-indigo-400/60 hover:bg-zinc-900" : "group rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-1 hover:border-indigo-300 hover:shadow-lg"}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={isDark ? "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 ring-1 ring-white/10" : "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 ring-1 ring-slate-200"}>
+                          <img
+                            src={item.iconSrc}
+                            alt={item.title}
+                            className="h-10 w-10 rounded-xl object-contain"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <h4 className="text-sm font-semibold leading-5 sm:text-base">{item.title}</h4>
+                            <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-indigo-400 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                          </div>
+                          <p className={isDark ? "mt-2 text-sm text-zinc-400" : "mt-2 text-sm text-slate-600"}>{item.subtitle}</p>
+                          <p className={isDark ? "mt-3 truncate text-xs text-zinc-500" : "mt-3 truncate text-xs text-slate-500"}>{item.url}</p>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </TabsContent>
+
+        <TabsContent value="meta-matriz" className="space-y-6">
+          <section className={isDark ? "rounded-3xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl" : "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg"}>
+            <div className="flex items-start gap-4">
+              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950 p-3" : "rounded-2xl border border-slate-200 bg-slate-50 p-3"}>
+                <Goal className="h-5 w-5 text-indigo-400" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">{section.title}</h3>
-                <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-600"}>{section.description}</p>
+                <h3 className="text-2xl font-semibold">Meta Matriz</h3>
+                <p className={isDark ? "mt-1 text-sm text-zinc-400" : "mt-1 text-sm text-slate-600"}>
+                  Informe a meta diária manualmente. Os demais campos acompanham automaticamente o resultado da guia Metas.
+                </p>
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {section.items.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={isDark ? "group rounded-2xl border border-white/10 bg-zinc-900/80 p-4 transition-all hover:-translate-y-1 hover:border-indigo-400/60 hover:bg-zinc-900" : "group rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-1 hover:border-indigo-300 hover:shadow-lg"}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={isDark ? "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-zinc-950 ring-1 ring-white/10" : "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 ring-1 ring-slate-200"}>
-                      <img
-                        src={item.iconSrc}
-                        alt={item.title}
-                        className="h-10 w-10 rounded-xl object-contain"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <h4 className="text-sm font-semibold leading-5 sm:text-base">{item.title}</h4>
-                        <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-indigo-400 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                      </div>
-                      <p className={isDark ? "mt-2 text-sm text-zinc-400" : "mt-2 text-sm text-slate-600"}>{item.subtitle}</p>
-                      <p className={isDark ? "mt-3 truncate text-xs text-zinc-500" : "mt-3 truncate text-xs text-slate-500"}>{item.url}</p>
-                    </div>
-                  </div>
-                </a>
-              ))}
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <Label htmlFor="meta-diaria" className={isDark ? "text-zinc-300" : "text-slate-700"}>Meta diária</Label>
+                <Input
+                  id="meta-diaria"
+                  inputMode="decimal"
+                  value={metaDiariaInput}
+                  onChange={(event) => setMetaDiariaInput(event.target.value)}
+                  placeholder="0,00"
+                  className={isDark ? "mt-3 border-white/10 bg-zinc-900 text-zinc-100" : "mt-3 border-slate-300 bg-white text-slate-900"}
+                />
+                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
+                  Campo com edição manual.
+                </p>
+              </div>
+
+              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-emerald-400" />
+                  <p className={isDark ? "text-zinc-300" : "text-slate-700"}>Recebido</p>
+                </div>
+                <p className="mt-4 text-2xl font-semibold">{formatCurrency(receivedAmount)}</p>
+                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
+                  Resultado puxado da guia Metas.
+                </p>
+              </div>
+
+              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <p className={isDark ? "text-zinc-300" : "text-slate-700"}>Restante</p>
+                <p className="mt-4 text-2xl font-semibold">{formatCurrency(restante)}</p>
+                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
+                  Cálculo automático: meta diária - recebido.
+                </p>
+              </div>
+
+              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <p className={isDark ? "text-zinc-300" : "text-slate-700"}>Percentual</p>
+                <p className="mt-4 text-2xl font-semibold">{percentual.toFixed(2)}%</p>
+                <div className={isDark ? "mt-4 h-2 rounded-full bg-zinc-800" : "mt-4 h-2 rounded-full bg-slate-200"}>
+                  <div
+                    className="h-2 rounded-full bg-indigo-500 transition-all"
+                    style={{ width: `${Math.min(percentual, 100)}%` }}
+                  />
+                </div>
+                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
+                  Percentual de atingimento da meta diária.
+                </p>
+              </div>
             </div>
           </section>
-        );
-      })}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

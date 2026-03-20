@@ -137,6 +137,7 @@ const DashboardLayout = () => {
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
+  const recebidoMetas = Math.max(0, (userData?.abertura_vencido_mes || 0) - (userData?.vencido_atual || 0));
   const isMembro = Boolean((userData as { membro?: boolean } | null)?.membro);
   const isDark = theme === "dark";
   const operatorRole = normalizeOperatorRole(userData?.role);
@@ -465,7 +466,10 @@ const DashboardLayout = () => {
 
               <TabsContent value="matriz">
                 {isMembro ? (
-                  <MatrizLinks />
+                  <MatrizLinks
+                    userId={userData?.user_id}
+                    receivedAmount={recebidoMetas}
+                  />
                 ) : (
                   <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md p-8 text-center"}>
                     <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-800 text-lg font-medium"}>Esta guia é somente para membros.</p>
