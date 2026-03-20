@@ -163,15 +163,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
 
   return (
     <div className="space-y-8">
-      <div className={isDark ? "rounded-3xl border border-white/10 bg-zinc-900/70 p-6 shadow-2xl" : "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg"}>
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-          Matriz
-        </h2>
-        <p className={isDark ? "mt-2 text-zinc-400" : "mt-2 text-slate-600"}>
-          Atalhos rápidos e acompanhamento da Meta Matriz em um único lugar.
-        </p>
-      </div>
-
       <Tabs defaultValue="atalhos" className="space-y-6">
         <TabsList className={isDark ? "grid w-full grid-cols-2 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-2 rounded-2xl border border-slate-200 bg-white p-1"}>
           <TabsTrigger value="atalhos" className="rounded-xl">Atalhos</TabsTrigger>
@@ -261,20 +252,14 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-emerald-400" />
-                  <p className={isDark ? "text-zinc-300" : "text-slate-700"}>Recebido</p>
+                  <p className={isDark ? "text-zinc-300" : "text-slate-700"}>Recebido Hoje</p>
                 </div>
                 <p className="mt-4 text-2xl font-semibold">{formatCurrency(receivedAmount)}</p>
-                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
-                  Resultado puxado da guia Metas.
-                </p>
               </div>
 
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                 <p className={isDark ? "text-zinc-300" : "text-slate-700"}>Restante</p>
                 <p className="mt-4 text-2xl font-semibold">{formatCurrency(restante)}</p>
-                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
-                  Cálculo automático: meta diária - recebido.
-                </p>
               </div>
 
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
