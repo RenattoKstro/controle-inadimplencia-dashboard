@@ -564,16 +564,34 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                       </div>
                                     </div>
                                     <div className="mt-4 space-y-2">
-                                      {user?.whatsapp && (
-                                        <a
-                                          href={`https://wa.me/55${user.whatsapp}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="flex items-center gap-2 text-emerald-400 hover:underline"
-                                        >
-                                          <Phone className="h-4 w-4" /> WhatsApp
-                                        </a>
-                                      )}
+                                      <div className="flex flex-wrap items-center gap-3">
+                                        {user?.whatsapp && (
+                                          <a
+                                            href={`https://wa.me/55${user.whatsapp}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-emerald-400 hover:underline"
+                                          >
+                                            <Phone className="h-4 w-4" /> WhatsApp
+                                          </a>
+                                        )}
+                                        {user?.user_id && (
+                                          <button
+                                            type="button"
+                                            onClick={() => window.dispatchEvent(new CustomEvent("member-chat-open-private", {
+                                              detail: {
+                                                user_id: user.user_id || undefined,
+                                                nome_usuario: user.nome_usuario || undefined,
+                                                avatar_url: user.avatar_url || undefined,
+                                                filial: f.idfilial,
+                                              },
+                                            }))}
+                                            className="flex items-center gap-2 text-indigo-400 hover:underline"
+                                          >
+                                            <MessageCircle className="h-4 w-4" /> Chat
+                                          </button>
+                                        )}
+                                      </div>
                                       {user?.instagram && (
                                         <a
                                           href={`https://instagram.com/${user.instagram.replace("@", "")}`}
