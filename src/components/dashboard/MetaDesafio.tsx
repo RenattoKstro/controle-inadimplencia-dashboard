@@ -127,7 +127,7 @@ const MetaDesafio = ({
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-300">{progresso.toFixed(1)}%</span>
+            <span className="text-zinc-300">{progresso.toFixed(2).replace(".", ",")}%</span>
             <span className="text-zinc-400">{formatCurrency(metaDesafioValor)}</span>
           </div>
           <div className="h-3 rounded-full bg-zinc-800 overflow-hidden">

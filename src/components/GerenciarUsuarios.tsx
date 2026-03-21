@@ -38,6 +38,35 @@ interface UsuarioComFilial {
   origem?: "user_dashboard" | "vw_ranking_filiais";
 }
 
+
+const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
+const PERFIS_PUBLIC_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis";
+
+const syncMembrosManifest = async (usuarios: UsuarioComFilial[]) => {
+  const filiaisMembro = Array.from(
+    new Set(
+      usuarios
+        .filter((u) => u.membro && typeof u.filial_id === "number")
+        .map((u) => u.filial_id as number)
+    )
+  ).sort((a, b) => a - b);
+
+  const payload = JSON.stringify({
+    updated_at: new Date().toISOString(),
+    filiais: filiaisMembro,
+  });
+
+  const file = new TextEncoder().encode(payload);
+  await supabase.storage
+    .from("perfis")
+    .upload(MEMBROS_MANIFEST_PATH, file, {
+      contentType: "application/json",
+      upsert: true,
+    });
+
+  return `${PERFIS_PUBLIC_URL}/${MEMBROS_MANIFEST_PATH}`;
+};
+
 const GerenciarUsuarios = () => {
   const [usuarios, setUsuarios] = useState<UsuarioComFilial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +130,7 @@ const GerenciarUsuarios = () => {
           role: u.role || "Sem perfil",
           whatsapp: u.whatsapp || "-",
           instagram: u.instagram || "-",
-          membro: Boolean(u.membro) || (u.role || "").toLowerCase() === "membro",
+          membro: Boolean(u.membro),
           origem: "user_dashboard",
         };
       });
@@ -146,17 +175,20 @@ const GerenciarUsuarios = () => {
               role: principal?.role || "Sem perfil",
               whatsapp: principal?.whatsapp || "-",
               instagram: principal?.instagram || "-",
-              membro: Boolean(principal?.membro) || (principal?.role || "").toLowerCase() === "membro",
+              membro: Boolean(principal?.membro),
               origem: "vw_ranking_filiais",
             };
           })
           .filter((u) => !existentes.has(u.user_id));
 
-        setUsuarios([...lista, ...extras]);
+        const usuariosCompletos = [...lista, ...extras];
+        await syncMembrosManifest(usuariosCompletos);
+        setUsuarios(usuariosCompletos);
         return;
       }
 
       if (lista.length > 0) {
+        await syncMembrosManifest(lista);
         setUsuarios(lista);
         return;
       }
@@ -238,18 +270,6 @@ const GerenciarUsuarios = () => {
         updatedSuccessfully = true;
       } else {
         saveError = fallbackUpdateError || userError || { message: "usuário não encontrado em user_dashboard (ou sem permissão de leitura por RLS)" };
-      }
-    }
-
-    if (updatedSuccessfully) {
-      const roleValue = form.membro ? "membro" : null;
-      const { error: roleError } = await supabase
-        .from("user_dashboard")
-        .update({ role: roleValue })
-        .eq("user_id", userId);
-
-      if (roleError) {
-        // não bloqueia o fluxo: alguns ambientes podem não ter permissão para role.
       }
     }
 
