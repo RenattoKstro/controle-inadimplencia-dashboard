@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trophy, Zap, Store, Phone, Instagram, User, BadgeCheck } from "lucide-react";
+import { Trophy, Zap, Store, Phone, Instagram, MessageCircle, User, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   HoverCard,
