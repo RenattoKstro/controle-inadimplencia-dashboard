@@ -217,7 +217,6 @@ const MemberChatWidget = ({
         recipient_user_id: privateTarget.user_id,
         scope: "private",
       },
-      ...basePublicPayloads,
     ];
   };
 
