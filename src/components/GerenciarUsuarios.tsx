@@ -41,6 +41,7 @@ interface UsuarioComFilial {
 
 const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
 const PERFIS_PUBLIC_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis";
+const AUTH_USERS_DASHBOARD_URL = "https://supabase.com/dashboard/project/xzssmnosumznfruppxsh/auth/users";
 
 const syncMembrosManifest = async (usuarios: UsuarioComFilial[]) => {
   const filiaisMembro = Array.from(
@@ -122,7 +123,7 @@ const GerenciarUsuarios = () => {
         return {
           id: u.id,
           user_id: u.user_id || String(u.id),
-          email: u.email || "Sem e-mail",
+          email: u.email || "Ver no Auth",
           nome_usuario: u.nome_usuario || "Sem nome",
           filial_id: filialId,
           nome_filial: filialData?.filial || (filialId ? `Filial ${filialId}` : "Sem filial"),
@@ -171,7 +172,7 @@ const GerenciarUsuarios = () => {
             return {
               id: `view-${r.idfilial}-${index}`,
               user_id: principal?.user_id || `view-user-${index}`,
-              email: principal?.email || "Sem e-mail",
+              email: principal?.email || "Ver no Auth",
               nome_usuario: principal?.nome_usuario || "Sem nome",
               filial_id: r.idfilial,
               nome_filial: r.filial || `Filial ${r.idfilial}`,
@@ -190,7 +191,7 @@ const GerenciarUsuarios = () => {
 
           return {
             ...usuario,
-            email: usuario.email !== "Sem e-mail" ? usuario.email : extra.email,
+            email: usuario.email !== "Ver no Auth" ? usuario.email : extra.email,
             role: usuario.role !== "Sem perfil" ? usuario.role : extra.role,
             whatsapp: usuario.whatsapp !== "-" ? usuario.whatsapp : extra.whatsapp,
             instagram: usuario.instagram !== "-" ? usuario.instagram : extra.instagram,
@@ -370,8 +371,14 @@ const GerenciarUsuarios = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
-        <p className="text-sm text-zinc-300">Total de usuários: {usuarios.length}</p>
+        <div className="space-y-1">
+          <p className="text-sm text-zinc-300">Total de usuários: {usuarios.length}</p>
+          <p className="text-xs text-zinc-400">Se o e-mail não aparecer aqui, use o UID completo ao lado e confira em Auth &gt; Users no Supabase.</p>
+        </div>
         <div className="flex gap-2 w-full md:w-auto">
+          <Button asChild size="sm" variant="outline" className="border-zinc-700 text-zinc-100 hover:bg-zinc-800">
+            <a href={AUTH_USERS_DASHBOARD_URL} target="_blank" rel="noopener noreferrer">Abrir Auth Users</a>
+          </Button>
           <Input
             value={novaRegional}
             onChange={(e) => setNovaRegional(e.target.value)}
@@ -410,7 +417,13 @@ const GerenciarUsuarios = () => {
                 const isEditing = editingUserId === u.user_id;
                 return (
                   <TableRow key={u.user_id} className="hover:bg-zinc-800/50">
-                    <TableCell className="max-w-72 whitespace-normal break-all" title={u.email}>{u.email}</TableCell>
+                    <TableCell className="max-w-72 whitespace-normal break-all" title={u.email}>
+                      {u.email === "Ver no Auth" ? (
+                        <a href={AUTH_USERS_DASHBOARD_URL} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">
+                          Ver no Auth
+                        </a>
+                      ) : u.email}
+                    </TableCell>
                     <TableCell>
                       {isEditing ? (
                         <Input
