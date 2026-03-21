@@ -141,16 +141,19 @@ const GerenciarUsuarios = () => {
         .not("usuario_principal", "is", null);
 
       if (rankingData) {
-        const existentes = new Set(lista.map((u) => u.user_id));
-        const extras: UsuarioComFilial[] = (rankingData as Array<{
+        const userIdsExistentes = new Set(lista.map((u) => u.user_id));
+        const extrasRanking: UsuarioComFilial[] = (rankingData as Array<{
           idfilial: number;
           filial: string;
           regional: string | null;
           usuario_principal: {
             user_id: string;
             nome_usuario: string;
+            email?: string | null;
             whatsapp: string;
             instagram: string;
+            role?: string | null;
+            membro?: boolean | null;
           } | null;
         }>)
           .filter((r) => r.usuario_principal?.user_id)
@@ -158,6 +161,7 @@ const GerenciarUsuarios = () => {
             const principal = r.usuario_principal as {
               user_id: string;
               nome_usuario?: string | null;
+              email?: string | null;
               whatsapp?: string | null;
               instagram?: string | null;
               role?: string | null;
@@ -167,7 +171,7 @@ const GerenciarUsuarios = () => {
             return {
               id: `view-${r.idfilial}-${index}`,
               user_id: principal?.user_id || `view-user-${index}`,
-              email: "Sem e-mail",
+              email: principal?.email || "Sem e-mail",
               nome_usuario: principal?.nome_usuario || "Sem nome",
               filial_id: r.idfilial,
               nome_filial: r.filial || `Filial ${r.idfilial}`,
@@ -178,10 +182,24 @@ const GerenciarUsuarios = () => {
               membro: Boolean(principal?.membro),
               origem: "vw_ranking_filiais",
             };
-          })
-          .filter((u) => !existentes.has(u.user_id));
+          });
 
-        const usuariosCompletos = [...lista, ...extras];
+        const usuariosEnriquecidos = lista.map((usuario) => {
+          const extra = extrasRanking.find((item) => item.user_id === usuario.user_id);
+          if (!extra) return usuario;
+
+          return {
+            ...usuario,
+            email: usuario.email !== "Sem e-mail" ? usuario.email : extra.email,
+            role: usuario.role !== "Sem perfil" ? usuario.role : extra.role,
+            whatsapp: usuario.whatsapp !== "-" ? usuario.whatsapp : extra.whatsapp,
+            instagram: usuario.instagram !== "-" ? usuario.instagram : extra.instagram,
+            membro: usuario.membro || extra.membro,
+          };
+        });
+
+        const usuariosComUIDNovo = extrasRanking.filter((u) => !userIdsExistentes.has(u.user_id));
+        const usuariosCompletos = [...usuariosEnriquecidos, ...usuariosComUIDNovo];
         await syncMembrosManifest(usuariosCompletos);
         setUsuarios(usuariosCompletos);
         return;
@@ -392,7 +410,7 @@ const GerenciarUsuarios = () => {
                 const isEditing = editingUserId === u.user_id;
                 return (
                   <TableRow key={u.user_id} className="hover:bg-zinc-800/50">
-                    <TableCell className="max-w-48 truncate">{u.email}</TableCell>
+                    <TableCell className="max-w-72 whitespace-normal break-all" title={u.email}>{u.email}</TableCell>
                     <TableCell>
                       {isEditing ? (
                         <Input
@@ -435,7 +453,7 @@ const GerenciarUsuarios = () => {
                         </label>
                       ) : (u.membro ? "Sim" : "Não")}
                     </TableCell>
-                    <TableCell className="text-xs font-mono hidden lg:table-cell">{u.user_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-xs font-mono hidden lg:table-cell whitespace-normal break-all" title={u.user_id}>{u.user_id}</TableCell>
                     <TableCell className="text-right space-x-1 sticky right-0 bg-zinc-950/95">
                       {isEditing ? (
                         <>
