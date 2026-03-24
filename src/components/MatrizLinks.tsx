@@ -222,6 +222,7 @@ const PIE_COLORS = [
   "#f59e0b",
   "#0891b2",
 ];
+const META_COBRANCAS_PADRAO = 520;
 
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const isDark = document.documentElement.classList.contains("dark");
@@ -233,6 +234,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [uploadPercent, setUploadPercent] = useState(0);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingDetailsImage, setIsGeneratingDetailsImage] = useState(false);
+  const [analysisText, setAnalysisText] = useState("");
   const dashboardRef = useRef<HTMLDivElement | null>(null);
   const fullDetailsExportRef = useRef<HTMLDivElement | null>(null);
 
@@ -475,6 +477,107 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     }
   };
 
+  const buildSellerAnalysis = (row: CobrancaRow) => {
+    const percentualMeta = META_COBRANCAS_PADRAO > 0 ? (row.qtdCobranca / META_COBRANCAS_PADRAO) * 100 : 0;
+    const header = `👤 ${row.vendedor.toUpperCase()}`;
+    const metrics = `📊 ${formatNumber(row.qtdCobranca)} cobranças (${percentualMeta.toFixed(0)}% da meta)\n📈 Efetividade: ${row.efetividade.toFixed(2)}%`;
+
+    if (row.qtdCobranca >= META_COBRANCAS_PADRAO * 0.9 && row.efetividade >= 90) {
+      return `${header}\n${metrics}\n\n✅ Referência da equipe\n👉 Volume alto + boa qualidade`;
+    }
+    if (row.qtdCobranca >= META_COBRANCAS_PADRAO * 0.6 && row.efetividade < 60) {
+      return `${header}\n${metrics}\n\n⚠️ Trabalha bem o volume, mas converte pouco\n👉 Precisa melhorar abordagem`;
+    }
+    if (row.efetividade >= 120 && row.qtdCobranca < META_COBRANCAS_PADRAO * 0.5) {
+      return `${header}\n${metrics}\n\n💡 Excelente conversão\n❗ Precisa aumentar volume`;
+    }
+    if (row.qtdCobranca < META_COBRANCAS_PADRAO * 0.2 && row.efetividade < 60) {
+      return `${header}\n${metrics}\n\n❌ Baixo volume\n❌ Baixa efetividade\n👉 Ponto crítico da equipe`;
+    }
+    return `${header}\n${metrics}\n\n👉 Equilibrado, mas pode aumentar produção`;
+  };
+
+  const handleAnalyzeData = () => {
+    if (!selectedLoja || !rowsFiltradasPorLoja.length) {
+      setAnalysisText("Selecione uma loja com dados para gerar a análise.");
+      return;
+    }
+
+    const ordered = [...rowsFiltradasPorLoja].sort((a, b) => b.qtdCobranca - a.qtdCobranca);
+    const acimaMeta = ordered.filter((row) => row.qtdCobranca >= META_COBRANCAS_PADRAO).length;
+    const abaixoMeta = ordered.length - acimaMeta;
+    const melhorGeral = ordered[0];
+    const maiorPotencial = [...ordered].sort((a, b) => b.efetividade - a.efetividade)[0];
+    const maiorAtencao = [...ordered].sort((a, b) => (a.qtdCobranca + a.efetividade) - (b.qtdCobranca + b.efetividade))[0];
+    const melhorAjusteRapido = [...ordered]
+      .sort((a, b) => (b.qtdCobranca - b.efetividade) - (a.qtdCobranca - a.efetividade))[0];
+
+    const focoVolume = ordered
+      .filter((row) => row.qtdCobranca < META_COBRANCAS_PADRAO * 0.7)
+      .slice(0, 4)
+      .map((row) => row.vendedor)
+      .join(", ");
+    const focoQualidade = ordered
+      .filter((row) => row.efetividade < 70)
+      .slice(0, 4)
+      .map((row) => row.vendedor)
+      .join(", ");
+    const manterPadrao = ordered
+      .filter((row) => row.qtdCobranca >= META_COBRANCAS_PADRAO * 0.9 && row.efetividade >= 90)
+      .slice(0, 3)
+      .map((row) => row.vendedor)
+      .join(", ");
+
+    const analysis = [
+      `📊 ANÁLISE – EQUIPE LOJA ${selectedLoja}`,
+      "",
+      `🎯 Meta principal: ${META_COBRANCAS_PADRAO} cobranças por vendedor`,
+      "⚠️ Efetividade é importante, mas o foco principal é VOLUME",
+      "",
+      "📌 VISÃO GERAL",
+      "",
+      `✅ ${acimaMeta} vendedor(es) em bom ritmo de volume`,
+      `❗ ${abaixoMeta} vendedor(es) ainda abaixo da meta de volume`,
+      "⚠️ Há diferença relevante de produtividade na equipe",
+      "",
+      "👉 Conclusão:",
+      "Precisamos aumentar o volume da equipe para melhorar o resultado geral",
+      "",
+      "👤 ANÁLISE POR VENDEDOR",
+      "",
+      ordered.map((row) => buildSellerAnalysis(row)).join("\n\n"),
+      "",
+      "🎯 PLANO DE AÇÃO",
+      "",
+      "📌 Aumentar volume (PRIORIDADE)",
+      `➡️ ${focoVolume || "Sem nomes críticos no momento"}`,
+      "",
+      "📌 Melhorar qualidade",
+      `➡️ ${focoQualidade || "Sem nomes críticos no momento"}`,
+      "",
+      "📌 Manter padrão",
+      `➡️ ${manterPadrao || "Definir referência após próximo ciclo"}`,
+      "",
+      "📌 Redistribuir carteira",
+      `➡️ Avaliar redução de carteira de ${maiorAtencao?.vendedor || "vendedor crítico"}`,
+      "➡️ Repassar para vendedores com melhor equilíbrio de volume + efetividade",
+      "",
+      "🔥 RESUMO FINAL",
+      "",
+      `👉 Melhor desempenho geral: ${melhorGeral?.vendedor || "-"}`,
+      `👉 Maior potencial: ${maiorPotencial?.vendedor || "-"}`,
+      `👉 Melhor ajuste rápido: ${melhorAjusteRapido?.vendedor || "-"}`,
+      `👉 Maior atenção: ${maiorAtencao?.vendedor || "-"}`,
+    ].join("\n");
+
+    setAnalysisText(analysis);
+  };
+
+  const handleCopyAnalysis = async () => {
+    if (!analysisText) return;
+    await navigator.clipboard.writeText(analysisText);
+  };
+
   return (
     <div className="space-y-8">
       <Tabs defaultValue="atalhos" className="space-y-6">
@@ -590,6 +693,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   Percentual de atingimento da meta diária.
                 </p>
               </div>
+
             </div>
           </section>
         </TabsContent>
@@ -742,6 +846,33 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                     )}
                   </div>
                 </div>
+              </div>
+
+              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h4 className="text-sm font-semibold uppercase tracking-wide text-indigo-400">Analisador de Dados</h4>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" size="sm" onClick={handleAnalyzeData}>Analisar dados</Button>
+                    <Button type="button" size="sm" variant="outline" disabled={!analysisText} onClick={handleCopyAnalysis}>
+                      Copiar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={!analysisText}
+                      onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(analysisText)}`, "_blank")}
+                    >
+                      WhatsApp
+                    </Button>
+                  </div>
+                </div>
+                <textarea
+                  value={analysisText}
+                  onChange={(event) => setAnalysisText(event.target.value)}
+                  placeholder={'Clique em "Analisar dados" para gerar uma análise automática da equipe.'}
+                  className={isDark ? "mt-3 h-72 w-full rounded-xl border border-white/10 bg-zinc-900 p-3 text-sm text-zinc-100" : "mt-3 h-72 w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-900"}
+                />
               </div>
             </div>
           </section>
