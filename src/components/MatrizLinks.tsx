@@ -175,6 +175,22 @@ const parseNumericValue = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const parsePercentageValue = (value: unknown): number => {
+  const parsed = parseNumericValue(value);
+
+  if (typeof value === "number") {
+    return value > 0 && value <= 2 ? value * 100 : parsed;
+  }
+
+  if (typeof value === "string") {
+    const hasPercentSignal = value.includes("%");
+    if (hasPercentSignal) return parsed;
+    return parsed > 0 && parsed <= 2 ? parsed * 100 : parsed;
+  }
+
+  return parsed;
+};
+
 const normalizeText = (value: unknown) =>
   String(value ?? "")
     .normalize("NFD")
@@ -309,14 +325,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     setIsUploadingExcel(true);
     setUploadPercent(0);
     setUploadError("");
-    let simulatedProgressTimer: number | null = null;
-    const uploadSteps = [10, 30, 50, 80];
-    let stepIndex = 0;
-    setUploadPercent(uploadSteps[stepIndex]);
-    simulatedProgressTimer = window.setInterval(() => {
-      stepIndex = Math.min(stepIndex + 1, uploadSteps.length - 1);
-      setUploadPercent(uploadSteps[stepIndex]);
-    }, 350);
+    setUploadPercent(99);
 
     try {
       const buffer = await readFileWithProgress(file);
@@ -404,7 +413,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
           agendamentosValor: agendamentoValorIndex >= 0 ? parseNumericValue(row[agendamentoValorIndex]) : 0,
           metaRecebimento: metaRecebimentoIndex >= 0 ? parseNumericValue(row[metaRecebimentoIndex]) : 0,
           recebido: recebidoIndex >= 0 ? parseNumericValue(row[recebidoIndex]) : 0,
-          efetividade: efetividadeIndex >= 0 ? parseNumericValue(row[efetividadeIndex]) : 0,
+          efetividade: efetividadeIndex >= 0 ? parsePercentageValue(row[efetividadeIndex]) : 0,
         }))
         .filter((row) => row.vendedor && row.loja);
 
@@ -421,9 +430,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       setUploadError("Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
       setCobrancasRows([]);
     } finally {
-      if (simulatedProgressTimer !== null) {
-        window.clearInterval(simulatedProgressTimer);
-      }
       setUploadPercent(100);
       window.setTimeout(() => setUploadPercent(0), 600);
       setIsUploadingExcel(false);
