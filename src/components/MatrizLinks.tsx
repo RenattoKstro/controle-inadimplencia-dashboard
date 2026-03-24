@@ -183,8 +183,14 @@ const normalizeText = (value: unknown) =>
   String(value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
     .toLowerCase()
     .trim();
+
+const hasAnyCandidate = (cell: unknown, candidates: string[]) => {
+  const normalized = normalizeText(cell);
+  return candidates.some((candidate) => normalized.includes(candidate));
+};
 
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const isDark = document.documentElement.classList.contains("dark");
@@ -269,59 +275,89 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
+      const matrixRows = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
 
-      if (!rows.length) {
+      if (!matrixRows.length) {
         setUploadError("Não foi possível ler dados da planilha.");
         setCobrancasRows([]);
         return;
       }
 
-      const firstRow = rows[0];
-      const keyMap = Object.keys(firstRow).reduce<Record<string, string>>((acc, key) => {
-        acc[normalizeText(key)] = key;
-        return acc;
-      }, {});
-
-      const findColumn = (...candidates: string[]) => {
-        for (const candidate of candidates) {
-          const target = Object.keys(keyMap).find((key) => key.includes(candidate));
-          if (target) return keyMap[target];
-        }
-        return "";
+      const columnsMatchers = {
+        vendedor: ["vendedor"],
+        loja: ["loja"],
+        fila: ["fila"],
+        qtdCobranca: ["qtd de cobranca", "qtd cobranca"],
+        agendamentoMes: ["agendamento mes"],
+        faltaCobrancaMes: ["falta cobranca mes"],
+        agendamentoValor: ["agendamentos - r$", "agendamentos"],
+        metaRecebimento: ["meta de recebimento", "meta recebimento"],
+        recebido: ["recebido"],
+        efetividade: ["% - efet", "% efet", "efet"],
       };
 
-      const vendedorKey = findColumn("vendedor");
-      const lojaKey = findColumn("loja");
-      const filaKey = findColumn("fila");
-      const qtdCobrancaKey = findColumn("qtd de cobranca", "qtd cobranca");
-      const agendamentoMesKey = findColumn("agendamento mes");
-      const faltaCobrancaMesKey = findColumn("falta cobranca mes");
-      const agendamentoValorKey = findColumn("agendamentos - r$", "agendamentos");
-      const metaRecebimentoKey = findColumn("meta de recebimento", "meta recebimento");
-      const recebidoKey = findColumn("recebido");
-      const efetividadeKey = findColumn("% - efet", "efet");
+      const headerRowIndex = matrixRows.findIndex((row) =>
+        hasAnyCandidate(row[0], ["situacao"]) &&
+        hasAnyCandidate(row[1], columnsMatchers.vendedor) &&
+        hasAnyCandidate(row[2], columnsMatchers.loja)
+      );
 
-      if (!vendedorKey || !lojaKey || !filaKey || !qtdCobrancaKey || !agendamentoMesKey) {
+      if (headerRowIndex < 0) {
+        setUploadError("Cabeçalho não encontrado. Verifique se a planilha contém as colunas esperadas.");
+        setCobrancasRows([]);
+        return;
+      }
+
+      const headerRow = matrixRows[headerRowIndex];
+
+      const findColumnIndex = (candidates: string[]) =>
+        headerRow.findIndex((cell) => hasAnyCandidate(cell, candidates));
+
+      const vendedorIndex = findColumnIndex(columnsMatchers.vendedor);
+      const lojaIndex = findColumnIndex(columnsMatchers.loja);
+      const filaIndex = findColumnIndex(columnsMatchers.fila);
+      const qtdCobrancaIndex = findColumnIndex(columnsMatchers.qtdCobranca);
+      const agendamentoMesIndex = findColumnIndex(columnsMatchers.agendamentoMes);
+      const faltaCobrancaMesIndex = findColumnIndex(columnsMatchers.faltaCobrancaMes);
+      const agendamentoValorIndex = findColumnIndex(columnsMatchers.agendamentoValor);
+      const metaRecebimentoIndex = findColumnIndex(columnsMatchers.metaRecebimento);
+      const recebidoIndex = findColumnIndex(columnsMatchers.recebido);
+      const efetividadeIndex = findColumnIndex(columnsMatchers.efetividade);
+
+      if (
+        vendedorIndex < 0 ||
+        lojaIndex < 0 ||
+        filaIndex < 0 ||
+        qtdCobrancaIndex < 0 ||
+        agendamentoMesIndex < 0
+      ) {
         setUploadError("Colunas obrigatórias não encontradas. Verifique o layout da planilha.");
         setCobrancasRows([]);
         return;
       }
 
-      const parsedRows: CobrancaRow[] = rows
+      const dataRows = matrixRows.slice(headerRowIndex + 1);
+
+      const parsedRows: CobrancaRow[] = dataRows
         .map((row) => ({
-          vendedor: String(row[vendedorKey] ?? "").trim(),
-          loja: String(row[lojaKey] ?? "").replace(/\D/g, ""),
-          fila: parseNumericValue(row[filaKey]),
-          qtdCobranca: parseNumericValue(row[qtdCobrancaKey]),
-          agendamentosMes: parseNumericValue(row[agendamentoMesKey]),
-          faltaCobrancaMes: parseNumericValue(row[faltaCobrancaMesKey]),
-          agendamentosValor: parseNumericValue(row[agendamentoValorKey]),
-          metaRecebimento: parseNumericValue(row[metaRecebimentoKey]),
-          recebido: parseNumericValue(row[recebidoKey]),
-          efetividade: parseNumericValue(row[efetividadeKey]),
+          vendedor: String(row[vendedorIndex] ?? "").trim(),
+          loja: String(row[lojaIndex] ?? "").replace(/\D/g, ""),
+          fila: parseNumericValue(row[filaIndex]),
+          qtdCobranca: parseNumericValue(row[qtdCobrancaIndex]),
+          agendamentosMes: parseNumericValue(row[agendamentoMesIndex]),
+          faltaCobrancaMes: faltaCobrancaMesIndex >= 0 ? parseNumericValue(row[faltaCobrancaMesIndex]) : 0,
+          agendamentosValor: agendamentoValorIndex >= 0 ? parseNumericValue(row[agendamentoValorIndex]) : 0,
+          metaRecebimento: metaRecebimentoIndex >= 0 ? parseNumericValue(row[metaRecebimentoIndex]) : 0,
+          recebido: recebidoIndex >= 0 ? parseNumericValue(row[recebidoIndex]) : 0,
+          efetividade: efetividadeIndex >= 0 ? parseNumericValue(row[efetividadeIndex]) : 0,
         }))
         .filter((row) => row.vendedor && row.loja);
+
+      if (!parsedRows.length) {
+        setUploadError("A planilha foi lida, mas não foram encontrados registros válidos abaixo do cabeçalho.");
+        setCobrancasRows([]);
+        return;
+      }
 
       setCobrancasRows(parsedRows);
       setSelectedLoja("");
