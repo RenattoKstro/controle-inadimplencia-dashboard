@@ -7,15 +7,10 @@ import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis,
-  YAxis,
 } from "recharts";
 
 type LinkItem = {
@@ -253,21 +248,21 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     });
   }, [rowsFiltradasPorLoja]);
 
-  const chartData = useMemo(() => rowsFiltradasPorLoja.map((row) => ({
-    vendedor: row.vendedor.split(" ").slice(0, 2).join(" "),
-    fila: row.fila,
-    cobrancas: row.qtdCobranca,
-    agendamentos: row.agendamentosMes,
-  })), [rowsFiltradasPorLoja]);
-
   const pieData = useMemo(() => {
     if (!selectedLoja) return [];
-    return [
-      { name: "Meta", value: resumoLoja.totalMeta },
-      { name: "Recebido", value: resumoLoja.totalRecebido },
-      { name: "Falta", value: Math.max(0, resumoLoja.totalMeta - resumoLoja.totalRecebido) },
-    ];
-  }, [resumoLoja, selectedLoja]);
+    const rowsWithCobranca = rowsFiltradasPorLoja.filter((row) => row.qtdCobranca > 0);
+    if (rowsWithCobranca.length) {
+      return rowsWithCobranca.map((row) => ({
+        name: row.vendedor,
+        value: row.qtdCobranca,
+      }));
+    }
+
+    return rowsFiltradasPorLoja.map((row) => ({
+      name: row.vendedor,
+      value: row.agendamentosMes,
+    }));
+  }, [rowsFiltradasPorLoja, selectedLoja]);
 
   const readFileWithProgress = (file: File) =>
     new Promise<ArrayBuffer>((resolve, reject) => {
@@ -299,6 +294,10 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     setIsUploadingExcel(true);
     setUploadPercent(0);
     setUploadError("");
+    let simulatedProgressTimer: number | null = null;
+    simulatedProgressTimer = window.setInterval(() => {
+      setUploadPercent((current) => (current >= 90 ? current : current + 5));
+    }, 120);
 
     try {
       const buffer = await readFileWithProgress(file);
@@ -403,6 +402,11 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       setUploadError("Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
       setCobrancasRows([]);
     } finally {
+      if (simulatedProgressTimer !== null) {
+        window.clearInterval(simulatedProgressTimer);
+      }
+      setUploadPercent(100);
+      window.setTimeout(() => setUploadPercent(0), 600);
       setIsUploadingExcel(false);
       event.target.value = "";
     }
@@ -641,23 +645,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
 
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
-                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Cobranças por vendedor</h4>
-                  <div className="h-[320px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#3f3f46" : "#cbd5e1"} />
-                        <XAxis dataKey="vendedor" tick={{ fontSize: 11 }} stroke={isDark ? "#e4e4e7" : "#1e293b"} />
-                        <YAxis stroke={isDark ? "#e4e4e7" : "#1e293b"} />
-                        <Tooltip />
-                        <Bar dataKey="cobrancas" fill="#6366f1" radius={[8, 8, 0, 0]} />
-                        <Bar dataKey="agendamentos" fill="#22c55e" radius={[8, 8, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
-                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Meta x Recebido</h4>
+                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Participação por vendedor (pizza)</h4>
                   <div className="h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -665,13 +653,40 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                           data={pieData}
                           dataKey="value"
                           nameKey="name"
-                          innerRadius={70}
-                          outerRadius={100}
-                          label={(item) => `${item.name}: ${formatCurrency(Number(item.value || 0))}`}
+                          innerRadius={55}
+                          outerRadius={105}
+                          label={({ name, value }) => `${String(name).split(" ").slice(0, 2).join(" ")}: ${formatNumber(Number(value || 0))}`}
                         />
-                        <Tooltip formatter={(value) => formatCurrency(Number(value || 0))} />
+                        <Tooltip formatter={(value) => formatNumber(Number(value || 0))} />
                       </PieChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Detalhes por vendedor</h4>
+                  <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
+                    {rowsFiltradasPorLoja.map((row) => (
+                      <div
+                        key={`${row.loja}-${row.vendedor}`}
+                        className={isDark ? "rounded-xl border border-white/10 bg-zinc-900/70 p-3" : "rounded-xl border border-slate-200 bg-white p-3"}
+                      >
+                        <p className="text-sm font-semibold">{row.vendedor}</p>
+                        <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                          <p><span className="font-medium">Cobranças:</span> {formatNumber(row.qtdCobranca)}</p>
+                          <p><span className="font-medium">Agend. mês:</span> {formatNumber(row.agendamentosMes)}</p>
+                          <p><span className="font-medium">Efetividade:</span> {row.efetividade.toFixed(2)}%</p>
+                          <p><span className="font-medium">Meta mês:</span> {formatCurrency(row.metaRecebimento)}</p>
+                          <p><span className="font-medium">Falta:</span> {formatNumber(row.faltaCobrancaMes)}</p>
+                          <p><span className="font-medium">Fila:</span> {formatNumber(row.fila)}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {!rowsFiltradasPorLoja.length && (
+                      <p className={isDark ? "text-sm text-zinc-500" : "text-sm text-slate-500"}>
+                        Selecione uma loja para visualizar os vendedores.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
