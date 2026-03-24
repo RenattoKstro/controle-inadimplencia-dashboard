@@ -198,6 +198,8 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
   const [selectedLoja, setSelectedLoja] = useState("");
   const [uploadError, setUploadError] = useState("");
+  const [isUploadingExcel, setIsUploadingExcel] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState(0);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const dashboardRef = useRef<HTMLDivElement | null>(null);
 
@@ -267,12 +269,39 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     ];
   }, [resumoLoja, selectedLoja]);
 
+  const readFileWithProgress = (file: File) =>
+    new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onprogress = (progressEvent) => {
+        if (!progressEvent.lengthComputable) return;
+        const percent = Math.min(100, Math.round((progressEvent.loaded / progressEvent.total) * 100));
+        setUploadPercent(percent);
+      };
+
+      reader.onload = () => {
+        if (reader.result instanceof ArrayBuffer) {
+          setUploadPercent(100);
+          resolve(reader.result);
+          return;
+        }
+        reject(new Error("Falha ao ler o arquivo como ArrayBuffer."));
+      };
+
+      reader.onerror = () => reject(reader.error ?? new Error("Falha desconhecida ao ler o arquivo."));
+      reader.readAsArrayBuffer(file);
+    });
+
   const handleUploadExcel = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setIsUploadingExcel(true);
+    setUploadPercent(0);
+    setUploadError("");
+
     try {
-      const buffer = await file.arrayBuffer();
+      const buffer = await readFileWithProgress(file);
       const workbook = XLSX.read(buffer, { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const matrixRows = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
@@ -296,11 +325,19 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
         efetividade: ["% - efet", "% efet", "efet"],
       };
 
-      const headerRowIndex = matrixRows.findIndex((row) =>
-        hasAnyCandidate(row[0], ["situacao"]) &&
-        hasAnyCandidate(row[1], columnsMatchers.vendedor) &&
-        hasAnyCandidate(row[2], columnsMatchers.loja)
-      );
+      const firstPossibleHeaderLine = 4; // linha 5 do Excel (0-indexado)
+      const headerRowIndex = matrixRows.findIndex((row, index) => {
+        if (index < firstPossibleHeaderLine) return false;
+        const normalizedCells = row.map((cell) => normalizeText(cell));
+        const hasSituacao = normalizedCells.some((cell) => cell.includes("situacao"));
+        const hasVendedor = normalizedCells.some((cell) =>
+          columnsMatchers.vendedor.some((candidate) => cell.includes(candidate))
+        );
+        const hasLoja = normalizedCells.some((cell) =>
+          columnsMatchers.loja.some((candidate) => cell.includes(candidate))
+        );
+        return hasSituacao && hasVendedor && hasLoja;
+      });
 
       if (headerRowIndex < 0) {
         setUploadError("Cabeçalho não encontrado. Verifique se a planilha contém as colunas esperadas.");
@@ -366,6 +403,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       setUploadError("Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
       setCobrancasRows([]);
     } finally {
+      setIsUploadingExcel(false);
       event.target.value = "";
     }
   };
@@ -536,8 +574,21 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                 <Label htmlFor="cobrancas-file">Arquivo Excel</Label>
                 <Input id="cobrancas-file" type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} className="mt-3" />
+                {isUploadingExcel && (
+                  <div className="mt-3 space-y-2">
+                    <div className={isDark ? "h-2 w-full overflow-hidden rounded-full bg-zinc-800" : "h-2 w-full overflow-hidden rounded-full bg-slate-200"}>
+                      <div
+                        className="h-2 rounded-full bg-indigo-500 transition-all duration-300"
+                        style={{ width: `${uploadPercent}%` }}
+                      />
+                    </div>
+                    <p className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-600"}>
+                      Carregando arquivo... {uploadPercent}%
+                    </p>
+                  </div>
+                )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
-                  A leitura considera a primeira aba do arquivo.
+                  A leitura considera a primeira aba do arquivo e procura cabeçalho a partir da linha 5.
                 </p>
               </div>
 
