@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,9 +76,30 @@ const GerenciarUsuarios = () => {
   const [schemaTemMembro, setSchemaTemMembro] = useState(true);
   const [form, setForm] = useState({ nome_usuario: "", filial_id: "", regional: "", membro: false });
   const [novaRegional, setNovaRegional] = useState("");
+  const [authEmailsById, setAuthEmailsById] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchUsuarios();
+  }, []);
+
+  useEffect(() => {
+    const loadAuthEmails = async () => {
+      try {
+        const response = await fetch("/.netlify/functions/list-auth-users");
+        if (!response.ok) return;
+        const payload = await response.json() as { users?: Array<{ id: string; email?: string | null }> };
+        const nextMap = Object.fromEntries(
+          (payload.users || [])
+            .filter((user) => user.id && user.email)
+            .map((user) => [user.id, user.email as string])
+        );
+        setAuthEmailsById(nextMap);
+      } catch {
+        // Se a função ou a secret não estiverem disponíveis, mantemos os dados já exibidos pela tela.
+      }
+    };
+
+    loadAuthEmails();
   }, []);
 
   const fetchUsuarios = async () => {
@@ -122,7 +143,7 @@ const GerenciarUsuarios = () => {
         return {
           id: u.id,
           user_id: u.user_id || String(u.id),
-          email: u.email || "Sem e-mail",
+          email: u.email || "E-mail indisponível",
           nome_usuario: u.nome_usuario || "Sem nome",
           filial_id: filialId,
           nome_filial: filialData?.filial || (filialId ? `Filial ${filialId}` : "Sem filial"),
@@ -141,16 +162,19 @@ const GerenciarUsuarios = () => {
         .not("usuario_principal", "is", null);
 
       if (rankingData) {
-        const existentes = new Set(lista.map((u) => u.user_id));
-        const extras: UsuarioComFilial[] = (rankingData as Array<{
+        const userIdsExistentes = new Set(lista.map((u) => u.user_id));
+        const extrasRanking: UsuarioComFilial[] = (rankingData as Array<{
           idfilial: number;
           filial: string;
           regional: string | null;
           usuario_principal: {
             user_id: string;
             nome_usuario: string;
+            email?: string | null;
             whatsapp: string;
             instagram: string;
+            role?: string | null;
+            membro?: boolean | null;
           } | null;
         }>)
           .filter((r) => r.usuario_principal?.user_id)
@@ -158,6 +182,7 @@ const GerenciarUsuarios = () => {
             const principal = r.usuario_principal as {
               user_id: string;
               nome_usuario?: string | null;
+              email?: string | null;
               whatsapp?: string | null;
               instagram?: string | null;
               role?: string | null;
@@ -167,7 +192,7 @@ const GerenciarUsuarios = () => {
             return {
               id: `view-${r.idfilial}-${index}`,
               user_id: principal?.user_id || `view-user-${index}`,
-              email: "Sem e-mail",
+              email: principal?.email || "E-mail indisponível",
               nome_usuario: principal?.nome_usuario || "Sem nome",
               filial_id: r.idfilial,
               nome_filial: r.filial || `Filial ${r.idfilial}`,
@@ -178,10 +203,24 @@ const GerenciarUsuarios = () => {
               membro: Boolean(principal?.membro),
               origem: "vw_ranking_filiais",
             };
-          })
-          .filter((u) => !existentes.has(u.user_id));
+          });
 
-        const usuariosCompletos = [...lista, ...extras];
+        const usuariosEnriquecidos = lista.map((usuario) => {
+          const extra = extrasRanking.find((item) => item.user_id === usuario.user_id);
+          if (!extra) return usuario;
+
+          return {
+            ...usuario,
+            email: usuario.email !== "E-mail indisponível" ? usuario.email : extra.email,
+            role: usuario.role !== "Sem perfil" ? usuario.role : extra.role,
+            whatsapp: usuario.whatsapp !== "-" ? usuario.whatsapp : extra.whatsapp,
+            instagram: usuario.instagram !== "-" ? usuario.instagram : extra.instagram,
+            membro: usuario.membro || extra.membro,
+          };
+        });
+
+        const usuariosComUIDNovo = extrasRanking.filter((u) => !userIdsExistentes.has(u.user_id));
+        const usuariosCompletos = [...usuariosEnriquecidos, ...usuariosComUIDNovo];
         await syncMembrosManifest(usuariosCompletos);
         setUsuarios(usuariosCompletos);
         return;
@@ -273,18 +312,6 @@ const GerenciarUsuarios = () => {
       }
     }
 
-    if (updatedSuccessfully) {
-      const roleValue = form.membro ? "membro" : null;
-      const { error: roleError } = await supabase
-        .from("user_dashboard")
-        .update({ role: roleValue })
-        .eq("user_id", userId);
-
-      if (roleError) {
-        // não bloqueia o fluxo: alguns ambientes podem não ter permissão para role.
-      }
-    }
-
     if (saveError) {
       if ((saveError.message || "").toLowerCase().includes("row-level security")) {
         alert("Erro de permissão (RLS): este usuário ainda não pode ser alterado pelo painel. Peça para ele abrir o dashboard e salvar os dados em Ajustes de Metas ao menos uma vez.");
@@ -328,6 +355,11 @@ const GerenciarUsuarios = () => {
     fetchUsuarios();
   };
 
+  const usuariosExibidos = useMemo(() => usuarios.map((usuario) => ({
+    ...usuario,
+    email: authEmailsById[usuario.user_id] || usuario.email,
+  })), [usuarios, authEmailsById]);
+
   const aplicarRegionalEmMassa = async () => {
     if (!novaRegional.trim()) return;
 
@@ -364,7 +396,10 @@ const GerenciarUsuarios = () => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
-        <p className="text-sm text-zinc-300">Total de usuários: {usuarios.length}</p>
+        <div className="space-y-1">
+          <p className="text-sm text-zinc-300">Total de usuários: {usuarios.length}</p>
+          <p className="text-xs text-zinc-400">Quando a função server-side estiver configurada com `SUPABASE_SERVICE_ROLE_KEY`, os e-mails do Auth aparecem automaticamente aqui na tabela.</p>
+        </div>
         <div className="flex gap-2 w-full md:w-auto">
           <Input
             value={novaRegional}
@@ -400,11 +435,11 @@ const GerenciarUsuarios = () => {
                 <TableCell colSpan={10} className="text-center py-10">Nenhum usuário encontrado.</TableCell>
               </TableRow>
             ) : (
-              usuarios.map((u) => {
+              usuariosExibidos.map((u) => {
                 const isEditing = editingUserId === u.user_id;
                 return (
                   <TableRow key={u.user_id} className="hover:bg-zinc-800/50">
-                    <TableCell className="max-w-48 truncate">{u.email}</TableCell>
+                    <TableCell className="max-w-72 whitespace-normal break-all" title={u.email}>{u.email}</TableCell>
                     <TableCell>
                       {isEditing ? (
                         <Input
@@ -447,7 +482,7 @@ const GerenciarUsuarios = () => {
                         </label>
                       ) : (u.membro ? "Sim" : "Não")}
                     </TableCell>
-                    <TableCell className="text-xs font-mono hidden lg:table-cell">{u.user_id.slice(0, 8)}...</TableCell>
+                    <TableCell className="text-xs font-mono hidden lg:table-cell whitespace-normal break-all" title={u.user_id}>{u.user_id}</TableCell>
                     <TableCell className="text-right space-x-1 sticky right-0 bg-zinc-950/95">
                       {isEditing ? (
                         <>

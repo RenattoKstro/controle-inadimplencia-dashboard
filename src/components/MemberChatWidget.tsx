@@ -108,6 +108,20 @@ const MemberChatWidget = ({
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, open]);
+  useEffect(() => {
+    const handleOpenPrivateChat = (event: Event) => {
+      const customEvent = event as CustomEvent<ChatViewer | null>;
+      const target = customEvent.detail;
+      if (!isMembro || !target?.user_id || target.user_id === viewer.user_id) return;
+      setPrivateTarget(target);
+      setOpen(true);
+      setLastSeenAt(new Date().toISOString());
+    };
+
+    window.addEventListener("member-chat-open-private", handleOpenPrivateChat as EventListener);
+    return () => window.removeEventListener("member-chat-open-private", handleOpenPrivateChat as EventListener);
+  }, [isMembro, viewer.user_id]);
+
 
   const isPrivateMessage = (message: ChatMessageRow) => (
     Boolean(message.is_private)
@@ -217,7 +231,6 @@ const MemberChatWidget = ({
         recipient_user_id: privateTarget.user_id,
         scope: "private",
       },
-      ...basePublicPayloads,
     ];
   };
 
