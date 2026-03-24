@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
 import {
+  Cell,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -187,6 +188,25 @@ const hasAnyCandidate = (cell: unknown, candidates: string[]) => {
   return candidates.some((candidate) => normalized.includes(candidate));
 };
 
+const PIE_COLORS = [
+  "#16a34a",
+  "#eab308",
+  "#2563eb",
+  "#dc2626",
+  "#9333ea",
+  "#ea580c",
+  "#0d9488",
+  "#db2777",
+  "#7c3aed",
+  "#0284c7",
+  "#65a30d",
+  "#be123c",
+  "#4f46e5",
+  "#84cc16",
+  "#f59e0b",
+  "#0891b2",
+];
+
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const isDark = document.documentElement.classList.contains("dark");
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
@@ -196,7 +216,9 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
   const [uploadPercent, setUploadPercent] = useState(0);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isGeneratingDetailsImage, setIsGeneratingDetailsImage] = useState(false);
   const dashboardRef = useRef<HTMLDivElement | null>(null);
+  const fullDetailsExportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -268,15 +290,8 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     new Promise<ArrayBuffer>((resolve, reject) => {
       const reader = new FileReader();
 
-      reader.onprogress = (progressEvent) => {
-        if (!progressEvent.lengthComputable) return;
-        const percent = Math.min(100, Math.round((progressEvent.loaded / progressEvent.total) * 100));
-        setUploadPercent(percent);
-      };
-
       reader.onload = () => {
         if (reader.result instanceof ArrayBuffer) {
-          setUploadPercent(100);
           resolve(reader.result);
           return;
         }
@@ -295,9 +310,13 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     setUploadPercent(0);
     setUploadError("");
     let simulatedProgressTimer: number | null = null;
+    const uploadSteps = [10, 30, 50, 80];
+    let stepIndex = 0;
+    setUploadPercent(uploadSteps[stepIndex]);
     simulatedProgressTimer = window.setInterval(() => {
-      setUploadPercent((current) => (current >= 90 ? current : current + 5));
-    }, 120);
+      stepIndex = Math.min(stepIndex + 1, uploadSteps.length - 1);
+      setUploadPercent(uploadSteps[stepIndex]);
+    }, 350);
 
     try {
       const buffer = await readFileWithProgress(file);
@@ -428,6 +447,25 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       link.click();
     } finally {
       setIsGeneratingImage(false);
+    }
+  };
+
+  const handleDownloadFullDetails = async () => {
+    if (!fullDetailsExportRef.current || !rowsFiltradasPorLoja.length) return;
+
+    try {
+      setIsGeneratingDetailsImage(true);
+      const canvas = await html2canvas(fullDetailsExportRef.current, {
+        backgroundColor: isDark ? "#09090b" : "#f8fafc",
+        scale: 2,
+      });
+
+      const link = document.createElement("a");
+      link.download = `detalhes-vendedores-loja-${selectedLoja || "geral"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } finally {
+      setIsGeneratingDetailsImage(false);
     }
   };
 
@@ -580,15 +618,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 <Input id="cobrancas-file" type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} className="mt-3" />
                 {isUploadingExcel && (
                   <div className="mt-3 space-y-2">
-                    <div className={isDark ? "h-2 w-full overflow-hidden rounded-full bg-zinc-800" : "h-2 w-full overflow-hidden rounded-full bg-slate-200"}>
-                      <div
-                        className="h-2 rounded-full bg-indigo-500 transition-all duration-300"
-                        style={{ width: `${uploadPercent}%` }}
-                      />
-                    </div>
-                    <p className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-600"}>
-                      Carregando arquivo... {uploadPercent}%
-                    </p>
+                    <p className={isDark ? "text-xs text-zinc-300 animate-pulse" : "text-xs text-slate-700 animate-pulse"}>Carregando... {uploadPercent}%</p>
                   </div>
                 )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
@@ -645,7 +675,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
 
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
-                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Participação por vendedor (pizza)</h4>
+                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Participação por vendedor</h4>
                   <div className="h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -655,8 +685,13 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                           nameKey="name"
                           innerRadius={55}
                           outerRadius={105}
-                          label={({ name, value }) => `${String(name).split(" ").slice(0, 2).join(" ")}: ${formatNumber(Number(value || 0))}`}
-                        />
+                          label={({ name }) => String(name || "").split(" ")[0] || ""}
+                        >
+                          {pieData.map((_, index) => {
+                            const fallbackColor = `hsl(${(index * 31) % 360} 70% 50%)`;
+                            return <Cell key={`cell-${index}`} fill={PIE_COLORS[index] ?? fallbackColor} />;
+                          })}
+                        </Pie>
                         <Tooltip formatter={(value) => formatNumber(Number(value || 0))} />
                       </PieChart>
                     </ResponsiveContainer>
@@ -664,7 +699,19 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 </div>
 
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
-                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Detalhes por vendedor</h4>
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h4 className="text-sm font-semibold uppercase tracking-wide text-indigo-400">Detalhes por vendedor</h4>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleDownloadFullDetails}
+                      disabled={!rowsFiltradasPorLoja.length || isGeneratingDetailsImage}
+                      className="h-7 px-2 text-xs"
+                    >
+                      {isGeneratingDetailsImage ? "Baixando..." : "⬇ Detalhes"}
+                    </Button>
+                  </div>
                   <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
                     {rowsFiltradasPorLoja.map((row) => (
                       <div
@@ -694,6 +741,62 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
           </section>
         </TabsContent>
       </Tabs>
+
+      <div className="pointer-events-none fixed -left-[10000px] top-0 z-[-1] w-[1400px]">
+        <div
+          ref={fullDetailsExportRef}
+          className={isDark ? "space-y-4 rounded-3xl border border-white/10 bg-zinc-950 p-6 text-zinc-100" : "space-y-4 rounded-3xl border border-slate-200 bg-white p-6 text-slate-900"}
+        >
+          <h3 className="text-xl font-semibold">Loja {selectedLoja || "-"}</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Participação por vendedor</h4>
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={55}
+                      outerRadius={105}
+                      label={({ name }) => String(name || "").split(" ")[0] || ""}
+                    >
+                      {pieData.map((_, index) => {
+                        const fallbackColor = `hsl(${(index * 31) % 360} 70% 50%)`;
+                        return <Cell key={`export-cell-${index}`} fill={PIE_COLORS[index] ?? fallbackColor} />;
+                      })}
+                    </Pie>
+                    <Tooltip formatter={(value) => formatNumber(Number(value || 0))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+              <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Detalhes por vendedor</h4>
+              <div className="space-y-2">
+                {rowsFiltradasPorLoja.map((row) => (
+                  <div
+                    key={`export-${row.loja}-${row.vendedor}`}
+                    className={isDark ? "rounded-xl border border-white/10 bg-zinc-800/80 p-3" : "rounded-xl border border-slate-200 bg-white p-3"}
+                  >
+                    <p className="text-sm font-semibold">{row.vendedor}</p>
+                    <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
+                      <p><span className="font-medium">Cobranças:</span> {formatNumber(row.qtdCobranca)}</p>
+                      <p><span className="font-medium">Agend. mês:</span> {formatNumber(row.agendamentosMes)}</p>
+                      <p><span className="font-medium">Efetividade:</span> {row.efetividade.toFixed(2)}%</p>
+                      <p><span className="font-medium">Meta mês:</span> {formatCurrency(row.metaRecebimento)}</p>
+                      <p><span className="font-medium">Falta:</span> {formatNumber(row.faltaCobrancaMes)}</p>
+                      <p><span className="font-medium">Fila:</span> {formatNumber(row.fila)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
