@@ -1,8 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { Chrome, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { BarChart3, Camera, Chrome, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import * as XLSX from "xlsx";
+import html2canvas from "html2canvas";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type LinkItem = {
   id: string;
@@ -131,14 +145,55 @@ type MatrizLinksProps = {
   receivedAmount?: number;
 };
 
+type CobrancaRow = {
+  vendedor: string;
+  loja: string;
+  fila: number;
+  qtdCobranca: number;
+  agendamentosMes: number;
+  faltaCobrancaMes: number;
+  agendamentosValor: number;
+  metaRecebimento: number;
+  recebido: number;
+  efetividade: number;
+};
+
 const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 }).format(value || 0);
 
+const formatNumber = (value: number) => new Intl.NumberFormat("pt-BR").format(value || 0);
+
+const parseNumericValue = (value: unknown): number => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value !== "string") return 0;
+
+  const normalized = value
+    .replace(/\s/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".")
+    .replace("%", "");
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeText = (value: unknown) =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const isDark = document.documentElement.classList.contains("dark");
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
+  const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
+  const [selectedLoja, setSelectedLoja] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -161,12 +216,150 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const restante = Math.max(0, metaDiaria - receivedAmount);
   const percentual = metaDiaria > 0 ? (receivedAmount / metaDiaria) * 100 : 0;
 
+  const lojasDisponiveis = useMemo(() => {
+    const unique = new Set(cobrancasRows.map((row) => row.loja).filter(Boolean));
+    return Array.from(unique).sort((a, b) => Number(a) - Number(b));
+  }, [cobrancasRows]);
+
+  const rowsFiltradasPorLoja = useMemo(() => {
+    if (!selectedLoja) return [];
+    return cobrancasRows.filter((row) => row.loja === selectedLoja);
+  }, [cobrancasRows, selectedLoja]);
+
+  const resumoLoja = useMemo(() => {
+    return rowsFiltradasPorLoja.reduce((acc, row) => {
+      acc.totalFila += row.fila;
+      acc.totalCobrancas += row.qtdCobranca;
+      acc.totalAgendamentos += row.agendamentosMes;
+      acc.totalFalta += row.faltaCobrancaMes;
+      acc.totalRecebido += row.recebido;
+      acc.totalMeta += row.metaRecebimento;
+      return acc;
+    }, {
+      totalFila: 0,
+      totalCobrancas: 0,
+      totalAgendamentos: 0,
+      totalFalta: 0,
+      totalRecebido: 0,
+      totalMeta: 0,
+    });
+  }, [rowsFiltradasPorLoja]);
+
+  const chartData = useMemo(() => rowsFiltradasPorLoja.map((row) => ({
+    vendedor: row.vendedor.split(" ").slice(0, 2).join(" "),
+    fila: row.fila,
+    cobrancas: row.qtdCobranca,
+    agendamentos: row.agendamentosMes,
+  })), [rowsFiltradasPorLoja]);
+
+  const pieData = useMemo(() => {
+    if (!selectedLoja) return [];
+    return [
+      { name: "Meta", value: resumoLoja.totalMeta },
+      { name: "Recebido", value: resumoLoja.totalRecebido },
+      { name: "Falta", value: Math.max(0, resumoLoja.totalMeta - resumoLoja.totalRecebido) },
+    ];
+  }, [resumoLoja, selectedLoja]);
+
+  const handleUploadExcel = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
+
+      if (!rows.length) {
+        setUploadError("Não foi possível ler dados da planilha.");
+        setCobrancasRows([]);
+        return;
+      }
+
+      const firstRow = rows[0];
+      const keyMap = Object.keys(firstRow).reduce<Record<string, string>>((acc, key) => {
+        acc[normalizeText(key)] = key;
+        return acc;
+      }, {});
+
+      const findColumn = (...candidates: string[]) => {
+        for (const candidate of candidates) {
+          const target = Object.keys(keyMap).find((key) => key.includes(candidate));
+          if (target) return keyMap[target];
+        }
+        return "";
+      };
+
+      const vendedorKey = findColumn("vendedor");
+      const lojaKey = findColumn("loja");
+      const filaKey = findColumn("fila");
+      const qtdCobrancaKey = findColumn("qtd de cobranca", "qtd cobranca");
+      const agendamentoMesKey = findColumn("agendamento mes");
+      const faltaCobrancaMesKey = findColumn("falta cobranca mes");
+      const agendamentoValorKey = findColumn("agendamentos - r$", "agendamentos");
+      const metaRecebimentoKey = findColumn("meta de recebimento", "meta recebimento");
+      const recebidoKey = findColumn("recebido");
+      const efetividadeKey = findColumn("% - efet", "efet");
+
+      if (!vendedorKey || !lojaKey || !filaKey || !qtdCobrancaKey || !agendamentoMesKey) {
+        setUploadError("Colunas obrigatórias não encontradas. Verifique o layout da planilha.");
+        setCobrancasRows([]);
+        return;
+      }
+
+      const parsedRows: CobrancaRow[] = rows
+        .map((row) => ({
+          vendedor: String(row[vendedorKey] ?? "").trim(),
+          loja: String(row[lojaKey] ?? "").replace(/\D/g, ""),
+          fila: parseNumericValue(row[filaKey]),
+          qtdCobranca: parseNumericValue(row[qtdCobrancaKey]),
+          agendamentosMes: parseNumericValue(row[agendamentoMesKey]),
+          faltaCobrancaMes: parseNumericValue(row[faltaCobrancaMesKey]),
+          agendamentosValor: parseNumericValue(row[agendamentoValorKey]),
+          metaRecebimento: parseNumericValue(row[metaRecebimentoKey]),
+          recebido: parseNumericValue(row[recebidoKey]),
+          efetividade: parseNumericValue(row[efetividadeKey]),
+        }))
+        .filter((row) => row.vendedor && row.loja);
+
+      setCobrancasRows(parsedRows);
+      setSelectedLoja("");
+      setUploadError("");
+    } catch {
+      setUploadError("Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
+      setCobrancasRows([]);
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const handleDownloadDashboard = async () => {
+    if (!dashboardRef.current) return;
+
+    try {
+      setIsGeneratingImage(true);
+      const canvas = await html2canvas(dashboardRef.current, {
+        backgroundColor: isDark ? "#09090b" : "#f8fafc",
+        scale: 2,
+      });
+
+      const link = document.createElement("a");
+      link.download = `cobrancas-loja-${selectedLoja || "geral"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <Tabs defaultValue="atalhos" className="space-y-6">
-        <TabsList className={isDark ? "grid w-full grid-cols-2 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-2 rounded-2xl border border-slate-200 bg-white p-1"}>
+        <TabsList className={isDark ? "grid w-full grid-cols-3 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1"}>
           <TabsTrigger value="atalhos" className="rounded-xl">Atalhos</TabsTrigger>
           <TabsTrigger value="meta-matriz" className="rounded-xl">Meta Matriz</TabsTrigger>
+          <TabsTrigger value="cobrancas-vendedor" className="rounded-xl">Cobranças Vendedor</TabsTrigger>
         </TabsList>
 
         <TabsContent value="atalhos" className="space-y-8">
@@ -274,6 +467,126 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
                   Percentual de atingimento da meta diária.
                 </p>
+              </div>
+            </div>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="cobrancas-vendedor" className="space-y-6">
+          <section className={isDark ? "rounded-3xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl" : "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg"}>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-indigo-400" />
+                  <h3 className="text-2xl font-semibold">Cobranças por Vendedor</h3>
+                </div>
+                <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-600"}>
+                  Faça upload da planilha, selecione a loja (somente números) e gere o painel de cobranças.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                onClick={handleDownloadDashboard}
+                disabled={!rowsFiltradasPorLoja.length || isGeneratingImage}
+                className="gap-2"
+              >
+                <Camera className="h-4 w-4" />
+                {isGeneratingImage ? "Gerando imagem..." : "Baixar imagem"}
+              </Button>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <Label htmlFor="cobrancas-file">Arquivo Excel</Label>
+                <Input id="cobrancas-file" type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} className="mt-3" />
+                <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
+                  A leitura considera a primeira aba do arquivo.
+                </p>
+              </div>
+
+              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <Label htmlFor="loja-select">Selecionar Loja</Label>
+                <Input
+                  id="loja-select"
+                  value={selectedLoja}
+                  onChange={(event) => setSelectedLoja(event.target.value.replace(/\D/g, ""))}
+                  placeholder="Ex.: 10359"
+                  className="mt-3"
+                  list="lojas-disponiveis"
+                />
+                <datalist id="lojas-disponiveis">
+                  {lojasDisponiveis.map((loja) => (
+                    <option key={loja} value={loja} />
+                  ))}
+                </datalist>
+                <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
+                  Lojas disponíveis: {lojasDisponiveis.length}
+                </p>
+              </div>
+            </div>
+
+            {uploadError && (
+              <p className="mt-4 rounded-xl border border-rose-300/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-400">
+                {uploadError}
+              </p>
+            )}
+
+            <div ref={dashboardRef} className="mt-6 space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                  <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Vendedores</p>
+                  <p className="mt-3 text-3xl font-semibold">{formatNumber(rowsFiltradasPorLoja.length)}</p>
+                </div>
+                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                  <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Filas</p>
+                  <p className="mt-3 text-3xl font-semibold">{formatNumber(resumoLoja.totalFila)}</p>
+                </div>
+                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                  <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Qtd. Cobranças</p>
+                  <p className="mt-3 text-3xl font-semibold">{formatNumber(resumoLoja.totalCobrancas)}</p>
+                </div>
+                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                  <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Agendamentos</p>
+                  <p className="mt-3 text-3xl font-semibold">{formatNumber(resumoLoja.totalAgendamentos)}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Cobranças por vendedor</h4>
+                  <div className="h-[320px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#3f3f46" : "#cbd5e1"} />
+                        <XAxis dataKey="vendedor" tick={{ fontSize: 11 }} stroke={isDark ? "#e4e4e7" : "#1e293b"} />
+                        <YAxis stroke={isDark ? "#e4e4e7" : "#1e293b"} />
+                        <Tooltip />
+                        <Bar dataKey="cobrancas" fill="#6366f1" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="agendamentos" fill="#22c55e" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                  <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Meta x Recebido</h4>
+                  <div className="h-[320px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={70}
+                          outerRadius={100}
+                          label={(item) => `${item.name}: ${formatCurrency(Number(item.value || 0))}`}
+                        />
+                        <Tooltip formatter={(value) => formatCurrency(Number(value || 0))} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
