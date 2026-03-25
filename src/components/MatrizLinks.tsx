@@ -231,7 +231,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [selectedLoja, setSelectedLoja] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
-  const [uploadPercent, setUploadPercent] = useState(0);
   const [loadingDots, setLoadingDots] = useState(1);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingDetailsImage, setIsGeneratingDetailsImage] = useState(false);
@@ -339,9 +338,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     if (!file) return;
 
     setIsUploadingExcel(true);
-    setUploadPercent(0);
     setUploadError("");
-    setUploadPercent(99);
 
     try {
       const buffer = await readFileWithProgress(file);
@@ -446,8 +443,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       setUploadError("Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
       setCobrancasRows([]);
     } finally {
-      setUploadPercent(100);
-      window.setTimeout(() => setUploadPercent(0), 600);
       setIsUploadingExcel(false);
       event.target.value = "";
     }
@@ -593,17 +588,14 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   };
 
   const getPerformanceVisual = (row: CobrancaRow) => {
-    const volumeRatio = META_COBRANCAS_PADRAO > 0 ? row.qtdCobranca / META_COBRANCAS_PADRAO : 0;
-    const score = (volumeRatio * 0.7) + ((row.efetividade / 100) * 0.3);
-
-    if (score >= 0.9 || (volumeRatio >= 0.8 && row.efetividade >= 90)) {
+    if (row.qtdCobranca >= 481) {
       return {
         nameClass: isDark ? "text-emerald-400" : "text-emerald-700",
         valueClass: isDark ? "text-emerald-300" : "text-emerald-700",
       };
     }
 
-    if (score >= 0.5 || volumeRatio >= 0.45 || row.efetividade >= 70) {
+    if (row.qtdCobranca >= 251) {
       return {
         nameClass: isDark ? "text-amber-300" : "text-amber-700",
         valueClass: isDark ? "text-amber-200" : "text-amber-700",
