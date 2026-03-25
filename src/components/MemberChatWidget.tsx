@@ -210,7 +210,7 @@ const MemberChatWidget = ({
         avatar_url: viewer.avatar_url || null,
         filial: filialNumber,
         mensagem: chatText,
-        recipient_user_id: privateTarget.user_id,
+        target_user_id: privateTarget.user_id,
         is_private: true,
       },
       {
@@ -228,7 +228,7 @@ const MemberChatWidget = ({
         avatar_url: viewer.avatar_url || null,
         filial: filialNumber,
         content: chatText,
-        recipient_user_id: privateTarget.user_id,
+        target_user_id: privateTarget.user_id,
         scope: "private",
       },
     ];
