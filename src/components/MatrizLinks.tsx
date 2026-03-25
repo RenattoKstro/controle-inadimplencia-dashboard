@@ -232,6 +232,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [uploadError, setUploadError] = useState("");
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
   const [uploadPercent, setUploadPercent] = useState(0);
+  const [loadingDots, setLoadingDots] = useState(1);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingDetailsImage, setIsGeneratingDetailsImage] = useState(false);
   const [analysisText, setAnalysisText] = useState("");
@@ -255,6 +256,19 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     if (!userId) return;
     localStorage.setItem(`matriz-meta-diaria:${userId}`, String(metaDiaria));
   }, [metaDiaria, userId]);
+
+  useEffect(() => {
+    if (!isUploadingExcel) {
+      setLoadingDots(1);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setLoadingDots((current) => (current >= 3 ? 1 : current + 1));
+    }, 350);
+
+    return () => window.clearInterval(interval);
+  }, [isUploadingExcel]);
 
   const restante = Math.max(0, metaDiaria - receivedAmount);
   const percentual = metaDiaria > 0 ? (receivedAmount / metaDiaria) * 100 : 0;
@@ -578,6 +592,30 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     await navigator.clipboard.writeText(analysisText);
   };
 
+  const getPerformanceVisual = (row: CobrancaRow) => {
+    const volumeRatio = META_COBRANCAS_PADRAO > 0 ? row.qtdCobranca / META_COBRANCAS_PADRAO : 0;
+    const score = (volumeRatio * 0.7) + ((row.efetividade / 100) * 0.3);
+
+    if (score >= 0.9 || (volumeRatio >= 0.8 && row.efetividade >= 90)) {
+      return {
+        nameClass: isDark ? "text-emerald-400" : "text-emerald-700",
+        valueClass: isDark ? "text-emerald-300" : "text-emerald-700",
+      };
+    }
+
+    if (score >= 0.5 || volumeRatio >= 0.45 || row.efetividade >= 70) {
+      return {
+        nameClass: isDark ? "text-amber-300" : "text-amber-700",
+        valueClass: isDark ? "text-amber-200" : "text-amber-700",
+      };
+    }
+
+    return {
+      nameClass: isDark ? "text-rose-400" : "text-rose-700",
+      valueClass: isDark ? "text-rose-300" : "text-rose-700",
+    };
+  };
+
   return (
     <div className="space-y-8">
       <Tabs defaultValue="atalhos" className="space-y-6">
@@ -728,7 +766,9 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 <Input id="cobrancas-file" type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} className="mt-3" />
                 {isUploadingExcel && (
                   <div className="mt-3 space-y-2">
-                    <p className={isDark ? "text-xs text-zinc-300 animate-pulse" : "text-xs text-slate-700 animate-pulse"}>Carregando... {uploadPercent}%</p>
+                    <p className={isDark ? "text-xs text-zinc-300" : "text-xs text-slate-700"}>
+                      {`Carregando${".".repeat(loadingDots)}`}
+                    </p>
                   </div>
                 )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
@@ -828,14 +868,14 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                         key={`${row.loja}-${row.vendedor}`}
                         className={isDark ? "rounded-xl border border-white/10 bg-zinc-900/70 p-3" : "rounded-xl border border-slate-200 bg-white p-3"}
                       >
-                        <p className="text-sm font-semibold">{row.vendedor}</p>
+                        <p className={`text-sm font-semibold ${getPerformanceVisual(row).nameClass}`}>{row.vendedor}</p>
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
-                          <p><span className="font-medium">Cobranças:</span> {formatNumber(row.qtdCobranca)}</p>
-                          <p><span className="font-medium">Agend. mês:</span> {formatNumber(row.agendamentosMes)}</p>
-                          <p><span className="font-medium">Efetividade:</span> {row.efetividade.toFixed(2)}%</p>
-                          <p><span className="font-medium">Meta mês:</span> {formatCurrency(row.metaRecebimento)}</p>
-                          <p><span className="font-medium">Falta:</span> {formatNumber(row.faltaCobrancaMes)}</p>
-                          <p><span className="font-medium">Fila:</span> {formatNumber(row.fila)}</p>
+                          <p><span className="font-medium">Cobranças:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.qtdCobranca)}</span></p>
+                          <p><span className="font-medium">Agend. mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.agendamentosMes)}</span></p>
+                          <p><span className="font-medium">Efetividade:</span> <span className={getPerformanceVisual(row).valueClass}>{row.efetividade.toFixed(2)}%</span></p>
+                          <p><span className="font-medium">Meta mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatCurrency(row.metaRecebimento)}</span></p>
+                          <p><span className="font-medium">Falta:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.faltaCobrancaMes)}</span></p>
+                          <p><span className="font-medium">Fila:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.fila)}</span></p>
                         </div>
                       </div>
                     ))}
@@ -918,14 +958,14 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                     key={`export-${row.loja}-${row.vendedor}`}
                     className={isDark ? "rounded-xl border border-white/10 bg-zinc-800/80 p-3" : "rounded-xl border border-slate-200 bg-white p-3"}
                   >
-                    <p className="text-sm font-semibold">{row.vendedor}</p>
+                    <p className={`text-sm font-semibold ${getPerformanceVisual(row).nameClass}`}>{row.vendedor}</p>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                      <p><span className="font-medium">Cobranças:</span> {formatNumber(row.qtdCobranca)}</p>
-                      <p><span className="font-medium">Agend. mês:</span> {formatNumber(row.agendamentosMes)}</p>
-                      <p><span className="font-medium">Efetividade:</span> {row.efetividade.toFixed(2)}%</p>
-                      <p><span className="font-medium">Meta mês:</span> {formatCurrency(row.metaRecebimento)}</p>
-                      <p><span className="font-medium">Falta:</span> {formatNumber(row.faltaCobrancaMes)}</p>
-                      <p><span className="font-medium">Fila:</span> {formatNumber(row.fila)}</p>
+                      <p><span className="font-medium">Cobranças:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.qtdCobranca)}</span></p>
+                      <p><span className="font-medium">Agend. mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.agendamentosMes)}</span></p>
+                      <p><span className="font-medium">Efetividade:</span> <span className={getPerformanceVisual(row).valueClass}>{row.efetividade.toFixed(2)}%</span></p>
+                      <p><span className="font-medium">Meta mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatCurrency(row.metaRecebimento)}</span></p>
+                      <p><span className="font-medium">Falta:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.faltaCobrancaMes)}</span></p>
+                      <p><span className="font-medium">Fila:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.fila)}</span></p>
                     </div>
                   </div>
                 ))}
