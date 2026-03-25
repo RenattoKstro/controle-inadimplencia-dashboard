@@ -91,6 +91,25 @@ const MemberChatWidget = ({
     return () => clearInterval(interval);
   }, [isMembro]);
 
+  useEffect(() => {
+    if (!isMembro) return;
+
+    const channel = supabase
+      .channel("member-chat-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: CHAT_TABLE },
+        () => {
+          loadMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isMembro]);
+
   const sortedMessages = useMemo(() => messages.slice().sort((a, b) => {
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;

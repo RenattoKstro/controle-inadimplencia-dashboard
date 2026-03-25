@@ -758,7 +758,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 <Input id="cobrancas-file" type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} className="mt-3" />
                 {isUploadingExcel && (
                   <div className="mt-3 space-y-2">
-                    <p className={isDark ? "text-xs text-zinc-300" : "text-xs text-slate-700"}>
+                    <p className={isDark ? "text-xs text-zinc-300 animate-pulse" : "text-xs text-slate-700 animate-pulse"}>
                       {`Carregando${".".repeat(loadingDots)}`}
                     </p>
                   </div>
