@@ -133,7 +133,11 @@ const MemberChatWidget = ({
 
   const visibleMessages = useMemo(() => {
     if (!privateTarget?.user_id) {
-      return sortedMessages.filter((message) => !isPrivateMessage(message));
+      return sortedMessages.filter((message) => {
+        if (!isPrivateMessage(message)) return true;
+        const recipientId = message.recipient_user_id || message.target_user_id;
+        return Boolean(recipientId && recipientId === viewer.user_id);
+      });
     }
 
     return sortedMessages.filter((message) => {
@@ -210,8 +214,7 @@ const MemberChatWidget = ({
         avatar_url: viewer.avatar_url || null,
         filial: filialNumber,
         mensagem: chatText,
-        recipient_user_id: privateTarget.user_id,
-        is_private: true,
+        target_user_id: privateTarget.user_id,
       },
       {
         user_id: viewer.user_id,
@@ -220,16 +223,6 @@ const MemberChatWidget = ({
         user_filial: filialNumber,
         message: chatText,
         target_user_id: privateTarget.user_id,
-        chat_type: "private",
-      },
-      {
-        user_id: viewer.user_id,
-        nome_usuario: viewer.nome_usuario || "Membro",
-        avatar_url: viewer.avatar_url || null,
-        filial: filialNumber,
-        content: chatText,
-        recipient_user_id: privateTarget.user_id,
-        scope: "private",
       },
     ];
   };
