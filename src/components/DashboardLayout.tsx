@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Wallet, Trophy, Utensils, Gift, Sliders, Menu,
-  Calendar, AlertTriangle, History, Instagram, File, Store, User, LogOut, Shield, Sun, Moon
+  Calendar, AlertTriangle, History, Instagram, Download, Store, User, LogOut, Shield, Sun, Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +24,6 @@ import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
 import { RiScreenshot2Fill } from "react-icons/ri";
 import { BiSolidReport } from "react-icons/bi";
-import Anexos from "./Anexos";
 import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import MatrizLinks from "./MatrizLinks";
@@ -195,12 +194,13 @@ const DashboardLayout = () => {
                 <Button onClick={print} variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
                   <RiScreenshot2Fill className="w-5 h-5" />
                 </Button>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2"><File className="w-4 h-4" /> Anexos</Button>
-                  </DialogTrigger>
-                  <DialogContent><Anexos /></DialogContent>
-                </Dialog>
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => window.open("https://gazinassisbrasil.shop/downloads", "_blank")}
+                >
+                  <Download className="w-4 h-4" /> Downloads
+                </Button>
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button>
