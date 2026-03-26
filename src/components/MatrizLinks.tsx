@@ -132,6 +132,20 @@ const sections: LinkSection[] = [
         url: "https://chat.deepseek.com/",
         iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=chat.deepseek.com",
       },
+      {
+        id: "grok",
+        title: "Grok",
+        subtitle: "xAI Grok",
+        url: "https://grok.com/",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=grok.com",
+      },
+      {
+        id: "claude",
+        title: "Claude",
+        subtitle: "Anthropic Claude",
+        url: "https://claude.ai/",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=claude.ai",
+      },
     ],
   },
 ];
@@ -231,7 +245,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [selectedLoja, setSelectedLoja] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
-  const [loadingDots, setLoadingDots] = useState(1);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingDetailsImage, setIsGeneratingDetailsImage] = useState(false);
   const [analysisText, setAnalysisText] = useState("");
@@ -255,19 +268,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     if (!userId) return;
     localStorage.setItem(`matriz-meta-diaria:${userId}`, String(metaDiaria));
   }, [metaDiaria, userId]);
-
-  useEffect(() => {
-    if (!isUploadingExcel) {
-      setLoadingDots(1);
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      setLoadingDots((current) => (current >= 3 ? 1 : current + 1));
-    }, 350);
-
-    return () => window.clearInterval(interval);
-  }, [isUploadingExcel]);
 
   const restante = Math.max(0, metaDiaria - receivedAmount);
   const percentual = metaDiaria > 0 ? (receivedAmount / metaDiaria) * 100 : 0;
@@ -759,7 +759,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 {isUploadingExcel && (
                   <div className="mt-3 space-y-2">
                     <p className={isDark ? "text-xs text-zinc-300 animate-pulse" : "text-xs text-slate-700 animate-pulse"}>
-                      {`Carregando${".".repeat(loadingDots)}`}
+                      Carregando...
                     </p>
                   </div>
                 )}
