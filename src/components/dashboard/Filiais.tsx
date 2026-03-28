@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trophy, Zap, Store, Phone, Instagram, MessageCircle, User, BadgeCheck } from "lucide-react";
+import { Trophy, Zap, Store, Phone, Instagram, User, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   HoverCard,
@@ -574,22 +574,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                           >
                                             <Phone className="h-4 w-4" /> WhatsApp
                                           </a>
-                                        )}
-                                        {user?.user_id && (
-                                          <button
-                                            type="button"
-                                            onClick={() => window.dispatchEvent(new CustomEvent("member-chat-open-private", {
-                                              detail: {
-                                                user_id: user.user_id || undefined,
-                                                nome_usuario: user.nome_usuario || undefined,
-                                                avatar_url: user.avatar_url || undefined,
-                                                filial: f.idfilial,
-                                              },
-                                            }))}
-                                            className="flex items-center gap-2 text-indigo-400 hover:underline"
-                                          >
-                                            <MessageCircle className="h-4 w-4" /> Chat
-                                          </button>
                                         )}
                                       </div>
                                       {user?.instagram && (
