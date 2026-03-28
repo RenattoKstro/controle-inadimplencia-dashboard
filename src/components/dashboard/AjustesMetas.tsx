@@ -132,7 +132,7 @@ const AjustesMetas = ({
     carteira_total: userData?.carteira_total || 0,
     role: normalizeOperatorRole(userData?.role) || "líder",
   });
-  const isDark = document.documentElement.classList.contains("dark");
+  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
 
   const formatWhatsapp = (value: string) => {
     const num = value.replace(/\D/g, "");

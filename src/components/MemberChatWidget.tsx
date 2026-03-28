@@ -61,7 +61,7 @@ const MemberChatWidget = ({
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastSeenAt, setLastSeenAt] = useState<string>(new Date().toISOString());
-  const isDark = document.documentElement.classList.contains("dark");
+  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const loadMessages = async () => {
