@@ -35,8 +35,8 @@ const acionaIcon = "/aciona-one.svg";
 const sections: LinkSection[] = [
   {
     id: "aciona",
-    title: "Aciona One",
-    description: "Atalhos rápidos para o dashboard e operador da Aciona.",
+    title: "Links",
+    description: "Links rápidos de sistemas e portais utilizados no dia a dia.",
     icon: ExternalLink,
     items: [
       {
@@ -52,6 +52,41 @@ const sections: LinkSection[] = [
         subtitle: "Portal do operador Gazin / Aciona",
         url: "https://gazin.acionaone.com.br/",
         iconSrc: acionaIcon,
+      },
+      {
+        id: "cadastro-digital",
+        title: "Cadastro Digital",
+        subtitle: "Portal de cadastro digital Gazin",
+        url: "https://cadastrodigital.gazin.com.br/",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=cadastrodigital.gazin.com.br",
+      },
+      {
+        id: "gazin-express",
+        title: "Gazin Express",
+        subtitle: "Minha Gazin",
+        url: "https://minhagazin.com.br/",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=minhagazin.com.br",
+      },
+      {
+        id: "area-cliente-gazin",
+        title: "Area do Cliente Gazin",
+        subtitle: "Área do cliente Gazin",
+        url: "https://areadocliente.gazin.com.br/",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=areadocliente.gazin.com.br",
+      },
+      {
+        id: "tv-gazin",
+        title: "TV Gazin",
+        subtitle: "Portal TV Gazin",
+        url: "https://tvgazin.com.br/",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=tvgazin.com.br",
+      },
+      {
+        id: "tv-crediario",
+        title: "TV Crediario",
+        subtitle: "TV Crediário Gazin Assis Brasil",
+        url: "https://gazinassisbrasil.shop/tv",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=gazinassisbrasil.shop",
       },
     ],
   },
@@ -131,6 +166,20 @@ const sections: LinkSection[] = [
         subtitle: "Chat DeepSeek",
         url: "https://chat.deepseek.com/",
         iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=chat.deepseek.com",
+      },
+      {
+        id: "grok",
+        title: "Grok",
+        subtitle: "xAI Grok",
+        url: "https://grok.com/",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=grok.com",
+      },
+      {
+        id: "claude",
+        title: "Claude",
+        subtitle: "Anthropic Claude",
+        url: "https://claude.ai/",
+        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=claude.ai",
       },
     ],
   },
@@ -225,13 +274,12 @@ const PIE_COLORS = [
 const META_COBRANCAS_PADRAO = 520;
 
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
-  const isDark = document.documentElement.classList.contains("dark");
+  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
   const [selectedLoja, setSelectedLoja] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
-  const [loadingDots, setLoadingDots] = useState(1);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingDetailsImage, setIsGeneratingDetailsImage] = useState(false);
   const [analysisText, setAnalysisText] = useState("");
@@ -758,8 +806,8 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 <Input id="cobrancas-file" type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} className="mt-3" />
                 {isUploadingExcel && (
                   <div className="mt-3 space-y-2">
-                    <p className={isDark ? "text-xs text-zinc-300" : "text-xs text-slate-700"}>
-                      {`Carregando${".".repeat(loadingDots)}`}
+                    <p className={isDark ? "text-xs text-zinc-300 animate-pulse" : "text-xs text-slate-700 animate-pulse"}>
+                      Carregando...
                     </p>
                   </div>
                 )}
