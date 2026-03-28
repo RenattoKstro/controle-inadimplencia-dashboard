@@ -274,7 +274,7 @@ const PIE_COLORS = [
 const META_COBRANCAS_PADRAO = 520;
 
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
-  const isDark = document.documentElement.classList.contains("dark");
+  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
   const [selectedLoja, setSelectedLoja] = useState("");
