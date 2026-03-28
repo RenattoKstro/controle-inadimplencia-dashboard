@@ -304,6 +304,19 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     localStorage.setItem(`matriz-meta-diaria:${userId}`, String(metaDiaria));
   }, [metaDiaria, userId]);
 
+  useEffect(() => {
+    if (!isUploadingExcel) {
+      setLoadingDots(1);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      setLoadingDots((current) => (current >= 3 ? 1 : current + 1));
+    }, 350);
+
+    return () => window.clearInterval(interval);
+  }, [isUploadingExcel]);
+
   const restante = Math.max(0, metaDiaria - receivedAmount);
   const percentual = metaDiaria > 0 ? (receivedAmount / metaDiaria) * 100 : 0;
 
