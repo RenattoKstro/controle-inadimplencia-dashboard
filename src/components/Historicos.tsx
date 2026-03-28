@@ -474,6 +474,9 @@ const Historicos = ({
     return { diff, isIncrease: diff > 0 };
   };
 
+  const defaultInputClass = "w-full p-2 border rounded border-input bg-background text-foreground";
+  const highlightInputClass = "w-full p-2 border rounded border-emerald-300 bg-emerald-100 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-100";
+
   if (isLoading) return <div>Carregando histórico...</div>;
 
   return (
@@ -489,7 +492,7 @@ const Historicos = ({
                   type="date"
                   value={formData.data_recebimento}
                   onChange={(e) => setFormData({ ...formData, data_recebimento: e.target.value })}
-                  className="w-full p-2 border rounded bg-green-200"
+                  className={highlightInputClass}
                   required
                   min="2025-01-01"
                   max={new Date().toISOString().split("T")[0]}
@@ -501,7 +504,7 @@ const Historicos = ({
                   type="number"
                   value={formData.recebidoDiario}
                   onChange={(e) => setFormData({ ...formData, recebidoDiario: Number(e.target.value) })}
-                  className="w-full p-2 border rounded bg-green-200"
+                  className={highlightInputClass}
                   required
                 />
               </div>
@@ -514,7 +517,7 @@ const Historicos = ({
                   type="month"
                   value={formData.month}
                   onChange={(e) => setFormData({ ...formData, month: e.target.value })}
-                  className="w-full p-2 border rounded"
+                  className={defaultInputClass}
                   required
                 />
               </div>
@@ -524,7 +527,7 @@ const Historicos = ({
                   type="number"
                   value={formData.aberturavencidomes}
                   onChange={(e) => setFormData({ ...formData, aberturavencidomes: Number(e.target.value) })}
-                  className="w-full p-2 border rounded"
+                  className={defaultInputClass}
                   required
                 />
               </div>
@@ -534,7 +537,7 @@ const Historicos = ({
                   type="number"
                   value={formData.metames}
                   onChange={(e) => setFormData({ ...formData, metames: Number(e.target.value) })}
-                  className="w-full p-2 border rounded"
+                  className={defaultInputClass}
                   required
                 />
               </div>
@@ -544,7 +547,7 @@ const Historicos = ({
                   type="number"
                   value={formData.metadesafio}
                   onChange={(e) => setFormData({ ...formData, metadesafio: Number(e.target.value) })}
-                  className="w-full p-2 border rounded"
+                  className={defaultInputClass}
                   required
                 />
               </div>
@@ -554,7 +557,7 @@ const Historicos = ({
                   type="number"
                   value={formData.vencidoatual}
                   onChange={(e) => setFormData({ ...formData, vencidoatual: Number(e.target.value) })}
-                  className="w-full p-2 border rounded bg-green-200"
+                  className={highlightInputClass}
                   required
                 />
               </div>
@@ -564,14 +567,14 @@ const Historicos = ({
                   type="number"
                   value={formData.recebidoDiario}
                   onChange={(e) => setFormData({ ...formData, recebidoDiario: Number(e.target.value) })}
-                  className="w-full p-2 border rounded bg-green-200"
+                  className={highlightInputClass}
                   required
                 />
                 <input
                   type="date"
                   value={formData.data_recebimento}
                   onChange={(e) => setFormData({ ...formData, data_recebimento: e.target.value })}
-                  className="w-full p-2 border rounded bg-green-200 mt-2"
+                  className={`${highlightInputClass} mt-2`}
                   required
                   min="2025-01-01"
                   max={new Date().toISOString().split("T")[0]}
@@ -585,7 +588,7 @@ const Historicos = ({
                       type="number"
                       value={formData.metaperdido}
                       onChange={(e) => setFormData({ ...formData, metaperdido: Number(e.target.value) })}
-                      className="w-full p-2 border rounded"
+                      className={defaultInputClass}
                     />
                   </div>
                   <div>
@@ -594,7 +597,7 @@ const Historicos = ({
                       type="number"
                       value={formData.recperdido}
                       onChange={(e) => setFormData({ ...formData, recperdido: Number(e.target.value) })}
-                      className="w-full p-2 border rounded"
+                      className={defaultInputClass}
                     />
                   </div>
                 </>
@@ -605,7 +608,7 @@ const Historicos = ({
                   type="number"
                   value={formData.percentual_meta_fiado}
                   onChange={(e) => setFormData({ ...formData, percentual_meta_fiado: Number(e.target.value) })}
-                  className="w-full p-2 border rounded"
+                  className={defaultInputClass}
                   required
                 />
               </div>
@@ -615,7 +618,7 @@ const Historicos = ({
                   type="number"
                   value={formData.percentual_meta_desafio}
                   onChange={(e) => setFormData({ ...formData, percentual_meta_desafio: Number(e.target.value) })}
-                  className="w-full p-2 border rounded"
+                  className={defaultInputClass}
                   required
                 />
               </div>
@@ -625,7 +628,7 @@ const Historicos = ({
                   type="number"
                   value={formData.premiosrecebidos}
                   onChange={(e) => setFormData({ ...formData, premiosrecebidos: Number(e.target.value) || 0 })}
-                  className="w-full p-2 border rounded"
+                  className={defaultInputClass}
                   step="0.01"
                   min="0"
                 />

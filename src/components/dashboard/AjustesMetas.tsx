@@ -132,6 +132,7 @@ const AjustesMetas = ({
     carteira_total: userData?.carteira_total || 0,
     role: normalizeOperatorRole(userData?.role) || "líder",
   });
+  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
 
   const formatWhatsapp = (value: string) => {
     const num = value.replace(/\D/g, "");
@@ -323,21 +324,29 @@ const AjustesMetas = ({
       formatAsCurrency
         ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v)
         : v.toString();
+
+    const iconWrapperClass = isDark
+      ? `rounded-xl border border-white/10 ${color} p-2 text-white`
+      : `rounded-xl ${color} p-2 text-white`;
+
     return (
-      <Card className={`shadow-sm hover:shadow transition-shadow ${color} bg-opacity-50`}>
+      <Card className={isDark
+        ? "group rounded-2xl border border-white/10 bg-zinc-900/80 transition-all hover:-translate-y-1 hover:border-indigo-400/60 hover:bg-zinc-900"
+        : "group rounded-2xl border border-slate-200 bg-white transition-all hover:-translate-y-1 hover:border-indigo-300 hover:shadow-lg"}
+      >
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-foreground">{title}</h3>
-            <span className={`p-2 rounded-full ${color} text-white`}>{icon}</span>
+            <h3 className={isDark ? "text-sm font-medium text-zinc-200" : "text-sm font-medium text-slate-700"}>{title}</h3>
+            <span className={iconWrapperClass}>{icon}</span>
           </div>
           {isEditable && isEditMode ? (
             formatAsCurrency ? (
-              <CurrencyInput value={value} onValueChange={(v) => onChange?.(v || 0)} className="text-lg font-bold" />
+              <CurrencyInput value={value} onValueChange={(v) => onChange?.(v || 0)} className={isDark ? "text-lg font-bold text-zinc-100" : "text-lg font-bold"} />
             ) : (
-              <Input type="number" value={value} onChange={(e) => onChange?.(parseInt(e.target.value) || 0)} className="text-lg font-bold" />
+              <Input type="number" value={value} onChange={(e) => onChange?.(parseInt(e.target.value) || 0)} className={isDark ? "text-lg font-bold text-zinc-100" : "text-lg font-bold"} />
             )
           ) : (
-            <div className="text-xl font-bold">{formatValue(value)}</div>
+            <div className={isDark ? "text-xl font-bold text-zinc-100" : "text-xl font-bold"}>{formatValue(value)}</div>
           )}
         </CardContent>
       </Card>
@@ -581,11 +590,14 @@ const AjustesMetas = ({
             </>
           )}
           <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditingMetas} />
-          <Card className="shadow-sm bg-gray-500 bg-opacity-50">
+          <Card className={isDark
+            ? "group rounded-2xl border border-white/10 bg-zinc-900/80 transition-all hover:-translate-y-1 hover:border-indigo-400/60 hover:bg-zinc-900"
+            : "group rounded-2xl border border-slate-200 bg-white transition-all hover:-translate-y-1 hover:border-indigo-300 hover:shadow-lg"}
+          >
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium">Dias</h3>
-                <span className="p-2 rounded-full bg-gray-500 text-white"><Target size={16} /></span>
+                <h3 className={isDark ? "text-sm font-medium text-zinc-200" : "text-sm font-medium text-slate-700"}>Dias</h3>
+                <span className={isDark ? "rounded-xl border border-white/10 bg-slate-600 p-2 text-white" : "rounded-xl bg-slate-500 p-2 text-white"}><Target size={16} /></span>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Trabalhados</p>
