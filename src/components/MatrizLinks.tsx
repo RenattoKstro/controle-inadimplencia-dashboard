@@ -274,7 +274,8 @@ const PIE_COLORS = [
 const META_COBRANCAS_PADRAO = 520;
 
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
-  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+  const [isClient, setIsClient] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
   const [selectedLoja, setSelectedLoja] = useState("");
@@ -285,6 +286,13 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [analysisText, setAnalysisText] = useState("");
   const dashboardRef = useRef<HTMLDivElement | null>(null);
   const fullDetailsExportRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof document !== "undefined") {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    }
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -657,6 +665,12 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   };
 
   return (
+    !isClient ? (
+      <div className="space-y-4">
+        <div className="h-12 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-zinc-800/60" />
+        <div className="h-64 animate-pulse rounded-3xl bg-slate-200/60 dark:bg-zinc-800/60" />
+      </div>
+    ) : (
     <div className="space-y-8">
       <Tabs defaultValue="atalhos" className="space-y-6">
         <TabsList className={isDark ? "grid w-full grid-cols-3 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1"}>
@@ -968,15 +982,15 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Participação por vendedor</h4>
-              <div className="h-[320px]">
+              <div className="flex h-[520px] items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieData}
                       dataKey="value"
                       nameKey="name"
-                      innerRadius={55}
-                      outerRadius={105}
+                      innerRadius={95}
+                      outerRadius={170}
                       label={({ name }) => String(name || "").split(" ")[0] || ""}
                     >
                       {pieData.map((_, index) => {
@@ -1015,6 +1029,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
         </div>
       </div>
     </div>
+    )
   );
 };
 
