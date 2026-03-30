@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trophy, Zap, Store, Phone, Instagram, User } from "lucide-react";
+import { Trophy, Zap, Store, Phone, Instagram, MessageCircle, User, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   HoverCard,
@@ -30,13 +30,123 @@ interface RankingFilial {
     whatsapp: string;
     instagram: string;
     updated_at: string | null;
+    role?: string | null;
+    membro?: boolean | null;
   } | null;
 }
 
-const Filiais = () => {
+type FilialOperator = {
+  user_id?: string | null;
+  filial?: number | null;
+  nome_usuario?: string | null;
+  avatar_url?: string | null;
+  whatsapp?: string | null;
+  instagram?: string | null;
+  updated_at?: string | null;
+  role?: string | null;
+  membro?: boolean | null;
+  abertura_vencido_mes?: number | null;
+  meta_mes?: number | null;
+  meta_desafio?: number | null;
+  vencido_atual?: number | null;
+};
+
+type FiliaisProps = {
+  isViewerMembro: boolean;
+};
+
+const ADMIN_EMAIL = "rks7ro@gmail.com";
+const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
+const MEMBROS_MANIFEST_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/membros-filiais.json";
+
+const normalizeOperatorRole = (role?: string | null) => {
+  const normalizedRole = (role || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  if (normalizedRole === "lider") return "líder";
+  if (normalizedRole === "auxiliar") return "auxiliar";
+  return "";
+};
+
+const getFirstName = (name?: string | null) => {
+  const normalizedName = (name || "").trim();
+  return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
+};
+
+const isOperatorMember = (user?: Pick<FilialOperator, "membro"> | null) => Boolean(user?.membro);
+
+const sortOperators = (operators: FilialOperator[]) => (
+  operators.slice().sort((a, b) => {
+    const aMember = isOperatorMember(a);
+    const bMember = isOperatorMember(b);
+    if (aMember !== bMember) return aMember ? -1 : 1;
+
+    const aRole = normalizeOperatorRole(a.role);
+    const bRole = normalizeOperatorRole(b.role);
+    if (aRole !== bRole) {
+      if (aRole === "líder") return -1;
+      if (bRole === "líder") return 1;
+    }
+
+    return (a.nome_usuario || "").localeCompare(b.nome_usuario || "", "pt-BR");
+  })
+);
+
+const getLatestUpdatedAt = (operators: FilialOperator[], fallback?: string | null) => {
+  const latestTimestamp = operators.reduce<number | null>((latest, operator) => {
+    if (!operator.updated_at) return latest;
+    const timestamp = new Date(operator.updated_at).getTime();
+    if (Number.isNaN(timestamp)) return latest;
+    return latest === null || timestamp > latest ? timestamp : latest;
+  }, null);
+
+  if (latestTimestamp !== null) {
+    return new Date(latestTimestamp).toISOString();
+  }
+
+  return fallback || null;
+};
+
+const getLatestMetricSnapshot = (operators: FilialOperator[], fallback: RankingFilial) => {
+  const latestOperator = operators.reduce<FilialOperator | null>((latest, operator) => {
+    const operatorTimestamp = operator.updated_at ? new Date(operator.updated_at).getTime() : 0;
+    const latestTimestamp = latest?.updated_at ? new Date(latest.updated_at).getTime() : 0;
+
+    if (!latest) return operator;
+    return operatorTimestamp > latestTimestamp ? operator : latest;
+  }, null);
+
+  return {
+    abertura_vencido_mes: latestOperator?.abertura_vencido_mes ?? fallback.total_abertura_vencido_mes ?? 0,
+    meta_mes: latestOperator?.meta_mes ?? fallback.total_meta_fiado ?? 0,
+    meta_desafio: latestOperator?.meta_desafio ?? fallback.total_meta_desafio ?? 0,
+    vencido_atual: latestOperator?.vencido_atual ?? fallback.total_vencido ?? 0,
+  };
+};
+
+const publishMembrosManifest = async (filiais: Set<number>) => {
+  const payload = JSON.stringify({
+    updated_at: new Date().toISOString(),
+    filiais: Array.from(filiais).sort((a, b) => a - b),
+  });
+
+  const file = new TextEncoder().encode(payload);
+  await supabase.storage
+    .from("perfis")
+    .upload(MEMBROS_MANIFEST_PATH, file, {
+      contentType: "application/json",
+      upsert: true,
+    });
+};
+
+const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
+  const [operadoresPorFilial, setOperadoresPorFilial] = useState<Record<number, FilialOperator[]>>({});
   const [regionais, setRegionais] = useState<string[]>([]);
   const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
+  const [filiaisComBadgeMembro, setFiliaisComBadgeMembro] = useState<Set<number>>(new Set());
   const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -55,38 +165,87 @@ const Filiais = () => {
         if (!regs.includes("Membros")) regs.unshift("Membros");
         setRegionais(regs);
         setRanking(lista);
-      }
 
-      const { data: membrosData, error: membrosError } = await supabase
-        .from("user_dashboard")
-        .select("filial")
-        .eq("membro", true)
-        .not("filial", "is", null);
-
-      if (!membrosError && membrosData) {
-        const filiaisMembros = new Set(
-          (membrosData as Array<{ filial: number | null }>)
-            .map((item) => item.filial)
-            .filter((filial): filial is number => typeof filial === "number")
+        const filiaisMarcadasNaView = new Set(
+          lista
+            .filter((item) => isOperatorMember(item.usuario_principal))
+            .map((item) => item.idfilial)
         );
-        setFiliaisComMembros(filiaisMembros);
-      } else {
-        // Fallback para ambientes onde a coluna `membro` ainda não existe:
-        // considera usuários com role = "membro" para não interromper o filtro.
-        const { data: roleData, error: roleError } = await supabase
-          .from("user_dashboard")
-          .select("filial, role")
-          .not("filial", "is", null);
 
-        if (!roleError && roleData) {
-          const filiaisMembros = new Set(
-            (roleData as Array<{ filial: number | null; role: string | null }>)
-              .filter((item) => (item.role || "").toLowerCase() === "membro")
-              .map((item) => item.filial)
-              .filter((filial): filial is number => typeof filial === "number")
-          );
-          setFiliaisComMembros(filiaisMembros);
+        let operadoresAgrupados: Record<number, FilialOperator[]> = {};
+        try {
+          const { data: operadoresData, error: operadoresError } = await supabase
+            .from("user_dashboard")
+            .select("user_id, filial, nome_usuario, avatar_url, whatsapp, instagram, updated_at, role, membro, abertura_vencido_mes, meta_mes, meta_desafio, vencido_atual")
+            .not("filial", "is", null)
+            .order("updated_at", { ascending: false });
+
+          if (!operadoresError && operadoresData) {
+            operadoresAgrupados = (operadoresData as FilialOperator[]).reduce<Record<number, FilialOperator[]>>((acc, operador) => {
+              if (typeof operador.filial !== "number") return acc;
+              if (!acc[operador.filial]) acc[operador.filial] = [];
+              acc[operador.filial].push(operador);
+              return acc;
+            }, {});
+          }
+        } catch {
+          // fallback silencioso para ambientes em que a leitura total de user_dashboard esteja protegida por RLS.
         }
+
+        setOperadoresPorFilial(operadoresAgrupados);
+
+        const filiaisMarcadasNosPerfis = new Set(
+          Object.entries(operadoresAgrupados)
+            .filter(([, operadores]) => operadores.some((operador) => isOperatorMember(operador)))
+            .map(([filialId]) => Number(filialId))
+            .filter((filialId) => Number.isFinite(filialId))
+        );
+
+        let filiaisMarcadasNoUserDashboard = new Set<number>();
+        const { data: { user } } = await supabase.auth.getUser();
+        const isAdminViewer = user?.email === ADMIN_EMAIL;
+
+        if (isAdminViewer) {
+          const { data: membrosData, error: membrosError } = await supabase
+            .from("user_dashboard")
+            .select("filial")
+            .eq("membro", true)
+            .not("filial", "is", null);
+
+          if (!membrosError && membrosData) {
+            filiaisMarcadasNoUserDashboard = new Set(
+              (membrosData as Array<{ filial: number | null }>)
+                .map((item) => item.filial)
+                .filter((filial): filial is number => typeof filial === "number")
+            );
+          }
+        }
+
+        let filiaisManifesto = new Set<number>();
+        try {
+          const response = await fetch(MEMBROS_MANIFEST_URL, { cache: "no-store" });
+          if (response.ok) {
+            const manifest = await response.json() as { filiais?: number[] };
+            filiaisManifesto = new Set((manifest.filiais || []).filter((item): item is number => typeof item === "number"));
+          }
+        } catch {
+          // fallback silencioso quando o manifesto ainda não existir.
+        }
+
+        const filiaisComMarcacaoExplicita = filiaisManifesto.size > 0
+          ? filiaisManifesto
+          : new Set([
+              ...filiaisMarcadasNaView,
+              ...filiaisMarcadasNosPerfis,
+              ...filiaisMarcadasNoUserDashboard,
+            ]);
+
+        if (isAdminViewer && filiaisComMarcacaoExplicita.size > 0) {
+          await publishMembrosManifest(filiaisComMarcacaoExplicita);
+        }
+
+        setFiliaisComBadgeMembro(filiaisComMarcacaoExplicita);
+        setFiliaisComMembros(filiaisComMarcacaoExplicita);
       }
 
       setLoading(false);
@@ -132,10 +291,9 @@ const Filiais = () => {
   };
 
   const getPercentColor = (pct: number) => {
-    if (pct >= 100) return "text-emerald-400 font-bold";
-    if (pct >= 94) return "text-amber-400 font-bold";
-    if (pct >= 90) return "text-rose-400 font-bold";
-    return "text-zinc-300";
+    if (pct >= 100) return isDark ? "text-emerald-400 font-bold" : "text-emerald-600 font-bold";
+    if (pct >= 94) return isDark ? "text-amber-400 font-bold" : "text-amber-500 font-bold";
+    return isDark ? "text-rose-400 font-bold" : "text-rose-600 font-bold";
   };
 
   const getProgressColor = (pct: number) => {
@@ -145,21 +303,24 @@ const Filiais = () => {
     return "bg-gray-400";
   };
 
-  const calcularRecebidoMeta = (f: RankingFilial) => {
-    const abertura = f.total_abertura_vencido_mes || 0;
-    const vencidoAtual = f.total_vencido || 0;
-    const metaMes = f.total_meta_fiado || 0;
-    const recebidosMes = abertura - vencidoAtual;
-    const aReceber = abertura - metaMes;
-    const restante = recebidosMes - aReceber;
+  const calcularRecebidoMeta = (metrics: {
+    abertura_vencido_mes: number;
+    meta_mes: number;
+    vencido_atual: number;
+  }) => {
+    const abertura = metrics.abertura_vencido_mes || 0;
+    const vencidoAtual = metrics.vencido_atual || 0;
+    const metaMes = metrics.meta_mes || 0;
+    const recebidosMes = Math.max(0, abertura - vencidoAtual);
+    const aReceber = Math.max(0, abertura - metaMes);
+    const restante = Math.max(0, vencidoAtual - metaMes);
 
     const format = (n: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(n);
 
-    // Cálculo do restante com cor
     const restanteText = format(restante);
     let restanteClass = "text-zinc-400 text-xs mt-1";
-    if (restante < 0) restanteClass = "text-rose-400 font-medium text-xs mt-1";
-    if (restante > 0) restanteClass = "text-emerald-400 font-medium text-xs mt-1";
+    if (restante > 0) restanteClass = "text-rose-400 font-medium text-xs mt-1";
+    if (restante === 0) restanteClass = "text-emerald-400 font-medium text-xs mt-1";
 
     return (
       <div className="flex flex-col items-center">
@@ -171,6 +332,48 @@ const Filiais = () => {
         </p>
       </div>
     );
+  };
+
+  const isUsuarioMembro = (_filialId: number, user: RankingFilial["usuario_principal"]) => {
+    return isOperatorMember(user);
+  };
+
+  const membroBadge = (
+    <span className={isDark
+      ? "inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300"
+      : "inline-flex items-center gap-1 rounded-full border border-emerald-600/40 bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm"
+    }>
+      <BadgeCheck className="h-3.5 w-3.5" />
+      Membro
+    </span>
+  );
+
+  const getRoleBadge = (role?: string | null) => {
+    const normalizedRole = normalizeOperatorRole(role);
+
+    if (normalizedRole === "líder") {
+      return (
+        <span className={isDark
+          ? "inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-300"
+          : "inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"
+        }>
+          Op. Líder
+        </span>
+      );
+    }
+
+    if (normalizedRole === "auxiliar") {
+      return (
+        <span className={isDark
+          ? "inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300"
+          : "inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700"
+        }>
+          Op. Auxiliar
+        </span>
+      );
+    }
+
+    return null;
   };
 
   const getUpdatedText = (updatedAt: string | null) => {
@@ -256,9 +459,21 @@ const Filiais = () => {
               </tr>
             ) : (
               dadosFiltrados.map((f, i) => {
-                const user = f.usuario_principal;
-                const initials = getInitials(user?.nome_usuario);
-                const updatedText = getUpdatedText(user?.updated_at);
+                const fallbackUser = f.usuario_principal
+                  ? [{
+                      ...f.usuario_principal,
+                      filial: f.idfilial,
+                    } satisfies FilialOperator]
+                  : [];
+                const operadores = sortOperators(
+                  (operadoresPorFilial[f.idfilial] && operadoresPorFilial[f.idfilial].length > 0)
+                    ? operadoresPorFilial[f.idfilial]
+                    : fallbackUser,
+                );
+                const metrics = getLatestMetricSnapshot(operadores, f);
+                const updatedText = getUpdatedText(getLatestUpdatedAt(operadores, f.usuario_principal?.updated_at || null));
+                const pctMetaFiado = metrics.vencido_atual > 0 ? (metrics.meta_mes / metrics.vencido_atual) * 100 : 0;
+                const pctMetaDesafio = metrics.vencido_atual > 0 && metrics.meta_desafio > 0 ? (metrics.meta_desafio / metrics.vencido_atual) * 100 : 0;
 
                 return (
                   <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
@@ -272,110 +487,158 @@ const Filiais = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-3">
-                          <HoverCard openDelay={200}>
-                            <HoverCardTrigger asChild>
-                              <div className="cursor-pointer">
-                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500 flex items-center justify-center">
-                                  {user?.avatar_url ? (
-                                    <img
-                                      src={user.avatar_url}
-                                      alt="Perfil"
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
-                                      }}
-                                    />
-                                  ) : null}
-                                  <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm ${user?.avatar_url ? "hidden" : ""}`}>
-                                    {initials !== "U" ? initials : <User className="h-6 w-6" />}
-                                  </div>
-                                </div>
-                              </div>
-                            </HoverCardTrigger>
-                            <HoverCardContent className={isDark ? "w-80 bg-zinc-900 text-zinc-100 border-white/10" : "w-80 bg-white text-slate-900 border-slate-300"}>
-                              <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
-                                  {user?.avatar_url ? (
-                                    <img
-                                      src={user.avatar_url}
-                                      alt="Perfil"
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
-                                      }}
-                                    />
-                                  ) : null}
-                                  <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-2xl ${user?.avatar_url ? "hidden" : ""}`}>
-                                    {initials !== "U" ? initials : <User className="h-10 w-10" />}
-                                  </div>
-                                </div>
-                                <div>
-                                  <p className="font-bold text-lg">{user?.nome_usuario || "Usuário"}</p>
-                                  <p className="text-sm text-zinc-400">Filial {f.filial}</p>
-                                </div>
-                              </div>
-                              <div className="mt-4 space-y-2">
-                                {user?.whatsapp && (
-                                  <a
-                                    href={`https://wa.me/55${user.whatsapp}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-emerald-400 hover:underline"
-                                  >
-                                    <Phone className="h-4 w-4" /> WhatsApp
-                                  </a>
-                                )}
-                                {user?.instagram && (
-                                  <a
-                                    href={`https://instagram.com/${user.instagram.replace("@", "")}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-pink-400 hover:underline"
-                                  >
-                                    <Instagram className="h-4 w-4" /> Instagram
-                                  </a>
-                                )}
-                              </div>
-                            </HoverCardContent>
-                          </HoverCard>
+                        <div className="flex flex-col gap-3">
                           <div>
-                            <p className="font-medium">{f.filial}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium">{f.filial}</p>
+                              {filiaisComMembros.has(f.idfilial) && membroBadge}
+                            </div>
                             <p className="text-xs text-zinc-400">{f.regional}</p>
+                          </div>
+                          <div className="space-y-2">
+                            {operadores.map((user) => {
+                              const initials = getInitials(user?.nome_usuario);
+                              const displayName = getFirstName(user?.nome_usuario);
+                              const usuarioMembro = isUsuarioMembro(f.idfilial, user as RankingFilial["usuario_principal"]);
+
+                              return (
+                                <HoverCard key={`${f.idfilial}-${user.user_id || user.nome_usuario || user.role || "operador"}`} openDelay={200}>
+                                  <HoverCardTrigger asChild>
+                                    <div className={isDark
+                                      ? "flex cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition hover:bg-white/10"
+                                      : "flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 transition hover:bg-white"
+                                    }>
+                                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-purple-500 flex items-center justify-center">
+                                        {user?.avatar_url ? (
+                                          <img
+                                            src={user.avatar_url}
+                                            alt="Perfil"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                              e.currentTarget.style.display = "none";
+                                              e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                                            }}
+                                          />
+                                        ) : null}
+                                        <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm ${user?.avatar_url ? "hidden" : ""}`}>
+                                          {initials !== "U" ? initials : <User className="h-6 w-6" />}
+                                        </div>
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <p className="font-semibold leading-none">{displayName}</p>
+                                          {getRoleBadge(user?.role)}
+                                          {usuarioMembro && membroBadge}
+                                        </div>
+                                        <p className="mt-1 text-xs text-zinc-400">
+                                          {getUpdatedText(user?.updated_at || null)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent className={isDark ? "w-80 bg-zinc-900 text-zinc-100 border-white/10" : "w-80 bg-white text-slate-900 border-slate-300"}>
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-purple-500 flex items-center justify-center">
+                                        {user?.avatar_url ? (
+                                          <img
+                                            src={user.avatar_url}
+                                            alt="Perfil"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                              e.currentTarget.style.display = "none";
+                                              e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                                            }}
+                                          />
+                                        ) : null}
+                                        <div className={`w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-2xl ${user?.avatar_url ? "hidden" : ""}`}>
+                                          {initials !== "U" ? initials : <User className="h-10 w-10" />}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <p className="font-bold text-lg">{displayName}</p>
+                                          {getRoleBadge(user?.role)}
+                                          {usuarioMembro && membroBadge}
+                                        </div>
+                                        <p className="text-sm text-zinc-400">Filial {f.filial}</p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-4 space-y-2">
+                                      <div className="flex flex-wrap items-center gap-3">
+                                        {user?.whatsapp && (
+                                          <a
+                                            href={`https://wa.me/55${user.whatsapp}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-emerald-400 hover:underline"
+                                          >
+                                            <Phone className="h-4 w-4" /> WhatsApp
+                                          </a>
+                                        )}
+                                        {user?.user_id && (
+                                          <button
+                                            type="button"
+                                            onClick={() => window.dispatchEvent(new CustomEvent("member-chat-open-private", {
+                                              detail: {
+                                                user_id: user.user_id || undefined,
+                                                nome_usuario: user.nome_usuario || undefined,
+                                                avatar_url: user.avatar_url || undefined,
+                                                filial: f.idfilial,
+                                              },
+                                            }))}
+                                            className="flex items-center gap-2 text-indigo-400 hover:underline"
+                                          >
+                                            <MessageCircle className="h-4 w-4" /> Chat
+                                          </button>
+                                        )}
+                                      </div>
+                                      {user?.instagram && (
+                                        <a
+                                          href={`https://instagram.com/${user.instagram.replace("@", "")}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-2 text-pink-400 hover:underline"
+                                        >
+                                          <Instagram className="h-4 w-4" /> Instagram
+                                        </a>
+                                      )}
+                                    </div>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              );
+                            })}
                           </div>
                         </div>
                         <p className="text-xs text-zinc-500 italic mt-1">
-                          {getUpdatedText(user?.updated_at)}
+                          {updatedText}
                         </p>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {calcularRecebidoMeta(f)}
+                      {calcularRecebidoMeta(metrics)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        <p className={`text-lg ${getPercentColor(f.pct_fiado)}`}>
-                          {f.pct_fiado.toFixed(2)}%
+                        <p className={`text-lg ${getPercentColor(pctMetaFiado)}`}>
+                          {pctMetaFiado.toFixed(2)}%
                         </p>
                         <Progress
-                          value={f.pct_fiado}
+                          value={pctMetaFiado}
                           className="h-3 bg-zinc-800"
-                          indicatorClassName={getProgressColor(f.pct_fiado)}
+                          indicatorClassName={getProgressColor(pctMetaFiado)}
                         />
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="space-y-1">
-                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(f.pct_desafio)}`}>
+                        <p className={`text-lg flex items-center justify-center gap-1 ${getPercentColor(pctMetaDesafio)}`}>
                           <Zap className="h-4 w-4 text-yellow-500" />
-                          {f.pct_desafio.toFixed(2)}%
+                          {pctMetaDesafio.toFixed(2)}%
                         </p>
                         <Progress
-                          value={f.pct_desafio}
+                          value={pctMetaDesafio}
                           className="h-3 bg-zinc-800"
-                          indicatorClassName={getProgressColor(f.pct_desafio)}
+                          indicatorClassName={getProgressColor(pctMetaDesafio)}
                         />
                       </div>
                     </td>
