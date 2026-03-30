@@ -221,13 +221,11 @@ const GerenciarUsuarios = () => {
 
         const usuariosComUIDNovo = extrasRanking.filter((u) => !userIdsExistentes.has(u.user_id));
         const usuariosCompletos = [...usuariosEnriquecidos, ...usuariosComUIDNovo];
-        await syncMembrosManifest(usuariosCompletos);
         setUsuarios(usuariosCompletos);
         return;
       }
 
       if (lista.length > 0) {
-        await syncMembrosManifest(lista);
         setUsuarios(lista);
         return;
       }
@@ -332,6 +330,18 @@ const GerenciarUsuarios = () => {
         );
     }
 
+    const usuariosAtualizados = usuarios.map((usuario) => {
+      if (usuario.user_id !== userId) return usuario;
+      return {
+        ...usuario,
+        nome_usuario: form.nome_usuario,
+        filial_id: filialNumber,
+        regional: form.regional.trim() || usuario.regional,
+        membro: form.membro,
+      };
+    });
+    await syncMembrosManifest(usuariosAtualizados);
+
     cancelEdit();
     fetchUsuarios();
   };
@@ -351,6 +361,9 @@ const GerenciarUsuarios = () => {
       alert("Erro ao excluir usuário.");
       return;
     }
+
+    const usuariosRestantes = usuarios.filter((usuario) => usuario.user_id !== userId);
+    await syncMembrosManifest(usuariosRestantes);
 
     fetchUsuarios();
   };

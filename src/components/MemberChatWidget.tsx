@@ -11,8 +11,6 @@ type ChatViewer = {
   filial?: number | string | null;
 };
 
-const emptyPrivateTarget: ChatViewer | null = null;
-
 type ChatMessageRow = {
   id: string | number;
   created_at?: string | null;
@@ -62,9 +60,8 @@ const MemberChatWidget = ({
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [privateTarget, setPrivateTarget] = useState<ChatViewer | null>(emptyPrivateTarget);
   const [lastSeenAt, setLastSeenAt] = useState<string>(new Date().toISOString());
-  const isDark = document.documentElement.classList.contains("dark");
+  const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const loadMessages = async () => {
@@ -91,6 +88,25 @@ const MemberChatWidget = ({
     return () => clearInterval(interval);
   }, [isMembro]);
 
+  useEffect(() => {
+    if (!isMembro) return;
+
+    const channel = supabase
+      .channel("member-chat-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: CHAT_TABLE },
+        () => {
+          loadMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isMembro]);
+
   const sortedMessages = useMemo(() => messages.slice().sort((a, b) => {
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
     const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -108,21 +124,6 @@ const MemberChatWidget = ({
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, open]);
-  useEffect(() => {
-    const handleOpenPrivateChat = (event: Event) => {
-      const customEvent = event as CustomEvent<ChatViewer | null>;
-      const target = customEvent.detail;
-      if (!isMembro || !target?.user_id || target.user_id === viewer.user_id) return;
-      setPrivateTarget(target);
-      setOpen(true);
-      setLastSeenAt(new Date().toISOString());
-    };
-
-    window.addEventListener("member-chat-open-private", handleOpenPrivateChat as EventListener);
-    return () => window.removeEventListener("member-chat-open-private", handleOpenPrivateChat as EventListener);
-  }, [isMembro, viewer.user_id]);
-
-
   const isPrivateMessage = (message: ChatMessageRow) => (
     Boolean(message.is_private)
     || (message.chat_type || "").toLowerCase() === "private"
@@ -132,20 +133,8 @@ const MemberChatWidget = ({
   );
 
   const visibleMessages = useMemo(() => {
-    if (!privateTarget?.user_id) {
-      return sortedMessages.filter((message) => !isPrivateMessage(message));
-    }
-
-    return sortedMessages.filter((message) => {
-      const recipientId = message.recipient_user_id || message.target_user_id;
-      const senderId = message.user_id;
-      return isPrivateMessage(message)
-        && (
-          (senderId === viewer.user_id && recipientId === privateTarget.user_id)
-          || (senderId === privateTarget.user_id && recipientId === viewer.user_id)
-        );
-    });
-  }, [sortedMessages, privateTarget, viewer.user_id]);
+    return sortedMessages.filter((message) => !isPrivateMessage(message));
+  }, [sortedMessages]);
 
   const unreadCount = useMemo(() => {
     if (!isMembro) return 0;
@@ -154,8 +143,7 @@ const MemberChatWidget = ({
     return sortedMessages.filter((message) => {
       const createdAt = message.created_at ? new Date(message.created_at).getTime() : 0;
       const isOwn = message.user_id && viewer.user_id && message.user_id === viewer.user_id;
-      const recipientId = message.recipient_user_id || message.target_user_id;
-      const visibleToViewer = !isPrivateMessage(message) || recipientId === viewer.user_id;
+      const visibleToViewer = !isPrivateMessage(message);
 
       return !isOwn && visibleToViewer && createdAt > seenAt;
     }).length;
@@ -201,37 +189,7 @@ const MemberChatWidget = ({
       },
     ];
 
-    if (!privateTarget?.user_id) return basePublicPayloads;
-
-    return [
-      {
-        user_id: viewer.user_id,
-        nome_usuario: viewer.nome_usuario || "Membro",
-        avatar_url: viewer.avatar_url || null,
-        filial: filialNumber,
-        mensagem: chatText,
-        recipient_user_id: privateTarget.user_id,
-        is_private: true,
-      },
-      {
-        user_id: viewer.user_id,
-        user_name: viewer.nome_usuario || "Membro",
-        user_avatar_url: viewer.avatar_url || null,
-        user_filial: filialNumber,
-        message: chatText,
-        target_user_id: privateTarget.user_id,
-        chat_type: "private",
-      },
-      {
-        user_id: viewer.user_id,
-        nome_usuario: viewer.nome_usuario || "Membro",
-        avatar_url: viewer.avatar_url || null,
-        filial: filialNumber,
-        content: chatText,
-        recipient_user_id: privateTarget.user_id,
-        scope: "private",
-      },
-    ];
+    return basePublicPayloads;
   };
 
   const handleSend = async () => {
@@ -286,9 +244,9 @@ const MemberChatWidget = ({
             : "flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3"
           }>
             <div>
-              <p className="font-semibold">{privateTarget?.user_id ? `Privado com ${privateTarget.nome_usuario || "membro"}` : "Chat dos membros"}</p>
+              <p className="font-semibold">Chat dos membros</p>
               <p className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-500"}>
-                {privateTarget?.user_id ? "Somente vocês dois veem esta conversa." : "Mensagens expiram automaticamente em 1 hora."}
+                Mensagens expiram automaticamente em 1 hora.
               </p>
             </div>
             <MessageCircle className="h-5 w-5 text-indigo-400" />
@@ -328,16 +286,6 @@ const MemberChatWidget = ({
                           <button
                             type="button"
                             className="mb-2 flex items-center gap-2 text-left"
-                            onClick={() => {
-                              if (message.user_id && message.user_id !== viewer.user_id) {
-                                setPrivateTarget({
-                                  user_id: message.user_id || undefined,
-                                  nome_usuario: nome,
-                                  avatar_url: avatar || undefined,
-                                  filial: filial,
-                                });
-                              }
-                            }}
                           >
                             {avatar ? (
                               <img src={avatar} alt={nome} className="h-9 w-9 rounded-full object-cover" />
@@ -366,15 +314,6 @@ const MemberChatWidget = ({
                 ? "border-t border-white/10 bg-zinc-900/90 px-4 py-3"
                 : "border-t border-slate-200 bg-slate-50 px-4 py-3"
               }>
-                {privateTarget?.user_id && (
-                  <button
-                    type="button"
-                    onClick={() => setPrivateTarget(emptyPrivateTarget)}
-                    className={isDark ? "mb-2 text-xs text-indigo-300 hover:text-indigo-200" : "mb-2 text-xs text-indigo-600 hover:text-indigo-500"}
-                  >
-                    ← Voltar para o chat geral
-                  </button>
-                )}
                 <div className="flex items-center gap-2">
                   <Input
                     value={text}
