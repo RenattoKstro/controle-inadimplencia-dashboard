@@ -112,6 +112,9 @@ const DashboardLayout = () => {
   };
 
   const handleTabChange = (v: string) => {
+    if (v === "matriz") {
+      console.log("[DashboardLayout] guia matriz selecionada");
+    }
     setActiveTab(v);
     if (isMobile) setSheetOpen(false);
   };

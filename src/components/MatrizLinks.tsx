@@ -276,6 +276,7 @@ const META_COBRANCAS_PADRAO = 520;
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [isClient, setIsClient] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [loadingDots, setLoadingDots] = useState(1);
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
   const [selectedLoja, setSelectedLoja] = useState("");
@@ -292,6 +293,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     if (typeof document !== "undefined") {
       setIsDark(document.documentElement.classList.contains("dark"));
     }
+    console.log("[MatrizLinks] componente montado", { userId, receivedAmount });
   }, []);
 
   useEffect(() => {
@@ -495,7 +497,8 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       setCobrancasRows(parsedRows);
       setSelectedLoja("");
       setUploadError("");
-    } catch {
+    } catch (error) {
+      console.error("[MatrizLinks] erro ao processar planilha de cobranças.", error);
       setUploadError("Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
       setCobrancasRows([]);
     } finally {
@@ -821,7 +824,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 {isUploadingExcel && (
                   <div className="mt-3 space-y-2">
                     <p className={isDark ? "text-xs text-zinc-300 animate-pulse" : "text-xs text-slate-700 animate-pulse"}>
-                      Carregando...
+                      Carregando{".".repeat(loadingDots)}
                     </p>
                   </div>
                 )}
