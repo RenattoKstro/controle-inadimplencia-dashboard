@@ -374,14 +374,14 @@ const MeusPremios = ({
           <CardContent className="p-3 md:p-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 md:gap-0">
               <div>
-                <h3 className="text-sm md:text-base font-bold flex items-center gap-1 md:gap-2 text-zinc-100">
+                <h3 className="text-sm md:text-base font-bold flex items-center gap-1 md:gap-2 text-foreground">
                   <Gift className={`${isMobile ? "h-4 w-4" : "h-5 w-5"} text-purple-400`} /> Total Geral de Ganhos ({isLider ? "Líder" : "Op. Auxiliar"})
                 </h3>
-                <p className="text-xs text-zinc-400">Soma de todos os prêmios conquistados</p>
+                <p className="text-xs text-muted-foreground">Soma de todos os prêmios conquistados</p>
               </div>
-              <div className="text-lg md:text-xl font-bold text-zinc-100 self-end md:self-auto">
+              <div className="text-lg md:text-xl font-bold text-foreground self-end md:self-auto">
                 {formatCurrency(totalGanhos)}
-                <span className="text-xs text-zinc-400 block text-right">
+                <span className="text-xs text-muted-foreground block text-right">
                   de {formatCurrency(totalPossivelGeral)}
                 </span>
               </div>
