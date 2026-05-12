@@ -55,10 +55,10 @@ const sections: LinkSection[] = [
       },
       {
         id: "cadastro-digital",
-        title: "Cadastro Digital",
-        subtitle: "Portal de cadastro digital Gazin",
-        url: "https://cadastrodigital.gazin.com.br/",
-        iconSrc: "https://www.google.com/s2/favicons?sz=128&domain=cadastrodigital.gazin.com.br",
+        title: "Cadastro Digital e Pagamentos",
+        subtitle: "Portal Gazin Gazin",
+        url: "https://https://portalcliente.gazin.com.br/",
+        iconSrc: "https://portalcliente.gazin.com.br/favicon-96x96.png",
       },
       {
         id: "gazin-express",
