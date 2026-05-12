@@ -44,14 +44,14 @@ const sections: LinkSection[] = [
         title: "Aciona Dashboard",
         subtitle: "Painel principal da Aciona One",
         url: "https://painel.acionaone.com.br/dashboard",
-        iconSrc: acionaIcon,
+        iconSrc: "https://gazin.acionaone.com.br/favicon.ico",
       },
       {
         id: "aciona-operador",
         title: "Aciona Operador",
         subtitle: "Portal do operador Gazin / Aciona",
         url: "https://gazin.acionaone.com.br/",
-        iconSrc: acionaIcon,
+        iconSrc: "https://gazin.acionaone.com.br/favicon.ico",
       },
       {
         id: "cadastro-digital",
