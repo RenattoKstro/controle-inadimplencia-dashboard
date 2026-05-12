@@ -17,17 +17,6 @@ const apps = [
     component: CalculadoraVendedor90,
   },
   {
-    id: "fechamento-caixa",
-    name: "Fechamento Caixa Geral",
-    icon: () => (
-      <div className="flex items-center opacity-100">
-        <Calculator className="h-4 w-4 mr-1 text-white" />
-        <DollarSign className="h-4 w-4 text-white" />
-      </div>
-    ),
-    url: "https://fechamentodecaixa.netlify.app/",
-  },
-  {
     id: "calculadora",
     name: "Calculadora de Rentabilidade",
     icon: Calculator,
