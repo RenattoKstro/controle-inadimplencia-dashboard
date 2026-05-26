@@ -1,11 +1,15 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { BarChart3, Camera, Chrome, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
+import { BarChart3, Camera, Chrome, Download, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
+import { BiSolidReport } from "react-icons/bi";
+import Apps from "./Apps";
+import RelatoriosSabium from "./RelatoriosSabium";
 import {
   Cell,
   Pie,
@@ -676,10 +680,11 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     ) : (
     <div className="space-y-8">
       <Tabs defaultValue="atalhos" className="space-y-6">
-        <TabsList className={isDark ? "grid w-full grid-cols-3 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1"}>
+        <TabsList className={isDark ? "grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-slate-200 bg-white p-1"}>
           <TabsTrigger value="atalhos" className="rounded-xl">Atalhos</TabsTrigger>
           <TabsTrigger value="meta-matriz" className="rounded-xl">Meta Matriz</TabsTrigger>
           <TabsTrigger value="cobrancas-vendedor" className="rounded-xl">Cobranças Vendedor</TabsTrigger>
+          <TabsTrigger value="apps-tools" className="rounded-xl">Apps e Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="atalhos" className="space-y-8">
@@ -972,6 +977,34 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 />
               </div>
             </div>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="apps-tools" className="space-y-6">
+          <section className={isDark ? "rounded-3xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl" : "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg"}>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 border-slate-300 bg-white/90 px-2.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                onClick={() => window.open("https://gazinassisbrasil.shop/downloads", "_blank")}
+              >
+                <Download className="h-3.5 w-3.5" /> Downloads
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 border-slate-300 bg-white/90 px-2.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <BiSolidReport className="h-4 w-4" /> Relatórios
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
+              </Dialog>
+            </div>
+            <Apps />
           </section>
         </TabsContent>
       </Tabs>
