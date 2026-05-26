@@ -57,6 +57,7 @@ const getFirstNameAndLastSurname = (name?: string | null) => {
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
+  const [membrosSubTab, setMembrosSubTab] = useState("links");
   const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { toast } = useToast();
@@ -113,7 +114,7 @@ const DashboardLayout = () => {
 
   const handleTabChange = (v: string) => {
     if (v === "matriz") {
-      console.log("[DashboardLayout] guia matriz selecionada");
+      console.log("[DashboardLayout] guia membros selecionada");
     }
     setActiveTab(v);
     if (isMobile) setSheetOpen(false);
@@ -174,8 +175,7 @@ const DashboardLayout = () => {
                     <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon"><Menu /></Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-80">
-                    <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
-                    <Apps />
+                    <div className="py-6 border-b"><h2 className="text-lg font-bold">Menu</h2></div>
                     <div className="py-4 border-t">
                       <Button variant="destructive" className="w-full" onClick={handleLogout}>
                         Sair
@@ -197,19 +197,6 @@ const DashboardLayout = () => {
                 <Button onClick={print} variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
                   <RiScreenshot2Fill className="w-5 h-5" />
                 </Button>
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => window.open("https://gazinassisbrasil.shop/downloads", "_blank")}
-                >
-                  <Download className="w-4 h-4" /> Downloads
-                </Button>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
-                </Dialog>
                 <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
                   <Calendar className="h-4 w-4" />
                 </Button>
@@ -373,7 +360,7 @@ const DashboardLayout = () => {
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
                 <TabsTrigger value="matriz" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                  <Store className="h-4 w-4" /> Matriz
+                  <Store className="h-4 w-4" /> Membros
                 </TabsTrigger>
               </TabsList>
 
@@ -468,10 +455,38 @@ const DashboardLayout = () => {
 
               <TabsContent value="matriz">
                 {isMembro ? (
-                  <MatrizLinks
-                    userId={userData?.user_id}
-                    receivedAmount={recebidoHoje}
-                  />
+                  <Tabs value={membrosSubTab} onValueChange={setMembrosSubTab} className="space-y-4">
+                    <TabsList className={isDark ? "bg-zinc-900/90 border border-white/10 rounded-xl" : "bg-white border border-slate-300 rounded-xl"}>
+                      <TabsTrigger value="links">Links</TabsTrigger>
+                      <TabsTrigger value="apps-tools">Apps e Tools</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="links">
+                      <MatrizLinks
+                        userId={userData?.user_id}
+                        receivedAmount={recebidoHoje}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="apps-tools" className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 p-4" : "rounded-2xl border border-slate-200 bg-white p-4"}>
+                      <div className="flex flex-wrap gap-3 mb-4">
+                        <Button
+                          variant="outline"
+                          className="gap-2"
+                          onClick={() => window.open("https://gazinassisbrasil.shop/downloads", "_blank")}
+                        >
+                          <Download className="w-4 h-4" /> Downloads
+                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
+                        </Dialog>
+                      </div>
+                      <Apps />
+                    </TabsContent>
+                  </Tabs>
                 ) : (
                   <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md p-8 text-center"}>
                     <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-800 text-lg font-medium"}>Esta guia é somente para membros.</p>
