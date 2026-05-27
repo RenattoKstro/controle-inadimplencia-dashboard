@@ -232,13 +232,13 @@ const parsePercentageValue = (value: unknown): number => {
   const parsed = parseNumericValue(value);
 
   if (typeof value === "number") {
-    return value > 0 && value <= 2 ? value * 100 : parsed;
+    return value > 0 && value <= 10 ? value * 100 : parsed;
   }
 
   if (typeof value === "string") {
     const hasPercentSignal = value.includes("%");
     if (hasPercentSignal) return parsed;
-    return parsed > 0 && parsed <= 2 ? parsed * 100 : parsed;
+    return parsed > 0 && parsed <= 10 ? parsed * 100 : parsed;
   }
 
   return parsed;
@@ -745,9 +745,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               </div>
               <div>
                 <h3 className="text-2xl font-semibold">Meta Matriz</h3>
-                <p className={isDark ? "mt-1 text-sm text-zinc-400" : "mt-1 text-sm text-slate-600"}>
-                  Informe a meta diária manualmente. Os demais campos acompanham automaticamente o resultado da guia Metas.
-                </p>
               </div>
             </div>
 
@@ -762,9 +759,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   placeholder="0,00"
                   className={isDark ? "mt-3 border-white/10 bg-zinc-900 text-zinc-100" : "mt-3 border-slate-300 bg-white text-slate-900"}
                 />
-                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
-                  Campo com edição manual.
-                </p>
               </div>
 
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
@@ -789,9 +783,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                     style={{ width: `${Math.min(percentual, 100)}%` }}
                   />
                 </div>
-                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
-                  Percentual de atingimento da meta diária.
-                </p>
               </div>
 
             </div>
@@ -834,7 +825,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   </div>
                 )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
-                  A leitura considera a primeira aba do arquivo e procura cabeçalho a partir da linha 5.
+                  Ao carregar o arquivo, espere, pois o arquivo é muito grande e pode demorar um pouco.
                 </p>
               </div>
 
