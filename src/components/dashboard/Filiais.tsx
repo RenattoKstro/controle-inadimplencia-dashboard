@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Trophy, Zap, Store, Phone, Instagram, User, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ABATEDORES_REGIONAL, isAbatedoresFilial } from "@/constants/abatedores";
 import {
   HoverCard,
   HoverCardContent,
@@ -58,8 +59,6 @@ type FiliaisProps = {
 const ADMIN_EMAIL = "rks7ro@gmail.com";
 const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
 const MEMBROS_MANIFEST_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/membros-filiais.json";
-const ABATEDORES_REGIONAL = "ABATEDORES";
-const ABATEDORES_FILIAIS = new Set([165, 193, 358, 359, 382, 386]);
 
 const normalizeOperatorRole = (role?: string | null) => {
   const normalizedRole = (role || "")
@@ -343,7 +342,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   if (filtroRegional === "Membros") {
     dadosFiltrados = dadosFiltrados.filter((f) => filiaisComMembros.has(f.idfilial));
   } else if (filtroRegional === ABATEDORES_REGIONAL) {
-    dadosFiltrados = dadosFiltrados.filter((f) => ABATEDORES_FILIAIS.has(f.idfilial));
+    dadosFiltrados = dadosFiltrados.filter((f) => isAbatedoresFilial(f.idfilial));
   } else if (filtroRegional !== "todas") {
     dadosFiltrados = dadosFiltrados.filter(f => (f.regional || "Sem regional") === filtroRegional);
   }
