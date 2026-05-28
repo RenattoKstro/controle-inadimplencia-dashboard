@@ -58,6 +58,8 @@ type FiliaisProps = {
 const ADMIN_EMAIL = "rks7ro@gmail.com";
 const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
 const MEMBROS_MANIFEST_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/membros-filiais.json";
+const ABATEDORES_REGIONAL = "ABATEDORES";
+const ABATEDORES_FILIAIS = new Set([165, 193, 358, 359, 382, 386]);
 
 const normalizeOperatorRole = (role?: string | null) => {
   const normalizedRole = (role || "")
@@ -229,8 +231,12 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       if (!error && data) {
         const lista = data as RankingFilial[];
         const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
-        if (!regs.includes("Membros")) regs.unshift("Membros");
-        setRegionais(regs);
+        const regionaisComCategoriasExtras = [
+          "Membros",
+          ABATEDORES_REGIONAL,
+          ...regs.filter((reg) => reg !== "Membros" && reg !== ABATEDORES_REGIONAL),
+        ];
+        setRegionais(regionaisComCategoriasExtras);
         setRanking(lista);
 
         const filiaisMarcadasNaView = new Set(
@@ -336,6 +342,8 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
 
   if (filtroRegional === "Membros") {
     dadosFiltrados = dadosFiltrados.filter((f) => filiaisComMembros.has(f.idfilial));
+  } else if (filtroRegional === ABATEDORES_REGIONAL) {
+    dadosFiltrados = dadosFiltrados.filter((f) => ABATEDORES_FILIAIS.has(f.idfilial));
   } else if (filtroRegional !== "todas") {
     dadosFiltrados = dadosFiltrados.filter(f => (f.regional || "Sem regional") === filtroRegional);
   }
@@ -482,8 +490,9 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
             </SelectTrigger>
             <SelectContent className={isDark ? "bg-zinc-900 border-white/10 text-zinc-100" : "bg-white border-slate-300 text-slate-900"}>
               <SelectItem value="Membros">Membros</SelectItem>
+              <SelectItem value={ABATEDORES_REGIONAL}>ABATEDORES</SelectItem>
               <SelectItem value="todas">Todas as regionais</SelectItem>
-              {regionais.filter((reg) => reg !== "Membros").map(reg => (
+              {regionais.filter((reg) => reg !== "Membros" && reg !== ABATEDORES_REGIONAL).map(reg => (
                 <SelectItem key={reg} value={reg}>{reg}</SelectItem>
               ))}
             </SelectContent>
