@@ -1,11 +1,15 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { BarChart3, Camera, Chrome, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
+import { BarChart3, Camera, Chrome, Download, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
+import { BiSolidReport } from "react-icons/bi";
+import Apps from "./Apps";
+import RelatoriosSabium from "./RelatoriosSabium";
 import {
   Cell,
   Pie,
@@ -228,13 +232,13 @@ const parsePercentageValue = (value: unknown): number => {
   const parsed = parseNumericValue(value);
 
   if (typeof value === "number") {
-    return value > 0 && value <= 2 ? value * 100 : parsed;
+    return value > 0 && value <= 10 ? value * 100 : parsed;
   }
 
   if (typeof value === "string") {
     const hasPercentSignal = value.includes("%");
     if (hasPercentSignal) return parsed;
-    return parsed > 0 && parsed <= 2 ? parsed * 100 : parsed;
+    return parsed > 0 && parsed <= 10 ? parsed * 100 : parsed;
   }
 
   return parsed;
@@ -676,10 +680,11 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     ) : (
     <div className="space-y-8">
       <Tabs defaultValue="atalhos" className="space-y-6">
-        <TabsList className={isDark ? "grid w-full grid-cols-3 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1"}>
+        <TabsList className={isDark ? "grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-slate-200 bg-white p-1"}>
           <TabsTrigger value="atalhos" className="rounded-xl">Atalhos</TabsTrigger>
           <TabsTrigger value="meta-matriz" className="rounded-xl">Meta Matriz</TabsTrigger>
           <TabsTrigger value="cobrancas-vendedor" className="rounded-xl">Cobranças Vendedor</TabsTrigger>
+          <TabsTrigger value="apps-tools" className="rounded-xl">Apps e Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="atalhos" className="space-y-8">
@@ -740,9 +745,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               </div>
               <div>
                 <h3 className="text-2xl font-semibold">Meta Matriz</h3>
-                <p className={isDark ? "mt-1 text-sm text-zinc-400" : "mt-1 text-sm text-slate-600"}>
-                  Informe a meta diária manualmente. Os demais campos acompanham automaticamente o resultado da guia Metas.
-                </p>
               </div>
             </div>
 
@@ -757,9 +759,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   placeholder="0,00"
                   className={isDark ? "mt-3 border-white/10 bg-zinc-900 text-zinc-100" : "mt-3 border-slate-300 bg-white text-slate-900"}
                 />
-                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
-                  Campo com edição manual.
-                </p>
               </div>
 
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
@@ -784,9 +783,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                     style={{ width: `${Math.min(percentual, 100)}%` }}
                   />
                 </div>
-                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
-                  Percentual de atingimento da meta diária.
-                </p>
               </div>
 
             </div>
@@ -829,7 +825,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   </div>
                 )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
-                  A leitura considera a primeira aba do arquivo e procura cabeçalho a partir da linha 5.
+                  Ao carregar o arquivo, espere, pois o arquivo é muito grande e pode demorar um pouco.
                 </p>
               </div>
 
@@ -972,6 +968,34 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 />
               </div>
             </div>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="apps-tools" className="space-y-6">
+          <section className={isDark ? "rounded-3xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl" : "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg"}>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 border-slate-300 bg-white/90 px-2.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                onClick={() => window.open("https://gazinassisbrasil.shop/downloads", "_blank")}
+              >
+                <Download className="h-3.5 w-3.5" /> Downloads
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 border-slate-300 bg-white/90 px-2.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <BiSolidReport className="h-4 w-4" /> Relatórios
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
+              </Dialog>
+            </div>
+            <Apps />
           </section>
         </TabsContent>
       </Tabs>
