@@ -159,8 +159,8 @@ const DashboardLayout = () => {
           {isMobile ? (
             <>
               <h1 className={isDark ? "text-lg font-semibold text-zinc-100 flex items-center gap-2" : "text-lg font-semibold text-slate-900 flex items-center gap-2"}>
-                <span className={isMembro ? "inline-flex h-6 w-6 -translate-y-1 items-center justify-center rounded-full bg-emerald-500 text-[8px] font-bold uppercase text-white shadow-md" : "inline-flex h-6 w-6 -translate-y-1 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold uppercase text-white shadow-md"}>
-                  {isMembro ? "PRO" : "Free"}
+                <span className={isMembro ? "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-red-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md"}>
+                  {isMembro ? "PRO" : "FREE"}
                 </span>
                 <span>Meu Fiado</span>
                 <span>{percentual ? `${percentual}%` : "0.0%"}</span>
@@ -177,8 +177,8 @@ const DashboardLayout = () => {
           ) : (
             <>
               <h1 className={isDark ? "text-2xl font-semibold text-zinc-100 flex items-center gap-3" : "text-2xl font-semibold text-slate-900 flex items-center gap-3"}>
-                <span className={isMembro ? "inline-flex h-7 w-7 -translate-y-2 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-bold uppercase text-white shadow-md" : "inline-flex h-7 w-7 -translate-y-2 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold uppercase text-white shadow-md"}>
-                  {isMembro ? "PRO" : "Free"}
+                <span className={isMembro ? "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-emerald-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-red-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md"}>
+                  {isMembro ? "PRO" : "FREE"}
                 </span>
                 <span>Meu Fiado</span>
                 <span>{percentual ? `${percentual}%` : "0.0%"}</span>
@@ -348,7 +348,7 @@ const DashboardLayout = () => {
                 </TabsTrigger>
                 <TabsTrigger value="matriz" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Users className="h-4 w-4" /> Membros
-                  <span className="inline-flex h-5 w-5 -translate-y-1 items-center justify-center rounded-full bg-emerald-500 text-[7px] font-bold uppercase text-white shadow-sm">PRO</span>
+                  <span className="inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[7px] font-bold uppercase leading-none text-white shadow-sm">PRO</span>
                 </TabsTrigger>
               </TabsList>
 
