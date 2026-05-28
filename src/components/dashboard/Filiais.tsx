@@ -126,6 +126,73 @@ const getLatestMetricSnapshot = (operators: FilialOperator[], fallback: RankingF
   };
 };
 
+
+const calculateMetaPercentages = (metrics: {
+  meta_mes: number;
+  meta_desafio: number;
+  vencido_atual: number;
+}) => ({
+  pctMetaFiado: metrics.vencido_atual > 0 ? (metrics.meta_mes / metrics.vencido_atual) * 100 : 0,
+  pctMetaDesafio: metrics.vencido_atual > 0 && metrics.meta_desafio > 0 ? (metrics.meta_desafio / metrics.vencido_atual) * 100 : 0,
+});
+
+const getFreshnessRank = (updatedAt: string | null, now: Date) => {
+  if (!updatedAt) return Number.MAX_SAFE_INTEGER;
+
+  const timestamp = new Date(updatedAt).getTime();
+  if (Number.isNaN(timestamp)) return Number.MAX_SAFE_INTEGER;
+
+  const diffMs = Math.max(0, now.getTime() - timestamp);
+  return Math.floor(diffMs / (24 * 60 * 60 * 1000));
+};
+
+const sortFiliaisByPercentualAndFreshness = (
+  filiais: RankingFilial[],
+  operadoresPorFilial: Record<number, FilialOperator[]>,
+  now: Date,
+) => (
+  filiais.slice().sort((a, b) => {
+    const getSortData = (filial: RankingFilial) => {
+      const fallbackUser = filial.usuario_principal
+        ? [{ ...filial.usuario_principal, filial: filial.idfilial } satisfies FilialOperator]
+        : [];
+      const operadores = sortOperators(
+        (operadoresPorFilial[filial.idfilial] && operadoresPorFilial[filial.idfilial].length > 0)
+          ? operadoresPorFilial[filial.idfilial]
+          : fallbackUser,
+      );
+      const metrics = getLatestMetricSnapshot(operadores, filial);
+      const { pctMetaFiado, pctMetaDesafio } = calculateMetaPercentages(metrics);
+      const latestUpdatedAt = getLatestUpdatedAt(operadores, filial.usuario_principal?.updated_at || null);
+      const latestTimestamp = latestUpdatedAt ? new Date(latestUpdatedAt).getTime() : 0;
+
+      return {
+        pctMetaFiado,
+        pctMetaDesafio,
+        freshnessRank: getFreshnessRank(latestUpdatedAt, now),
+        latestTimestamp: Number.isNaN(latestTimestamp) ? 0 : latestTimestamp,
+      };
+    };
+
+    const aData = getSortData(a);
+    const bData = getSortData(b);
+
+    if (aData.freshnessRank !== bData.freshnessRank) {
+      return aData.freshnessRank - bData.freshnessRank;
+    }
+
+    if (bData.pctMetaFiado !== aData.pctMetaFiado) {
+      return bData.pctMetaFiado - aData.pctMetaFiado;
+    }
+
+    if (bData.pctMetaDesafio !== aData.pctMetaDesafio) {
+      return bData.pctMetaDesafio - aData.pctMetaDesafio;
+    }
+
+    return bData.latestTimestamp - aData.latestTimestamp;
+  })
+);
+
 const publishMembrosManifest = async (filiais: Set<number>) => {
   const payload = JSON.stringify({
     updated_at: new Date().toISOString(),
@@ -278,6 +345,8 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       f.total_meta_fiado > 0 || f.total_meta_desafio > 0
     );
   }
+
+  dadosFiltrados = sortFiliaisByPercentualAndFreshness(dadosFiltrados, operadoresPorFilial, now);
 
   if (loading) {
     return <p className={isDark ? "text-center py-20 text-xl text-zinc-200" : "text-center py-20 text-xl text-slate-700"}>Carregando Filiais %...</p>;
@@ -472,8 +541,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                 );
                 const metrics = getLatestMetricSnapshot(operadores, f);
                 const updatedText = getUpdatedText(getLatestUpdatedAt(operadores, f.usuario_principal?.updated_at || null));
-                const pctMetaFiado = metrics.vencido_atual > 0 ? (metrics.meta_mes / metrics.vencido_atual) * 100 : 0;
-                const pctMetaDesafio = metrics.vencido_atual > 0 && metrics.meta_desafio > 0 ? (metrics.meta_desafio / metrics.vencido_atual) * 100 : 0;
+                const { pctMetaFiado, pctMetaDesafio } = calculateMetaPercentages(metrics);
 
                 return (
                   <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
