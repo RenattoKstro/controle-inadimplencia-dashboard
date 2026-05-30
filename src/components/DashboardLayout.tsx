@@ -155,10 +155,10 @@ const DashboardLayout = () => {
     >
       {/* HEADER */}
       <header className={isDark ? "bg-zinc-950/95 border-b border-white/10 backdrop-blur-xl shadow-md sticky top-0 z-50" : "bg-white/95 border-b border-slate-200 backdrop-blur-xl shadow-sm sticky top-0 z-50"}>
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           {isMobile ? (
             <>
-              <h1 className={isDark ? "text-lg font-semibold text-zinc-100 flex items-center gap-2" : "text-lg font-semibold text-slate-900 flex items-center gap-2"}>
+              <h1 className={isDark ? "min-w-0 flex-1 text-lg font-semibold text-zinc-100 flex flex-wrap items-center gap-2" : "min-w-0 flex-1 text-lg font-semibold text-slate-900 flex flex-wrap items-center gap-2"}>
                 <span className={isMembro ? "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-red-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md"}>
                   {isMembro ? "PRO" : "FREE"}
                 </span>
@@ -318,35 +318,35 @@ const DashboardLayout = () => {
       {/* MAIN CONTENT */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
-          <div className="max-w-5xl mx-auto px-4">
+          <div className="max-w-5xl mx-auto px-3 sm:px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className={isDark ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1" : "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1"}>
-                <TabsTrigger value="ajustes-metas" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+              <TabsList className={isDark ? "flex h-auto w-full justify-start overflow-x-auto p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8" : "flex h-auto w-full justify-start overflow-x-auto p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8"}>
+                <TabsTrigger value="ajustes-metas" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Sliders className="h-4 w-4" /> Ajustes
                 </TabsTrigger>
-                <TabsTrigger value="metas" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="metas" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Gift className="h-4 w-4" /> Metas
                 </TabsTrigger>
-                <TabsTrigger value="meta-alimentacao" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="meta-alimentacao" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Utensils className="h-4 w-4" /> Alimentação
                 </TabsTrigger>
                 {bonusPerdidoAtivado && (
-                  <TabsTrigger value="meta-perdido" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <TabsTrigger value="meta-perdido" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                     <AlertTriangle className="h-4 w-4" /> Perdido
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="meus-premios" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="meus-premios" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Trophy className="h-4 w-4" /> Prêmios
                 </TabsTrigger>
                 {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <TabsTrigger value="historicos" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                     <History className="h-4 w-4" /> Histórico
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="filiais" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="filiais" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
-                <TabsTrigger value="matriz" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="matriz" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Users className="h-4 w-4" /> Membros
                   <span className="inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[7px] font-bold uppercase leading-none text-white shadow-sm">PRO</span>
                 </TabsTrigger>

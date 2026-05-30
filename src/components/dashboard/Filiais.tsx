@@ -470,9 +470,9 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   };
 
   return (
-    <div className={isDark ? "space-y-6 text-zinc-100" : "space-y-6 text-slate-900"}>
+    <div className={isDark ? "space-y-6 text-zinc-100 px-1 sm:px-0" : "space-y-6 text-slate-900 px-1 sm:px-0"}>
       <div className="text-center">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+        <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
           Filiais %
         </h2>
         <p className="text-muted-foreground mt-2">
@@ -481,7 +481,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       </div>
 
       {/* FILTROS */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
         <div className="w-full max-w-xs">
           <Select value={filtroRegional} onValueChange={setFiltroRegional}>
             <SelectTrigger className={isDark ? "bg-zinc-900 border-white/10 text-zinc-100" : "bg-white border-slate-300 text-slate-900"}>
@@ -498,7 +498,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
           </Select>
         </div>
 
-        <div className={isDark ? "flex items-center gap-3 bg-zinc-900/90 px-6 py-3 rounded-lg border border-white/10" : "flex items-center gap-3 bg-white px-6 py-3 rounded-lg border border-slate-300"}>
+        <div className={isDark ? "flex w-full sm:w-auto items-center justify-center gap-3 bg-zinc-900/90 px-4 sm:px-6 py-3 rounded-lg border border-white/10" : "flex w-full sm:w-auto items-center justify-center gap-3 bg-white px-4 sm:px-6 py-3 rounded-lg border border-slate-300"}>
           <Switch
             id="ocultar-zeradas"
             checked={ocultarZeradas}
@@ -511,8 +511,8 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       </div>
 
       {/* TABELA */}
-      <div className={isDark ? "bg-zinc-950/90 rounded-xl shadow-lg border border-white/10 overflow-hidden" : "bg-white rounded-xl shadow-lg border border-slate-300 overflow-hidden"}>
-        <table className="w-full text-left text-sm">
+      <div className={isDark ? "bg-zinc-950/90 rounded-xl shadow-lg border border-white/10 overflow-x-auto" : "bg-white rounded-xl shadow-lg border border-slate-300 overflow-x-auto"}>
+        <table className="min-w-[900px] w-full text-left text-sm">
           <thead className={isDark ? "bg-gradient-to-r from-indigo-700 to-violet-700 text-zinc-100 text-xs" : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs"}>
             <tr>
               <th className="px-4 py-2">#</th>
@@ -602,7 +602,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                       </div>
                                       <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                          <p className="font-semibold leading-none">{displayName}</p>
+                                          <p className="break-words font-semibold leading-tight">{displayName}</p>
                                           {getRoleBadge(user?.role)}
                                           {usuarioMembro && membroBadge}
                                         </div>

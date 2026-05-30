@@ -680,11 +680,11 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     ) : (
     <div className="space-y-8">
       <Tabs defaultValue="atalhos" className="space-y-6">
-        <TabsList className={isDark ? "grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-slate-200 bg-white p-1"}>
-          <TabsTrigger value="atalhos" className="rounded-xl">Atalhos</TabsTrigger>
-          <TabsTrigger value="meta-matriz" className="rounded-xl">Meta Matriz</TabsTrigger>
-          <TabsTrigger value="cobrancas-vendedor" className="rounded-xl">Cobranças Vendedor</TabsTrigger>
-          <TabsTrigger value="apps-tools" className="rounded-xl">Apps e Tools</TabsTrigger>
+        <TabsList className={isDark ? "grid h-auto w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid h-auto w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-slate-200 bg-white p-1"}>
+          <TabsTrigger value="atalhos" className="rounded-xl px-2 text-xs leading-tight sm:text-sm">Atalhos</TabsTrigger>
+          <TabsTrigger value="meta-matriz" className="rounded-xl px-2 text-xs leading-tight sm:text-sm">Meta Matriz</TabsTrigger>
+          <TabsTrigger value="cobrancas-vendedor" className="rounded-xl px-2 text-xs leading-tight sm:text-sm">Cobranças Vendedor</TabsTrigger>
+          <TabsTrigger value="apps-tools" className="rounded-xl px-2 text-xs leading-tight sm:text-sm">Apps e Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="atalhos" className="space-y-8">
