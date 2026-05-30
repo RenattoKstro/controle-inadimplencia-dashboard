@@ -45,7 +45,7 @@ const apps = [
 
 const Apps = () => {
   return (
-    <div className="py-4 flex-1 space-y-2">
+    <div className="py-2 flex flex-wrap items-center gap-2">
       {apps.map((app) =>
         app.url ? (
           <a
@@ -53,16 +53,10 @@ const Apps = () => {
             href={app.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="block"
+            className="inline-flex"
           >
             <button
-              className={`w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md outline-none focus:outline-none focus:ring-0 ${
-                app.id === "external-calculator"
-                  ? "bg-orange-500 text-white hover:bg-orange-600"
-                  : app.id === "fechamento-caixa"
-                  ? "bg-blue-500 text-white hover:bg-blue-600"
-                  : ""
-              }`}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white/90 px-2.5 text-xs text-slate-700 outline-none hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
             >
               {typeof app.icon === "function" ? <app.icon /> : <app.icon className="h-4 w-4" />}
               {app.name}
@@ -72,17 +66,7 @@ const Apps = () => {
           <Dialog key={app.id}>
             <DialogTrigger asChild>
               <button
-                className={`w-full justify-start text-foreground hover:text-primary flex items-center gap-2 px-4 py-2 rounded-md hover:bg-muted outline-none focus:outline-none focus:ring-0 ${
-                  app.id === "vendedor-90"
-                    ? "bg-green-500 text-white hover:bg-green-600"
-                    : app.id === "calculadora"
-                    ? "bg-red-500 text-white hover:bg-red-600"
-                    : app.id === "tiger-2.0"
-                    ? "bg-blue-500 text-white hover:bg-blue-600"
-                    : app.id === "renegociacao"
-                    ? "bg-purple-500 text-white hover:bg-purple-600"
-                    : ""
-                }`}
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-300 bg-white/90 px-2.5 text-xs text-slate-700 outline-none hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
               >
                 {typeof app.icon === "function" ? <app.icon /> : <app.icon className="h-4 w-4" />}
                 {app.name}
