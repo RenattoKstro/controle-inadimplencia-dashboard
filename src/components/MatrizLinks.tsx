@@ -277,26 +277,16 @@ const PIE_COLORS = [
   "#0891b2",
 ];
 const META_COBRANCAS_PADRAO = 520;
-const COBRANCAS_STORAGE_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/cobrancas-vendedor-atual.json";
-
-type SavedCobrancasFile = {
-  uploaded_at: string;
-  file_name: string;
-  rows: CobrancaRow[];
-};
-
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [isClient, setIsClient] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [loadingDots, setLoadingDots] = useState(1);
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
-  const [cobrancasInfo, setCobrancasInfo] = useState<{ fileName: string; uploadedAt: string; rowCount: number } | null>(null);
   const [vendedoresOcultos, setVendedoresOcultos] = useState<Set<string>>(new Set());
   const [selectedLoja, setSelectedLoja] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
-  const [isLoadingSavedCobrancas, setIsLoadingSavedCobrancas] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingDetailsImage, setIsGeneratingDetailsImage] = useState(false);
   const [analysisText, setAnalysisText] = useState("");
@@ -309,32 +299,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       setIsDark(document.documentElement.classList.contains("dark"));
     }
     console.log("[MatrizLinks] componente montado", { userId, receivedAmount });
-  }, []);
-
-  useEffect(() => {
-    const loadSavedCobrancas = async () => {
-      setIsLoadingSavedCobrancas(true);
-
-      try {
-        const response = await fetch(COBRANCAS_STORAGE_URL, { cache: "no-store" });
-        if (!response.ok) return;
-
-        const savedFile = await response.json() as SavedCobrancasFile;
-        const rows = Array.isArray(savedFile.rows) ? savedFile.rows : [];
-        setCobrancasRows(rows);
-        setCobrancasInfo({
-          fileName: savedFile.file_name || "Arquivo salvo",
-          uploadedAt: savedFile.uploaded_at || "",
-          rowCount: rows.length,
-        });
-      } catch (error) {
-        console.error("[MatrizLinks] erro ao carregar arquivo salvo de cobranças.", error);
-      } finally {
-        setIsLoadingSavedCobrancas(false);
-      }
-    };
-
-    loadSavedCobrancas();
   }, []);
 
   useEffect(() => {
@@ -539,36 +503,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     return parsedRows;
   };
 
-  const saveCobrancasFile = async (rows: CobrancaRow[], fileName: string) => {
-    const payload: SavedCobrancasFile = {
-      uploaded_at: new Date().toISOString(),
-      file_name: fileName,
-      rows,
-    };
-
-    const response = await fetch("/.netlify/functions/save-cobrancas", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      let message = "Falha ao salvar o arquivo compartilhado de cobranças.";
-      try {
-        const errorPayload = await response.json() as { error?: string; details?: string };
-        message = [errorPayload.error, errorPayload.details].filter(Boolean).join(" ") || message;
-      } catch {
-        const details = await response.text();
-        if (details) message = details;
-      }
-      throw new Error(message);
-    }
-
-    return payload;
-  };
-
   const handleUploadExcel = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -578,19 +512,14 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
 
     try {
       const parsedRows = await parseCobrancasExcel(file);
-      const savedFile = await saveCobrancasFile(parsedRows, file.name);
-      setCobrancasRows(savedFile.rows);
-      setCobrancasInfo({
-        fileName: savedFile.file_name,
-        uploadedAt: savedFile.uploaded_at,
-        rowCount: savedFile.rows.length,
-      });
+      setCobrancasRows(parsedRows);
       setVendedoresOcultos(new Set());
       setSelectedLoja("");
       setUploadError("");
     } catch (error) {
-      console.error("[MatrizLinks] erro ao processar ou salvar planilha atual de cobranças.", error);
-      setUploadError(error instanceof Error ? error.message : "Erro ao processar ou salvar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
+      console.error("[MatrizLinks] erro ao processar planilha de cobranças.", error);
+      setUploadError(error instanceof Error ? error.message : "Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
+      setCobrancasRows([]);
     } finally {
       setIsUploadingExcel(false);
       event.target.value = "";
@@ -901,7 +830,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
-                <Label htmlFor="cobrancas-file">Arquivo Excel salvo</Label>
+                <Label htmlFor="cobrancas-file">Arquivo Excel</Label>
                 <Input id="cobrancas-file" type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} className="mt-3" />
                 {isUploadingExcel && (
                   <div className="mt-3 space-y-2">
@@ -911,18 +840,8 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   </div>
                 )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
-                  A planilha não fica armazenada: copiamos os dados para um arquivo único e ele é substituído quando qualquer usuário enviar outro.
+                  Ao carregar o arquivo, espere, pois o arquivo é muito grande e pode demorar um pouco.
                 </p>
-                {isLoadingSavedCobrancas && (
-                  <p className={isDark ? "mt-2 text-xs text-zinc-300 animate-pulse" : "mt-2 text-xs text-slate-700 animate-pulse"}>
-                    Carregando arquivo salvo{".".repeat(loadingDots)}
-                  </p>
-                )}
-                {cobrancasInfo && (
-                  <p className={isDark ? "mt-2 text-xs text-emerald-300" : "mt-2 text-xs text-emerald-700"}>
-                    Salvo: {cobrancasInfo.fileName} • {formatNumber(cobrancasInfo.rowCount)} registros
-                  </p>
-                )}
               </div>
 
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
