@@ -593,21 +593,23 @@ const AjustesMetas = ({
                 <h3 className={isDark ? "text-sm font-medium text-zinc-200" : "text-sm font-medium text-slate-700"}>Dias</h3>
                 <span className={isDark ? "rounded-xl border border-white/10 bg-slate-600 p-2 text-white" : "rounded-xl bg-slate-500 p-2 text-white"}><Target size={16} /></span>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Trabalhados</p>
-                {isEditingMetas ? (
-                  <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-                ) : (
-                  <div className="text-xl font-bold">{formState.dias_trabalhados}</div>
-                )}
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Restantes</p>
-                {isEditingMetas ? (
-                  <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-                ) : (
-                  <div className="text-xl font-bold">{formState.dias_restantes}</div>
-                )}
+              <div className="grid grid-cols-2 gap-3">
+                <div className={isDark ? "rounded-xl border border-white/10 bg-zinc-950/50 p-3" : "rounded-xl border border-slate-200 bg-slate-50 p-3"}>
+                  <p className="text-xs text-muted-foreground">Trabalhados</p>
+                  {isEditingMetas ? (
+                    <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="mt-2 text-lg font-bold" />
+                  ) : (
+                    <div className="mt-2 text-xl font-bold">{formState.dias_trabalhados}</div>
+                  )}
+                </div>
+                <div className={isDark ? "rounded-xl border border-white/10 bg-zinc-950/50 p-3" : "rounded-xl border border-slate-200 bg-slate-50 p-3"}>
+                  <p className="text-xs text-muted-foreground">Restantes</p>
+                  {isEditingMetas ? (
+                    <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="mt-2 text-lg font-bold" />
+                  ) : (
+                    <div className="mt-2 text-xl font-bold">{formState.dias_restantes}</div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
