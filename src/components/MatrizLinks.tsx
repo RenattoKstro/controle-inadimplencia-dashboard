@@ -911,7 +911,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   </div>
                 )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
-                  O arquivo fica salvo para todos e será substituído quando qualquer usuário enviar outro.
+                  A planilha não fica armazenada: copiamos os dados para um arquivo único e ele é substituído quando qualquer usuário enviar outro.
                 </p>
                 {isLoadingSavedCobrancas && (
                   <p className={isDark ? "mt-2 text-xs text-zinc-300 animate-pulse" : "mt-2 text-xs text-slate-700 animate-pulse"}>

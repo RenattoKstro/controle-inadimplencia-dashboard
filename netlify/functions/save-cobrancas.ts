@@ -1,3 +1,5 @@
+import { createClient } from "@supabase/supabase-js";
+
 const SUPABASE_URL = "https://xzssmnosumznfruppxsh.supabase.co";
 const STORAGE_BUCKET = "perfis";
 const STORAGE_PATH = "cobrancas-vendedor-atual.json";
@@ -31,23 +33,36 @@ export default async (request: Request) => {
     return json(400, { error: "Payload JSON inválido." });
   }
 
-  const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${STORAGE_PATH}`, {
-    method: "POST",
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      "Content-Type": "application/json",
-      "Cache-Control": "no-store",
-      "x-upsert": "true",
+  const supabase = createClient(SUPABASE_URL, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
     },
-    body: JSON.stringify(payload),
   });
+  const file = new TextEncoder().encode(JSON.stringify(payload));
 
-  if (!response.ok) {
-    const details = await response.text();
-    return json(response.status, {
+  const upload = async () => supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(STORAGE_PATH, file, {
+      contentType: "application/json",
+      cacheControl: "0",
+      upsert: true,
+    });
+
+  const firstAttempt = await upload();
+
+  if (!firstAttempt.error) {
+    return json(200, { ok: true });
+  }
+
+  await supabase.storage.from(STORAGE_BUCKET).remove([STORAGE_PATH]);
+  const secondAttempt = await upload();
+
+  if (secondAttempt.error) {
+    return json(500, {
       error: "Falha ao salvar arquivo de cobranças no Storage.",
-      details,
+      details: secondAttempt.error.message,
+      firstAttempt: firstAttempt.error.message,
     });
   }
 
