@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
 import { BiSolidReport } from "react-icons/bi";
@@ -278,7 +277,6 @@ const PIE_COLORS = [
   "#0891b2",
 ];
 const META_COBRANCAS_PADRAO = 520;
-const COBRANCAS_STORAGE_PATH = "cobrancas-vendedor-atual.json";
 const COBRANCAS_STORAGE_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/cobrancas-vendedor-atual.json";
 
 type SavedCobrancasFile = {
@@ -547,15 +545,27 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       file_name: fileName,
       rows,
     };
-    const file = new TextEncoder().encode(JSON.stringify(payload));
-    const { error } = await supabase.storage
-      .from("perfis")
-      .upload(COBRANCAS_STORAGE_PATH, file, {
-        contentType: "application/json",
-        upsert: true,
-      });
 
-    if (error) throw error;
+    const response = await fetch("/.netlify/functions/save-cobrancas", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let message = "Falha ao salvar o arquivo compartilhado de cobranças.";
+      try {
+        const errorPayload = await response.json() as { error?: string; details?: string };
+        message = [errorPayload.error, errorPayload.details].filter(Boolean).join(" ") || message;
+      } catch {
+        const details = await response.text();
+        if (details) message = details;
+      }
+      throw new Error(message);
+    }
+
     return payload;
   };
 
