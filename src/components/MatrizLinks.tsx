@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
@@ -284,6 +285,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
   const [cobrancasRowsAnteriores, setCobrancasRowsAnteriores] = useState<CobrancaRow[]>([]);
+  const [vendedoresOcultos, setVendedoresOcultos] = useState<Set<string>>(new Set());
   const [selectedLoja, setSelectedLoja] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
@@ -350,6 +352,31 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     return cobrancasRowsAnteriores.filter((row) => row.loja === selectedLoja);
   }, [cobrancasRowsAnteriores, selectedLoja]);
 
+  const getVendedorKey = (row: Pick<CobrancaRow, "loja" | "vendedor">) => `${row.loja}::${normalizeText(row.vendedor)}`;
+
+  const rowsRelatorioPorLoja = useMemo(() => (
+    rowsFiltradasPorLoja.filter((row) => !vendedoresOcultos.has(getVendedorKey(row)))
+  ), [rowsFiltradasPorLoja, vendedoresOcultos]);
+
+  const cobrancasAnterioresPorVendedor = useMemo(() => {
+    return rowsAnterioresFiltradasPorLoja.reduce<Record<string, number>>((acc, row) => {
+      acc[getVendedorKey(row)] = (acc[getVendedorKey(row)] || 0) + row.qtdCobranca;
+      return acc;
+    }, {});
+  }, [rowsAnterioresFiltradasPorLoja]);
+
+  const getCobrancasRealizadasNoDia = (row: CobrancaRow) => Math.max(0, row.qtdCobranca - (cobrancasAnterioresPorVendedor[getVendedorKey(row)] || 0));
+
+  const toggleVendedorOculto = (row: CobrancaRow, checked: boolean) => {
+    const key = getVendedorKey(row);
+    setVendedoresOcultos((current) => {
+      const next = new Set(current);
+      if (checked) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  };
+
   const buildResumoLoja = (rows: CobrancaRow[]) => rows.reduce((acc, row) => {
     acc.totalFila += row.fila;
     acc.totalCobrancas += row.qtdCobranca;
@@ -367,14 +394,12 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     totalMeta: 0,
   });
 
-  const resumoLoja = useMemo(() => buildResumoLoja(rowsFiltradasPorLoja), [rowsFiltradasPorLoja]);
-  const resumoLojaAnterior = useMemo(() => buildResumoLoja(rowsAnterioresFiltradasPorLoja), [rowsAnterioresFiltradasPorLoja]);
-  const totalCobrancasDoDia = Math.max(0, resumoLoja.totalCobrancas - resumoLojaAnterior.totalCobrancas);
+  const resumoLoja = useMemo(() => buildResumoLoja(rowsRelatorioPorLoja), [rowsRelatorioPorLoja]);
   const hasArquivoAnterior = cobrancasRowsAnteriores.length > 0;
 
   const pieData = useMemo(() => {
     if (!selectedLoja) return [];
-    const rowsWithCobranca = rowsFiltradasPorLoja.filter((row) => row.qtdCobranca > 0);
+    const rowsWithCobranca = rowsRelatorioPorLoja.filter((row) => row.qtdCobranca > 0);
     if (rowsWithCobranca.length) {
       return rowsWithCobranca.map((row) => ({
         name: row.vendedor,
@@ -382,11 +407,11 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       }));
     }
 
-    return rowsFiltradasPorLoja.map((row) => ({
+    return rowsRelatorioPorLoja.map((row) => ({
       name: row.vendedor,
       value: row.agendamentosMes,
     }));
-  }, [rowsFiltradasPorLoja, selectedLoja]);
+  }, [rowsRelatorioPorLoja, selectedLoja]);
 
   const readFileWithProgress = (file: File) =>
     new Promise<ArrayBuffer>((resolve, reject) => {
@@ -505,6 +530,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     try {
       const parsedRows = await parseCobrancasExcel(file);
       setCobrancasRows(parsedRows);
+      setVendedoresOcultos(new Set());
       setSelectedLoja("");
       setUploadError("");
     } catch (error) {
@@ -558,7 +584,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   };
 
   const handleDownloadFullDetails = async () => {
-    if (!fullDetailsExportRef.current || !rowsFiltradasPorLoja.length) return;
+    if (!fullDetailsExportRef.current || !rowsRelatorioPorLoja.length) return;
 
     try {
       setIsGeneratingDetailsImage(true);
@@ -597,12 +623,12 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   };
 
   const handleAnalyzeData = () => {
-    if (!selectedLoja || !rowsFiltradasPorLoja.length) {
+    if (!selectedLoja || !rowsRelatorioPorLoja.length) {
       setAnalysisText("Selecione uma loja com dados para gerar a análise.");
       return;
     }
 
-    const ordered = [...rowsFiltradasPorLoja].sort((a, b) => b.qtdCobranca - a.qtdCobranca);
+    const ordered = [...rowsRelatorioPorLoja].sort((a, b) => b.qtdCobranca - a.qtdCobranca);
     const acimaMeta = ordered.filter((row) => row.qtdCobranca >= META_COBRANCAS_PADRAO).length;
     const abaixoMeta = ordered.length - acimaMeta;
     const melhorGeral = ordered[0];
@@ -832,7 +858,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               <Button
                 type="button"
                 onClick={handleDownloadDashboard}
-                disabled={!rowsFiltradasPorLoja.length || isGeneratingImage}
+                disabled={!rowsRelatorioPorLoja.length || isGeneratingImage}
                 className="gap-2"
               >
                 <Camera className="h-4 w-4" />
@@ -891,11 +917,35 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               </p>
             )}
 
+            {rowsFiltradasPorLoja.length > 0 && (
+              <div className={isDark ? "mt-4 rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold uppercase tracking-wide text-indigo-400">Vendedores no relatório</h4>
+                  <p className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-600"}>Marque quem está de férias para ocultar do relatório.</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {rowsFiltradasPorLoja.map((row) => {
+                    const key = getVendedorKey(row);
+                    return (
+                      <label key={`hide-${key}`} className={isDark ? "flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/70 p-2 text-sm" : "flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 text-sm"}>
+                        <Checkbox
+                          checked={vendedoresOcultos.has(key)}
+                          onCheckedChange={(checked) => toggleVendedorOculto(row, checked === true)}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{row.vendedor}</span>
+                        <span className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-500"}>Ocultar</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div ref={dashboardRef} className="mt-6 space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                   <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Vendedores</p>
-                  <p className="mt-3 text-3xl font-semibold">{formatNumber(rowsFiltradasPorLoja.length)}</p>
+                  <p className="mt-3 text-3xl font-semibold">{formatNumber(rowsRelatorioPorLoja.length)}</p>
                 </div>
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                   <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Filas</p>
@@ -904,15 +954,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                   <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Qtd. Cobranças</p>
                   <p className="mt-3 text-3xl font-semibold">{formatNumber(resumoLoja.totalCobrancas)}</p>
-                </div>
-                <div className={isDark ? "rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4" : "rounded-2xl border border-emerald-300 bg-emerald-50 p-4"}>
-                  <p className={isDark ? "text-emerald-200" : "text-emerald-700"}>Cobranças de ontem</p>
-                  <p className="mt-3 text-3xl font-semibold text-emerald-400">{hasArquivoAnterior ? formatNumber(totalCobrancasDoDia) : "-"}</p>
-                  <p className={isDark ? "mt-2 text-xs text-zinc-400" : "mt-2 text-xs text-slate-600"}>
-                    {hasArquivoAnterior
-                      ? `${formatNumber(resumoLoja.totalCobrancas)} atual - ${formatNumber(resumoLojaAnterior.totalCobrancas)} anterior`
-                      : "Envie o arquivo anterior para comparar."}
-                  </p>
                 </div>
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                   <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Agendamentos</p>
@@ -953,14 +994,14 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                       size="sm"
                       variant="secondary"
                       onClick={handleDownloadFullDetails}
-                      disabled={!rowsFiltradasPorLoja.length || isGeneratingDetailsImage}
+                      disabled={!rowsRelatorioPorLoja.length || isGeneratingDetailsImage}
                       className="h-7 px-2 text-xs"
                     >
                       {isGeneratingDetailsImage ? "Baixando..." : "⬇ Detalhes"}
                     </Button>
                   </div>
                   <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
-                    {rowsFiltradasPorLoja.map((row) => (
+                    {rowsRelatorioPorLoja.map((row) => (
                       <div
                         key={`${row.loja}-${row.vendedor}`}
                         className={isDark ? "rounded-xl border border-white/10 bg-zinc-900/70 p-3" : "rounded-xl border border-slate-200 bg-white p-3"}
@@ -968,6 +1009,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                         <p className={`text-sm font-semibold ${getPerformanceVisual(row).nameClass}`}>{row.vendedor}</p>
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
                           <p><span className="font-medium">Cobranças:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.qtdCobranca)}</span></p>
+                          <p><span className="font-medium">Realizadas:</span> <span className={getPerformanceVisual(row).valueClass}>{hasArquivoAnterior ? formatNumber(getCobrancasRealizadasNoDia(row)) : "-"}</span></p>
                           <p><span className="font-medium">Agend. mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.agendamentosMes)}</span></p>
                           <p><span className="font-medium">Efetividade:</span> <span className={getPerformanceVisual(row).valueClass}>{row.efetividade.toFixed(2)}%</span></p>
                           <p><span className="font-medium">Meta mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatCurrency(row.metaRecebimento)}</span></p>
@@ -976,7 +1018,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                         </div>
                       </div>
                     ))}
-                    {!rowsFiltradasPorLoja.length && (
+                    {!rowsRelatorioPorLoja.length && (
                       <p className={isDark ? "text-sm text-zinc-500" : "text-sm text-slate-500"}>
                         Selecione uma loja para visualizar os vendedores.
                       </p>
@@ -1078,7 +1120,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
             <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Detalhes por vendedor</h4>
               <div className="space-y-2">
-                {rowsFiltradasPorLoja.map((row) => (
+                {rowsRelatorioPorLoja.map((row) => (
                   <div
                     key={`export-${row.loja}-${row.vendedor}`}
                     className={isDark ? "rounded-xl border border-white/10 bg-zinc-800/80 p-3" : "rounded-xl border border-slate-200 bg-white p-3"}
@@ -1086,6 +1128,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                     <p className={`text-sm font-semibold ${getPerformanceVisual(row).nameClass}`}>{row.vendedor}</p>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                       <p><span className="font-medium">Cobranças:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.qtdCobranca)}</span></p>
+                      <p><span className="font-medium">Realizadas:</span> <span className={getPerformanceVisual(row).valueClass}>{hasArquivoAnterior ? formatNumber(getCobrancasRealizadasNoDia(row)) : "-"}</span></p>
                       <p><span className="font-medium">Agend. mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.agendamentosMes)}</span></p>
                       <p><span className="font-medium">Efetividade:</span> <span className={getPerformanceVisual(row).valueClass}>{row.efetividade.toFixed(2)}%</span></p>
                       <p><span className="font-medium">Meta mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatCurrency(row.metaRecebimento)}</span></p>
