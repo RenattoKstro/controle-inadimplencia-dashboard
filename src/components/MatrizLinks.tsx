@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
 import { BiSolidReport } from "react-icons/bi";
@@ -277,6 +278,14 @@ const PIE_COLORS = [
   "#0891b2",
 ];
 const META_COBRANCAS_PADRAO = 520;
+const COBRANCAS_STORAGE_PATH = "cobrancas-vendedor-atual.json";
+const COBRANCAS_STORAGE_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/cobrancas-vendedor-atual.json";
+
+type SavedCobrancasFile = {
+  uploaded_at: string;
+  file_name: string;
+  rows: CobrancaRow[];
+};
 
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [isClient, setIsClient] = useState(false);
@@ -284,11 +293,12 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [loadingDots, setLoadingDots] = useState(1);
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
-  const [cobrancasRowsAnteriores, setCobrancasRowsAnteriores] = useState<CobrancaRow[]>([]);
+  const [cobrancasInfo, setCobrancasInfo] = useState<{ fileName: string; uploadedAt: string; rowCount: number } | null>(null);
   const [vendedoresOcultos, setVendedoresOcultos] = useState<Set<string>>(new Set());
   const [selectedLoja, setSelectedLoja] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
+  const [isLoadingSavedCobrancas, setIsLoadingSavedCobrancas] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingDetailsImage, setIsGeneratingDetailsImage] = useState(false);
   const [analysisText, setAnalysisText] = useState("");
@@ -301,6 +311,32 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       setIsDark(document.documentElement.classList.contains("dark"));
     }
     console.log("[MatrizLinks] componente montado", { userId, receivedAmount });
+  }, []);
+
+  useEffect(() => {
+    const loadSavedCobrancas = async () => {
+      setIsLoadingSavedCobrancas(true);
+
+      try {
+        const response = await fetch(COBRANCAS_STORAGE_URL, { cache: "no-store" });
+        if (!response.ok) return;
+
+        const savedFile = await response.json() as SavedCobrancasFile;
+        const rows = Array.isArray(savedFile.rows) ? savedFile.rows : [];
+        setCobrancasRows(rows);
+        setCobrancasInfo({
+          fileName: savedFile.file_name || "Arquivo salvo",
+          uploadedAt: savedFile.uploaded_at || "",
+          rowCount: rows.length,
+        });
+      } catch (error) {
+        console.error("[MatrizLinks] erro ao carregar arquivo salvo de cobranças.", error);
+      } finally {
+        setIsLoadingSavedCobrancas(false);
+      }
+    };
+
+    loadSavedCobrancas();
   }, []);
 
   useEffect(() => {
@@ -347,25 +383,11 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     return cobrancasRows.filter((row) => row.loja === selectedLoja);
   }, [cobrancasRows, selectedLoja]);
 
-  const rowsAnterioresFiltradasPorLoja = useMemo(() => {
-    if (!selectedLoja) return [];
-    return cobrancasRowsAnteriores.filter((row) => row.loja === selectedLoja);
-  }, [cobrancasRowsAnteriores, selectedLoja]);
-
   const getVendedorKey = (row: Pick<CobrancaRow, "loja" | "vendedor">) => `${row.loja}::${normalizeText(row.vendedor)}`;
 
   const rowsRelatorioPorLoja = useMemo(() => (
     rowsFiltradasPorLoja.filter((row) => !vendedoresOcultos.has(getVendedorKey(row)))
   ), [rowsFiltradasPorLoja, vendedoresOcultos]);
-
-  const cobrancasAnterioresPorVendedor = useMemo(() => {
-    return rowsAnterioresFiltradasPorLoja.reduce<Record<string, number>>((acc, row) => {
-      acc[getVendedorKey(row)] = (acc[getVendedorKey(row)] || 0) + row.qtdCobranca;
-      return acc;
-    }, {});
-  }, [rowsAnterioresFiltradasPorLoja]);
-
-  const getCobrancasRealizadasNoDia = (row: CobrancaRow) => Math.max(0, row.qtdCobranca - (cobrancasAnterioresPorVendedor[getVendedorKey(row)] || 0));
 
   const toggleVendedorOculto = (row: CobrancaRow, checked: boolean) => {
     const key = getVendedorKey(row);
@@ -395,7 +417,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   });
 
   const resumoLoja = useMemo(() => buildResumoLoja(rowsRelatorioPorLoja), [rowsRelatorioPorLoja]);
-  const hasArquivoAnterior = cobrancasRowsAnteriores.length > 0;
 
   const pieData = useMemo(() => {
     if (!selectedLoja) return [];
@@ -520,6 +541,24 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     return parsedRows;
   };
 
+  const saveCobrancasFile = async (rows: CobrancaRow[], fileName: string) => {
+    const payload: SavedCobrancasFile = {
+      uploaded_at: new Date().toISOString(),
+      file_name: fileName,
+      rows,
+    };
+    const file = new TextEncoder().encode(JSON.stringify(payload));
+    const { error } = await supabase.storage
+      .from("perfis")
+      .upload(COBRANCAS_STORAGE_PATH, file, {
+        contentType: "application/json",
+        upsert: true,
+      });
+
+    if (error) throw error;
+    return payload;
+  };
+
   const handleUploadExcel = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -529,35 +568,19 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
 
     try {
       const parsedRows = await parseCobrancasExcel(file);
-      setCobrancasRows(parsedRows);
+      const savedFile = await saveCobrancasFile(parsedRows, file.name);
+      setCobrancasRows(savedFile.rows);
+      setCobrancasInfo({
+        fileName: savedFile.file_name,
+        uploadedAt: savedFile.uploaded_at,
+        rowCount: savedFile.rows.length,
+      });
       setVendedoresOcultos(new Set());
       setSelectedLoja("");
       setUploadError("");
     } catch (error) {
-      console.error("[MatrizLinks] erro ao processar planilha atual de cobranças.", error);
-      setUploadError(error instanceof Error ? error.message : "Erro ao processar o arquivo atual. Envie um Excel válido (.xlsx ou .xls).");
-      setCobrancasRows([]);
-    } finally {
-      setIsUploadingExcel(false);
-      event.target.value = "";
-    }
-  };
-
-  const handleUploadExcelAnterior = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingExcel(true);
-    setUploadError("");
-
-    try {
-      const parsedRows = await parseCobrancasExcel(file);
-      setCobrancasRowsAnteriores(parsedRows);
-      setUploadError("");
-    } catch (error) {
-      console.error("[MatrizLinks] erro ao processar planilha anterior de cobranças.", error);
-      setUploadError(error instanceof Error ? error.message : "Erro ao processar o arquivo anterior. Envie um Excel válido (.xlsx ou .xls).");
-      setCobrancasRowsAnteriores([]);
+      console.error("[MatrizLinks] erro ao processar ou salvar planilha atual de cobranças.", error);
+      setUploadError(error instanceof Error ? error.message : "Erro ao processar ou salvar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
     } finally {
       setIsUploadingExcel(false);
       event.target.value = "";
@@ -866,17 +889,9 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               </Button>
             </div>
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
-                <Label htmlFor="cobrancas-file-anterior">Arquivo anterior</Label>
-                <Input id="cobrancas-file-anterior" type="file" accept=".xlsx,.xls" onChange={handleUploadExcelAnterior} className="mt-3" />
-                <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
-                  Use a planilha do dia anterior para calcular a diferença de cobranças.
-                </p>
-              </div>
-
-              <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
-                <Label htmlFor="cobrancas-file">Arquivo atual</Label>
+                <Label htmlFor="cobrancas-file">Arquivo Excel salvo</Label>
                 <Input id="cobrancas-file" type="file" accept=".xlsx,.xls" onChange={handleUploadExcel} className="mt-3" />
                 {isUploadingExcel && (
                   <div className="mt-3 space-y-2">
@@ -886,8 +901,18 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   </div>
                 )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
-                  Ao carregar o arquivo, espere, pois o arquivo é muito grande e pode demorar um pouco.
+                  O arquivo fica salvo para todos e será substituído quando qualquer usuário enviar outro.
                 </p>
+                {isLoadingSavedCobrancas && (
+                  <p className={isDark ? "mt-2 text-xs text-zinc-300 animate-pulse" : "mt-2 text-xs text-slate-700 animate-pulse"}>
+                    Carregando arquivo salvo{".".repeat(loadingDots)}
+                  </p>
+                )}
+                {cobrancasInfo && (
+                  <p className={isDark ? "mt-2 text-xs text-emerald-300" : "mt-2 text-xs text-emerald-700"}>
+                    Salvo: {cobrancasInfo.fileName} • {formatNumber(cobrancasInfo.rowCount)} registros
+                  </p>
+                )}
               </div>
 
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
@@ -1009,7 +1034,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                         <p className={`text-sm font-semibold ${getPerformanceVisual(row).nameClass}`}>{row.vendedor}</p>
                         <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
                           <p><span className="font-medium">Cobranças:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.qtdCobranca)}</span></p>
-                          <p><span className="font-medium">Realizadas:</span> <span className={getPerformanceVisual(row).valueClass}>{hasArquivoAnterior ? formatNumber(getCobrancasRealizadasNoDia(row)) : "-"}</span></p>
                           <p><span className="font-medium">Agend. mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.agendamentosMes)}</span></p>
                           <p><span className="font-medium">Efetividade:</span> <span className={getPerformanceVisual(row).valueClass}>{row.efetividade.toFixed(2)}%</span></p>
                           <p><span className="font-medium">Meta mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatCurrency(row.metaRecebimento)}</span></p>
@@ -1128,7 +1152,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                     <p className={`text-sm font-semibold ${getPerformanceVisual(row).nameClass}`}>{row.vendedor}</p>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                       <p><span className="font-medium">Cobranças:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.qtdCobranca)}</span></p>
-                      <p><span className="font-medium">Realizadas:</span> <span className={getPerformanceVisual(row).valueClass}>{hasArquivoAnterior ? formatNumber(getCobrancasRealizadasNoDia(row)) : "-"}</span></p>
                       <p><span className="font-medium">Agend. mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatNumber(row.agendamentosMes)}</span></p>
                       <p><span className="font-medium">Efetividade:</span> <span className={getPerformanceVisual(row).valueClass}>{row.efetividade.toFixed(2)}%</span></p>
                       <p><span className="font-medium">Meta mês:</span> <span className={getPerformanceVisual(row).valueClass}>{formatCurrency(row.metaRecebimento)}</span></p>
