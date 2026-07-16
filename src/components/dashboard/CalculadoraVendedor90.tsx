@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 const CalculadoraVendedor90 = () => {
   const [aReceber, setAReceber] = useState<number | "">(0);
   const [recebido, setRecebido] = useState<number | "">(0);
-  const [recRefMes, setRecRefMes] = useState<number | "">(0);
   const [resultado, setResultado] = useState("0,00");
 
   // Função para formatar valor em reais
@@ -24,7 +23,7 @@ const CalculadoraVendedor90 = () => {
   const calculateResult = () => {
     const aReceberNum = typeof aReceber === "number" ? aReceber : 0;
     const recebidoNum = typeof recebido === "number" ? recebido : 0;
-    const recRefMesNum = typeof recRefMes === "number" ? recRefMes : 0;
+    
 
     if (aReceberNum <= 0 || recebidoNum < 0 || recRefMesNum < 0) return "0,00";
 
