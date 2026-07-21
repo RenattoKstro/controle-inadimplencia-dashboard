@@ -159,9 +159,6 @@ const DashboardLayout = () => {
           {isMobile ? (
             <>
               <h1 className={isDark ? "min-w-0 flex-1 text-lg font-semibold text-zinc-100 flex flex-wrap items-center gap-2" : "min-w-0 flex-1 text-lg font-semibold text-slate-900 flex flex-wrap items-center gap-2"}>
-                <span className={isMembro ? "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-red-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md"}>
-                  {isMembro ? "PRO" : "FREE"}
-                </span>
                 <span>Meu Fiado</span>
                 <span>{percentual ? `${percentual}%` : "0.0%"}</span>
               </h1>
@@ -177,9 +174,6 @@ const DashboardLayout = () => {
           ) : (
             <>
               <h1 className={isDark ? "text-2xl font-semibold text-zinc-100 flex items-center gap-3" : "text-2xl font-semibold text-slate-900 flex items-center gap-3"}>
-                <span className={isMembro ? "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-emerald-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-red-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md"}>
-                  {isMembro ? "PRO" : "FREE"}
-                </span>
                 <span>Meu Fiado</span>
                 <span>{percentual ? `${percentual}%` : "0.0%"}</span>
               </h1>
@@ -289,11 +283,6 @@ const DashboardLayout = () => {
                                 Op. Auxiliar
                               </span>
                             )}
-                            {isMembro && (
-                              <span className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">
-                                Membro
-                              </span>
-                            )}
                           </div>
                           <p className="text-lg text-indigo-400 font-medium">
                             Filial {String(userData?.filial || "00000").padStart(5, "0")}
@@ -312,6 +301,11 @@ const DashboardLayout = () => {
               </div>
             </>
           )}
+        </div>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 pb-3">
+          <div className="rounded-lg border border-red-500/50 bg-red-600 px-3 py-2 text-center text-xs font-extrabold uppercase tracking-wide text-white shadow-lg sm:text-sm">
+            ATENÇÃO - FIM DO SUPORTE AO APP, USEM ATÉ PARAR DE FUNCIONAR - FUNCIONAMENTO ATÉ 15/03/2027
+          </div>
         </div>
       </header>
 
@@ -347,8 +341,7 @@ const DashboardLayout = () => {
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
                 <TabsTrigger value="matriz" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                  <Users className="h-4 w-4" /> Membros
-                  <span className="inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[7px] font-bold uppercase leading-none text-white shadow-sm">PRO</span>
+                  <Users className="h-4 w-4" /> Mais
                 </TabsTrigger>
               </TabsList>
 

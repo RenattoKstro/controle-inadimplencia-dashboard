@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trophy, Zap, Store, Phone, Instagram, User, BadgeCheck } from "lucide-react";
+import { Trophy, Zap, Store, Phone, Instagram, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ABATEDORES_REGIONAL, isAbatedoresFilial } from "@/constants/abatedores";
 import {
@@ -214,7 +214,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   const [operadoresPorFilial, setOperadoresPorFilial] = useState<Record<number, FilialOperator[]>>({});
   const [regionais, setRegionais] = useState<string[]>([]);
   const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
-  const [filiaisComBadgeMembro, setFiliaisComBadgeMembro] = useState<Set<number>>(new Set());
   const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -316,7 +315,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
           await publishMembrosManifest(filiaisComMarcacaoExplicita);
         }
 
-        setFiliaisComBadgeMembro(filiaisComMarcacaoExplicita);
         setFiliaisComMembros(filiaisComMarcacaoExplicita);
       }
 
@@ -409,20 +407,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       </div>
     );
   };
-
-  const isUsuarioMembro = (_filialId: number, user: RankingFilial["usuario_principal"]) => {
-    return isOperatorMember(user);
-  };
-
-  const membroBadge = (
-    <span className={isDark
-      ? "inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300"
-      : "inline-flex items-center gap-1 rounded-full border border-emerald-600/40 bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm"
-    }>
-      <BadgeCheck className="h-3.5 w-3.5" />
-      Membro
-    </span>
-  );
 
   const getRoleBadge = (role?: string | null) => {
     const normalizedRole = normalizeOperatorRole(role);
@@ -567,7 +551,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-medium">{f.filial}</p>
-                              {filiaisComMembros.has(f.idfilial) && membroBadge}
                             </div>
                             <p className="text-xs text-zinc-400">{f.regional}</p>
                           </div>
@@ -575,8 +558,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                             {operadores.map((user) => {
                               const initials = getInitials(user?.nome_usuario);
                               const displayName = getFirstName(user?.nome_usuario);
-                              const usuarioMembro = isUsuarioMembro(f.idfilial, user as RankingFilial["usuario_principal"]);
-
                               return (
                                 <HoverCard key={`${f.idfilial}-${user.user_id || user.nome_usuario || user.role || "operador"}`} openDelay={200}>
                                   <HoverCardTrigger asChild>
@@ -604,7 +585,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                         <div className="flex flex-wrap items-center gap-2">
                                           <p className="break-words font-semibold leading-tight">{displayName}</p>
                                           {getRoleBadge(user?.role)}
-                                          {usuarioMembro && membroBadge}
                                         </div>
                                         <p className="mt-1 text-xs text-zinc-400">
                                           {getUpdatedText(user?.updated_at || null)}
@@ -634,7 +614,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                         <div className="flex flex-wrap items-center gap-2">
                                           <p className="font-bold text-lg">{displayName}</p>
                                           {getRoleBadge(user?.role)}
-                                          {usuarioMembro && membroBadge}
                                         </div>
                                         <p className="text-sm text-zinc-400">Filial {f.filial}</p>
                                       </div>
