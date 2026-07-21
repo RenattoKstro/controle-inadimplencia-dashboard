@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageCircle, Send, ShieldAlert, X } from "lucide-react";
+import { MessageCircle, Send, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,10 +49,8 @@ const getInitials = (name?: string | null) => {
 };
 
 const MemberChatWidget = ({
-  isMembro,
   viewer,
 }: {
-  isMembro: boolean;
   viewer: ChatViewer;
 }) => {
   const [open, setOpen] = useState(false);
@@ -65,7 +63,6 @@ const MemberChatWidget = ({
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const loadMessages = async () => {
-    if (!isMembro) return;
     setLoading(true);
 
     const cutoff = new Date(Date.now() - ONE_HOUR_MS).toISOString();
@@ -81,16 +78,13 @@ const MemberChatWidget = ({
   };
 
   useEffect(() => {
-    if (!isMembro) return;
     loadMessages();
 
     const interval = setInterval(loadMessages, 15000);
     return () => clearInterval(interval);
-  }, [isMembro]);
+  }, []);
 
   useEffect(() => {
-    if (!isMembro) return;
-
     const channel = supabase
       .channel("member-chat-realtime")
       .on(
@@ -105,7 +99,7 @@ const MemberChatWidget = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isMembro]);
+  }, []);
 
   const sortedMessages = useMemo(() => messages.slice().sort((a, b) => {
     const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -137,7 +131,6 @@ const MemberChatWidget = ({
   }, [sortedMessages]);
 
   const unreadCount = useMemo(() => {
-    if (!isMembro) return 0;
     const seenAt = new Date(lastSeenAt).getTime();
 
     return sortedMessages.filter((message) => {
@@ -147,42 +140,42 @@ const MemberChatWidget = ({
 
       return !isOwn && visibleToViewer && createdAt > seenAt;
     }).length;
-  }, [sortedMessages, lastSeenAt, isMembro, viewer.user_id]);
+  }, [sortedMessages, lastSeenAt, viewer.user_id]);
 
   const buildPayloads = (chatText: string) => {
     const filialNumber = viewer.filial ? Number(viewer.filial) : null;
     const basePublicPayloads = [
       {
         user_id: viewer.user_id,
-        nome_usuario: viewer.nome_usuario || "Membro",
+        nome_usuario: viewer.nome_usuario || "Usuário",
         avatar_url: viewer.avatar_url || null,
         filial: filialNumber,
         mensagem: chatText,
       },
       {
         user_id: viewer.user_id,
-        user_name: viewer.nome_usuario || "Membro",
+        user_name: viewer.nome_usuario || "Usuário",
         user_avatar_url: viewer.avatar_url || null,
         user_filial: filialNumber,
         message: chatText,
       },
       {
         user_id: viewer.user_id,
-        nome_usuario: viewer.nome_usuario || "Membro",
+        nome_usuario: viewer.nome_usuario || "Usuário",
         avatar_url: viewer.avatar_url || null,
         filial: filialNumber,
         message: chatText,
       },
       {
         user_id: viewer.user_id,
-        user_name: viewer.nome_usuario || "Membro",
+        user_name: viewer.nome_usuario || "Usuário",
         user_avatar_url: viewer.avatar_url || null,
         user_filial: filialNumber,
         mensagem: chatText,
       },
       {
         user_id: viewer.user_id,
-        nome_usuario: viewer.nome_usuario || "Membro",
+        nome_usuario: viewer.nome_usuario || "Usuário",
         avatar_url: viewer.avatar_url || null,
         filial: filialNumber,
         content: chatText,
@@ -193,7 +186,7 @@ const MemberChatWidget = ({
   };
 
   const handleSend = async () => {
-    if (!text.trim() || !viewer.user_id || !isMembro) return;
+    if (!text.trim() || !viewer.user_id) return;
     setSending(true);
 
     const chatText = text.trim();
@@ -224,7 +217,7 @@ const MemberChatWidget = ({
           ? "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl transition hover:bg-indigo-500"
           : "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl transition hover:bg-indigo-500"
         }
-        aria-label="Abrir chat dos membros"
+        aria-label="Abrir chat"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
         {!open && unreadCount > 0 && (
@@ -244,7 +237,7 @@ const MemberChatWidget = ({
             : "flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3"
           }>
             <div>
-              <p className="font-semibold">Chat dos membros</p>
+              <p className="font-semibold">Chat</p>
               <p className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-500"}>
                 Mensagens expiram automaticamente em 1 hora.
               </p>
@@ -252,26 +245,14 @@ const MemberChatWidget = ({
             <MessageCircle className="h-5 w-5 text-indigo-400" />
           </div>
 
-          {!isMembro ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-              <ShieldAlert className="h-10 w-10 text-amber-500" />
-              <p className={isDark ? "text-lg font-medium text-zinc-100" : "text-lg font-medium text-slate-900"}>
-                Apenas membro tem acesso ao chat
-              </p>
-              <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-500"}>
-                O botão fica visível para todos, mas somente membros podem participar da conversa.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className={isDark ? "flex-1 space-y-3 overflow-y-auto bg-zinc-950 px-4 py-4" : "flex-1 space-y-3 overflow-y-auto bg-white px-4 py-4"}>
+          <div className={isDark ? "flex-1 space-y-3 overflow-y-auto bg-zinc-950 px-4 py-4" : "flex-1 space-y-3 overflow-y-auto bg-white px-4 py-4"}>
                 {loading ? (
                   <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-500"}>Carregando mensagens...</p>
                 ) : visibleMessages.length === 0 ? (
                   <p className={isDark ? "text-sm text-zinc-400" : "text-sm text-slate-500"}>Nenhuma mensagem por enquanto.</p>
                 ) : (
                   visibleMessages.map((message) => {
-                    const nome = message.nome_usuario || message.user_name || "Membro";
+                    const nome = message.nome_usuario || message.user_name || "Usuário";
                     const avatar = message.avatar_url || message.user_avatar_url || null;
                     const filial = message.filial || message.user_filial;
                     const body = message.mensagem || message.message || "";
@@ -308,12 +289,12 @@ const MemberChatWidget = ({
                   })
                 )}
                 <div ref={bottomRef} />
-              </div>
+          </div>
 
-              <div className={isDark
-                ? "border-t border-white/10 bg-zinc-900/90 px-4 py-3"
-                : "border-t border-slate-200 bg-slate-50 px-4 py-3"
-              }>
+          <div className={isDark
+            ? "border-t border-white/10 bg-zinc-900/90 px-4 py-3"
+            : "border-t border-slate-200 bg-slate-50 px-4 py-3"
+          }>
                 <div className="flex items-center gap-2">
                   <Input
                     value={text}
@@ -331,9 +312,7 @@ const MemberChatWidget = ({
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-            </>
-          )}
+          </div>
         </div>
       )}
     </>

@@ -110,7 +110,7 @@ const DashboardLayout = () => {
 
   const handleTabChange = (v: string) => {
     if (v === "matriz") {
-      console.log("[DashboardLayout] guia membros selecionada");
+      console.log("[DashboardLayout] guia mais selecionada");
     }
     setActiveTab(v);
   };
@@ -135,7 +135,6 @@ const DashboardLayout = () => {
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
-  const isMembro = Boolean((userData as { membro?: boolean } | null)?.membro);
   const isDark = theme === "dark";
   const operatorRole = normalizeOperatorRole(userData?.role);
   const profileDisplayName = getFirstNameAndLastSurname(userData?.nome_usuario);
@@ -431,20 +430,14 @@ const DashboardLayout = () => {
               )}
 
               <TabsContent value="filiais">
-                <Filiais isViewerMembro={isMembro} />
+                <Filiais />
               </TabsContent>
 
               <TabsContent value="matriz">
-                {isMembro ? (
-                  <MatrizLinks
-                    userId={userData?.user_id}
-                    receivedAmount={recebidoHoje}
-                  />
-                ) : (
-                  <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md p-8 text-center"}>
-                    <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-800 text-lg font-medium"}>Esta guia é somente para membros.</p>
-                  </div>
-                )}
+                <MatrizLinks
+                  userId={userData?.user_id}
+                  receivedAmount={recebidoHoje}
+                />
               </TabsContent>
             </Tabs>
           </div>
@@ -452,7 +445,6 @@ const DashboardLayout = () => {
       </div>
 
       <MemberChatWidget
-        isMembro={isMembro}
         viewer={{
           user_id: userData?.user_id,
           nome_usuario: userData?.nome_usuario,

@@ -32,7 +32,6 @@ interface RankingFilial {
     instagram: string;
     updated_at: string | null;
     role?: string | null;
-    membro?: boolean | null;
   } | null;
 }
 
@@ -45,20 +44,11 @@ type FilialOperator = {
   instagram?: string | null;
   updated_at?: string | null;
   role?: string | null;
-  membro?: boolean | null;
   abertura_vencido_mes?: number | null;
   meta_mes?: number | null;
   meta_desafio?: number | null;
   vencido_atual?: number | null;
 };
-
-type FiliaisProps = {
-  isViewerMembro: boolean;
-};
-
-const ADMIN_EMAIL = "rks7ro@gmail.com";
-const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
-const MEMBROS_MANIFEST_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/membros-filiais.json";
 
 const normalizeOperatorRole = (role?: string | null) => {
   const normalizedRole = (role || "")
@@ -76,14 +66,8 @@ const getFirstName = (name?: string | null) => {
   return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
 };
 
-const isOperatorMember = (user?: Pick<FilialOperator, "membro"> | null) => Boolean(user?.membro);
-
 const sortOperators = (operators: FilialOperator[]) => (
   operators.slice().sort((a, b) => {
-    const aMember = isOperatorMember(a);
-    const bMember = isOperatorMember(b);
-    if (aMember !== bMember) return aMember ? -1 : 1;
-
     const aRole = normalizeOperatorRole(a.role);
     const bRole = normalizeOperatorRole(b.role);
     if (aRole !== bRole) {
@@ -194,27 +178,11 @@ const sortFiliaisByPercentualAndFreshness = (
   })
 );
 
-const publishMembrosManifest = async (filiais: Set<number>) => {
-  const payload = JSON.stringify({
-    updated_at: new Date().toISOString(),
-    filiais: Array.from(filiais).sort((a, b) => a - b),
-  });
-
-  const file = new TextEncoder().encode(payload);
-  await supabase.storage
-    .from("perfis")
-    .upload(MEMBROS_MANIFEST_PATH, file, {
-      contentType: "application/json",
-      upsert: true,
-    });
-};
-
-const Filiais = ({ isViewerMembro }: FiliaisProps) => {
+const Filiais = () => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
   const [operadoresPorFilial, setOperadoresPorFilial] = useState<Record<number, FilialOperator[]>>({});
   const [regionais, setRegionais] = useState<string[]>([]);
-  const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
-  const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
+  const [filtroRegional, setFiltroRegional] = useState<string>("todas");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
@@ -230,24 +198,17 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
         const lista = data as RankingFilial[];
         const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
         const regionaisComCategoriasExtras = [
-          "Membros",
           ABATEDORES_REGIONAL,
-          ...regs.filter((reg) => reg !== "Membros" && reg !== ABATEDORES_REGIONAL),
+          ...regs.filter((reg) => reg !== ABATEDORES_REGIONAL),
         ];
         setRegionais(regionaisComCategoriasExtras);
         setRanking(lista);
-
-        const filiaisMarcadasNaView = new Set(
-          lista
-            .filter((item) => isOperatorMember(item.usuario_principal))
-            .map((item) => item.idfilial)
-        );
 
         let operadoresAgrupados: Record<number, FilialOperator[]> = {};
         try {
           const { data: operadoresData, error: operadoresError } = await supabase
             .from("user_dashboard")
-            .select("user_id, filial, nome_usuario, avatar_url, whatsapp, instagram, updated_at, role, membro, abertura_vencido_mes, meta_mes, meta_desafio, vencido_atual")
+            .select("user_id, filial, nome_usuario, avatar_url, whatsapp, instagram, updated_at, role, abertura_vencido_mes, meta_mes, meta_desafio, vencido_atual")
             .not("filial", "is", null)
             .order("updated_at", { ascending: false });
 
@@ -264,58 +225,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
         }
 
         setOperadoresPorFilial(operadoresAgrupados);
-
-        const filiaisMarcadasNosPerfis = new Set(
-          Object.entries(operadoresAgrupados)
-            .filter(([, operadores]) => operadores.some((operador) => isOperatorMember(operador)))
-            .map(([filialId]) => Number(filialId))
-            .filter((filialId) => Number.isFinite(filialId))
-        );
-
-        let filiaisMarcadasNoUserDashboard = new Set<number>();
-        const { data: { user } } = await supabase.auth.getUser();
-        const isAdminViewer = user?.email === ADMIN_EMAIL;
-
-        if (isAdminViewer) {
-          const { data: membrosData, error: membrosError } = await supabase
-            .from("user_dashboard")
-            .select("filial")
-            .eq("membro", true)
-            .not("filial", "is", null);
-
-          if (!membrosError && membrosData) {
-            filiaisMarcadasNoUserDashboard = new Set(
-              (membrosData as Array<{ filial: number | null }>)
-                .map((item) => item.filial)
-                .filter((filial): filial is number => typeof filial === "number")
-            );
-          }
-        }
-
-        let filiaisManifesto = new Set<number>();
-        try {
-          const response = await fetch(MEMBROS_MANIFEST_URL, { cache: "no-store" });
-          if (response.ok) {
-            const manifest = await response.json() as { filiais?: number[] };
-            filiaisManifesto = new Set((manifest.filiais || []).filter((item): item is number => typeof item === "number"));
-          }
-        } catch {
-          // fallback silencioso quando o manifesto ainda não existir.
-        }
-
-        const filiaisComMarcacaoExplicita = filiaisManifesto.size > 0
-          ? filiaisManifesto
-          : new Set([
-              ...filiaisMarcadasNaView,
-              ...filiaisMarcadasNosPerfis,
-              ...filiaisMarcadasNoUserDashboard,
-            ]);
-
-        if (isAdminViewer && filiaisComMarcacaoExplicita.size > 0) {
-          await publishMembrosManifest(filiaisComMarcacaoExplicita);
-        }
-
-        setFiliaisComMembros(filiaisComMarcacaoExplicita);
       }
 
       setLoading(false);
@@ -326,10 +235,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
     return () => clearInterval(interval);
   }, []);
 
-
-  useEffect(() => {
-    setFiltroRegional("Membros");
-  }, []);
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
@@ -337,9 +242,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
 
   let dadosFiltrados = ranking;
 
-  if (filtroRegional === "Membros") {
-    dadosFiltrados = dadosFiltrados.filter((f) => filiaisComMembros.has(f.idfilial));
-  } else if (filtroRegional === ABATEDORES_REGIONAL) {
+  if (filtroRegional === ABATEDORES_REGIONAL) {
     dadosFiltrados = dadosFiltrados.filter((f) => isAbatedoresFilial(f.idfilial));
   } else if (filtroRegional !== "todas") {
     dadosFiltrados = dadosFiltrados.filter(f => (f.regional || "Sem regional") === filtroRegional);
@@ -472,10 +375,9 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
               <SelectValue placeholder="Todas as regionais" />
             </SelectTrigger>
             <SelectContent className={isDark ? "bg-zinc-900 border-white/10 text-zinc-100" : "bg-white border-slate-300 text-slate-900"}>
-              <SelectItem value="Membros">Membros</SelectItem>
-              <SelectItem value={ABATEDORES_REGIONAL}>ABATEDORES</SelectItem>
               <SelectItem value="todas">Todas as regionais</SelectItem>
-              {regionais.filter((reg) => reg !== "Membros" && reg !== ABATEDORES_REGIONAL).map(reg => (
+              <SelectItem value={ABATEDORES_REGIONAL}>ABATEDORES</SelectItem>
+              {regionais.filter((reg) => reg !== ABATEDORES_REGIONAL).map(reg => (
                 <SelectItem key={reg} value={reg}>{reg}</SelectItem>
               ))}
             </SelectContent>
