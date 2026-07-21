@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy, Utensils, Gift, Sliders,
-  CalendarDays, AlertTriangle, History, Instagram, Store, Users, User, Sun, Moon
+  CalendarDays, AlertTriangle, History, Instagram, Store, MoreHorizontal, User, Sun, Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -154,6 +154,11 @@ const DashboardLayout = () => {
     >
       {/* HEADER */}
       <header className={isDark ? "bg-zinc-950/95 border-b border-white/10 backdrop-blur-xl shadow-md sticky top-0 z-50" : "bg-white/95 border-b border-slate-200 backdrop-blur-xl shadow-sm sticky top-0 z-50"}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-3">
+          <div className="rounded-lg border border-red-500/50 bg-red-600 px-3 py-2 text-center text-xs font-extrabold uppercase tracking-wide text-white shadow-lg sm:text-sm">
+            ATENÇÃO - FIM DO SUPORTE AO APP, USEM ATÉ PARAR DE FUNCIONAR - FUNCIONAMENTO ATÉ 15/03/2027
+          </div>
+        </div>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           {isMobile ? (
             <>
@@ -301,11 +306,6 @@ const DashboardLayout = () => {
             </>
           )}
         </div>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 pb-3">
-          <div className="rounded-lg border border-red-500/50 bg-red-600 px-3 py-2 text-center text-xs font-extrabold uppercase tracking-wide text-white shadow-lg sm:text-sm">
-            ATENÇÃO - FIM DO SUPORTE AO APP, USEM ATÉ PARAR DE FUNCIONAR - FUNCIONAMENTO ATÉ 15/03/2027
-          </div>
-        </div>
       </header>
 
       {/* MAIN CONTENT */}
@@ -340,7 +340,7 @@ const DashboardLayout = () => {
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
                 <TabsTrigger value="matriz" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                  <Users className="h-4 w-4" /> Mais
+                  <MoreHorizontal className="h-4 w-4" /> Mais
                 </TabsTrigger>
               </TabsList>
 
