@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy, Utensils, Gift, Sliders,
-  CalendarDays, AlertTriangle, History, Instagram, Store, MoreHorizontal, User, Sun, Moon
+  CalendarDays, AlertTriangle, Instagram, Store, MoreHorizontal, User, Sun, Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +13,6 @@ import MetasOverview from "./dashboard/MetasOverview";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
-import Historicos from "./Historicos";
 import Filiais from "./dashboard/Filiais";
 import { useUserData } from "@/hooks/useUserData";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -54,7 +53,6 @@ const getFirstNameAndLastSurname = (name?: string | null) => {
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
-  const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -154,11 +152,6 @@ const DashboardLayout = () => {
     >
       {/* HEADER */}
       <header className={isDark ? "bg-zinc-950/95 border-b border-white/10 backdrop-blur-xl shadow-md sticky top-0 z-50" : "bg-white/95 border-b border-slate-200 backdrop-blur-xl shadow-sm sticky top-0 z-50"}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 pt-3">
-          <div className="rounded-lg border border-red-500/50 bg-red-600 px-3 py-2 text-center text-xs font-extrabold uppercase tracking-wide text-white shadow-lg sm:text-sm">
-            ATENÇÃO - FIM DO SUPORTE AO APP, USEM ATÉ PARAR DE FUNCIONAR - FUNCIONAMENTO ATÉ 15/03/2027
-          </div>
-        </div>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           {isMobile ? (
             <>
@@ -313,7 +306,7 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-3 sm:px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className={isDark ? "flex h-auto w-full justify-start overflow-x-auto p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8" : "flex h-auto w-full justify-start overflow-x-auto p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8"}>
+              <TabsList className={isDark ? "flex h-auto w-full justify-start overflow-x-auto p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-7" : "flex h-auto w-full justify-start overflow-x-auto p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-7"}>
                 <TabsTrigger value="ajustes-metas" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Sliders className="h-4 w-4" /> Ajustes
                 </TabsTrigger>
@@ -331,11 +324,6 @@ const DashboardLayout = () => {
                 <TabsTrigger value="meus-premios" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Trophy className="h-4 w-4" /> Prêmios
                 </TabsTrigger>
-                {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                    <History className="h-4 w-4" /> Histórico
-                  </TabsTrigger>
-                )}
                 <TabsTrigger value="filiais" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
@@ -354,8 +342,6 @@ const DashboardLayout = () => {
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
                   setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-                  mostrarHistorico={mostrarHistorico}
-                  setMostrarHistorico={setMostrarHistorico}
                 />
               </TabsContent>
 
@@ -414,20 +400,6 @@ const DashboardLayout = () => {
                 />
               </TabsContent>
 
-              {mostrarHistorico && (
-                <TabsContent value="historicos">
-                  <Historicos
-                    userData={userData}
-                    updateUserData={updateUserData}
-                    diasSemExpediente={diasSemExpediente}
-                    updateDiasSemExpediente={updateDiasSemExpediente}
-                    diasRestantesCalculados={diasRestantesCalculados}
-                    isLoading={isLoading}
-                    bonusPerdidoAtivado={bonusPerdidoAtivado}
-                    recebido={recebidoHoje}
-                  />
-                </TabsContent>
-              )}
 
               <TabsContent value="filiais">
                 <Filiais />
