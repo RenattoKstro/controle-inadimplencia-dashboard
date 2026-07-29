@@ -442,7 +442,7 @@ const DashboardLayout = () => {
           <Instagram className="text-pink-600 cursor-pointer" onClick={instagram} />
           {showInstagramUsername && (
             <span className="text-pink-600 text-xs bg-card px-2 py-1 rounded shadow">
-              @renato_alme1da
+              @renato_lmd
             </span>
           )}
         </div>
