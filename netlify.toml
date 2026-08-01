@@ -4,5 +4,11 @@
 
 [[redirects]]
   from = "/*"
+  to = "/maintenance.html"
+  status = 503
+  force = true
+
+[[redirects]]
+  from = "/*"
   to = "/index.html"
   status = 200
