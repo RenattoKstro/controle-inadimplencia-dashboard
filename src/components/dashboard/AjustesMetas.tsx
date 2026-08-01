@@ -18,8 +18,6 @@ import {
   Store,
   Check,
   ChevronsUpDown,
-  Eye,
-  EyeOff,
   User,
   Phone,
   Instagram,
@@ -101,12 +99,8 @@ const AjustesMetas = ({
   isLoading,
   bonusPerdidoAtivado,
   setBonusPerdidoAtivado,
-  mostrarHistorico,
-  setMostrarHistorico,
 }: DashboardProps & {
   setBonusPerdidoAtivado: (value: boolean) => void;
-  mostrarHistorico: boolean;
-  setMostrarHistorico: (value: boolean) => void;
 }) => {
   const [isEditingMetas, setIsEditingMetas] = useState(false);
   const [isEditingPerfil, setIsEditingPerfil] = useState(false);
@@ -407,19 +401,10 @@ const AjustesMetas = ({
           )}
           {/* SWITCHES */}
           {!(isEditingMetas || isEditingPerfil) && (
-            <>
-              <div className="flex items-center gap-2">
-                <Switch checked={mostrarHistorico} onCheckedChange={setMostrarHistorico} />
-                <Label className="flex items-center gap-1 cursor-pointer" onClick={() => setMostrarHistorico(!mostrarHistorico)}>
-                  {mostrarHistorico ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  Histórico
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
-                <Label>Ativar Meta Perdido</Label>
-              </div>
-            </>
+            <div className="flex items-center space-x-2">
+              <Switch checked={bonusPerdidoAtivado} onCheckedChange={setBonusPerdidoAtivado} />
+              <Label>Ativar Meta Perdido</Label>
+            </div>
           )}
         </div>
       </div>

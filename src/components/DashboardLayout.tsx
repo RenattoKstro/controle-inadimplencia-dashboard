@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy, Utensils, Gift, Sliders,
-  CalendarDays, AlertTriangle, History, Instagram, Store, Users, User, Sun, Moon
+  CalendarDays, AlertTriangle, Instagram, Store, MoreHorizontal, User, Sun, Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +13,6 @@ import MetasOverview from "./dashboard/MetasOverview";
 import MetaAlimentacao from "./dashboard/MetaAlimentacao";
 import MeusPremios from "./dashboard/MeusPremios";
 import AjustesMetas from "./dashboard/AjustesMetas";
-import Historicos from "./Historicos";
 import Filiais from "./dashboard/Filiais";
 import { useUserData } from "@/hooks/useUserData";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -54,7 +53,6 @@ const getFirstNameAndLastSurname = (name?: string | null) => {
 
 const DashboardLayout = () => {
   const [activeTab, setActiveTab] = useState("metas");
-  const [mostrarHistorico, setMostrarHistorico] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -110,7 +108,7 @@ const DashboardLayout = () => {
 
   const handleTabChange = (v: string) => {
     if (v === "matriz") {
-      console.log("[DashboardLayout] guia membros selecionada");
+      console.log("[DashboardLayout] guia mais selecionada");
     }
     setActiveTab(v);
   };
@@ -135,7 +133,6 @@ const DashboardLayout = () => {
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
-  const isMembro = Boolean((userData as { membro?: boolean } | null)?.membro);
   const isDark = theme === "dark";
   const operatorRole = normalizeOperatorRole(userData?.role);
   const profileDisplayName = getFirstNameAndLastSurname(userData?.nome_usuario);
@@ -159,9 +156,6 @@ const DashboardLayout = () => {
           {isMobile ? (
             <>
               <h1 className={isDark ? "min-w-0 flex-1 text-lg font-semibold text-zinc-100 flex flex-wrap items-center gap-2" : "min-w-0 flex-1 text-lg font-semibold text-slate-900 flex flex-wrap items-center gap-2"}>
-                <span className={isMembro ? "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-red-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md"}>
-                  {isMembro ? "PRO" : "FREE"}
-                </span>
                 <span>Meu Fiado</span>
                 <span>{percentual ? `${percentual}%` : "0.0%"}</span>
               </h1>
@@ -177,9 +171,6 @@ const DashboardLayout = () => {
           ) : (
             <>
               <h1 className={isDark ? "text-2xl font-semibold text-zinc-100 flex items-center gap-3" : "text-2xl font-semibold text-slate-900 flex items-center gap-3"}>
-                <span className={isMembro ? "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-emerald-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-red-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md"}>
-                  {isMembro ? "PRO" : "FREE"}
-                </span>
                 <span>Meu Fiado</span>
                 <span>{percentual ? `${percentual}%` : "0.0%"}</span>
               </h1>
@@ -289,11 +280,6 @@ const DashboardLayout = () => {
                                 Op. Auxiliar
                               </span>
                             )}
-                            {isMembro && (
-                              <span className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-300">
-                                Membro
-                              </span>
-                            )}
                           </div>
                           <p className="text-lg text-indigo-400 font-medium">
                             Filial {String(userData?.filial || "00000").padStart(5, "0")}
@@ -320,7 +306,7 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-3 sm:px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className={isDark ? "flex h-auto w-full justify-start overflow-x-auto p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8" : "flex h-auto w-full justify-start overflow-x-auto p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8"}>
+              <TabsList className={isDark ? "flex h-auto w-full justify-start overflow-x-auto p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-7" : "flex h-auto w-full justify-start overflow-x-auto p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-7"}>
                 <TabsTrigger value="ajustes-metas" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Sliders className="h-4 w-4" /> Ajustes
                 </TabsTrigger>
@@ -338,17 +324,11 @@ const DashboardLayout = () => {
                 <TabsTrigger value="meus-premios" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Trophy className="h-4 w-4" /> Prêmios
                 </TabsTrigger>
-                {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                    <History className="h-4 w-4" /> Histórico
-                  </TabsTrigger>
-                )}
                 <TabsTrigger value="filiais" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
                 <TabsTrigger value="matriz" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                  <Users className="h-4 w-4" /> Membros
-                  <span className="inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[7px] font-bold uppercase leading-none text-white shadow-sm">PRO</span>
+                  <MoreHorizontal className="h-4 w-4" /> Mais
                 </TabsTrigger>
               </TabsList>
 
@@ -362,8 +342,6 @@ const DashboardLayout = () => {
                   isLoading={isLoading}
                   bonusPerdidoAtivado={bonusPerdidoAtivado}
                   setBonusPerdidoAtivado={setBonusPerdidoAtivado}
-                  mostrarHistorico={mostrarHistorico}
-                  setMostrarHistorico={setMostrarHistorico}
                 />
               </TabsContent>
 
@@ -422,36 +400,16 @@ const DashboardLayout = () => {
                 />
               </TabsContent>
 
-              {mostrarHistorico && (
-                <TabsContent value="historicos">
-                  <Historicos
-                    userData={userData}
-                    updateUserData={updateUserData}
-                    diasSemExpediente={diasSemExpediente}
-                    updateDiasSemExpediente={updateDiasSemExpediente}
-                    diasRestantesCalculados={diasRestantesCalculados}
-                    isLoading={isLoading}
-                    bonusPerdidoAtivado={bonusPerdidoAtivado}
-                    recebido={recebidoHoje}
-                  />
-                </TabsContent>
-              )}
 
               <TabsContent value="filiais">
-                <Filiais isViewerMembro={isMembro} />
+                <Filiais />
               </TabsContent>
 
               <TabsContent value="matriz">
-                {isMembro ? (
-                  <MatrizLinks
-                    userId={userData?.user_id}
-                    receivedAmount={recebidoHoje}
-                  />
-                ) : (
-                  <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/60 backdrop-blur-md p-8 text-center" : "rounded-2xl border border-slate-200 bg-white/90 backdrop-blur-md p-8 text-center"}>
-                    <p className={isDark ? "text-zinc-200 text-lg font-medium" : "text-slate-800 text-lg font-medium"}>Esta guia é somente para membros.</p>
-                  </div>
-                )}
+                <MatrizLinks
+                  userId={userData?.user_id}
+                  receivedAmount={recebidoHoje}
+                />
               </TabsContent>
             </Tabs>
           </div>
@@ -459,7 +417,6 @@ const DashboardLayout = () => {
       </div>
 
       <MemberChatWidget
-        isMembro={isMembro}
         viewer={{
           user_id: userData?.user_id,
           nome_usuario: userData?.nome_usuario,
@@ -485,7 +442,7 @@ const DashboardLayout = () => {
           <Instagram className="text-pink-600 cursor-pointer" onClick={instagram} />
           {showInstagramUsername && (
             <span className="text-pink-600 text-xs bg-card px-2 py-1 rounded shadow">
-              @renato_alme1da
+              @renato_lmd
             </span>
           )}
         </div>
