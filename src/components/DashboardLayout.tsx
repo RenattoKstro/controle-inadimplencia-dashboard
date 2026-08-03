@@ -36,11 +36,6 @@ const normalizeOperatorRole = (role?: string | null) => {
   return "";
 };
 
-const getFirstName = (name?: string | null) => {
-  const normalizedName = (name || "").trim();
-  return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
-};
-
 const getFirstNameAndLastSurname = (name?: string | null) => {
   const normalizedName = (name || "").trim().replace(/\s+/g, " ");
   if (!normalizedName) return "Usuário";
@@ -49,6 +44,61 @@ const getFirstNameAndLastSurname = (name?: string | null) => {
   if (parts.length === 1) return parts[0];
 
   return `${parts[0]} ${parts[parts.length - 1]}`;
+};
+
+/** Converte qualquer imagem para JPEG válido (evita HEIC/WebP problemático e arquivos corrompidos). */
+const convertImageToJpegBlob = (file: File, maxSize = 512, quality = 0.85): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      try {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const width = Math.max(1, Math.round(img.width * scale));
+        const height = Math.max(1, Math.round(img.height * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("Não foi possível processar a imagem."));
+          return;
+        }
+
+        // Fundo branco (JPEG não tem transparência)
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(objectUrl);
+            if (!blob) {
+              reject(new Error("Falha ao converter a imagem para JPEG."));
+              return;
+            }
+            resolve(blob);
+          },
+          "image/jpeg",
+          quality
+        );
+      } catch (err) {
+        URL.revokeObjectURL(objectUrl);
+        reject(err);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Arquivo de imagem inválido ou não suportado pelo navegador."));
+    };
+
+    img.src = objectUrl;
+  });
 };
 
 const DashboardLayout = () => {
@@ -71,6 +121,7 @@ const DashboardLayout = () => {
   const [recebidoHoje, setRecebidoHoje] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
   const [showInstagramUsername, setShowInstagramUsername] = useState(false);
+  const [avatarBroken, setAvatarBroken] = useState(false);
   const today = new Date();
 
   // Verificação de sessão
@@ -99,6 +150,10 @@ const DashboardLayout = () => {
     document.documentElement.classList.toggle("dark", isDarkTheme);
     localStorage.setItem("dashboard-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [userData?.avatar_url]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -130,12 +185,74 @@ const DashboardLayout = () => {
 
   const toggleTheme = () => setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // limpa o input para permitir reenviar a mesma foto
+    e.target.value = "";
+
+    if (!file || !userData?.user_id) {
+      toast({ title: "Erro: arquivo ou usuário não encontrado", variant: "destructive" });
+      return;
+    }
+
+    if (!file.type.startsWith("image/") && !/\.(jpe?g|png|webp|gif|heic|heif|bmp)$/i.test(file.name)) {
+      toast({ title: "Selecione um arquivo de imagem válido", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande", description: "Use uma foto de até 8 MB.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      toast({ title: "Processando foto..." });
+
+      // Sempre gera JPEG válido — evita HEIC do iPhone e content-type errado
+      const jpegBlob = await convertImageToJpegBlob(file, 512, 0.85);
+      const fileName = `${userData.user_id}.jpg`;
+
+      const { error } = await supabase.storage
+        .from("perfis")
+        .upload(fileName, jpegBlob, {
+          contentType: "image/jpeg",
+          upsert: true,
+          cacheControl: "3600",
+        });
+
+      if (error) {
+        console.error("Erro no upload:", error);
+        toast({
+          title: "Erro ao enviar foto",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: publicData } = supabase.storage.from("perfis").getPublicUrl(fileName);
+      const novaUrl = `${publicData.publicUrl}?t=${Date.now()}`;
+
+      await updateUserData({ avatar_url: novaUrl });
+      setAvatarBroken(false);
+      toast({ title: "Foto atualizada com sucesso!" });
+    } catch (err: any) {
+      console.error("Erro ao processar foto:", err);
+      toast({
+        title: "Erro ao processar foto",
+        description: err?.message || "Não foi possível ler esta imagem. Tente outra foto (JPG ou PNG).",
+        variant: "destructive",
+      });
+    }
+  };
+
   const percentual = userData?.carteira_total > 0
     ? ((userData.vencido_atual / userData.carteira_total) * 100).toFixed(1)
     : null;
   const isDark = theme === "dark";
   const operatorRole = normalizeOperatorRole(userData?.role);
   const profileDisplayName = getFirstNameAndLastSurname(userData?.nome_usuario);
+  const showAvatar = Boolean(userData?.avatar_url) && !avatarBroken;
 
   if (isLoading || !userData) {
     return (
@@ -201,12 +318,13 @@ const DashboardLayout = () => {
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     title={userData?.nome_usuario || "Usuário"}
                   >
-                    {userData?.avatar_url ? (
+                    {showAvatar ? (
                       <div className="w-10 h-10 rounded-full overflow-hidden">
                         <img
                           src={userData.avatar_url}
                           alt="Perfil"
                           className="w-full h-full object-cover"
+                          onError={() => setAvatarBroken(true)}
                         />
                       </div>
                     ) : (
@@ -219,12 +337,13 @@ const DashboardLayout = () => {
                     <div className={isDark ? "absolute right-0 mt-2 w-96 bg-zinc-900 text-zinc-100 rounded-2xl shadow-2xl border border-white/10 p-6 z-50" : "absolute right-0 mt-2 w-96 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 p-6 z-50"}>
                       <div className="flex items-center gap-5 mb-6">
                         <label htmlFor="upload-foto" className="cursor-pointer group">
-                          {userData?.avatar_url ? (
+                          {showAvatar ? (
                             <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-purple-500 group-hover:opacity-80 transition">
                               <img
                                 src={userData.avatar_url}
                                 alt="Perfil"
                                 className="w-full h-full object-cover"
+                                onError={() => setAvatarBroken(true)}
                               />
                             </div>
                           ) : (
@@ -235,34 +354,9 @@ const DashboardLayout = () => {
                           <input
                             id="upload-foto"
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/webp,image/gif,image/*"
                             className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file || !userData?.user_id) {
-                                toast({ title: "Erro: arquivo ou usuário não encontrado", variant: "destructive" });
-                                return;
-                              }
-                              const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
-                              const fileName = `${userData.user_id}.${fileExt}`;
-                              await supabase.storage.from("perfis").remove([fileName]);
-                              const arrayBuffer = await file.arrayBuffer();
-                              const uint8Array = new Uint8Array(arrayBuffer);
-                              const { error } = await supabase.storage
-                                .from("perfis")
-                                .upload(fileName, uint8Array, {
-                                  contentType: file.type || "image/jpeg",
-                                  upsert: false
-                                });
-                              if (error) {
-                                console.error("Erro no upload:", error);
-                                toast({ title: "Erro ao enviar foto", variant: "destructive" });
-                                return;
-                              }
-                              const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}`;
-                              await updateUserData({ avatar_url: novaUrl });
-                              toast({ title: "Foto atualizada com sucesso!" });
-                            }}
+                            onChange={handleAvatarUpload}
                           />
                         </label>
                         <div>
