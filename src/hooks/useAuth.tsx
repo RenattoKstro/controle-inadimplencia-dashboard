@@ -95,7 +95,7 @@ export const useAuth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: "https://cotroledeinadimpleciateste.netlify.app/auth",
+            emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
         console.log("Signup response:", { data, error });
@@ -127,11 +127,12 @@ export const useAuth = () => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      console.log("Initiating Google login, redirectTo:", "https://cotroledeinadimpleciateste.netlify.app/auth/callback");
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      console.log("Initiating Google login, redirectTo:", redirectTo);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://cotroledeinadimpleciateste.netlify.app/auth/callback",
+          redirectTo,
         },
       });
       console.log("Google login initial response:", data);

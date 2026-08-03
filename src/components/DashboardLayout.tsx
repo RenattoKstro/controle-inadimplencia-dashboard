@@ -245,21 +245,26 @@ const DashboardLayout = () => {
                               }
                               const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
                               const fileName = `${userData.user_id}.${fileExt}`;
-                              await supabase.storage.from("perfis").remove([fileName]);
-                              const arrayBuffer = await file.arrayBuffer();
-                              const uint8Array = new Uint8Array(arrayBuffer);
+
                               const { error } = await supabase.storage
                                 .from("perfis")
-                                .upload(fileName, uint8Array, {
+                                .upload(fileName, file, {
                                   contentType: file.type || "image/jpeg",
-                                  upsert: false
+                                  upsert: true,
+                                  cacheControl: "3600",
                                 });
+
                               if (error) {
                                 console.error("Erro no upload:", error);
-                                toast({ title: "Erro ao enviar foto", variant: "destructive" });
+                                toast({
+                                  title: "Erro ao enviar foto",
+                                  description: error.message,
+                                  variant: "destructive",
+                                });
                                 return;
                               }
-                              const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}`;
+
+                              const novaUrl = `https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/${fileName}?t=${Date.now()}`;
                               await updateUserData({ avatar_url: novaUrl });
                               toast({ title: "Foto atualizada com sucesso!" });
                             }}
