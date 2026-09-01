@@ -131,6 +131,68 @@ const getFreshnessRank = (updatedAt: string | null, now: Date) => {
   return Math.floor(diffMs / (24 * 60 * 60 * 1000));
 };
 
+const sortFiliaisByFreshnessAndPercentual = (
+  filiais: RankingFilial[],
+  operadoresPorFilial: Record<number, FilialOperator[]>,
+  now: Date,
+) => (
+  filiais.slice().sort((a, b) => {
+    const getSortData = (filial: RankingFilial) => {
+      const fallbackUser = filial.usuario_principal
+        ? [{ ...filial.usuario_principal, filial: filial.idfilial } satisfies FilialOperator]
+        : [];
+      const operadores = sortOperators(
+        (operadoresPorFilial[filial.idfilial] && operadoresPorFilial[filial.idfilial].length > 0)
+          ? operadoresPorFilial[filial.idfilial]
+          : fallbackUser,
+      );
+      const metrics = getLatestMetricSnapshot(operadores, filial);
+      const { pctMetaFiado, pctMetaDesafio } = calculateMetaPercentages(metrics);
+      const latestUpdatedAt = getLatestUpdatedAt(operadores, filial.usuario_principal?.updated_at || null);
+      const latestTimestamp = latestUpdatedAt ? new Date(latestUpdatedAt).getTime() : 0;
+
+      return {
+        pctMetaFiado,
+        pctMetaDesafio,
+        freshnessRank: getFreshnessRank(latestUpdatedAt, now),
+        latestTimestamp: Number.isNaN(latestTimestamp) ? 0 : latestTimestamp,
+      };
+    };
+
+    const aData = getSortData(a);
+    const bData = getSortData(b);
+
+    if (aData.freshnessRank !== bData.freshnessRank) {
+      return aData.freshnessRank - bData.freshnessRank;
+    }
+
+    if (bData.pctMetaFiado !== aData.pctMetaFiado) {
+      return bData.pctMetaFiado - aData.pctMetaFiado;
+    }
+
+    if (bData.pctMetaDesafio !== aData.pctMetaDesafio) {
+      return bData.pctMetaDesafio - aData.pctMetaDesafio;
+    }
+
+    return bData.latestTimestamp - aData.latestTimestamp;
+  })
+);
+
+const publishMembrosManifest = async (filiais: Set<number>) => {
+  const payload = JSON.stringify({
+    updated_at: new Date().toISOString(),
+    filiais: Array.from(filiais).sort((a, b) => a - b),
+  });
+
+  const file = new TextEncoder().encode(payload);
+  await supabase.storage
+    .from("perfis")
+    .upload(MEMBROS_MANIFEST_PATH, file, {
+      contentType: "application/json",
+      upsert: true,
+    });
+};
+
 const sortFiliaisByPercentualAndFreshness = (
   filiais: RankingFilial[],
   operadoresPorFilial: Record<number, FilialOperator[]>,
@@ -198,8 +260,9 @@ const Filiais = () => {
         const lista = data as RankingFilial[];
         const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
         const regionaisComCategoriasExtras = [
+          "Membros",
           ABATEDORES_REGIONAL,
-          ...regs.filter((reg) => reg !== ABATEDORES_REGIONAL),
+          ...regs.filter((reg) => reg !== "Membros" && reg !== ABATEDORES_REGIONAL),
         ];
         setRegionais(regionaisComCategoriasExtras);
         setRanking(lista);
@@ -242,7 +305,9 @@ const Filiais = () => {
 
   let dadosFiltrados = ranking;
 
-  if (filtroRegional === ABATEDORES_REGIONAL) {
+  if (filtroRegional === "Membros") {
+    dadosFiltrados = dadosFiltrados.filter((f) => filiaisComMembros.has(f.idfilial));
+  } else if (filtroRegional === ABATEDORES_REGIONAL) {
     dadosFiltrados = dadosFiltrados.filter((f) => isAbatedoresFilial(f.idfilial));
   } else if (filtroRegional !== "todas") {
     dadosFiltrados = dadosFiltrados.filter(f => (f.regional || "Sem regional") === filtroRegional);
@@ -254,7 +319,7 @@ const Filiais = () => {
     );
   }
 
-  dadosFiltrados = sortFiliaisByPercentualAndFreshness(dadosFiltrados, operadoresPorFilial, now);
+  dadosFiltrados = sortFiliaisByFreshnessAndPercentual(dadosFiltrados, operadoresPorFilial, now);
 
   if (loading) {
     return <p className={isDark ? "text-center py-20 text-xl text-zinc-200" : "text-center py-20 text-xl text-slate-700"}>Carregando Filiais %...</p>;
@@ -375,9 +440,10 @@ const Filiais = () => {
               <SelectValue placeholder="Todas as regionais" />
             </SelectTrigger>
             <SelectContent className={isDark ? "bg-zinc-900 border-white/10 text-zinc-100" : "bg-white border-slate-300 text-slate-900"}>
-              <SelectItem value="todas">Todas as regionais</SelectItem>
+              <SelectItem value="Membros">Membros</SelectItem>
               <SelectItem value={ABATEDORES_REGIONAL}>ABATEDORES</SelectItem>
-              {regionais.filter((reg) => reg !== ABATEDORES_REGIONAL).map(reg => (
+              <SelectItem value="todas">Todas as regionais</SelectItem>
+              {regionais.filter((reg) => reg !== "Membros" && reg !== ABATEDORES_REGIONAL).map(reg => (
                 <SelectItem key={reg} value={reg}>{reg}</SelectItem>
               ))}
             </SelectContent>

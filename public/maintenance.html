@@ -1,59 +1,188 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Site em Manutenção</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f4f4f4;
-      color: #333;
-      text-align: center;
-    }
-    .container {
-      max-width: 600px;
-      padding: 20px;
-    }
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 20px;
-      color: #d32f2f;
-    }
-    p {
-      font-size: 1.2em;
-      margin-bottom: 20px;
-    }
-    .contact {
-      font-size: 1em;
-      color: #555;
-    }
-    .spinner {
-      border: 8px solid #f3f3f3;
-      border-top: 8px solid #d32f2f;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="spinner"></div>
-    <h1>Site em Manutenção</h1>
-    <p>BANCO DE DADOS LOTADO.</p>
-    <p class="contact">EXCLUINDO TODAS AS CONTAS, QUANDO LIBERADO VOCÊ TERÁ QUE CRIAR UMA NOVA CONTA</a>.</p>
-  </div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Meu Fiado · Em manutenção</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
+        background: #f8f8f5;
+        color: #242424;
+      }
+
+      main {
+        width: min(1440px, 100%);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: clamp(24px, 5vw, 72px) clamp(20px, 5vw, 88px) 32px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 20px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: #ea4d3d;
+        color: white;
+        font-size: 14px;
+        box-shadow: 0 8px 20px #ea4d3d3d;
+      }
+
+      .status {
+        border: 1px solid #e4b7af;
+        border-radius: 999px;
+        background: #fff4f2;
+        color: #b5392e;
+        padding: 7px 11px;
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .content {
+        display: grid;
+        grid-template-columns: minmax(260px, 0.8fr) minmax(380px, 1.5fr);
+        align-items: center;
+        gap: clamp(28px, 6vw, 100px);
+      }
+
+      .message { max-width: 490px; }
+      .eyebrow {
+        margin: 0 0 14px;
+        color: #c94a3c;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(38px, 5.2vw, 72px);
+        line-height: .98;
+        letter-spacing: -0.065em;
+      }
+
+      .message p:not(.eyebrow) {
+        max-width: 420px;
+        margin: 20px 0 0;
+        color: #616161;
+        font-size: clamp(16px, 1.45vw, 19px);
+        line-height: 1.6;
+      }
+
+      .contact {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 28px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: #242424;
+        color: white;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 700;
+        transition: transform .2s ease, background .2s ease;
+      }
+      .contact:hover { transform: translateY(-2px); background: #ea4d3d; }
+
+      .illustration { width: 100%; }
+      .illustration svg { display: block; width: 100%; height: auto; }
+
+      @media (max-width: 760px) {
+        main { padding-top: 26px; }
+        .content { grid-template-columns: 1fr; gap: 26px; }
+        .message { text-align: center; margin: 0 auto; }
+        .message p:not(.eyebrow) { margin-left: auto; margin-right: auto; }
+        .illustration { order: -1; max-width: 650px; margin: 0 auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">MF</span> Meu Fiado</div>
+        <span class="status">EM MANUTENÇÃO</span>
+      </header>
+
+      <section class="content" aria-labelledby="maintenance-title">
+        <div class="message">
+          <p class="eyebrow">Estamos construindo algo melhor</p>
+          <h1 id="maintenance-title">Voltamos em breve.</h1>
+          <p>O Meu Fiado está passando por melhorias. Nossa equipe está preparando uma experiência ainda melhor para você.</p>
+          <a class="contact" href="https://chat.whatsapp.com/GTc7DQBgrzqG1fmmHAcmPl">Entrar no grupo do WhatsApp</a>
+        </div>
+
+        <div class="illustration" role="img" aria-label="Ilustração de uma obra com guindaste e plataforma coberta">
+          <svg viewBox="0 0 900 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="shadow" x="120" y="330" width="650" height="230" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="16" stdDeviation="13" flood-color="#483f35" flood-opacity=".22" /></filter>
+              <linearGradient id="wood" x1="450" y1="391" x2="450" y2="520" gradientUnits="userSpaceOnUse"><stop stop-color="#C58C5C"/><stop offset="1" stop-color="#8E5D3A"/></linearGradient>
+              <linearGradient id="cloth" x1="420" y1="244" x2="478" y2="482" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset="1" stop-color="#e1ded7"/></linearGradient>
+              <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M0 0H24M0 0V24" stroke="#5b5b58" stroke-opacity=".36" stroke-width="1"/></pattern>
+            </defs>
+            <path d="M95 520H806" stroke="#dedbd4" stroke-width="4" stroke-linecap="round"/>
+            <ellipse cx="450" cy="465" rx="278" ry="76" fill="url(#wood)" filter="url(#shadow)"/>
+            <ellipse cx="450" cy="446" rx="278" ry="70" fill="#D8A373"/>
+            <ellipse cx="450" cy="446" rx="255" ry="57" fill="#C99362" opacity=".48"/>
+            <path d="M560 30V390M549 30H571M553 75H567M549 124H571M553 169H567M549 218H571M553 263H567M549 308H571M553 353H567" stroke="#3d3e3b" stroke-width="5"/>
+            <path d="M553 30L338 112H690" stroke="#3d3e3b" stroke-width="5" stroke-linecap="round"/>
+            <path d="M338 112L553 30L690 112" stroke="#777771" stroke-width="2"/>
+            <path d="M420 87L420 260" stroke="#454642" stroke-width="3"/>
+            <path d="M411 258H429M414 270H426" stroke="#454642" stroke-width="3"/>
+            <path d="M420 270C420 286 408 296 398 305" stroke="#454642" stroke-width="3"/>
+            <path d="M390 302L407 302L412 316L384 316L390 302Z" fill="#575852"/>
+            <path d="M397 317C397 326 407 330 417 336" stroke="#454642" stroke-width="3"/>
+            <path d="M398 318C398 329 388 335 377 340" stroke="#454642" stroke-width="3"/>
+            <path d="M422 314C435 333 514 327 544 372" stroke="#3d3e3b" stroke-width="2" opacity=".75"/>
+            <path d="M418 314C401 337 326 322 294 370" stroke="#3d3e3b" stroke-width="2" opacity=".75"/>
+            <path d="M324 374C340 297 390 248 451 248C512 248 556 312 572 379C584 428 570 455 532 469C489 485 412 491 357 469C323 456 315 423 324 374Z" fill="url(#cloth)" stroke="#d7d4ce" stroke-width="2"/>
+            <path d="M360 284C388 304 414 321 450 297C469 284 486 282 505 293M344 385C391 365 397 457 433 475M461 297C449 351 455 415 480 479M514 310C490 374 526 416 533 461" stroke="#c9c6c0" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+            <path d="M430 478L451 456L473 478" fill="#ee6b56"/>
+            <g stroke="#555651" stroke-width="3"><path d="M191 315V470M255 315V470M191 340H255M191 385H255M191 430H255M210 315L255 385M236 315L191 385M210 385L255 455M236 385L191 455"/></g>
+            <rect x="184" y="305" width="79" height="10" rx="3" fill="#5d5e59"/>
+            <rect x="183" y="470" width="82" height="10" rx="3" fill="#5d5e59"/>
+            <g stroke="#555651" stroke-width="3"><path d="M637 288V470M712 288V470M637 320H712M637 365H712M637 410H712M656 288L712 365M693 288L637 365M656 365L712 445M693 365L637 445"/></g>
+            <rect x="630" y="278" width="90" height="10" rx="3" fill="#5d5e59"/><rect x="630" y="470" width="90" height="10" rx="3" fill="#5d5e59"/>
+            <g fill="#f3b03e" stroke="#444" stroke-width="2"><circle cx="225" cy="286" r="7"/><circle cx="674" cy="263" r="7"/><circle cx="675" cy="333" r="7"/></g>
+            <g fill="#555"><rect x="218" y="294" width="14" height="20" rx="4"/><rect x="667" y="271" width="14" height="18" rx="4"/><rect x="668" y="341" width="14" height="18" rx="4"/></g>
+            <g transform="translate(738 392)" stroke="#444" stroke-width="4"><path d="M0 58H134L151 77H-8L0 58Z" fill="#4d4f4b"/><path d="M55 57V18H118L134 57" fill="#e6b24d"/><path d="M7 58C-22 80-9 100 20 100M116 77C93 94 111 112 140 101"/><circle cx="20" cy="92" r="16" fill="#3e403d"/><circle cx="123" cy="92" r="16" fill="#3e403d"/></g>
+            <g transform="translate(86 408)" stroke="#444" stroke-width="4"><path d="M0 54H120L137 70H-8L0 54Z" fill="#4d4f4b"/><path d="M45 54V18H103L119 54" fill="#e6b24d"/><circle cx="18" cy="84" r="15" fill="#3e403d"/><circle cx="109" cy="84" r="15" fill="#3e403d"/></g>
+            <path d="M145 506H204L214 520H135L145 506ZM694 506H755L765 520H684L694 506Z" fill="#e39b32" stroke="#555" stroke-width="3"/>
+            <path d="M145 511H204M694 511H755" stroke="#2f3030" stroke-width="4"/>
+            <rect x="100" y="198" width="685" height="330" fill="url(#grid)" opacity=".08"/>
+          </svg>
+        </div>
+      </section>
+    </main>
+  </body>
 </html>

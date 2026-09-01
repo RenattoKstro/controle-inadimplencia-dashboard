@@ -4,13 +4,6 @@
   
 [[redirects]]
   from = "/*"
-  to = "/index.html"
-  status = 200
-  
-[[redirects]]
-  from = "/*"
   to = "/maintenance.html"
   status = 503
   force = true
-
-

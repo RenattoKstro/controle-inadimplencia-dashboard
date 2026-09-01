@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy, Utensils, Gift, Sliders,
-  CalendarDays, AlertTriangle, Instagram, Store, MoreHorizontal, User, Sun, Moon
+  CalendarDays, AlertTriangle, History, Instagram, Store, Users, User, Sun, Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -163,7 +163,7 @@ const DashboardLayout = () => {
 
   const handleTabChange = (v: string) => {
     if (v === "matriz") {
-      console.log("[DashboardLayout] guia mais selecionada");
+      console.log("[DashboardLayout] guia membros selecionada");
     }
     setActiveTab(v);
   };
@@ -273,6 +273,9 @@ const DashboardLayout = () => {
           {isMobile ? (
             <>
               <h1 className={isDark ? "min-w-0 flex-1 text-lg font-semibold text-zinc-100 flex flex-wrap items-center gap-2" : "min-w-0 flex-1 text-lg font-semibold text-slate-900 flex flex-wrap items-center gap-2"}>
+                <span className={isMembro ? "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-red-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md"}>
+                  {isMembro ? "PRO" : "FREE"}
+                </span>
                 <span>Meu Fiado</span>
                 <span>{percentual ? `${percentual}%` : "0.0%"}</span>
               </h1>
@@ -288,6 +291,9 @@ const DashboardLayout = () => {
           ) : (
             <>
               <h1 className={isDark ? "text-2xl font-semibold text-zinc-100 flex items-center gap-3" : "text-2xl font-semibold text-slate-900 flex items-center gap-3"}>
+                <span className={isMembro ? "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-emerald-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-red-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md"}>
+                  {isMembro ? "PRO" : "FREE"}
+                </span>
                 <span>Meu Fiado</span>
                 <span>{percentual ? `${percentual}%` : "0.0%"}</span>
               </h1>
@@ -400,7 +406,7 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
           <div className="max-w-5xl mx-auto px-3 sm:px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className={isDark ? "flex h-auto w-full justify-start overflow-x-auto p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-7" : "flex h-auto w-full justify-start overflow-x-auto p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-7"}>
+              <TabsList className={isDark ? "flex h-auto w-full justify-start overflow-x-auto p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8" : "flex h-auto w-full justify-start overflow-x-auto p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8"}>
                 <TabsTrigger value="ajustes-metas" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Sliders className="h-4 w-4" /> Ajustes
                 </TabsTrigger>
@@ -418,11 +424,17 @@ const DashboardLayout = () => {
                 <TabsTrigger value="meus-premios" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Trophy className="h-4 w-4" /> Prêmios
                 </TabsTrigger>
+                {mostrarHistorico && (
+                  <TabsTrigger value="historicos" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                    <History className="h-4 w-4" /> Histórico
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="filiais" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
                 <TabsTrigger value="matriz" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                  <MoreHorizontal className="h-4 w-4" /> Mais
+                  <Users className="h-4 w-4" /> Membros
+                  <span className="inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[7px] font-bold uppercase leading-none text-white shadow-sm">PRO</span>
                 </TabsTrigger>
               </TabsList>
 
