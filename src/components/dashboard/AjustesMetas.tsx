@@ -578,18 +578,12 @@ const AjustesMetas = ({
       {/* GRID DE METAS — SÓ MOSTRA QUANDO NÃO ESTÁ FORÇADO NO PERFIL */}
       {!isEditingPerfil && (
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
-          <CardItem title="Abertura de Vencido do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditingMetas} />
-          <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditingMetas} />
-          <CardItem title="Meta do Mês" value={formState.meta_mes} icon={<Target size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_mes", v)} color="bg-blue-500" isEditMode={isEditingMetas} />
-          <CardItem title="Vencido Atual" value={formState.vencido_atual} icon={<AlertTriangle size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("vencido_atual", v)} color="bg-yellow-500" isEditMode={isEditingMetas} />
-          <CardItem title="Meta Desafio" value={formState.meta_desafio} icon={<Target size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_desafio", v)} color="bg-green-500" isEditMode={isEditingMetas} />
-          {bonusPerdidoAtivado && (
-            <>
-              <CardItem title="Meta Perdido" value={formState.meta_perdido} icon={<AlertTriangle size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_perdido", v)} color="bg-red-500" isEditMode={isEditingMetas} />
-              <CardItem title="Rec. Perdido" value={formState.rec_perdido} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("rec_perdido", v)} color="bg-red-500" isEditMode={isEditingMetas} />
-            </>
-          )}
           <CardItem title="Carteira Total" value={formState.carteira_total} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("carteira_total", v)} color="bg-teal-500" isEditMode={isEditingMetas} />
+          <CardItem title="Abertura do Mês" value={formState.abertura_vencido_mes} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_vencido_mes", v)} color="bg-purple-500" isEditMode={isEditingMetas} />
+          <CardItem title="Abertura do Dia" value={formState.abertura_dia} icon={<Building size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("abertura_dia", v)} color="bg-indigo-500" isEditMode={isEditingMetas} />
+          <CardItem title="Vencido Atual" value={formState.vencido_atual} icon={<AlertTriangle size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("vencido_atual", v)} color="bg-yellow-500" isEditMode={isEditingMetas} />
+          <CardItem title="Meta do Mês" value={formState.meta_mes} icon={<Target size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_mes", v)} color="bg-blue-500" isEditMode={isEditingMetas} />
+          <CardItem title="Meta Desafio" value={formState.meta_desafio} icon={<Target size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_desafio", v)} color="bg-green-500" isEditMode={isEditingMetas} />
           <Card className={isDark
             ? "group rounded-2xl border border-white/10 bg-zinc-900/80 transition-all hover:-translate-y-1 hover:border-indigo-400/60 hover:bg-zinc-900"
             : "group rounded-2xl border border-slate-200 bg-white transition-all hover:-translate-y-1 hover:border-indigo-300 hover:shadow-lg"}
@@ -599,24 +593,32 @@ const AjustesMetas = ({
                 <h3 className={isDark ? "text-sm font-medium text-zinc-200" : "text-sm font-medium text-slate-700"}>Dias</h3>
                 <span className={isDark ? "rounded-xl border border-white/10 bg-slate-600 p-2 text-white" : "rounded-xl bg-slate-500 p-2 text-white"}><Target size={16} /></span>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Trabalhados</p>
-                {isEditingMetas ? (
-                  <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-                ) : (
-                  <div className="text-xl font-bold">{formState.dias_trabalhados}</div>
-                )}
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Restantes</p>
-                {isEditingMetas ? (
-                  <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="text-lg font-bold" />
-                ) : (
-                  <div className="text-xl font-bold">{formState.dias_restantes}</div>
-                )}
+              <div className="grid grid-cols-2 gap-3">
+                <div className={isDark ? "rounded-xl border border-white/10 bg-zinc-950/50 p-3" : "rounded-xl border border-slate-200 bg-slate-50 p-3"}>
+                  <p className="text-xs text-muted-foreground">Trabalhados</p>
+                  {isEditingMetas ? (
+                    <Input type="number" value={formState.dias_trabalhados} onChange={(e) => handleChange("dias_trabalhados", parseInt(e.target.value) || 0)} className="mt-2 text-lg font-bold" />
+                  ) : (
+                    <div className="mt-2 text-xl font-bold">{formState.dias_trabalhados}</div>
+                  )}
+                </div>
+                <div className={isDark ? "rounded-xl border border-white/10 bg-zinc-950/50 p-3" : "rounded-xl border border-slate-200 bg-slate-50 p-3"}>
+                  <p className="text-xs text-muted-foreground">Restantes</p>
+                  {isEditingMetas ? (
+                    <Input type="number" value={formState.dias_restantes} onChange={(e) => handleChange("dias_restantes", parseInt(e.target.value) || 0)} className="mt-2 text-lg font-bold" />
+                  ) : (
+                    <div className="mt-2 text-xl font-bold">{formState.dias_restantes}</div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
+          {bonusPerdidoAtivado && (
+            <>
+              <CardItem title="Meta Perdido" value={formState.meta_perdido} icon={<AlertTriangle size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("meta_perdido", v)} color="bg-red-500" isEditMode={isEditingMetas} />
+              <CardItem title="Rec. Perdido" value={formState.rec_perdido} icon={<Wallet size={16} />} isEditable={isEditingMetas} onChange={(v) => handleChange("rec_perdido", v)} color="bg-red-500" isEditMode={isEditingMetas} />
+            </>
+          )}
         </div>
       )}
     </div>

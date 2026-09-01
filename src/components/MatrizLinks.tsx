@@ -1,11 +1,16 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { BarChart3, Camera, Chrome, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
+import { BarChart3, Camera, Chrome, Download, ExternalLink, Goal, Sparkles, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import * as XLSX from "xlsx";
 import html2canvas from "html2canvas";
+import { BiSolidReport } from "react-icons/bi";
+import Apps from "./Apps";
+import RelatoriosSabium from "./RelatoriosSabium";
 import {
   Cell,
   Pie,
@@ -228,13 +233,13 @@ const parsePercentageValue = (value: unknown): number => {
   const parsed = parseNumericValue(value);
 
   if (typeof value === "number") {
-    return value > 0 && value <= 2 ? value * 100 : parsed;
+    return value > 0 && value <= 10 ? value * 100 : parsed;
   }
 
   if (typeof value === "string") {
     const hasPercentSignal = value.includes("%");
     if (hasPercentSignal) return parsed;
-    return parsed > 0 && parsed <= 2 ? parsed * 100 : parsed;
+    return parsed > 0 && parsed <= 10 ? parsed * 100 : parsed;
   }
 
   return parsed;
@@ -272,13 +277,13 @@ const PIE_COLORS = [
   "#0891b2",
 ];
 const META_COBRANCAS_PADRAO = 520;
-
 const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   const [isClient, setIsClient] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [loadingDots, setLoadingDots] = useState(1);
   const [metaDiariaInput, setMetaDiariaInput] = useState("0");
   const [cobrancasRows, setCobrancasRows] = useState<CobrancaRow[]>([]);
+  const [vendedoresOcultos, setVendedoresOcultos] = useState<Set<string>>(new Set());
   const [selectedLoja, setSelectedLoja] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [isUploadingExcel, setIsUploadingExcel] = useState(false);
@@ -340,28 +345,44 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     return cobrancasRows.filter((row) => row.loja === selectedLoja);
   }, [cobrancasRows, selectedLoja]);
 
-  const resumoLoja = useMemo(() => {
-    return rowsFiltradasPorLoja.reduce((acc, row) => {
-      acc.totalFila += row.fila;
-      acc.totalCobrancas += row.qtdCobranca;
-      acc.totalAgendamentos += row.agendamentosMes;
-      acc.totalFalta += row.faltaCobrancaMes;
-      acc.totalRecebido += row.recebido;
-      acc.totalMeta += row.metaRecebimento;
-      return acc;
-    }, {
-      totalFila: 0,
-      totalCobrancas: 0,
-      totalAgendamentos: 0,
-      totalFalta: 0,
-      totalRecebido: 0,
-      totalMeta: 0,
+  const getVendedorKey = (row: Pick<CobrancaRow, "loja" | "vendedor">) => `${row.loja}::${normalizeText(row.vendedor)}`;
+
+  const rowsRelatorioPorLoja = useMemo(() => (
+    rowsFiltradasPorLoja.filter((row) => !vendedoresOcultos.has(getVendedorKey(row)))
+  ), [rowsFiltradasPorLoja, vendedoresOcultos]);
+
+  const toggleVendedorOculto = (row: CobrancaRow, checked: boolean) => {
+    const key = getVendedorKey(row);
+    setVendedoresOcultos((current) => {
+      const next = new Set(current);
+      if (checked) next.add(key);
+      else next.delete(key);
+      return next;
     });
-  }, [rowsFiltradasPorLoja]);
+  };
+
+  const buildResumoLoja = (rows: CobrancaRow[]) => rows.reduce((acc, row) => {
+    acc.totalFila += row.fila;
+    acc.totalCobrancas += row.qtdCobranca;
+    acc.totalAgendamentos += row.agendamentosMes;
+    acc.totalFalta += row.faltaCobrancaMes;
+    acc.totalRecebido += row.recebido;
+    acc.totalMeta += row.metaRecebimento;
+    return acc;
+  }, {
+    totalFila: 0,
+    totalCobrancas: 0,
+    totalAgendamentos: 0,
+    totalFalta: 0,
+    totalRecebido: 0,
+    totalMeta: 0,
+  });
+
+  const resumoLoja = useMemo(() => buildResumoLoja(rowsRelatorioPorLoja), [rowsRelatorioPorLoja]);
 
   const pieData = useMemo(() => {
     if (!selectedLoja) return [];
-    const rowsWithCobranca = rowsFiltradasPorLoja.filter((row) => row.qtdCobranca > 0);
+    const rowsWithCobranca = rowsRelatorioPorLoja.filter((row) => row.qtdCobranca > 0);
     if (rowsWithCobranca.length) {
       return rowsWithCobranca.map((row) => ({
         name: row.vendedor,
@@ -369,11 +390,11 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       }));
     }
 
-    return rowsFiltradasPorLoja.map((row) => ({
+    return rowsRelatorioPorLoja.map((row) => ({
       name: row.vendedor,
       value: row.agendamentosMes,
     }));
-  }, [rowsFiltradasPorLoja, selectedLoja]);
+  }, [rowsRelatorioPorLoja, selectedLoja]);
 
   const readFileWithProgress = (file: File) =>
     new Promise<ArrayBuffer>((resolve, reject) => {
@@ -391,6 +412,97 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
       reader.readAsArrayBuffer(file);
     });
 
+  const parseCobrancasExcel = async (file: File) => {
+    const buffer = await readFileWithProgress(file);
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const matrixRows = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
+
+    if (!matrixRows.length) {
+      throw new Error("Não foi possível ler dados da planilha.");
+    }
+
+    const columnsMatchers = {
+      vendedor: ["vendedor"],
+      loja: ["loja"],
+      fila: ["fila"],
+      qtdCobranca: ["qtd de cobranca", "qtd cobranca"],
+      agendamentoMes: ["agendamento mes"],
+      faltaCobrancaMes: ["falta cobranca mes"],
+      agendamentoValor: ["agendamentos - r$", "agendamentos"],
+      metaRecebimento: ["meta de recebimento", "meta recebimento"],
+      recebido: ["recebido"],
+      efetividade: ["% - efet", "% efet", "efet"],
+    };
+
+    const firstPossibleHeaderLine = 4; // linha 5 do Excel (0-indexado)
+    const headerRowIndex = matrixRows.findIndex((row, index) => {
+      if (index < firstPossibleHeaderLine) return false;
+      const normalizedCells = row.map((cell) => normalizeText(cell));
+      const hasSituacao = normalizedCells.some((cell) => cell.includes("situacao"));
+      const hasVendedor = normalizedCells.some((cell) =>
+        columnsMatchers.vendedor.some((candidate) => cell.includes(candidate))
+      );
+      const hasLoja = normalizedCells.some((cell) =>
+        columnsMatchers.loja.some((candidate) => cell.includes(candidate))
+      );
+      return hasSituacao && hasVendedor && hasLoja;
+    });
+
+    if (headerRowIndex < 0) {
+      throw new Error("Cabeçalho não encontrado. Verifique se a planilha contém as colunas esperadas.");
+    }
+
+    const headerRow = matrixRows[headerRowIndex];
+
+    const findColumnIndex = (candidates: string[]) =>
+      headerRow.findIndex((cell) => hasAnyCandidate(cell, candidates));
+
+    const vendedorIndex = findColumnIndex(columnsMatchers.vendedor);
+    const lojaIndex = findColumnIndex(columnsMatchers.loja);
+    const filaIndex = findColumnIndex(columnsMatchers.fila);
+    const qtdCobrancaIndex = findColumnIndex(columnsMatchers.qtdCobranca);
+    const agendamentoMesIndex = findColumnIndex(columnsMatchers.agendamentoMes);
+    const faltaCobrancaMesIndex = findColumnIndex(columnsMatchers.faltaCobrancaMes);
+    const agendamentoValorIndex = findColumnIndex(columnsMatchers.agendamentoValor);
+    const metaRecebimentoIndex = findColumnIndex(columnsMatchers.metaRecebimento);
+    const recebidoIndex = findColumnIndex(columnsMatchers.recebido);
+    const efetividadeIndex = findColumnIndex(columnsMatchers.efetividade);
+
+    if (
+      vendedorIndex < 0 ||
+      lojaIndex < 0 ||
+      filaIndex < 0 ||
+      qtdCobrancaIndex < 0 ||
+      agendamentoMesIndex < 0
+    ) {
+      throw new Error("Colunas obrigatórias não encontradas. Verifique o layout da planilha.");
+    }
+
+    const dataRows = matrixRows.slice(headerRowIndex + 1);
+
+    const parsedRows: CobrancaRow[] = dataRows
+      .map((row) => ({
+        vendedor: String(row[vendedorIndex] ?? "").trim(),
+        loja: String(row[lojaIndex] ?? "").replace(/\D/g, ""),
+        fila: parseNumericValue(row[filaIndex]),
+        qtdCobranca: parseNumericValue(row[qtdCobrancaIndex]),
+        agendamentosMes: parseNumericValue(row[agendamentoMesIndex]),
+        faltaCobrancaMes: faltaCobrancaMesIndex >= 0 ? parseNumericValue(row[faltaCobrancaMesIndex]) : 0,
+        agendamentosValor: agendamentoValorIndex >= 0 ? parseNumericValue(row[agendamentoValorIndex]) : 0,
+        metaRecebimento: metaRecebimentoIndex >= 0 ? parseNumericValue(row[metaRecebimentoIndex]) : 0,
+        recebido: recebidoIndex >= 0 ? parseNumericValue(row[recebidoIndex]) : 0,
+        efetividade: efetividadeIndex >= 0 ? parsePercentageValue(row[efetividadeIndex]) : 0,
+      }))
+      .filter((row) => row.vendedor && row.loja);
+
+    if (!parsedRows.length) {
+      throw new Error("A planilha foi lida, mas não foram encontrados registros válidos abaixo do cabeçalho.");
+    }
+
+    return parsedRows;
+  };
+
   const handleUploadExcel = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -399,107 +511,14 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     setUploadError("");
 
     try {
-      const buffer = await readFileWithProgress(file);
-      const workbook = XLSX.read(buffer, { type: "array" });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const matrixRows = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
-
-      if (!matrixRows.length) {
-        setUploadError("Não foi possível ler dados da planilha.");
-        setCobrancasRows([]);
-        return;
-      }
-
-      const columnsMatchers = {
-        vendedor: ["vendedor"],
-        loja: ["loja"],
-        fila: ["fila"],
-        qtdCobranca: ["qtd de cobranca", "qtd cobranca"],
-        agendamentoMes: ["agendamento mes"],
-        faltaCobrancaMes: ["falta cobranca mes"],
-        agendamentoValor: ["agendamentos - r$", "agendamentos"],
-        metaRecebimento: ["meta de recebimento", "meta recebimento"],
-        recebido: ["recebido"],
-        efetividade: ["% - efet", "% efet", "efet"],
-      };
-
-      const firstPossibleHeaderLine = 4; // linha 5 do Excel (0-indexado)
-      const headerRowIndex = matrixRows.findIndex((row, index) => {
-        if (index < firstPossibleHeaderLine) return false;
-        const normalizedCells = row.map((cell) => normalizeText(cell));
-        const hasSituacao = normalizedCells.some((cell) => cell.includes("situacao"));
-        const hasVendedor = normalizedCells.some((cell) =>
-          columnsMatchers.vendedor.some((candidate) => cell.includes(candidate))
-        );
-        const hasLoja = normalizedCells.some((cell) =>
-          columnsMatchers.loja.some((candidate) => cell.includes(candidate))
-        );
-        return hasSituacao && hasVendedor && hasLoja;
-      });
-
-      if (headerRowIndex < 0) {
-        setUploadError("Cabeçalho não encontrado. Verifique se a planilha contém as colunas esperadas.");
-        setCobrancasRows([]);
-        return;
-      }
-
-      const headerRow = matrixRows[headerRowIndex];
-
-      const findColumnIndex = (candidates: string[]) =>
-        headerRow.findIndex((cell) => hasAnyCandidate(cell, candidates));
-
-      const vendedorIndex = findColumnIndex(columnsMatchers.vendedor);
-      const lojaIndex = findColumnIndex(columnsMatchers.loja);
-      const filaIndex = findColumnIndex(columnsMatchers.fila);
-      const qtdCobrancaIndex = findColumnIndex(columnsMatchers.qtdCobranca);
-      const agendamentoMesIndex = findColumnIndex(columnsMatchers.agendamentoMes);
-      const faltaCobrancaMesIndex = findColumnIndex(columnsMatchers.faltaCobrancaMes);
-      const agendamentoValorIndex = findColumnIndex(columnsMatchers.agendamentoValor);
-      const metaRecebimentoIndex = findColumnIndex(columnsMatchers.metaRecebimento);
-      const recebidoIndex = findColumnIndex(columnsMatchers.recebido);
-      const efetividadeIndex = findColumnIndex(columnsMatchers.efetividade);
-
-      if (
-        vendedorIndex < 0 ||
-        lojaIndex < 0 ||
-        filaIndex < 0 ||
-        qtdCobrancaIndex < 0 ||
-        agendamentoMesIndex < 0
-      ) {
-        setUploadError("Colunas obrigatórias não encontradas. Verifique o layout da planilha.");
-        setCobrancasRows([]);
-        return;
-      }
-
-      const dataRows = matrixRows.slice(headerRowIndex + 1);
-
-      const parsedRows: CobrancaRow[] = dataRows
-        .map((row) => ({
-          vendedor: String(row[vendedorIndex] ?? "").trim(),
-          loja: String(row[lojaIndex] ?? "").replace(/\D/g, ""),
-          fila: parseNumericValue(row[filaIndex]),
-          qtdCobranca: parseNumericValue(row[qtdCobrancaIndex]),
-          agendamentosMes: parseNumericValue(row[agendamentoMesIndex]),
-          faltaCobrancaMes: faltaCobrancaMesIndex >= 0 ? parseNumericValue(row[faltaCobrancaMesIndex]) : 0,
-          agendamentosValor: agendamentoValorIndex >= 0 ? parseNumericValue(row[agendamentoValorIndex]) : 0,
-          metaRecebimento: metaRecebimentoIndex >= 0 ? parseNumericValue(row[metaRecebimentoIndex]) : 0,
-          recebido: recebidoIndex >= 0 ? parseNumericValue(row[recebidoIndex]) : 0,
-          efetividade: efetividadeIndex >= 0 ? parsePercentageValue(row[efetividadeIndex]) : 0,
-        }))
-        .filter((row) => row.vendedor && row.loja);
-
-      if (!parsedRows.length) {
-        setUploadError("A planilha foi lida, mas não foram encontrados registros válidos abaixo do cabeçalho.");
-        setCobrancasRows([]);
-        return;
-      }
-
+      const parsedRows = await parseCobrancasExcel(file);
       setCobrancasRows(parsedRows);
+      setVendedoresOcultos(new Set());
       setSelectedLoja("");
       setUploadError("");
     } catch (error) {
       console.error("[MatrizLinks] erro ao processar planilha de cobranças.", error);
-      setUploadError("Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
+      setUploadError(error instanceof Error ? error.message : "Erro ao processar o arquivo. Envie um Excel válido (.xlsx ou .xls).");
       setCobrancasRows([]);
     } finally {
       setIsUploadingExcel(false);
@@ -527,7 +546,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   };
 
   const handleDownloadFullDetails = async () => {
-    if (!fullDetailsExportRef.current || !rowsFiltradasPorLoja.length) return;
+    if (!fullDetailsExportRef.current || !rowsRelatorioPorLoja.length) return;
 
     try {
       setIsGeneratingDetailsImage(true);
@@ -566,12 +585,12 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
   };
 
   const handleAnalyzeData = () => {
-    if (!selectedLoja || !rowsFiltradasPorLoja.length) {
+    if (!selectedLoja || !rowsRelatorioPorLoja.length) {
       setAnalysisText("Selecione uma loja com dados para gerar a análise.");
       return;
     }
 
-    const ordered = [...rowsFiltradasPorLoja].sort((a, b) => b.qtdCobranca - a.qtdCobranca);
+    const ordered = [...rowsRelatorioPorLoja].sort((a, b) => b.qtdCobranca - a.qtdCobranca);
     const acimaMeta = ordered.filter((row) => row.qtdCobranca >= META_COBRANCAS_PADRAO).length;
     const abaixoMeta = ordered.length - acimaMeta;
     const melhorGeral = ordered[0];
@@ -676,10 +695,11 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
     ) : (
     <div className="space-y-8">
       <Tabs defaultValue="atalhos" className="space-y-6">
-        <TabsList className={isDark ? "grid w-full grid-cols-3 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid w-full grid-cols-3 rounded-2xl border border-slate-200 bg-white p-1"}>
-          <TabsTrigger value="atalhos" className="rounded-xl">Atalhos</TabsTrigger>
-          <TabsTrigger value="meta-matriz" className="rounded-xl">Meta Matriz</TabsTrigger>
-          <TabsTrigger value="cobrancas-vendedor" className="rounded-xl">Cobranças Vendedor</TabsTrigger>
+        <TabsList className={isDark ? "grid h-auto w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-white/10 bg-zinc-900/80 p-1" : "grid h-auto w-full grid-cols-2 sm:grid-cols-4 rounded-2xl border border-slate-200 bg-white p-1"}>
+          <TabsTrigger value="atalhos" className="rounded-xl px-2 text-xs leading-tight sm:text-sm">Atalhos</TabsTrigger>
+          <TabsTrigger value="meta-matriz" className="rounded-xl px-2 text-xs leading-tight sm:text-sm">Meta Matriz</TabsTrigger>
+          <TabsTrigger value="cobrancas-vendedor" className="rounded-xl px-2 text-xs leading-tight sm:text-sm">Cobranças Vendedor</TabsTrigger>
+          <TabsTrigger value="apps-tools" className="rounded-xl px-2 text-xs leading-tight sm:text-sm">Apps e Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="atalhos" className="space-y-8">
@@ -740,9 +760,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               </div>
               <div>
                 <h3 className="text-2xl font-semibold">Meta Matriz</h3>
-                <p className={isDark ? "mt-1 text-sm text-zinc-400" : "mt-1 text-sm text-slate-600"}>
-                  Informe a meta diária manualmente. Os demais campos acompanham automaticamente o resultado da guia Metas.
-                </p>
               </div>
             </div>
 
@@ -757,9 +774,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   placeholder="0,00"
                   className={isDark ? "mt-3 border-white/10 bg-zinc-900 text-zinc-100" : "mt-3 border-slate-300 bg-white text-slate-900"}
                 />
-                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
-                  Campo com edição manual.
-                </p>
               </div>
 
               <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
@@ -784,9 +798,6 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                     style={{ width: `${Math.min(percentual, 100)}%` }}
                   />
                 </div>
-                <p className={isDark ? "mt-3 text-xs text-zinc-500" : "mt-3 text-xs text-slate-500"}>
-                  Percentual de atingimento da meta diária.
-                </p>
               </div>
 
             </div>
@@ -809,7 +820,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               <Button
                 type="button"
                 onClick={handleDownloadDashboard}
-                disabled={!rowsFiltradasPorLoja.length || isGeneratingImage}
+                disabled={!rowsRelatorioPorLoja.length || isGeneratingImage}
                 className="gap-2"
               >
                 <Camera className="h-4 w-4" />
@@ -829,7 +840,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                   </div>
                 )}
                 <p className={isDark ? "mt-2 text-xs text-zinc-500" : "mt-2 text-xs text-slate-500"}>
-                  A leitura considera a primeira aba do arquivo e procura cabeçalho a partir da linha 5.
+                  Ao carregar o arquivo, espere, pois o arquivo é muito grande e pode demorar um pouco.
                 </p>
               </div>
 
@@ -860,11 +871,35 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
               </p>
             )}
 
+            {rowsFiltradasPorLoja.length > 0 && (
+              <div className={isDark ? "mt-4 rounded-2xl border border-white/10 bg-zinc-950/70 p-4" : "mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold uppercase tracking-wide text-indigo-400">Vendedores no relatório</h4>
+                  <p className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-600"}>Marque quem está de férias para ocultar do relatório.</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {rowsFiltradasPorLoja.map((row) => {
+                    const key = getVendedorKey(row);
+                    return (
+                      <label key={`hide-${key}`} className={isDark ? "flex items-center gap-2 rounded-xl border border-white/10 bg-zinc-900/70 p-2 text-sm" : "flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 text-sm"}>
+                        <Checkbox
+                          checked={vendedoresOcultos.has(key)}
+                          onCheckedChange={(checked) => toggleVendedorOculto(row, checked === true)}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{row.vendedor}</span>
+                        <span className={isDark ? "text-xs text-zinc-400" : "text-xs text-slate-500"}>Ocultar</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div ref={dashboardRef} className="mt-6 space-y-6">
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                   <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Vendedores</p>
-                  <p className="mt-3 text-3xl font-semibold">{formatNumber(rowsFiltradasPorLoja.length)}</p>
+                  <p className="mt-3 text-3xl font-semibold">{formatNumber(rowsRelatorioPorLoja.length)}</p>
                 </div>
                 <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-950/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
                   <p className={isDark ? "text-zinc-300" : "text-slate-600"}>Filas</p>
@@ -913,14 +948,14 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                       size="sm"
                       variant="secondary"
                       onClick={handleDownloadFullDetails}
-                      disabled={!rowsFiltradasPorLoja.length || isGeneratingDetailsImage}
+                      disabled={!rowsRelatorioPorLoja.length || isGeneratingDetailsImage}
                       className="h-7 px-2 text-xs"
                     >
                       {isGeneratingDetailsImage ? "Baixando..." : "⬇ Detalhes"}
                     </Button>
                   </div>
                   <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
-                    {rowsFiltradasPorLoja.map((row) => (
+                    {rowsRelatorioPorLoja.map((row) => (
                       <div
                         key={`${row.loja}-${row.vendedor}`}
                         className={isDark ? "rounded-xl border border-white/10 bg-zinc-900/70 p-3" : "rounded-xl border border-slate-200 bg-white p-3"}
@@ -936,7 +971,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                         </div>
                       </div>
                     ))}
-                    {!rowsFiltradasPorLoja.length && (
+                    {!rowsRelatorioPorLoja.length && (
                       <p className={isDark ? "text-sm text-zinc-500" : "text-sm text-slate-500"}>
                         Selecione uma loja para visualizar os vendedores.
                       </p>
@@ -972,6 +1007,34 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
                 />
               </div>
             </div>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="apps-tools" className="space-y-6">
+          <section className={isDark ? "rounded-3xl border border-white/10 bg-zinc-900/80 p-6 shadow-2xl" : "rounded-3xl border border-slate-200 bg-white p-6 shadow-lg"}>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 border-slate-300 bg-white/90 px-2.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                onClick={() => window.open("https://gazinassisbrasil.shop/downloads", "_blank")}
+              >
+                <Download className="h-3.5 w-3.5" /> Downloads
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 border-slate-300 bg-white/90 px-2.5 text-xs text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                  >
+                    <BiSolidReport className="h-4 w-4" /> Relatórios
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
+              </Dialog>
+            </div>
+            <Apps />
           </section>
         </TabsContent>
       </Tabs>
@@ -1010,7 +1073,7 @@ const MatrizLinks = ({ userId, receivedAmount = 0 }: MatrizLinksProps) => {
             <div className={isDark ? "rounded-2xl border border-white/10 bg-zinc-900/80 p-4" : "rounded-2xl border border-slate-200 bg-slate-50 p-4"}>
               <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-indigo-400">Detalhes por vendedor</h4>
               <div className="space-y-2">
-                {rowsFiltradasPorLoja.map((row) => (
+                {rowsRelatorioPorLoja.map((row) => (
                   <div
                     key={`export-${row.loja}-${row.vendedor}`}
                     className={isDark ? "rounded-xl border border-white/10 bg-zinc-800/80 p-3" : "rounded-xl border border-slate-200 bg-white p-3"}
