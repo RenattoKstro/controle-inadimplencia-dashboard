@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Users, Upload, Shield, LogOut } from "lucide-react";
 import UploadFiliaisExcel from "@/components/UploadFiliaisExcel";
 import GerenciarUsuarios from "@/components/GerenciarUsuarios";
+import ManualAbatedoresFiliais from "@/components/ManualAbatedoresFiliais";
 
 const ADMIN_EMAIL = "rks7ro@gmail.com";
 
@@ -81,6 +82,21 @@ const Admin = () => {
             </CardHeader>
             <CardContent>
               <UploadFiliaisExcel />
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Seção manual ABATEDORES */}
+        <section>
+          <Card className="bg-white/10 backdrop-blur border-purple-500 max-w-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Upload className="h-5 w-5 text-purple-400" />
+                Adicionar Filiais ABATEDORES
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ManualAbatedoresFiliais />
             </CardContent>
           </Card>
         </section>
