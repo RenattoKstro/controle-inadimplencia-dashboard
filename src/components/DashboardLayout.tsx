@@ -2,8 +2,8 @@
 import { useEffect, useState, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Wallet, Trophy, Utensils, Gift, Sliders, Menu,
-  Calendar, AlertTriangle, History, Instagram, Download, Store, User, LogOut, Shield, Sun, Moon
+  Trophy, Utensils, Gift, Sliders,
+  CalendarDays, AlertTriangle, History, Instagram, Store, Users, User, Sun, Moon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -16,18 +16,15 @@ import AjustesMetas from "./dashboard/AjustesMetas";
 import Historicos from "./Historicos";
 import Filiais from "./dashboard/Filiais";
 import { useUserData } from "@/hooks/useUserData";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import RelatoriosSabium from "./RelatoriosSabium";
 import html2canvas from "html2canvas";
 import { FaWhatsapp } from "react-icons/fa";
 import { RiScreenshot2Fill } from "react-icons/ri";
-import { BiSolidReport } from "react-icons/bi";
-import Apps from "./Apps";
 import MetaPerdido from "./dashboard/MetaPerdido";
 import MatrizLinks from "./MatrizLinks";
 import MemberChatWidget from "./MemberChatWidget";
+import { Calendar } from "@/components/ui/calendar";
 
 const normalizeOperatorRole = (role?: string | null) => {
   const normalizedRole = (role || "")
@@ -62,7 +59,7 @@ const DashboardLayout = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [bonusPerdidoAtivado, setBonusPerdidoAtivado] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const {
@@ -113,10 +110,9 @@ const DashboardLayout = () => {
 
   const handleTabChange = (v: string) => {
     if (v === "matriz") {
-      console.log("[DashboardLayout] guia matriz selecionada");
+      console.log("[DashboardLayout] guia membros selecionada");
     }
     setActiveTab(v);
-    if (isMobile) setSheetOpen(false);
   };
 
   const print = () => {
@@ -159,36 +155,33 @@ const DashboardLayout = () => {
     >
       {/* HEADER */}
       <header className={isDark ? "bg-zinc-950/95 border-b border-white/10 backdrop-blur-xl shadow-md sticky top-0 z-50" : "bg-white/95 border-b border-slate-200 backdrop-blur-xl shadow-sm sticky top-0 z-50"}>
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           {isMobile ? (
             <>
-              <h1 className={isDark ? "text-lg font-semibold text-zinc-100 flex items-center gap-2" : "text-lg font-semibold text-slate-900 flex items-center gap-2"}>
-                <Shield className="h-4 w-4 text-indigo-500" /> Inadimplência <span className="text-indigo-500 text-sm">{percentual && `${percentual}%`}</span>
+              <h1 className={isDark ? "min-w-0 flex-1 text-lg font-semibold text-zinc-100 flex flex-wrap items-center gap-2" : "min-w-0 flex-1 text-lg font-semibold text-slate-900 flex flex-wrap items-center gap-2"}>
+                <span className={isMembro ? "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-red-500 px-1.5 text-[8px] font-bold uppercase leading-none text-white shadow-md"}>
+                  {isMembro ? "PRO" : "FREE"}
+                </span>
+                <span>Meu Fiado</span>
+                <span>{percentual ? `${percentual}%` : "0.0%"}</span>
               </h1>
               <div className="flex gap-2">
                 <Button variant="outline" size="icon" onClick={toggleTheme} className={isDark ? "border-white/20 text-zinc-100 hover:bg-white/10" : "border-slate-300 text-slate-800 hover:bg-slate-100"}>
                   {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
-                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon"><Menu /></Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-80">
-                    <div className="py-6 border-b"><h2 className="text-lg font-bold">Apps</h2></div>
-                    <Apps />
-                    <div className="py-4 border-t">
-                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
-                        Sair
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
+                <Button variant="destructive" onClick={handleLogout} className="px-3">
+                  Sair
+                </Button>
               </div>
             </>
           ) : (
             <>
               <h1 className={isDark ? "text-2xl font-semibold text-zinc-100 flex items-center gap-3" : "text-2xl font-semibold text-slate-900 flex items-center gap-3"}>
-                <Shield className="h-5 w-5 text-indigo-500" /> Meu Fiado <span className="text-indigo-500 text-base">{percentual && `${percentual}%`}</span>
+                <span className={isMembro ? "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-emerald-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md" : "inline-flex h-5 -translate-y-2 items-center justify-center rounded-md bg-red-500 px-2 text-[9px] font-bold uppercase leading-none text-white shadow-md"}>
+                  {isMembro ? "PRO" : "FREE"}
+                </span>
+                <span>Meu Fiado</span>
+                <span>{percentual ? `${percentual}%` : "0.0%"}</span>
               </h1>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" onClick={toggleTheme} className={isDark ? "border-white/20 text-zinc-100 hover:bg-white/10" : "border-slate-300 text-slate-800 hover:bg-slate-100"}>
@@ -197,35 +190,16 @@ const DashboardLayout = () => {
                 <Button onClick={print} variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
                   <RiScreenshot2Fill className="w-5 h-5" />
                 </Button>
-                <Button
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => window.open("https://gazinassisbrasil.shop/downloads", "_blank")}
-                >
-                  <Download className="w-4 h-4" /> Downloads
-                </Button>
-                <Dialog>
+                <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="gap-2"><BiSolidReport className="w-5 h-5" /> Relatórios</Button>
+                    <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
+                      <CalendarDays className="h-4 w-4" />
+                    </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl"><RelatoriosSabium /></DialogContent>
+                  <DialogContent className="max-w-fit p-0 overflow-hidden">
+                    <Calendar mode="single" selected={today} className={isDark ? "bg-zinc-900 text-zinc-100" : "bg-white text-slate-900"} />
+                  </DialogContent>
                 </Dialog>
-                <Button variant="ghost" size="icon" className="text-zinc-300 hover:text-white hover:bg-white/10">
-                  <Calendar className="h-4 w-4" />
-                </Button>
-                <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" className="text-zinc-300 hover:text-white hover:bg-white/10" size="icon"><Menu className="h-5 w-5" /></Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-80">
-                    <Apps />
-                    <div className="mt-8">
-                      <Button variant="destructive" className="w-full" onClick={handleLogout}>
-                        Sair
-                      </Button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
 
                 {/* BOTÃO DE PERFIL */}
                 <div className="relative">
@@ -344,36 +318,37 @@ const DashboardLayout = () => {
       {/* MAIN CONTENT */}
       <div className="flex flex-col lg:flex-row min-h-screen">
         <main className="flex-1 lg:ml-0 pt-6 pb-20">
-          <div className="max-w-5xl mx-auto px-4">
+          <div className="max-w-5xl mx-auto px-3 sm:px-4">
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className={isDark ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1" : "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 w-full p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1"}>
-                <TabsTrigger value="ajustes-metas" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+              <TabsList className={isDark ? "flex h-auto w-full justify-start overflow-x-auto p-1 bg-zinc-900/90 border border-white/10 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8" : "flex h-auto w-full justify-start overflow-x-auto p-1 bg-white border border-slate-300 rounded-xl mb-6 gap-1 lg:grid lg:grid-cols-8"}>
+                <TabsTrigger value="ajustes-metas" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Sliders className="h-4 w-4" /> Ajustes
                 </TabsTrigger>
-                <TabsTrigger value="metas" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="metas" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Gift className="h-4 w-4" /> Metas
                 </TabsTrigger>
-                <TabsTrigger value="meta-alimentacao" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="meta-alimentacao" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Utensils className="h-4 w-4" /> Alimentação
                 </TabsTrigger>
                 {bonusPerdidoAtivado && (
-                  <TabsTrigger value="meta-perdido" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <TabsTrigger value="meta-perdido" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                     <AlertTriangle className="h-4 w-4" /> Perdido
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="meus-premios" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="meus-premios" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Trophy className="h-4 w-4" /> Prêmios
                 </TabsTrigger>
                 {mostrarHistorico && (
-                  <TabsTrigger value="historicos" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <TabsTrigger value="historicos" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                     <History className="h-4 w-4" /> Histórico
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="filiais" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                <TabsTrigger value="filiais" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
                   <Store className="h-4 w-4" /> Filiais %
                 </TabsTrigger>
-                <TabsTrigger value="matriz" className={isDark ? "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
-                  <Store className="h-4 w-4" /> Matriz
+                <TabsTrigger value="matriz" className={isDark ? "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-zinc-400 rounded-lg px-2 py-2" : "shrink-0 gap-1.5 text-xs sm:text-sm font-medium data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-sm text-slate-700 rounded-lg px-2 py-2"}>
+                  <Users className="h-4 w-4" /> Membros
+                  <span className="inline-flex h-4 -translate-y-1 items-center justify-center rounded-md bg-emerald-500 px-1.5 text-[7px] font-bold uppercase leading-none text-white shadow-sm">PRO</span>
                 </TabsTrigger>
               </TabsList>
 

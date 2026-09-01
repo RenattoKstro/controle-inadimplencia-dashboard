@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Trophy, Zap, Store, Phone, Instagram, User, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ABATEDORES_REGIONAL, isAbatedoresFilial } from "@/constants/abatedores";
 import {
   HoverCard,
   HoverCardContent,
@@ -126,6 +127,73 @@ const getLatestMetricSnapshot = (operators: FilialOperator[], fallback: RankingF
   };
 };
 
+
+const calculateMetaPercentages = (metrics: {
+  meta_mes: number;
+  meta_desafio: number;
+  vencido_atual: number;
+}) => ({
+  pctMetaFiado: metrics.vencido_atual > 0 ? (metrics.meta_mes / metrics.vencido_atual) * 100 : 0,
+  pctMetaDesafio: metrics.vencido_atual > 0 && metrics.meta_desafio > 0 ? (metrics.meta_desafio / metrics.vencido_atual) * 100 : 0,
+});
+
+const getFreshnessRank = (updatedAt: string | null, now: Date) => {
+  if (!updatedAt) return Number.MAX_SAFE_INTEGER;
+
+  const timestamp = new Date(updatedAt).getTime();
+  if (Number.isNaN(timestamp)) return Number.MAX_SAFE_INTEGER;
+
+  const diffMs = Math.max(0, now.getTime() - timestamp);
+  return Math.floor(diffMs / (24 * 60 * 60 * 1000));
+};
+
+const sortFiliaisByPercentualAndFreshness = (
+  filiais: RankingFilial[],
+  operadoresPorFilial: Record<number, FilialOperator[]>,
+  now: Date,
+) => (
+  filiais.slice().sort((a, b) => {
+    const getSortData = (filial: RankingFilial) => {
+      const fallbackUser = filial.usuario_principal
+        ? [{ ...filial.usuario_principal, filial: filial.idfilial } satisfies FilialOperator]
+        : [];
+      const operadores = sortOperators(
+        (operadoresPorFilial[filial.idfilial] && operadoresPorFilial[filial.idfilial].length > 0)
+          ? operadoresPorFilial[filial.idfilial]
+          : fallbackUser,
+      );
+      const metrics = getLatestMetricSnapshot(operadores, filial);
+      const { pctMetaFiado, pctMetaDesafio } = calculateMetaPercentages(metrics);
+      const latestUpdatedAt = getLatestUpdatedAt(operadores, filial.usuario_principal?.updated_at || null);
+      const latestTimestamp = latestUpdatedAt ? new Date(latestUpdatedAt).getTime() : 0;
+
+      return {
+        pctMetaFiado,
+        pctMetaDesafio,
+        freshnessRank: getFreshnessRank(latestUpdatedAt, now),
+        latestTimestamp: Number.isNaN(latestTimestamp) ? 0 : latestTimestamp,
+      };
+    };
+
+    const aData = getSortData(a);
+    const bData = getSortData(b);
+
+    if (aData.freshnessRank !== bData.freshnessRank) {
+      return aData.freshnessRank - bData.freshnessRank;
+    }
+
+    if (bData.pctMetaFiado !== aData.pctMetaFiado) {
+      return bData.pctMetaFiado - aData.pctMetaFiado;
+    }
+
+    if (bData.pctMetaDesafio !== aData.pctMetaDesafio) {
+      return bData.pctMetaDesafio - aData.pctMetaDesafio;
+    }
+
+    return bData.latestTimestamp - aData.latestTimestamp;
+  })
+);
+
 const publishMembrosManifest = async (filiais: Set<number>) => {
   const payload = JSON.stringify({
     updated_at: new Date().toISOString(),
@@ -162,8 +230,12 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       if (!error && data) {
         const lista = data as RankingFilial[];
         const regs = [...new Set(lista.map(f => f.regional || "Sem regional"))].sort();
-        if (!regs.includes("Membros")) regs.unshift("Membros");
-        setRegionais(regs);
+        const regionaisComCategoriasExtras = [
+          "Membros",
+          ABATEDORES_REGIONAL,
+          ...regs.filter((reg) => reg !== "Membros" && reg !== ABATEDORES_REGIONAL),
+        ];
+        setRegionais(regionaisComCategoriasExtras);
         setRanking(lista);
 
         const filiaisMarcadasNaView = new Set(
@@ -269,6 +341,8 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
 
   if (filtroRegional === "Membros") {
     dadosFiltrados = dadosFiltrados.filter((f) => filiaisComMembros.has(f.idfilial));
+  } else if (filtroRegional === ABATEDORES_REGIONAL) {
+    dadosFiltrados = dadosFiltrados.filter((f) => isAbatedoresFilial(f.idfilial));
   } else if (filtroRegional !== "todas") {
     dadosFiltrados = dadosFiltrados.filter(f => (f.regional || "Sem regional") === filtroRegional);
   }
@@ -278,6 +352,8 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       f.total_meta_fiado > 0 || f.total_meta_desafio > 0
     );
   }
+
+  dadosFiltrados = sortFiliaisByPercentualAndFreshness(dadosFiltrados, operadoresPorFilial, now);
 
   if (loading) {
     return <p className={isDark ? "text-center py-20 text-xl text-zinc-200" : "text-center py-20 text-xl text-slate-700"}>Carregando Filiais %...</p>;
@@ -394,9 +470,9 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
   };
 
   return (
-    <div className={isDark ? "space-y-6 text-zinc-100" : "space-y-6 text-slate-900"}>
+    <div className={isDark ? "space-y-6 text-zinc-100 px-1 sm:px-0" : "space-y-6 text-slate-900 px-1 sm:px-0"}>
       <div className="text-center">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+        <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
           Filiais %
         </h2>
         <p className="text-muted-foreground mt-2">
@@ -405,7 +481,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       </div>
 
       {/* FILTROS */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
         <div className="w-full max-w-xs">
           <Select value={filtroRegional} onValueChange={setFiltroRegional}>
             <SelectTrigger className={isDark ? "bg-zinc-900 border-white/10 text-zinc-100" : "bg-white border-slate-300 text-slate-900"}>
@@ -413,15 +489,16 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
             </SelectTrigger>
             <SelectContent className={isDark ? "bg-zinc-900 border-white/10 text-zinc-100" : "bg-white border-slate-300 text-slate-900"}>
               <SelectItem value="Membros">Membros</SelectItem>
+              <SelectItem value={ABATEDORES_REGIONAL}>ABATEDORES</SelectItem>
               <SelectItem value="todas">Todas as regionais</SelectItem>
-              {regionais.filter((reg) => reg !== "Membros").map(reg => (
+              {regionais.filter((reg) => reg !== "Membros" && reg !== ABATEDORES_REGIONAL).map(reg => (
                 <SelectItem key={reg} value={reg}>{reg}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        <div className={isDark ? "flex items-center gap-3 bg-zinc-900/90 px-6 py-3 rounded-lg border border-white/10" : "flex items-center gap-3 bg-white px-6 py-3 rounded-lg border border-slate-300"}>
+        <div className={isDark ? "flex w-full sm:w-auto items-center justify-center gap-3 bg-zinc-900/90 px-4 sm:px-6 py-3 rounded-lg border border-white/10" : "flex w-full sm:w-auto items-center justify-center gap-3 bg-white px-4 sm:px-6 py-3 rounded-lg border border-slate-300"}>
           <Switch
             id="ocultar-zeradas"
             checked={ocultarZeradas}
@@ -434,8 +511,8 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       </div>
 
       {/* TABELA */}
-      <div className={isDark ? "bg-zinc-950/90 rounded-xl shadow-lg border border-white/10 overflow-hidden" : "bg-white rounded-xl shadow-lg border border-slate-300 overflow-hidden"}>
-        <table className="w-full text-left text-sm">
+      <div className={isDark ? "bg-zinc-950/90 rounded-xl shadow-lg border border-white/10 overflow-x-auto" : "bg-white rounded-xl shadow-lg border border-slate-300 overflow-x-auto"}>
+        <table className="min-w-[900px] w-full text-left text-sm">
           <thead className={isDark ? "bg-gradient-to-r from-indigo-700 to-violet-700 text-zinc-100 text-xs" : "bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs"}>
             <tr>
               <th className="px-4 py-2">#</th>
@@ -472,8 +549,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                 );
                 const metrics = getLatestMetricSnapshot(operadores, f);
                 const updatedText = getUpdatedText(getLatestUpdatedAt(operadores, f.usuario_principal?.updated_at || null));
-                const pctMetaFiado = metrics.vencido_atual > 0 ? (metrics.meta_mes / metrics.vencido_atual) * 100 : 0;
-                const pctMetaDesafio = metrics.vencido_atual > 0 && metrics.meta_desafio > 0 ? (metrics.meta_desafio / metrics.vencido_atual) * 100 : 0;
+                const { pctMetaFiado, pctMetaDesafio } = calculateMetaPercentages(metrics);
 
                 return (
                   <tr key={f.idfilial} className={isDark ? "border-b border-white/10 hover:bg-white/5 transition-colors" : "border-b border-slate-200 hover:bg-slate-50 transition-colors"}>
@@ -526,7 +602,7 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                       </div>
                                       <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                          <p className="font-semibold leading-none">{displayName}</p>
+                                          <p className="break-words font-semibold leading-tight">{displayName}</p>
                                           {getRoleBadge(user?.role)}
                                           {usuarioMembro && membroBadge}
                                         </div>
