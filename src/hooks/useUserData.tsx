@@ -62,9 +62,16 @@ export function useUserData() {
       if (!user) throw new Error("Usuário não autenticado. Faça login novamente");
 
       const updatedData = { ...userData, ...newData, user_id: user.id };
+
+      // Remove id do payload para evitar conflito de PK ao fazer upsert por user_id
+      const { id: _id, ...payloadWithoutId } = updatedData as typeof updatedData & { id?: string };
+
       const { error } = await supabase
         .from("user_dashboard")
-        .upsert({ ...updatedData, updated_at: new Date().toISOString() });
+        .upsert(
+          { ...payloadWithoutId, user_id: user.id, updated_at: new Date().toISOString() },
+          { onConflict: "user_id" }
+        );
 
       if (error) throw error;
 

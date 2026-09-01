@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trophy, Zap, Store, Phone, Instagram, User, BadgeCheck } from "lucide-react";
+import { Trophy, Zap, Store, Phone, Instagram, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ABATEDORES_REGIONAL, isAbatedoresFilial } from "@/constants/abatedores";
 import {
@@ -32,7 +32,6 @@ interface RankingFilial {
     instagram: string;
     updated_at: string | null;
     role?: string | null;
-    membro?: boolean | null;
   } | null;
 }
 
@@ -45,20 +44,11 @@ type FilialOperator = {
   instagram?: string | null;
   updated_at?: string | null;
   role?: string | null;
-  membro?: boolean | null;
   abertura_vencido_mes?: number | null;
   meta_mes?: number | null;
   meta_desafio?: number | null;
   vencido_atual?: number | null;
 };
-
-type FiliaisProps = {
-  isViewerMembro: boolean;
-};
-
-const ADMIN_EMAIL = "rks7ro@gmail.com";
-const MEMBROS_MANIFEST_PATH = "membros-filiais.json";
-const MEMBROS_MANIFEST_URL = "https://xzssmnosumznfruppxsh.supabase.co/storage/v1/object/public/perfis/membros-filiais.json";
 
 const normalizeOperatorRole = (role?: string | null) => {
   const normalizedRole = (role || "")
@@ -76,14 +66,8 @@ const getFirstName = (name?: string | null) => {
   return normalizedName ? normalizedName.split(/\s+/)[0] : "Usuário";
 };
 
-const isOperatorMember = (user?: Pick<FilialOperator, "membro"> | null) => Boolean(user?.membro);
-
 const sortOperators = (operators: FilialOperator[]) => (
   operators.slice().sort((a, b) => {
-    const aMember = isOperatorMember(a);
-    const bMember = isOperatorMember(b);
-    if (aMember !== bMember) return aMember ? -1 : 1;
-
     const aRole = normalizeOperatorRole(a.role);
     const bRole = normalizeOperatorRole(b.role);
     if (aRole !== bRole) {
@@ -209,13 +193,58 @@ const publishMembrosManifest = async (filiais: Set<number>) => {
     });
 };
 
-const Filiais = ({ isViewerMembro }: FiliaisProps) => {
+const sortFiliaisByPercentualAndFreshness = (
+  filiais: RankingFilial[],
+  operadoresPorFilial: Record<number, FilialOperator[]>,
+  now: Date,
+) => (
+  filiais.slice().sort((a, b) => {
+    const getSortData = (filial: RankingFilial) => {
+      const fallbackUser = filial.usuario_principal
+        ? [{ ...filial.usuario_principal, filial: filial.idfilial } satisfies FilialOperator]
+        : [];
+      const operadores = sortOperators(
+        (operadoresPorFilial[filial.idfilial] && operadoresPorFilial[filial.idfilial].length > 0)
+          ? operadoresPorFilial[filial.idfilial]
+          : fallbackUser,
+      );
+      const metrics = getLatestMetricSnapshot(operadores, filial);
+      const { pctMetaFiado, pctMetaDesafio } = calculateMetaPercentages(metrics);
+      const latestUpdatedAt = getLatestUpdatedAt(operadores, filial.usuario_principal?.updated_at || null);
+      const latestTimestamp = latestUpdatedAt ? new Date(latestUpdatedAt).getTime() : 0;
+
+      return {
+        pctMetaFiado,
+        pctMetaDesafio,
+        freshnessRank: getFreshnessRank(latestUpdatedAt, now),
+        latestTimestamp: Number.isNaN(latestTimestamp) ? 0 : latestTimestamp,
+      };
+    };
+
+    const aData = getSortData(a);
+    const bData = getSortData(b);
+
+    if (aData.freshnessRank !== bData.freshnessRank) {
+      return aData.freshnessRank - bData.freshnessRank;
+    }
+
+    if (bData.pctMetaFiado !== aData.pctMetaFiado) {
+      return bData.pctMetaFiado - aData.pctMetaFiado;
+    }
+
+    if (bData.pctMetaDesafio !== aData.pctMetaDesafio) {
+      return bData.pctMetaDesafio - aData.pctMetaDesafio;
+    }
+
+    return bData.latestTimestamp - aData.latestTimestamp;
+  })
+);
+
+const Filiais = () => {
   const [ranking, setRanking] = useState<RankingFilial[]>([]);
   const [operadoresPorFilial, setOperadoresPorFilial] = useState<Record<number, FilialOperator[]>>({});
   const [regionais, setRegionais] = useState<string[]>([]);
-  const [filiaisComMembros, setFiliaisComMembros] = useState<Set<number>>(new Set());
-  const [filiaisComBadgeMembro, setFiliaisComBadgeMembro] = useState<Set<number>>(new Set());
-  const [filtroRegional, setFiltroRegional] = useState<string>("Membros");
+  const [filtroRegional, setFiltroRegional] = useState<string>("todas");
   const [ocultarZeradas, setOcultarZeradas] = useState(true);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
@@ -238,17 +267,11 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
         setRegionais(regionaisComCategoriasExtras);
         setRanking(lista);
 
-        const filiaisMarcadasNaView = new Set(
-          lista
-            .filter((item) => isOperatorMember(item.usuario_principal))
-            .map((item) => item.idfilial)
-        );
-
         let operadoresAgrupados: Record<number, FilialOperator[]> = {};
         try {
           const { data: operadoresData, error: operadoresError } = await supabase
             .from("user_dashboard")
-            .select("user_id, filial, nome_usuario, avatar_url, whatsapp, instagram, updated_at, role, membro, abertura_vencido_mes, meta_mes, meta_desafio, vencido_atual")
+            .select("user_id, filial, nome_usuario, avatar_url, whatsapp, instagram, updated_at, role, abertura_vencido_mes, meta_mes, meta_desafio, vencido_atual")
             .not("filial", "is", null)
             .order("updated_at", { ascending: false });
 
@@ -265,59 +288,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
         }
 
         setOperadoresPorFilial(operadoresAgrupados);
-
-        const filiaisMarcadasNosPerfis = new Set(
-          Object.entries(operadoresAgrupados)
-            .filter(([, operadores]) => operadores.some((operador) => isOperatorMember(operador)))
-            .map(([filialId]) => Number(filialId))
-            .filter((filialId) => Number.isFinite(filialId))
-        );
-
-        let filiaisMarcadasNoUserDashboard = new Set<number>();
-        const { data: { user } } = await supabase.auth.getUser();
-        const isAdminViewer = user?.email === ADMIN_EMAIL;
-
-        if (isAdminViewer) {
-          const { data: membrosData, error: membrosError } = await supabase
-            .from("user_dashboard")
-            .select("filial")
-            .eq("membro", true)
-            .not("filial", "is", null);
-
-          if (!membrosError && membrosData) {
-            filiaisMarcadasNoUserDashboard = new Set(
-              (membrosData as Array<{ filial: number | null }>)
-                .map((item) => item.filial)
-                .filter((filial): filial is number => typeof filial === "number")
-            );
-          }
-        }
-
-        let filiaisManifesto = new Set<number>();
-        try {
-          const response = await fetch(MEMBROS_MANIFEST_URL, { cache: "no-store" });
-          if (response.ok) {
-            const manifest = await response.json() as { filiais?: number[] };
-            filiaisManifesto = new Set((manifest.filiais || []).filter((item): item is number => typeof item === "number"));
-          }
-        } catch {
-          // fallback silencioso quando o manifesto ainda não existir.
-        }
-
-        const filiaisComMarcacaoExplicita = filiaisManifesto.size > 0
-          ? filiaisManifesto
-          : new Set([
-              ...filiaisMarcadasNaView,
-              ...filiaisMarcadasNosPerfis,
-              ...filiaisMarcadasNoUserDashboard,
-            ]);
-
-        if (isAdminViewer && filiaisComMarcacaoExplicita.size > 0) {
-          await publishMembrosManifest(filiaisComMarcacaoExplicita);
-        }
-
-        setFiliaisComBadgeMembro(filiaisComMarcacaoExplicita);
-        setFiliaisComMembros(filiaisComMarcacaoExplicita);
       }
 
       setLoading(false);
@@ -328,10 +298,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
     return () => clearInterval(interval);
   }, []);
 
-
-  useEffect(() => {
-    setFiltroRegional("Membros");
-  }, []);
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
@@ -409,20 +375,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
       </div>
     );
   };
-
-  const isUsuarioMembro = (_filialId: number, user: RankingFilial["usuario_principal"]) => {
-    return isOperatorMember(user);
-  };
-
-  const membroBadge = (
-    <span className={isDark
-      ? "inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300"
-      : "inline-flex items-center gap-1 rounded-full border border-emerald-600/40 bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 shadow-sm"
-    }>
-      <BadgeCheck className="h-3.5 w-3.5" />
-      Membro
-    </span>
-  );
 
   const getRoleBadge = (role?: string | null) => {
     const normalizedRole = normalizeOperatorRole(role);
@@ -567,7 +519,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-medium">{f.filial}</p>
-                              {filiaisComMembros.has(f.idfilial) && membroBadge}
                             </div>
                             <p className="text-xs text-zinc-400">{f.regional}</p>
                           </div>
@@ -575,8 +526,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                             {operadores.map((user) => {
                               const initials = getInitials(user?.nome_usuario);
                               const displayName = getFirstName(user?.nome_usuario);
-                              const usuarioMembro = isUsuarioMembro(f.idfilial, user as RankingFilial["usuario_principal"]);
-
                               return (
                                 <HoverCard key={`${f.idfilial}-${user.user_id || user.nome_usuario || user.role || "operador"}`} openDelay={200}>
                                   <HoverCardTrigger asChild>
@@ -604,7 +553,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                         <div className="flex flex-wrap items-center gap-2">
                                           <p className="break-words font-semibold leading-tight">{displayName}</p>
                                           {getRoleBadge(user?.role)}
-                                          {usuarioMembro && membroBadge}
                                         </div>
                                         <p className="mt-1 text-xs text-zinc-400">
                                           {getUpdatedText(user?.updated_at || null)}
@@ -634,7 +582,6 @@ const Filiais = ({ isViewerMembro }: FiliaisProps) => {
                                         <div className="flex flex-wrap items-center gap-2">
                                           <p className="font-bold text-lg">{displayName}</p>
                                           {getRoleBadge(user?.role)}
-                                          {usuarioMembro && membroBadge}
                                         </div>
                                         <p className="text-sm text-zinc-400">Filial {f.filial}</p>
                                       </div>

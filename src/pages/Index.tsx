@@ -28,7 +28,7 @@ const Index = () => {
         </h1>
 
         <p className="text-zinc-400 text-base sm:text-lg max-w-xl mx-auto">
-          Gerencie metas de forma clara, acompanhe indicadores em tempo real e mantenha performance com visual moderno em tema escuro.
+          Gerencie metas de forma clara, acompanhe indicadores em tempo real e mantenha performance com visual moderno.
         </p>
 
         <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-left text-sm text-amber-200">
