@@ -4,6 +4,58 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+const isNetworkError = (error: any) => {
+  const message = (error?.message || "").toLowerCase();
+  const name = (error?.name || "").toLowerCase();
+
+  return (
+    message === "failed to fetch" ||
+    message.includes("networkerror") ||
+    message.includes("network request failed") ||
+    message.includes("load failed") ||
+    message.includes("timeout") ||
+    name === "typeerror" && message.includes("fetch")
+  );
+};
+
+const getAuthErrorMessage = (error: any, isLoginMode: boolean) => {
+  const raw = (error?.message || "").toLowerCase();
+  const status = error?.status;
+
+  if (
+    raw.includes("invalid login credentials") ||
+    raw.includes("invalid credentials") ||
+    raw.includes("email not confirmed") === false && status === 400 && isLoginMode
+  ) {
+    if (raw.includes("email not confirmed")) {
+      return "Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.";
+    }
+    return "E-mail ou senha incorretos. Verifique e tente novamente.";
+  }
+
+  if (raw.includes("email not confirmed")) {
+    return "Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.";
+  }
+
+  if (raw.includes("user already registered") || raw.includes("already been registered")) {
+    return "Este e-mail já está cadastrado. Faça login ou recupere a senha.";
+  }
+
+  if (raw.includes("password should be at least") || raw.includes("password is too short")) {
+    return "A senha deve ter pelo menos 6 caracteres.";
+  }
+
+  if (raw.includes("unable to validate email") || raw.includes("invalid email")) {
+    return "E-mail inválido. Verifique o endereço digitado.";
+  }
+
+  if (raw.includes("too many requests") || status === 429) {
+    return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+  }
+
+  return error?.message || "Ocorreu um erro durante a autenticação.";
+};
+
 export const useAuth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -95,7 +147,7 @@ export const useAuth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: "https://cotroledeinadimpleciateste.netlify.app/auth",
+            emailRedirectTo: `${window.location.origin}/auth`,
           },
         });
         console.log("Signup response:", { data, error });
@@ -108,17 +160,21 @@ export const useAuth = () => {
       }
     } catch (error: any) {
       console.error("Erro de autenticação:", error);
-      if (error.message === "Failed to fetch" || error.__isAuthError) {
+
+      // Só trata como erro de conexão se for realmente falha de rede
+      if (isNetworkError(error)) {
         handleConnectionError(error);
         setRetryCount((prev) => prev + 1);
-      } else {
-        setErrorMessage(error.message);
-        toast({
-          title: "Erro",
-          description: error.message || "Ocorreu um erro durante a autenticação.",
-          variant: "destructive",
-        });
+        return;
       }
+
+      const friendlyMessage = getAuthErrorMessage(error, isLogin);
+      setErrorMessage(friendlyMessage);
+      toast({
+        title: isLogin ? "Falha no login" : "Falha no cadastro",
+        description: friendlyMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -127,11 +183,12 @@ export const useAuth = () => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      console.log("Initiating Google login, redirectTo:", "https://cotroledeinadimpleciateste.netlify.app/auth/callback");
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      console.log("Initiating Google login, redirectTo:", redirectTo);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://cotroledeinadimpleciateste.netlify.app/auth/callback",
+          redirectTo,
         },
       });
       console.log("Google login initial response:", data);
@@ -139,6 +196,12 @@ export const useAuth = () => {
       if (error) throw error;
     } catch (error: any) {
       console.error("Erro no login com Google:", error);
+
+      if (isNetworkError(error)) {
+        handleConnectionError(error);
+        return;
+      }
+
       toast({
         title: "Erro",
         description: error.message || "Falha ao efetuar login com o Google.",

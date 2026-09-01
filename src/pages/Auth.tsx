@@ -76,7 +76,7 @@ export default function Auth() {
             className="w-full h-11 bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
             disabled={isLoading}
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar com Google"}
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar com Google (em manutenção)"}
           </Button>
 
           <div className="text-center">
